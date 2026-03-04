@@ -1,0 +1,1283 @@
+import { useState, useRef, useEffect } from "react";
+
+const ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
+
+// ─── Simulated user profile (will eventually come from OAuth integrations) ───
+const USER_PROFILE = {
+  cards: [
+    { name: "Chase Sapphire Reserve", network: "Visa", multipliers: "3x travel & dining, 1x all else", perksNote: "Priority Pass lounge access, $300 travel credit" },
+    { name: "Amex Platinum", network: "Amex", multipliers: "5x flights booked direct, 5x hotels via Amex Travel, 1x all else", perksNote: "Fine Hotels & Resorts, Centurion Lounges, $200 airline credit" },
+    { name: "Citi AAdvantage Executive", network: "Mastercard", multipliers: "4x AA purchases, 1x all else", perksNote: "Admirals Club access, priority boarding" },
+    { name: "BofA Alaska Airlines Visa", network: "Visa", multipliers: "3x Alaska purchases, 1x all else", perksNote: "Companion Fare annually, free checked bag" },
+    { name: "Chase Freedom Unlimited", network: "Visa", multipliers: "1.5x all purchases", perksNote: "No annual fee, flexible redemption" },
+  ],
+  loyaltyAccounts: [
+    { program: "United MileagePlus", balance: "24,200 miles", tier: "Silver", estValue: "$484" },
+    { program: "Delta SkyMiles", balance: "11,400 miles", tier: "None", estValue: "$171" },
+    { program: "American AAdvantage", balance: "8,900 miles", tier: "None", estValue: "$142" },
+    { program: "Alaska Mileage Plan", balance: "6,200 miles", tier: "None", estValue: "$99" },
+    { program: "Marriott Bonvoy", balance: "68,400 points", tier: "Gold", estValue: "$684" },
+    { program: "Hilton Honors", balance: "32,100 points", tier: "Silver", estValue: "$193" },
+    { program: "World of Hyatt", balance: "9,800 points", tier: "Globalist", estValue: "$196" },
+    { program: "United Club (credit)", balance: "$120 credit", tier: "N/A", estValue: "$120" },
+  ]
+};
+
+const SYSTEM_PROMPT = `You are Sojourn, an AI-powered travel decision engine. Your job is to optimize business and personal travel by reasoning jointly across: out-of-pocket cost, loyalty points earned, loyalty points redemption opportunities, credit card routing (which card to use for each component to maximize rewards), supplier incentives, and the user's stated preferences and constraints.
+
+You have access to the user's connected accounts (cards and loyalty programs with balances). Your goal is to surface options that a smart, financially-savvy traveler would choose — not just search results.
+
+USER'S CONNECTED ACCOUNTS:
+${JSON.stringify(USER_PROFILE, null, 2)}
+
+CONVERSATION BEHAVIOR:
+- If the user's request has an implicit tension in preferences (e.g. "keep costs low" but they have 68,400 Marriott points idle that could save $900), ask ONE brief clarifying question before generating options. For example: "By costs, do you mean out-of-pocket spend — or are you open to using your Marriott points to reduce expenditures?" Keep clarifying questions to one at a time, conversational, and sharp.
+- Once you have enough information, generate exactly 6 travel options using the framework below.
+- Do not ask for clarification if the intent is clear enough to generate useful options.
+
+OUTPUT FORMAT:
+When ready to generate options, your ENTIRE response must be a single raw JSON object and nothing else. No introduction, no explanation, no markdown code fences, no text before or after. Just the JSON object starting with { and ending with }. Use this exact structure:
+
+{
+  "tripSummary": {
+    "origin": "city name",
+    "destination": "city name",
+    "dates": "human readable dates",
+    "preferences": ["preference 1", "preference 2"],
+    "constraints": ["constraint 1"]
+  },
+  "options": [
+    {
+      "id": 1,
+      "tag": "Recommended",
+      "tagColor": "#C9A84C",
+      "headline": "Airline + Hotel combo name",
+      "subhead": "One sentence explaining why this is the best overall option for this specific user",
+      "score": 94,
+      "totalCost": 1840,
+      "pointsEarned": "18,400 pts",
+      "pointsValue": 368,
+      "netValue": 1472,
+      "redemption": null,
+      "tags": ["Tag1", "Tag2", "Tag3"],
+      "tradeoff": "Honest one sentence tradeoff or downside",
+      "loyaltyHighlight": "Specific loyalty benefit unlocked on this trip",
+      "whyThis": "2-3 sentences explaining why this option fits the user's specific stated inputs, preferences and constraints",
+      "components": [
+        {
+          "label": "Flight",
+          "value": "$520",
+          "detail": "Airline + flight number + route + duration",
+          "points": "earns X pts",
+          "card": "Card name · Xx multiplier reason"
+        },
+        {
+          "label": "Hotel",
+          "value": "$1,200",
+          "detail": "Hotel name · nights · room type",
+          "points": "earns X pts",
+          "card": "Card name · Xx multiplier reason"
+        },
+        {
+          "label": "Ground",
+          "value": "$120",
+          "detail": "Transport type and detail",
+          "points": "earns X pts",
+          "card": "Card name · Xx multiplier reason"
+        }
+      ]
+    }
+  ]
+}
+
+THE 6 OPTION TAGS (use exactly these, in this order):
+1. "Recommended" — best overall option balancing all variables
+2. "Best Points Earned" — maximizes points/miles accumulation on this trip
+3. "Best Points Redemption" — best use of existing points balances; redemption object should be non-null
+4. "Lowest Cost" — minimizes out-of-pocket spend
+5. "Fastest" — optimizes for speed/time (earliest arrival, fewest connections, fastest ground)
+6. "Quality Upgrade" — premium experience option, best comfort/status/perks
+
+TAG COLORS: Recommended: #C9A84C, Best Points Earned: #4C9AC9, Best Points Redemption: #4CC97A, Lowest Cost: #C9C94C, Fastest: #C94C8A, Quality Upgrade: #9A4CC9
+
+CARD ROUTING LOGIC: For each trip component, recommend the card from the user's wallet that maximizes rewards. Show the card name and the specific reason (e.g. "Amex Platinum · 5x on direct flights").
+
+REDEMPTION LOGIC: For "Best Points Redemption", identify the highest-value redemption opportunity from the user's balances. The redemption field should be: { "program": "program name", "pointsUsed": "X pts", "valueRedeemed": "$X" }
+
+SCORING: Score each option 0-100. Recommended should be highest (88-96). Score reflects overall fit to this specific user's profile and stated preferences.
+
+NET VALUE: netValue = totalCost - pointsValue (lower is better — reflects true economic cost after points earned)
+
+Be specific with flight numbers, hotel names, and realistic pricing. Make the reasoning feel genuinely personalized to the user's actual accounts and stated preferences — not generic.`;
+
+
+// ─── Onboarding ───────────────────────────────────────────────────────────────
+
+const CARD_OPTIONS = [
+  { name: "Chase Sapphire Reserve", issuer: "Chase" },
+  { name: "Chase Sapphire Preferred", issuer: "Chase" },
+  { name: "Chase Freedom Unlimited", issuer: "Chase" },
+  { name: "Chase Ink Business Preferred", issuer: "Chase" },
+  { name: "Amex Platinum", issuer: "Amex" },
+  { name: "Amex Gold", issuer: "Amex" },
+  { name: "Amex Green", issuer: "Amex" },
+  { name: "Amex Business Platinum", issuer: "Amex" },
+  { name: "Citi AAdvantage Executive", issuer: "Citi" },
+  { name: "Citi AAdvantage Platinum", issuer: "Citi" },
+  { name: "Capital One Venture X", issuer: "Capital One" },
+  { name: "Capital One Venture", issuer: "Capital One" },
+  { name: "BofA Alaska Airlines Visa", issuer: "BofA" },
+  { name: "BofA Premium Rewards", issuer: "BofA" },
+  { name: "Hilton Honors Amex Surpass", issuer: "Amex" },
+  { name: "Marriott Bonvoy Boundless", issuer: "Chase" },
+  { name: "World of Hyatt Card", issuer: "Chase" },
+  { name: "United Explorer Card", issuer: "Chase" },
+  { name: "Delta SkyMiles Reserve", issuer: "Amex" },
+  { name: "Delta SkyMiles Platinum", issuer: "Amex" },
+  { name: "Southwest Rapid Rewards Priority", issuer: "Chase" },
+  { name: "Barclays AAdvantage Aviator", issuer: "Barclays" },
+  { name: "Wells Fargo Autograph", issuer: "Wells Fargo" },
+];
+
+const LOYALTY_OPTIONS = {
+  hotel: [
+    { program: "Marriott Bonvoy", tiers: ["None", "Silver", "Gold", "Platinum", "Titanium", "Ambassador"], brands: ["Marriott", "Westin", "Sheraton", "W Hotels", "St. Regis", "Ritz-Carlton", "EDITION", "Autograph Collection", "Renaissance", "Le Méridien", "The Luxury Collection", "Delta Hotels", "Courtyard", "Four Points"] },
+    { program: "Hilton Honors", tiers: ["None", "Silver", "Gold", "Diamond"], brands: ["Hilton", "Conrad", "Waldorf Astoria", "Curio Collection", "DoubleTree", "Embassy Suites", "Hampton Inn", "Canopy", "Tapestry Collection", "LXR Hotels"] },
+    { program: "World of Hyatt", tiers: ["None", "Discoverist", "Explorist", "Globalist"], brands: ["Park Hyatt", "Grand Hyatt", "Andaz", "Hyatt Regency", "Alila", "Thompson Hotels", "Hyatt Centric", "JdV by Hyatt", "Caption by Hyatt"] },
+    { program: "IHG One Rewards", tiers: ["None", "Silver", "Gold", "Platinum", "Diamond"], brands: ["InterContinental", "Kimpton", "Six Senses", "Regent", "voco", "Holiday Inn", "Crowne Plaza", "Hotel Indigo"] },
+    { program: "Wyndham Rewards", tiers: ["None", "Blue", "Gold", "Platinum", "Diamond"], brands: ["Wyndham Grand", "Registry Collection", "La Quinta", "Trademark Collection", "Dolce Hotels"] },
+    { program: "Choice Privileges", tiers: ["None", "Gold", "Platinum", "Diamond"], brands: ["Cambria Hotels", "Ascend Collection", "Comfort Inn", "Quality Inn"] },
+  ],
+  airline: [
+    { program: "United MileagePlus", tiers: ["None", "Silver", "Gold", "Platinum", "1K"] },
+    { program: "Delta SkyMiles", tiers: ["None", "Silver Medallion", "Gold Medallion", "Platinum Medallion", "Diamond Medallion"] },
+    { program: "American AAdvantage", tiers: ["None", "Gold", "Platinum", "Platinum Pro", "Executive Platinum"] },
+    { program: "Alaska Mileage Plan", tiers: ["None", "MVP", "MVP Gold", "MVP Gold 75K"] },
+    { program: "Southwest Rapid Rewards", tiers: ["None", "A-List", "A-List Preferred", "Companion Pass"] },
+    { program: "JetBlue TrueBlue", tiers: ["None", "Mosaic 1", "Mosaic 2", "Mosaic 3", "Mosaic 4"] },
+    { program: "Emirates Skywards", tiers: ["None", "Blue", "Silver", "Gold", "Platinum"] },
+    { program: "British Airways Avios", tiers: ["None", "Blue", "Bronze", "Silver", "Gold"] },
+    { program: "Air France Flying Blue", tiers: ["None", "Explorer", "Silver", "Gold", "Platinum"] },
+    { program: "Singapore KrisFlyer", tiers: ["None", "KrisFlyer", "KrisFlyer Elite Silver", "KrisFlyer Elite Gold"] },
+  ],
+  car: [
+    { program: "Hertz Gold Plus Rewards", tiers: ["None", "Gold", "Five Star", "President's Circle"] },
+    { program: "Avis Preferred", tiers: ["None", "Preferred", "Select", "Chairman"] },
+    { program: "Enterprise Plus", tiers: ["None", "Silver", "Gold", "Platinum"] },
+    { program: "National Emerald Club", tiers: ["None", "Emerald Club", "Executive", "Executive Elite"] },
+    { program: "Budget Fastbreak", tiers: ["None", "Fastbreak"] },
+    { program: "Alamo Insiders", tiers: ["None", "Member"] },
+    { program: "Turo", tiers: ["None", "Member"] },
+    { program: "Zipcar", tiers: ["None", "Member"] },
+  ],
+  rideshare: [
+    { program: "Uber One", tiers: ["None", "Member"] },
+    { program: "Lyft Pink", tiers: ["None", "Pink", "Pink All Access"] },
+    { program: "Blacklane", tiers: ["None", "Member"] },
+    { program: "Blade", tiers: ["None", "Member"] },
+    { program: "Via", tiers: ["None", "Member"] },
+  ],
+};
+
+const LOYALTY_BRAND_MAP = {
+  "Marriott Bonvoy": ["Marriott", "Westin", "Sheraton", "W Hotels", "St. Regis", "Ritz-Carlton", "EDITION", "Autograph Collection", "Renaissance", "Le Méridien", "The Luxury Collection"],
+  "Hilton Honors": ["Hilton", "Conrad", "Waldorf Astoria", "Curio Collection", "DoubleTree", "Canopy", "Tapestry Collection", "LXR Hotels"],
+  "World of Hyatt": ["Park Hyatt", "Grand Hyatt", "Andaz", "Hyatt Regency", "Alila", "Thompson Hotels", "Hyatt Centric"],
+  "IHG One Rewards": ["InterContinental", "Kimpton", "Six Senses", "Regent", "Hotel Indigo"],
+};
+
+const BRAND_CATEGORIES = [
+  {
+    key: "loyalty_brands",
+    label: "Loyalty Program Brands",
+    sublabel: "Auto-populated from your loyalty programs",
+    dynamic: true,
+    brands: [],
+  },
+  {
+    key: "luxury_independent",
+    label: "Luxury Independent",
+    sublabel: "Premium properties outside loyalty ecosystems",
+    brands: ["Four Seasons", "One & Only", "Aman", "Rosewood", "Belmond", "Montage Hotels", "Proper Hotels", "Auberge Resorts", "Virgin Hotels", "SH Hotels"],
+  },
+  {
+    key: "curated_collections",
+    label: "Curated Collections",
+    sublabel: "Handpicked independent properties",
+    brands: ["Leading Hotels of the World", "Relais & Châteaux", "Small Luxury Hotels", "Design Hotels", "Tablet Hotels", "Mr & Mrs Smith"],
+  },
+  {
+    key: "recognition",
+    label: "Quality Recognition",
+    sublabel: "Award and rating systems",
+    brands: ["Michelin Keys", "Michelin Stars (restaurant)", "Forbes Five Star", "AAA Five Diamond", "Condé Nast Gold List"],
+  },
+  {
+    key: "style_business",
+    label: "Business Focused",
+    sublabel: "Optimized for work travel",
+    brands: ["Marriott", "Hilton", "Hyatt Regency", "Westin", "Courtyard", "Residence Inn", "Homewood Suites", "AC Hotels"],
+  },
+  {
+    key: "style_resort",
+    label: "Resort & Leisure",
+    sublabel: "Destination and leisure properties",
+    brands: ["Four Seasons Resort", "One & Only Resorts", "Sandals", "Club Med", "Beaches Resorts", "Excellence Resorts"],
+  },
+  {
+    key: "style_allinclusive",
+    label: "All-Inclusive",
+    sublabel: "Bundled experience properties",
+    brands: ["Sandals", "Beaches", "Club Med", "Excellence Playa Mujeres", "Secrets Resorts", "Dreams Resorts", "Iberostar"],
+  },
+  {
+    key: "style_boutique",
+    label: "Boutique & Lifestyle",
+    sublabel: "Independently spirited properties",
+    brands: ["Ace Hotel", "Soho House", "Graduate Hotels", "21c Museum Hotels", "Bunkhouse Group", "Standard Hotels", "Freehand Hotels"],
+  },
+  {
+    key: "airlines_pref",
+    label: "Preferred Airlines",
+    sublabel: "Carriers you prefer when available",
+    brands: ["United", "Delta", "American", "Alaska", "JetBlue", "Southwest", "Emirates", "Lufthansa", "Singapore Airlines", "British Airways", "Air France", "Cathay Pacific"],
+  },
+  {
+    key: "quality_budget",
+    label: "Quality / Value",
+    sublabel: "Best value without sacrificing quality",
+    brands: ["Hyatt Place", "Courtyard by Marriott", "Hampton Inn", "AC Hotels", "Aloft", "Element Hotels", "Moxy Hotels"],
+  },
+  {
+    key: "ground_pref",
+    label: "Ground Transport Preferences",
+    sublabel: "Preferred carriers and services on the ground",
+    brands: ["Uber One", "Lyft Pink", "Hertz", "National", "Enterprise", "Avis", "Blacklane", "Blade", "Turo", "Zipcar", "Via", "Public Transit"],
+  },
+];
+
+const Chip = ({ label, active, onClick }) => (
+  <button onClick={onClick} style={{
+    background: active ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.03)",
+    border: `1px solid ${active ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.08)"}`,
+    color: active ? "#C9A84C" : "#6a6460",
+    borderRadius: "20px", padding: "7px 13px", cursor: "pointer",
+    fontSize: "12px", transition: "all 0.15s", whiteSpace: "nowrap",
+  }}>{active ? "✓ " : ""}{label}</button>
+);
+
+const OnboardingFlow = ({ onComplete }) => {
+  const [step, setStep] = useState(0);
+  const [selectedCards, setSelectedCards] = useState(["Chase Sapphire Reserve", "Amex Platinum"]);
+  const [customCard, setCustomCard] = useState("");
+  const [showCustomCard, setShowCustomCard] = useState(false);
+  const [cardSearch, setCardSearch] = useState("");
+
+  const defaultLoyalty = () => {
+    const obj = {};
+    Object.values(LOYALTY_OPTIONS).flat().forEach(({ program, tiers }) => {
+      obj[program] = { selected: false, tier: tiers[0], balance: "" };
+    });
+    obj["United MileagePlus"] = { selected: true, tier: "Silver", balance: "24,200" };
+    obj["Marriott Bonvoy"] = { selected: true, tier: "Gold", balance: "68,400" };
+    obj["Hilton Honors"] = { selected: true, tier: "Silver", balance: "32,100" };
+    obj["Uber One"] = { selected: true, tier: "Member", balance: "" };
+    obj["National Emerald Club"] = { selected: true, tier: "Executive", balance: "" };
+    return obj;
+  };
+  const [loyaltyAccounts, setLoyaltyAccounts] = useState(defaultLoyalty);
+  const [selectedBrands, setSelectedBrands] = useState(["Four Seasons", "Leading Hotels of the World", "Relais & Châteaux", "Michelin Keys"]);
+  const [expandedBrandCat, setExpandedBrandCat] = useState(null);
+  const [debugMsg, setDebugMsg] = useState("");
+  const [travelProfile, setTravelProfile] = useState({
+    homeAirport: "",
+    frequency: "",
+    travelTypes: [],
+  });
+
+  const toggleCard = (card) => setSelectedCards(prev => prev.includes(card) ? prev.filter(c => c !== card) : [...prev, card]);
+  const toggleBrand = (brand) => setSelectedBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]);
+  const toggleLoyalty = (prog) => setLoyaltyAccounts(prev => ({ ...prev, [prog]: { ...prev[prog], selected: !prev[prog].selected } }));
+  const setTier = (prog, tier) => setLoyaltyAccounts(prev => ({ ...prev, [prog]: { ...prev[prog], tier } }));
+  const setBalance = (prog, bal) => setLoyaltyAccounts(prev => ({ ...prev, [prog]: { ...prev[prog], balance: bal } }));
+
+  const addCustomCard = () => {
+    if (customCard.trim()) {
+      setSelectedCards(prev => [...prev, customCard.trim()]);
+      setCustomCard("");
+      setShowCustomCard(false);
+    }
+  };
+
+  // Auto-derive loyalty brands for Step 3
+  const getLoyaltyBrands = () => {
+    const brands = [];
+    Object.entries(loyaltyAccounts).forEach(([prog, acct]) => {
+      if (acct.selected && LOYALTY_BRAND_MAP[prog]) {
+        LOYALTY_BRAND_MAP[prog].forEach(b => { if (!brands.includes(b)) brands.push(b); });
+      }
+    });
+    return brands;
+  };
+
+  const handleComplete = () => {
+    const loyaltyList = [];
+    try {
+      Object.entries(loyaltyAccounts || {}).forEach(([program, v]) => {
+        if (v && v.selected) loyaltyList.push({ program, balance: v.balance || "Unknown", tier: v.tier || "None", estValue: "TBD" });
+      });
+    } catch(e) {}
+
+    const loyaltyBrands = [];
+    try {
+      Object.entries(loyaltyAccounts || {}).forEach(([prog, acct]) => {
+        if (acct && acct.selected && LOYALTY_BRAND_MAP[prog]) {
+          LOYALTY_BRAND_MAP[prog].forEach(b => { if (!loyaltyBrands.includes(b)) loyaltyBrands.push(b); });
+        }
+      });
+    } catch(e) {}
+
+    const profile = {
+      travelProfile: travelProfile || {},
+      cards: (selectedCards || []).map(name => ({ name, network: "Visa", multipliers: "varies", perksNote: "" })),
+      loyaltyAccounts: loyaltyList,
+      preferredBrands: [...(selectedBrands || []), ...loyaltyBrands],
+    };
+    onComplete(profile);
+  };
+
+  const filteredCards = CARD_OPTIONS.filter(c => c.name.toLowerCase().includes(cardSearch.toLowerCase()));
+  const steps = ["Welcome", "Profile", "Cards", "Loyalty", "Brands"];
+
+  const NavButtons = ({ onBack, onNext, nextLabel = "Next →", nextDisabled = false }) => (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "24px" }}>
+      <button onClick={onBack} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "#666", padding: "10px 18px", borderRadius: "12px", cursor: "pointer", fontSize: "12px" }}>← Back</button>
+      <button onClick={onNext} disabled={nextDisabled} style={{ padding: "12px 28px", background: nextDisabled ? "rgba(201,168,76,0.2)" : "#C9A84C", color: nextDisabled ? "#555" : "#0a0908", border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: nextDisabled ? "default" : "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>{nextLabel}</button>
+    </div>
+  );
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#080706", fontFamily: "'DM Sans',system-ui,sans-serif", color: "#e8e4dc", display: "flex", flexDirection: "column" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+        @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+        input:focus,select:focus,textarea:focus{outline:none}
+        ::-webkit-scrollbar{width:3px;height:3px;background:transparent}
+        ::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.2);border-radius:2px}
+      `}</style>
+
+      {/* Header + Progress */}
+      <div style={{ padding: "24px 28px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ fontSize: "11px", letterSpacing: "0.3em", color: "#C9A84C", textTransform: "uppercase", fontFamily: "serif" }}>Sojourn · AI</div>
+        {step > 0 && (
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            {steps.slice(1).map((s, i) => (
+              <div key={s} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <div style={{ width: "22px", height: "22px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: "700", background: i + 1 < step ? "#C9A84C" : i + 1 === step ? "rgba(201,168,76,0.15)" : "rgba(255,255,255,0.04)", color: i + 1 < step ? "#0a0908" : i + 1 === step ? "#C9A84C" : "#333", border: i + 1 === step ? "1px solid rgba(201,168,76,0.35)" : "none" }}>
+                  {i + 1 < step ? "✓" : i + 2}
+                </div>
+                <span style={{ color: i + 1 === step ? "#b0a898" : "#333", fontSize: "11px" }}>{s}</span>
+                {i < 3 && <span style={{ color: "#222", fontSize: "10px", margin: "0 2px" }}>—</span>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "28px 28px 28px", maxWidth: "640px", width: "100%", margin: "0 auto", animation: "fadeUp 0.4s ease forwards", boxSizing: "border-box" }}>
+
+        {/* Step 0 — Welcome */}
+        {step === 0 && (
+          <div>
+            <div style={{ fontSize: "36px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.15", marginBottom: "16px" }}>Spend less.<br />Travel smarter.</div>
+            <div style={{ color: "#666", fontSize: "15px", lineHeight: "1.7", marginBottom: "32px" }}>Sojourn optimizes every trip across your credit cards, loyalty programs, and personal preferences — all at once, in plain language.</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginBottom: "36px" }}>
+              {["Optimizes cards, loyalty programs, and brand preferences simultaneously", "Surfaces points redemption opportunities you would otherwise miss", "Gets smarter and more personalized with every trip"].map(t => (
+                <div key={t} style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                  <span style={{ color: "#C9A84C", fontSize: "12px", marginTop: "3px", flexShrink: 0 }}>▪</span>
+                  <span style={{ color: "#7a7468", fontSize: "14px", lineHeight: "1.5" }}>{t}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ color: "#444", fontSize: "12px", marginBottom: "20px", textAlign: "center" }}>Takes about 2 minutes · You can update preferences anytime</div>
+            <button onClick={() => setStep(1)} style={{ width: "100%", padding: "16px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "14px", fontSize: "14px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>Get Started →</button>
+          </div>
+        )}
+
+
+        {/* Step 1 — Travel Profile */}
+        {step === 1 && (
+          <div>
+            <div style={{ marginBottom: "6px", color: "#C9A84C", fontSize: "11px", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "serif" }}>Step 1 of 4</div>
+            <div style={{ fontSize: "26px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "6px" }}>Tell us about how you travel</div>
+            <div style={{ color: "#555", fontSize: "13px", marginBottom: "24px", lineHeight: "1.6" }}>This helps Sojourn prioritize the right routes, carriers, and properties from the start.</div>
+
+            {/* Home Airport */}
+            <div style={{ marginBottom: "22px" }}>
+              <div style={{ color: "#888", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>Home Airport</div>
+              <input
+                value={travelProfile.homeAirport}
+                onChange={e => setTravelProfile(p => ({ ...p, homeAirport: e.target.value }))}
+                placeholder="e.g. SFO, JFK, LAX, ORD..."
+                style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "11px 14px", color: "#e8e4dc", fontSize: "14px", fontFamily: "'DM Sans',system-ui,sans-serif", boxSizing: "border-box" }}
+              />
+              <div style={{ color: "#333", fontSize: "11px", marginTop: "6px" }}>You can add a secondary airport too — e.g. "SFO, OAK"</div>
+            </div>
+
+            {/* Travel Frequency */}
+            <div style={{ marginBottom: "22px" }}>
+              <div style={{ color: "#888", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>Travel Frequency</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                {["1–2 trips/year", "3–5 trips/year", "6–10 trips/year", "10–20 trips/year", "20+ trips/year"].map(f => (
+                  <button key={f} onClick={() => setTravelProfile(p => ({ ...p, frequency: f }))}
+                    style={{ background: travelProfile.frequency === f ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.03)", border: `1px solid ${travelProfile.frequency === f ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.08)"}`, color: travelProfile.frequency === f ? "#C9A84C" : "#6a6460", borderRadius: "20px", padding: "8px 16px", cursor: "pointer", fontSize: "12px", transition: "all 0.15s" }}>
+                    {travelProfile.frequency === f ? "✓ " : ""}{f}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Travel Type & Purpose */}
+            <div style={{ marginBottom: "8px" }}>
+              <div style={{ color: "#888", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>Travel Type & Purpose</div>
+              <div style={{ color: "#444", fontSize: "11px", marginBottom: "10px" }}>Select all that apply</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                {[
+                  { label: "Domestic", icon: "🗺" },
+                  { label: "International", icon: "✈️" },
+                  { label: "Business", icon: "💼" },
+                  { label: "Urban / City", icon: "🏙" },
+                  { label: "Vacation — Beach", icon: "🏖" },
+                  { label: "Vacation — Ski", icon: "⛷" },
+                  { label: "Vacation — Other", icon: "🌿" },
+                  { label: "Family / Relatives", icon: "👨‍👩‍👧" },
+                  { label: "Youth Athletics", icon: "🏆" },
+                ].map(({ label, icon }) => {
+                  const active = travelProfile.travelTypes.includes(label);
+                  return (
+                    <button key={label} onClick={() => setTravelProfile(p => ({ ...p, travelTypes: active ? p.travelTypes.filter(t => t !== label) : [...p.travelTypes, label] }))}
+                      style={{ background: active ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.03)", border: `1px solid ${active ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.08)"}`, color: active ? "#C9A84C" : "#6a6460", borderRadius: "20px", padding: "8px 14px", cursor: "pointer", fontSize: "12px", transition: "all 0.15s", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span>{icon}</span>{active ? "✓ " : ""}{label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <NavButtons onBack={() => setStep(0)} onNext={() => setStep(2)} nextLabel="Next: Cards →" nextDisabled={!travelProfile.homeAirport.trim()} />
+          </div>
+        )}
+
+        {/* Step 2 — Cards */}
+        {step === 2 && (
+          <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+            <div style={{ marginBottom: "6px", color: "#C9A84C", fontSize: "11px", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "serif" }}>Step 2 of 4</div>
+            <div style={{ fontSize: "26px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "6px" }}>Which cards do you carry?</div>
+            <div style={{ color: "#555", fontSize: "13px", marginBottom: "18px", lineHeight: "1.6" }}>Select all that apply. Sojourn routes each component to the card that earns the most rewards.</div>
+            <input value={cardSearch} onChange={e => setCardSearch(e.target.value)} placeholder="Search cards..." style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "9px 14px", color: "#e8e4dc", fontSize: "13px", marginBottom: "14px", boxSizing: "border-box", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "7px", marginBottom: "14px", maxHeight: "240px", overflowY: "auto" }}>
+              {filteredCards.map(({ name }) => <Chip key={name} label={name} active={selectedCards.includes(name)} onClick={() => toggleCard(name)} />)}
+            </div>
+
+            {/* Custom card add */}
+            {showCustomCard ? (
+              <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+                <input value={customCard} onChange={e => setCustomCard(e.target.value)} onKeyDown={e => e.key === "Enter" && addCustomCard()} placeholder="Card name (e.g. Chase Ink Business Unlimited)" autoFocus
+                  style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: "10px", padding: "9px 14px", color: "#e8e4dc", fontSize: "13px", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
+                <button onClick={addCustomCard} style={{ background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "10px", padding: "9px 16px", cursor: "pointer", fontSize: "12px", fontWeight: "700" }}>Add</button>
+                <button onClick={() => setShowCustomCard(false)} style={{ background: "rgba(255,255,255,0.04)", color: "#666", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "9px 14px", cursor: "pointer", fontSize: "12px" }}>✕</button>
+              </div>
+            ) : (
+              <button onClick={() => setShowCustomCard(true)} style={{ background: "none", border: "1px dashed rgba(255,255,255,0.12)", color: "#555", borderRadius: "20px", padding: "7px 14px", cursor: "pointer", fontSize: "12px", marginBottom: "12px", alignSelf: "flex-start", transition: "all 0.2s" }}>+ Add another card</button>
+            )}
+
+            {selectedCards.length > 0 && (
+              <div style={{ marginBottom: "12px" }}>
+                <div style={{ color: "#444", fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "8px" }}>Selected ({selectedCards.length})</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  {selectedCards.map(c => <span key={c} style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", color: "#C9A84C", fontSize: "11px", padding: "4px 10px", borderRadius: "8px" }}>✓ {c}</span>)}
+                </div>
+              </div>
+            )}
+
+            <NavButtons onBack={() => setStep(1)} onNext={() => setStep(3)} nextLabel="Next: Loyalty →" nextDisabled={selectedCards.length === 0} />
+          </div>
+        )}
+
+        {/* Step 3 — Loyalty Programs */}
+        {step === 3 && (
+          <div>
+            <div style={{ marginBottom: "6px", color: "#C9A84C", fontSize: "11px", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "serif" }}>Step 3 of 4</div>
+            <div style={{ fontSize: "26px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "6px" }}>Your loyalty programs</div>
+            <div style={{ color: "#555", fontSize: "13px", marginBottom: "20px", lineHeight: "1.6" }}>Select your programs, tier, and approximate balance. Sojourn will factor these into every recommendation.</div>
+
+            <div style={{ maxHeight: "400px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "24px", marginBottom: "8px" }}>
+              {[
+                { label: "Hotel Programs", key: "hotel" },
+                { label: "Airline Programs", key: "airline" },
+                { label: "Car Rental", key: "car" },
+                { label: "Rideshare & Ground", key: "rideshare" },
+              ].map(({ label, key }) => (
+                <div key={key}>
+                  <div style={{ color: "#C9A84C", fontSize: "10px", letterSpacing: "0.18em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px", paddingBottom: "6px", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>{label}</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {LOYALTY_OPTIONS[key].map(({ program, tiers }) => {
+                      const acct = loyaltyAccounts[program] || { selected: false, tier: tiers[0], balance: "" };
+                      return (
+                        <div key={program} style={{ background: acct.selected ? "rgba(201,168,76,0.05)" : "rgba(255,255,255,0.02)", border: `1px solid ${acct.selected ? "rgba(201,168,76,0.22)" : "rgba(255,255,255,0.05)"}`, borderRadius: "10px", padding: "10px 12px", transition: "all 0.2s" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: acct.selected ? "10px" : "0" }}>
+                            <div onClick={() => toggleLoyalty(program)} style={{ width: "17px", height: "17px", borderRadius: "4px", border: `1px solid ${acct.selected ? "#C9A84C" : "rgba(255,255,255,0.15)"}`, background: acct.selected ? "#C9A84C" : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+                              {acct.selected && <span style={{ color: "#0a0908", fontSize: "10px", fontWeight: "bold" }}>✓</span>}
+                            </div>
+                            <span onClick={() => toggleLoyalty(program)} style={{ color: acct.selected ? "#e8e4dc" : "#6a6460", fontSize: "13px", cursor: "pointer", flex: 1 }}>{program}</span>
+                          </div>
+                          {acct.selected && (
+                            <div style={{ display: "flex", gap: "8px", paddingLeft: "27px" }}>
+                              <select value={acct.tier} onChange={e => setTier(program, e.target.value)} style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#b0a898", fontSize: "12px", cursor: "pointer", fontFamily: "'DM Sans',system-ui,sans-serif" }}>
+                                {tiers.map(t => <option key={t} value={t} style={{ background: "#1a1a1a" }}>{t}</option>)}
+                              </select>
+                              <input value={acct.balance} onChange={e => setBalance(program, e.target.value)} placeholder="Balance (e.g. 45,000)" style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#e8e4dc", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <NavButtons onBack={() => setStep(2)} onNext={() => setStep(4)} nextLabel="Next: Brands →" />
+          </div>
+        )}
+
+        {/* Step 4 — Brand Preferences */}
+        {step === 4 && (
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ marginBottom: "6px", color: "#C9A84C", fontSize: "11px", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "serif" }}>Step 4 of 4</div>
+            <div style={{ fontSize: "26px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "6px" }}>Brand & style preferences</div>
+            <div style={{ color: "#555", fontSize: "13px", marginBottom: "16px", lineHeight: "1.6" }}>Sojourn weights these in every recommendation. Tap any category to expand and select. You can skip this and add preferences later.</div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "16px", maxHeight: "380px", overflowY: "auto", paddingRight: "4px" }}>
+              {BRAND_CATEGORIES.map((cat) => {
+                const brands = cat.dynamic ? getLoyaltyBrands() : cat.brands;
+                const activeCount = brands.filter(b => selectedBrands.includes(b)).length;
+                const isOpen = expandedBrandCat === cat.key;
+                return (
+                  <div key={cat.key} style={{ border: `1px solid ${activeCount > 0 ? "rgba(201,168,76,0.2)" : "rgba(255,255,255,0.06)"}`, borderRadius: "10px", background: activeCount > 0 ? "rgba(201,168,76,0.04)" : "rgba(255,255,255,0.02)" }}>
+                    <div
+                      onClick={() => setExpandedBrandCat(isOpen ? null : cat.key)}
+                      style={{ padding: "11px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", userSelect: "none" }}
+                    >
+                      <div>
+                        <span style={{ color: activeCount > 0 ? "#c0b8ae" : "#6a6460", fontSize: "13px" }}>{cat.label}</span>
+                        <span style={{ color: "#333", fontSize: "11px", marginLeft: "8px" }}>{cat.sublabel}</span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                        {activeCount > 0 && <span style={{ background: "rgba(201,168,76,0.12)", color: "#C9A84C", fontSize: "10px", padding: "2px 8px", borderRadius: "8px" }}>{activeCount}</span>}
+                        <span style={{ color: "#555", fontSize: "11px" }}>{isOpen ? "▲" : "▼"}</span>
+                      </div>
+                    </div>
+                    {isOpen && (
+                      <div style={{ padding: "8px 14px 14px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                        {cat.dynamic && brands.length === 0 ? (
+                          <div style={{ color: "#444", fontSize: "12px", paddingTop: "6px", fontStyle: "italic" }}>Select loyalty programs in Step 3 to auto-populate this section.</div>
+                        ) : (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", paddingTop: "8px" }}>
+                            {brands.map(brand => (
+                              <div
+                                key={brand}
+                                onClick={(e) => { e.stopPropagation(); toggleBrand(brand); }}
+                                style={{ background: selectedBrands.includes(brand) ? "rgba(201,168,76,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${selectedBrands.includes(brand) ? "rgba(201,168,76,0.45)" : "rgba(255,255,255,0.1)"}`, color: selectedBrands.includes(brand) ? "#C9A84C" : "#6a6460", borderRadius: "20px", padding: "6px 12px", cursor: "pointer", fontSize: "12px", transition: "all 0.15s", userSelect: "none" }}
+                              >
+                                {selectedBrands.includes(brand) ? "✓ " : ""}{brand}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {debugMsg ? <div style={{ background: "rgba(201,76,76,0.15)", border: "1px solid rgba(201,76,76,0.3)", borderRadius: "8px", padding: "8px 12px", color: "#e88", fontSize: "12px", marginBottom: "10px" }}>{debugMsg}</div> : null}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <button onClick={() => setStep(3)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "#666", padding: "10px 18px", borderRadius: "12px", cursor: "pointer", fontSize: "12px" }}>← Back</button>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button onClick={() => {
+                  setDebugMsg("Clicked...");
+                  try {
+                    setDebugMsg("Building profile...");
+                    const profile = {
+                      travelProfile: travelProfile || {},
+                      cards: (selectedCards || []).map(name => ({ name })),
+                      loyaltyAccounts: Object.entries(loyaltyAccounts || {}).filter(([,v]) => v && v.selected).map(([program, v]) => ({ program, balance: v.balance || "", tier: v.tier || "None" })),
+                      preferredBrands: selectedBrands || [],
+                    };
+                    setDebugMsg("Calling onComplete...");
+                    onComplete(profile);
+                    setDebugMsg("Done!");
+                  } catch(e) {
+                    setDebugMsg("ERROR: " + e.message);
+                  }
+                }} style={{ padding: "12px 28px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>Start Optimizing →</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ─── Components ──────────────────────────────────────────────────────────────
+
+const CompareView = ({ options, onBack }) => (
+  <div style={{ animation: "fadeUp 0.4s ease forwards" }}>
+    <button onClick={onBack} style={{ background: "none", border: "1px solid rgba(255,255,255,0.2)", color: "#aaa", padding: "8px 16px", borderRadius: "20px", cursor: "pointer", marginBottom: "24px", fontSize: "13px" }}>← Back to Cards</button>
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "800px" }}>
+        <thead>
+          <tr>
+            {["Option", "Total Cost", "Points Value", "Net Value", "Why This Option"].map(h => (
+              <th key={h} style={{ textAlign: h === "Option" || h === "Why This Option" ? "left" : "right", padding: "12px 16px", color: "#555", fontSize: "11px", fontFamily: "serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {options.map((opt, i) => (
+            <tr key={opt.id} style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: i === 0 ? "rgba(201,168,76,0.04)" : "transparent" }}>
+              <td style={{ padding: "16px", verticalAlign: "top" }}>
+                <span style={{ background: opt.tagColor + "18", color: opt.tagColor, fontSize: "10px", padding: "3px 8px", borderRadius: "10px", fontFamily: "serif", display: "inline-block", marginBottom: "6px" }}>{opt.tag}</span>
+                <div style={{ color: "#b0a898", fontSize: "13px" }}>{opt.headline}</div>
+              </td>
+              <td style={{ padding: "16px", textAlign: "right", verticalAlign: "top" }}>
+                <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "serif" }}>${opt.totalCost.toLocaleString()}</div>
+                {opt.redemption && <div style={{ color: "#4CC97A", fontSize: "11px" }}>−{opt.redemption.valueRedeemed} redeemed</div>}
+              </td>
+              <td style={{ padding: "16px", textAlign: "right", verticalAlign: "top" }}>
+                <div style={{ color: opt.tagColor, fontSize: "14px" }}>+${opt.pointsValue}</div>
+                <div style={{ color: "#555", fontSize: "11px" }}>{opt.pointsEarned}</div>
+              </td>
+              <td style={{ padding: "16px", textAlign: "right", verticalAlign: "top" }}>
+                <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "serif" }}>${opt.netValue.toLocaleString()}</div>
+                <div style={{ color: "#555", fontSize: "10px" }}>after pts value</div>
+              </td>
+              <td style={{ padding: "16px", verticalAlign: "top", maxWidth: "260px" }}>
+                <div style={{ color: "#b0a898", fontSize: "13px", lineHeight: "1.5" }}>{opt.whyThis}</div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
+
+const ComponentRow = ({ label, value, detail, points, card }) => {
+  const isFlight = label === "Flight" || label === "Return Flight";
+  // Parse flight detail for rich display: "UA 234 · SFO→JFK · Departs 7:45am → Arrives 4:02pm · 5h 17m"
+  const parts = isFlight ? detail.split(" · ") : [];
+  const flightNum = parts[0] || "";
+  const route = parts[1] || "";
+  const times = parts[2] || "";
+  const duration = parts[3] || "";
+
+  return (
+    <div style={{ padding: "14px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{ color: "#666", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif" }}>{label}</div>
+          {isFlight && duration && <div style={{ color: "#555", fontSize: "10px", background: "rgba(255,255,255,0.04)", padding: "2px 7px", borderRadius: "6px" }}>{duration}</div>}
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "serif" }}>{value}</div>
+          <div style={{ color: "#4CC97A", fontSize: "11px" }}>{points}</div>
+        </div>
+      </div>
+      {isFlight && route ? (
+        <div style={{ marginBottom: "8px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "5px" }}>
+            <span style={{ color: "#b0a898", fontSize: "14px", fontFamily: "serif", fontWeight: "600" }}>{flightNum}</span>
+            <span style={{ color: "#C9A84C", fontSize: "13px", letterSpacing: "0.05em" }}>{route}</span>
+          </div>
+          {times && (
+            <div style={{ background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: "8px", padding: "8px 12px", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ color: "#C9A84C", fontSize: "11px" }}>✈</span>
+              <span style={{ color: "#c0b8ae", fontSize: "13px" }}>{times}</span>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div style={{ color: "#c0b8ae", fontSize: "13px", marginBottom: "6px" }}>{detail}</div>
+      )}
+      <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(255,255,255,0.04)", borderRadius: "8px", padding: "3px 8px" }}>
+        <span style={{ color: "#C9A84C", fontSize: "10px" }}>▪</span>
+        <span style={{ color: "#7a7468", fontSize: "11px" }}>{card}</span>
+      </div>
+    </div>
+  );
+};
+
+const TripCard = ({ option, isExpanded, onToggle }) => {
+  const isRec = option.id === 1;
+  return (
+    <div onClick={onToggle} style={{
+      width: isExpanded ? "100%" : "300px", minWidth: isExpanded ? "unset" : "300px",
+      background: isRec ? "linear-gradient(145deg,#1a1712,#13110e)" : "linear-gradient(145deg,#131211,#0e0d0c)",
+      border: isRec ? "1px solid rgba(201,168,76,0.35)" : "1px solid rgba(255,255,255,0.08)",
+      borderRadius: "20px", padding: "26px", cursor: "pointer",
+      transition: "all 0.35s cubic-bezier(0.4,0,0.2,1)",
+      boxShadow: isRec ? "0 8px 40px rgba(201,168,76,0.12),0 2px 8px rgba(0,0,0,0.4)" : "0 4px 20px rgba(0,0,0,0.3)",
+      position: "relative", overflow: "hidden", flexShrink: 0,
+    }}>
+      {isRec && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: "linear-gradient(90deg,transparent,#C9A84C,transparent)" }} />}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "18px" }}>
+        <span style={{ background: option.tagColor + "18", color: option.tagColor, fontSize: "11px", padding: "5px 12px", borderRadius: "12px", fontFamily: "'Playfair Display',Georgia,serif", border: `1px solid ${option.tagColor}33` }}>{option.tag}</span>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ color: "#e8e4dc", fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif" }}>{option.score}</div>
+          <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em" }}>SCORE</div>
+        </div>
+      </div>
+      <div style={{ marginBottom: "16px" }}>
+        <div style={{ color: "#e8e4dc", fontSize: "15px", fontWeight: "600", lineHeight: "1.3", marginBottom: "7px", fontFamily: "'Playfair Display',Georgia,serif" }}>{option.headline}</div>
+        <div style={{ color: "#7a7468", fontSize: "12px", lineHeight: "1.5" }}>{option.subhead}</div>
+      </div>
+      <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginBottom: "18px" }}>
+        {option.tags.map(t => <span key={t} style={{ background: "rgba(255,255,255,0.05)", color: "#8a8278", fontSize: "10px", padding: "3px 8px", borderRadius: "8px" }}>{t}</span>)}
+      </div>
+      {option.redemption && (
+        <div style={{ background: "rgba(76,201,122,0.08)", border: "1px solid rgba(76,201,122,0.25)", borderRadius: "10px", padding: "10px 12px", marginBottom: "14px" }}>
+          <div style={{ color: "#4CC97A", fontSize: "11px", marginBottom: "2px" }}>✦ Points Redemption Applied</div>
+          <div style={{ color: "#7a9e7a", fontSize: "11px" }}>{option.redemption.program} · {option.redemption.pointsUsed} → {option.redemption.valueRedeemed} value</div>
+        </div>
+      )}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingTop: "14px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+        <div>
+          <div style={{ color: "#e8e4dc", fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif" }}>${option.totalCost.toLocaleString()}</div>
+          <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", marginTop: "2px" }}>TOTAL ESTIMATED</div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ color: option.tagColor, fontSize: "12px" }}>earns ${option.pointsValue} value via {option.pointsEarned}</div>
+          <div style={{ color: "#4a4a4a", fontSize: "11px", marginTop: "3px" }}>net ${option.netValue.toLocaleString()} after pts</div>
+        </div>
+      </div>
+      {isExpanded && (
+        <div style={{ marginTop: "26px", animation: "fadeUp 0.3s ease forwards" }} onClick={e => e.stopPropagation()}>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "22px", marginBottom: "6px" }}>
+            <div style={{ color: "#666", fontSize: "10px", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Trip Components</div>
+            {option.components.map(c => <ComponentRow key={c.label + c.value} {...c} />)}
+          </div>
+          <div style={{ marginTop: "18px", padding: "14px 16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "5px" }}>Tradeoff</div>
+            <div style={{ color: "#8a8278", fontSize: "13px", lineHeight: "1.5", fontStyle: "italic" }}>{option.tradeoff}</div>
+          </div>
+          <div style={{ marginTop: "12px", padding: "12px 16px", background: option.tagColor + "0e", borderRadius: "12px", border: `1px solid ${option.tagColor}22` }}>
+            <div style={{ color: option.tagColor, fontSize: "12px" }}>✦ {option.loyaltyHighlight}</div>
+          </div>
+          <button style={{ width: "100%", marginTop: "18px", padding: "14px", background: option.tagColor, color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>
+            Book This Trip →
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const TypingIndicator = () => (
+  <div style={{ display: "flex", gap: "5px", alignItems: "center", padding: "14px 16px" }}>
+    {[0, 1, 2].map(i => (
+      <div key={i} style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#C9A84C", animation: `bounce 1.2s ease ${i * 0.2}s infinite` }} />
+    ))}
+  </div>
+);
+
+const BottomDrawer = ({ label, count, items }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ flex: 1, position: "relative" }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          width: "100%", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: open ? "12px 12px 0 0" : "12px", padding: "10px 14px",
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+          cursor: "pointer", transition: "all 0.2s",
+        }}
+      >
+        <span style={{ color: "#444", fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif" }}>{label}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ background: "rgba(201,168,76,0.08)", color: "#5a4a2a", fontSize: "10px", padding: "2px 7px", borderRadius: "8px", border: "1px solid rgba(201,168,76,0.12)" }}>{count}</span>
+          <span style={{ color: "#444", fontSize: "10px", display: "inline-block", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</span>
+        </div>
+      </button>
+      {open && (
+        <div style={{
+          position: "absolute", bottom: "100%", left: 0, right: 0,
+          background: "#0e0d0c", border: "1px solid rgba(255,255,255,0.07)",
+          borderBottom: "none", borderRadius: "12px 12px 0 0",
+          padding: "14px 14px 6px", zIndex: 10,
+          maxHeight: "260px", overflowY: "auto",
+        }}>
+          {items.map(({ section, entries }) => (
+            <div key={section} style={{ marginBottom: "12px" }}>
+              <div style={{ color: "#444", fontSize: "9px", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "7px" }}>{section}</div>
+              <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+                {entries.map(e => (
+                  <span key={e} style={{ background: "rgba(201,168,76,0.05)", border: "1px solid rgba(201,168,76,0.1)", color: "#6a5a3a", fontSize: "10px", padding: "3px 8px", borderRadius: "8px" }}>✓ {e}</span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Main App ──────────────────────────────────────────────────────────────────
+
+export default function SojournApp() {
+  const [phase, setPhase] = useState("onboarding"); // onboarding | chat | results
+  const [messages, setMessages] = useState([
+    { role: "assistant", text: "Where are you headed? Tell me about your trip — destination, rough dates, any preferences or constraints. I'll handle the rest." }
+  ]);
+  const [input, setInput] = useState("");
+  const [listening, setListening] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [tripOptions, setTripOptions] = useState([]);
+  const [tripSummary, setTripSummary] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
+  const [showCompare, setShowCompare] = useState(false);
+  const [refineInput, setRefineInput] = useState("");
+  const [refineLoading, setRefineLoading] = useState(false);
+  const [refineMessages, setRefineMessages] = useState([]);
+  const [userProfile, setUserProfile] = useState(USER_PROFILE);
+  const recognitionRef = useRef(null);
+  const bottomRef = useRef(null);
+  const conversationRef = useRef([]);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
+
+  const startListening = () => {
+    if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
+      alert("Voice input requires Chrome or Edge."); return;
+    }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SR();
+    rec.continuous = false; rec.interimResults = false; rec.lang = "en-US";
+    rec.onresult = e => setInput(e.results[0][0].transcript);
+    rec.onend = () => setListening(false);
+    rec.start();
+    recognitionRef.current = rec;
+    setListening(true);
+  };
+
+  const buildSystemPrompt = () => {
+    const p = userProfile;
+    const tp = p.travelProfile || {};
+    return `You are Sojourn, a travel optimization engine. Generate exactly 6 travel options as a raw JSON object. Output ONLY JSON — no markdown, no explanation, start with { end with }.
+
+USER: home=${tp.homeAirport||"unknown"} freq=${tp.frequency||"?"} types=${(tp.travelTypes||[]).join(",")}
+CARDS: ${(p.cards||[]).map(c=>c.name).join(", ")}
+LOYALTY: ${(p.loyaltyAccounts||[]).map(a=>`${a.program}(${a.tier},${a.balance})`).join(", ")}
+BRANDS: ${(p.preferredBrands||[]).slice(0,15).join(", ")}
+
+REQUIRED JSON (no extra text, start with {):
+{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","score":90,"totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","value":"","detail":"UA 234 · SFO→JFK · Departs 7:45am → Arrives 4:02pm · 5h 17m","points":"","card":""},{"label":"Return Flight","value":"","detail":"UA 235 · JFK→SFO · Departs 8:00pm → Arrives 11:15pm · 6h 15m","points":"","card":""},{"label":"Hotel","value":"","detail":"","points":"","card":""},{"label":"Ground","value":"","detail":"","points":"","card":""}]}]}
+
+TAGS IN ORDER: 1=Recommended/#C9A84C, 2=Best Points Earned/#4C9AC9, 3=Best Points Redemption/#4CC97A(redemption required), 4=Lowest Cost/#C9C94C, 5=Fastest/#C94C8A, 6=Quality Upgrade/#9A4CC9
+
+RULES:
+- Use home airport as origin for ALL flights
+- Include both Flight and Return Flight with real departure/arrival times and duration
+- Fastest must have genuinely shortest travel time — never a connecting flight if nonstop exists
+- Route each component to the card earning the most rewards
+- Budget = out-of-pocket spend. Points are the lever between cost and value.
+- If budget stated: Lowest Cost = best value at/near that budget. If no budget: Lowest Cost = cheapest option.
+- netValue = totalCost - pointsValue`;
+  };
+
+  const callClaude = async (userMessage) => {
+    conversationRef.current = [...conversationRef.current, { role: "user", content: userMessage }];
+    setLoading(true);
+
+    const tryGenerate = async () => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 58000);
+      try {
+        const res = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          signal: controller.signal,
+          headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 4000,
+            system: buildSystemPrompt(),
+            messages: [{ role: "user", content: userMessage }],
+          })
+        });
+        clearTimeout(timeout);
+        const data = await res.json();
+        const text = data.content?.[0]?.text?.trim() || "";
+        const start = text.indexOf("{");
+        const end = text.lastIndexOf("}");
+        if (start === -1 || end === -1) throw new Error("No JSON found");
+        const parsed = JSON.parse(text.slice(start, end + 1));
+        if (!parsed.options?.length) throw new Error("No options array");
+        return parsed;
+      } catch(e) {
+        clearTimeout(timeout);
+        throw e;
+      }
+    };
+
+    try {
+      const parsed = await tryGenerate();
+      setTripOptions(parsed.options);
+      setTripSummary(parsed.tripSummary);
+      setPhase("results");
+    } catch(e) {
+      // One automatic retry
+      try {
+        const parsed = await tryGenerate();
+        setTripOptions(parsed.options);
+        setTripSummary(parsed.tripSummary);
+        setPhase("results");
+      } catch(e2) {
+        setMessages(prev => [...prev, { role: "assistant", text: "Having trouble generating your options — please try again in a moment." }]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSend = () => {
+    if (!input.trim() || loading) return;
+    const msg = input.trim();
+    setInput("");
+    setMessages(prev => [...prev, { role: "user", text: msg }]);
+    callClaude(msg);
+  };
+
+  const handleKeyDown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } };
+
+  const handleRefine = async () => {
+    if (!refineInput.trim() || refineLoading) return;
+    const msg = refineInput.trim();
+    setRefineInput("");
+    setRefineMessages(prev => [...prev, { role: "user", text: msg }]);
+    setRefineLoading(true);
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 4000,
+          system: `You are Sojourn, an AI travel decision engine mid-conversation. The user has already seen their options and is now refining or asking follow-up questions.
+
+Current trip options shown to user:
+${JSON.stringify(tripOptions)}
+
+User profile:
+- Home airport: ${userProfile.travelProfile?.homeAirport || "unknown"}
+- Cards: ${userProfile.cards.map(c => c.name).join(", ")}
+- Loyalty: ${userProfile.loyaltyAccounts.map(a => `${a.program} (${a.tier}, ${a.balance})`).join(", ")}
+- Preferred brands: ${(userProfile.preferredBrands || []).join(", ")}
+
+The user may ask to:
+- Swap a specific component (different hotel, different airline)
+- See more options matching a criterion
+- Understand a tradeoff better
+- Get an updated full set of 6 cards based on new preferences
+
+If the user wants a FULL NEW SET of options, output ONLY raw JSON in the same structure as before (6 options).
+If the user wants a conversational answer or partial clarification, respond conversationally in 2-4 sentences — sharp and specific, no fluff.
+Do not ask clarifying questions unless truly necessary.`,
+          messages: [
+            { role: "user", content: `The user has completed a trip search and is now looking at their results. Here is their full context:
+
+CURRENT TRIP OPTIONS:
+${JSON.stringify(tripOptions.map(o => ({ id: o.id, tag: o.tag, headline: o.headline, totalCost: o.totalCost, netValue: o.netValue, components: o.components })))}
+
+USER PROFILE:
+- Home airport: ${userProfile.travelProfile?.homeAirport || "unknown"}
+- Cards: ${(userProfile.cards || []).map(c => c.name).join(", ")}
+- Loyalty: ${(userProfile.loyaltyAccounts || []).map(a => `${a.program} (${a.tier}, ${a.balance})`).join(", ")}
+- Preferred brands: ${(userProfile.preferredBrands || []).join(", ")}
+
+ORIGINAL TRIP REQUEST: ${conversationRef.current.filter(m => m.role === "user").map(m => m.content).join(" ")}
+
+USER'S REFINEMENT REQUEST: "${msg}"
+
+Please respond to the refinement request now.` }
+          ],
+        })
+      });
+      const data = await res.json();
+      const replyText = data.content?.[0]?.text?.trim() || "";
+
+      // Try to parse as new options set
+      try {
+        const start = replyText.indexOf("{");
+        const end = replyText.lastIndexOf("}");
+        if (start !== -1 && end !== -1) {
+          const parsed = JSON.parse(replyText.slice(start, end + 1));
+          if (parsed.options?.length > 0) {
+            setTripOptions(parsed.options);
+            setTripSummary(parsed.tripSummary);
+            setExpandedId(null);
+            setShowCompare(false);
+            setRefineMessages(prev => [...prev, { role: "assistant", text: "I've updated your options based on that." }]);
+            setRefineLoading(false);
+            return;
+          }
+        }
+      } catch (e) {}
+
+      // Conversational response
+      setRefineMessages(prev => [...prev, { role: "assistant", text: replyText }]);
+    } catch (e) {
+      setRefineMessages(prev => [...prev, { role: "assistant", text: "Something went wrong. Please try again." }]);
+    } finally {
+      setRefineLoading(false);
+    }
+  };
+
+  const handleOnboardingComplete = (profile) => {
+    setUserProfile(profile);
+    setPhase("chat");
+  };
+
+  const resetApp = () => {
+    setPhase("chat"); setMessages([{ role: "assistant", text: "Where are you headed? Tell me about your trip — destination, rough dates, any preferences or constraints. I'll handle the rest." }]);
+    setInput(""); setTripOptions([]); setTripSummary(null);
+    setExpandedId(null); setShowCompare(false);
+    conversationRef.current = [];
+  };
+
+  // ── Results screen ──
+  if (phase === "onboarding") {
+    return <OnboardingFlow onComplete={handleOnboardingComplete} />;
+  }
+
+  if (phase === "results") {
+    return (
+      <div style={{ minHeight: "100vh", background: "#080706", fontFamily: "'DM Sans',system-ui,sans-serif", color: "#e8e4dc" }}>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+          @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+          ::-webkit-scrollbar{height:4px;background:transparent}
+          ::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.3);border-radius:2px}
+          .card-scroll{scrollbar-width:thin;scrollbar-color:rgba(201,168,76,0.3) transparent}
+        `}</style>
+
+        <div style={{ padding: "24px 28px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <div style={{ fontSize: "11px", letterSpacing: "0.25em", color: "#C9A84C", textTransform: "uppercase", marginBottom: "3px", fontFamily: "serif" }}>Sojourn · AI</div>
+            <div style={{ fontSize: "12px", color: "#555" }}>Spend less. Travel smarter.</div>
+          </div>
+          <button onClick={resetApp} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "#666", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px" }}>New Trip</button>
+        </div>
+
+        {tripSummary && (
+          <div style={{ padding: "16px 28px 0" }}>
+            <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "14px 18px", display: "flex", gap: "24px", flexWrap: "wrap" }}>
+              {[
+                { label: "Trip", value: `${tripSummary.origin} → ${tripSummary.destination}` },
+                { label: "Dates", value: tripSummary.dates },
+                ...(tripSummary.preferences || []).slice(0, 2).map((p, i) => ({ label: i === 0 ? "Preference" : "Also", value: p })),
+                ...(tripSummary.constraints || []).slice(0, 1).map(c => ({ label: "Constraint", value: c })),
+              ].map(item => (
+                <div key={item.label + item.value}>
+                  <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "3px" }}>{item.label}</div>
+                  <div style={{ color: "#b0a898", fontSize: "13px" }}>{item.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div style={{ padding: "20px 28px 14px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <div>
+            <div style={{ fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "3px" }}>6 options, optimized for you</div>
+            <div style={{ color: "#555", fontSize: "12px" }}>Tap a card to explore · Scroll to see all</div>
+          </div>
+          {!showCompare && !expandedId && (
+            <button onClick={() => setShowCompare(true)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", color: "#888", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", whiteSpace: "nowrap" }}>Compare All →</button>
+          )}
+        </div>
+
+        <div style={{ padding: "0 28px 48px" }}>
+          {showCompare ? (
+            <CompareView options={tripOptions} onBack={() => setShowCompare(false)} />
+          ) : expandedId ? (
+            <div style={{ animation: "fadeUp 0.3s ease forwards" }}>
+              <button onClick={() => setExpandedId(null)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", color: "#888", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", marginBottom: "16px" }}>← All Options</button>
+              <TripCard option={tripOptions.find(o => o.id === expandedId)} isExpanded={true} onToggle={() => setExpandedId(null)} />
+              <div style={{ marginTop: "14px" }}>
+                <div style={{ color: "#555", fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>Other Options</div>
+                <div style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "8px" }} className="card-scroll">
+                  {tripOptions.filter(o => o.id !== expandedId).map(opt => (
+                    <div key={opt.id} onClick={() => setExpandedId(opt.id)} style={{ flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "12px 14px", cursor: "pointer", minWidth: "155px" }}>
+                      <div style={{ color: opt.tagColor, fontSize: "10px", marginBottom: "4px" }}>{opt.tag}</div>
+                      <div style={{ color: "#b0a898", fontSize: "13px", fontFamily: "serif" }}>${opt.totalCost.toLocaleString()}</div>
+                      <div style={{ color: "#555", fontSize: "11px" }}>net ${opt.netValue.toLocaleString()}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="card-scroll" style={{ display: "flex", gap: "14px", overflowX: "auto", paddingBottom: "16px", paddingRight: "56px", scrollSnapType: "x mandatory" }}>
+              {tripOptions.map((opt, i) => (
+                <div key={opt.id} style={{ scrollSnapAlign: "start", animation: `fadeUp 0.5s ease ${i * 0.07}s forwards`, opacity: 0 }}>
+                  <TripCard option={opt} isExpanded={false} onToggle={() => setExpandedId(expandedId === opt.id ? null : opt.id)} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Refine bar — persistent on results screen */}
+        <div style={{ padding: "0 28px 12px" }}>
+          {refineMessages.length > 0 && (
+            <div style={{ marginBottom: "12px", display: "flex", flexDirection: "column", gap: "8px", maxHeight: "160px", overflowY: "auto" }}>
+              {refineMessages.map((msg, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
+                  <div style={{
+                    maxWidth: "85%", padding: "10px 14px",
+                    borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+                    background: msg.role === "user" ? "rgba(201,168,76,0.1)" : "rgba(255,255,255,0.04)",
+                    border: msg.role === "user" ? "1px solid rgba(201,168,76,0.2)" : "1px solid rgba(255,255,255,0.06)",
+                    color: msg.role === "user" ? "#e8e4dc" : "#b0a898",
+                    fontSize: "13px", lineHeight: "1.5",
+                    fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit",
+                    fontStyle: msg.role === "assistant" ? "italic" : "normal",
+                  }}>{msg.text}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: "14px", padding: "4px 4px 4px 16px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <input
+              value={refineInput}
+              onChange={e => setRefineInput(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") handleRefine(); }}
+              placeholder="Refine your trip — e.g. &quot;any other Marriott options?&quot; or &quot;swap the hotel for something quieter&quot;"
+              style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "13px", padding: "10px 0", fontFamily: "'DM Sans',system-ui,sans-serif", outline: "none" }}
+            />
+            {refineLoading ? (
+              <div style={{ width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#C9A84C", animation: "bounce 1.2s ease infinite" }} />
+              </div>
+            ) : (
+              <button onClick={handleRefine} disabled={!refineInput.trim()} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", cursor: refineInput.trim() ? "pointer" : "default", background: refineInput.trim() ? "#C9A84C" : "rgba(201,168,76,0.1)", color: refineInput.trim() ? "#0a0908" : "#555", fontSize: "14px", fontWeight: "bold", flexShrink: 0 }}>↑</button>
+            )}
+          </div>
+          <div style={{ color: "#2a2a2a", fontSize: "10px", textAlign: "center", marginTop: "6px", letterSpacing: "0.05em" }}>Ask Sojourn to refine, swap a component, or explore alternatives</div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Chat / Input screen ──
+  const isFirst = messages.length === 1;
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#080706", fontFamily: "'DM Sans',system-ui,sans-serif", color: "#e8e4dc", display: "flex", flexDirection: "column" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+        @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(1.15)}}
+        textarea:focus{outline:none} textarea{resize:none}
+      `}</style>
+
+      {/* Header */}
+      <div style={{ padding: "28px 24px 0", textAlign: "center" }}>
+        <div style={{ fontSize: "11px", letterSpacing: "0.3em", color: "#C9A84C", textTransform: "uppercase", marginBottom: "4px", fontFamily: "serif" }}>Sojourn · AI</div>
+        <div style={{ fontSize: "12px", color: "#555" }}>Spend less. Travel smarter.</div>
+      </div>
+
+      {/* Hero — centerpoint on first load */}
+      {isFirst && (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 24px 12px", animation: "fadeUp 0.5s ease forwards" }}>
+          <div style={{ marginBottom: "32px" }}>
+            <div style={{ fontSize: "32px", fontFamily: "'Playfair Display',Georgia,serif", color: "#e8e4dc", lineHeight: "1.2", marginBottom: "12px" }}>Where are you going?</div>
+            <div style={{ color: "#555", fontSize: "14px", lineHeight: "1.6", maxWidth: "420px" }}>Tell me your trip in plain language — destination, dates, preferences, budget, and any constraints. Include who you're traveling with if relevant. I'll optimize across all your cards and loyalty programs.</div>
+          </div>
+          <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "18px", padding: "4px 4px 4px 18px", display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "16px" }}>
+            <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
+              placeholder={`e.g. "New York next week, direct flights, back by Thursday. I'm thinking around $2,000 but open if the value is there. Maximize my points."`}
+              rows={3} style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "15px", lineHeight: "1.6", padding: "12px 0", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
+            <div style={{ display: "flex", gap: "6px", paddingBottom: "8px", flexShrink: 0 }}>
+              <button onClick={listening ? () => { recognitionRef.current?.stop(); setListening(false); } : startListening} style={{ width: "38px", height: "38px", borderRadius: "10px", border: "none", cursor: "pointer", background: listening ? "rgba(201,76,76,0.2)" : "rgba(255,255,255,0.06)", color: listening ? "#C94C4C" : "#666", fontSize: "16px", animation: listening ? "pulse 1.2s infinite" : "none" }}>🎤</button>
+              <button onClick={handleSend} disabled={!input.trim() || loading} style={{ width: "38px", height: "38px", borderRadius: "10px", border: "none", cursor: input.trim() && !loading ? "pointer" : "default", background: input.trim() && !loading ? "#C9A84C" : "rgba(201,168,76,0.15)", color: input.trim() && !loading ? "#0a0908" : "#555", fontSize: "18px", fontWeight: "bold" }}>↑</button>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            {["NYC next week, direct flights, back by Thursday", "Chicago conference, maximize Marriott points", "LA on a budget, use my United miles"].map(ex => (
+              <button key={ex} onClick={() => setInput(ex)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "#6a6460", borderRadius: "20px", padding: "7px 14px", cursor: "pointer", fontSize: "12px" }}>{ex}</button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Message thread — after first exchange */}
+      {!isFirst && (
+        <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px 0", display: "flex", flexDirection: "column", gap: "14px" }}>
+          {messages.slice(1).map((msg, i) => (
+            <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start", animation: "fadeUp 0.3s ease forwards" }}>
+              <div style={{ maxWidth: "80%", padding: "12px 16px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.role === "user" ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)", border: msg.role === "user" ? "1px solid rgba(201,168,76,0.25)" : "1px solid rgba(255,255,255,0.07)", color: msg.role === "user" ? "#e8e4dc" : "#b0a898", fontSize: "14px", lineHeight: "1.6", fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit", fontStyle: msg.role === "assistant" ? "italic" : "normal" }}>{msg.text}</div>
+            </div>
+          ))}
+          {loading && (
+            <div style={{ display: "flex", justifyContent: "flex-start" }}>
+              <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "18px 18px 18px 4px" }}><TypingIndicator /></div>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
+      )}
+
+      {/* Compact input — after first exchange */}
+      {!isFirst && (
+        <div style={{ padding: "12px 24px 16px" }}>
+          <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", padding: "4px 4px 4px 16px", display: "flex", alignItems: "flex-end", gap: "8px" }}>
+            <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Reply..." rows={2}
+              style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "14px", lineHeight: "1.5", padding: "10px 0", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
+            <div style={{ display: "flex", gap: "6px", paddingBottom: "6px", flexShrink: 0 }}>
+              <button onClick={listening ? () => { recognitionRef.current?.stop(); setListening(false); } : startListening} style={{ width: "36px", height: "36px", borderRadius: "10px", border: "none", cursor: "pointer", background: listening ? "rgba(201,76,76,0.2)" : "rgba(255,255,255,0.06)", color: listening ? "#C94C4C" : "#666", fontSize: "16px", animation: listening ? "pulse 1.2s infinite" : "none" }}>🎤</button>
+              <button onClick={handleSend} disabled={!input.trim() || loading} style={{ width: "36px", height: "36px", borderRadius: "10px", border: "none", cursor: input.trim() && !loading ? "pointer" : "default", background: input.trim() && !loading ? "#C9A84C" : "rgba(201,168,76,0.15)", color: input.trim() && !loading ? "#0a0908" : "#555", fontSize: "16px", fontWeight: "bold" }}>↑</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom drawers — Connected Accounts + Preferred Brands */}
+      <div style={{ padding: "0 24px 24px", flexShrink: 0, display: "flex", gap: "10px" }}>
+        <BottomDrawer
+          label="Connected Accounts"
+          count={USER_PROFILE.cards.length + USER_PROFILE.loyaltyAccounts.length}
+          items={[
+            { section: "Cards", entries: USER_PROFILE.cards.map(c => c.name) },
+            { section: "Loyalty Programs", entries: USER_PROFILE.loyaltyAccounts.map(a => `${a.program} · ${a.balance}`) },
+          ]}
+        />
+        <BottomDrawer
+          label="Preferred Brands"
+          count={12}
+          items={[
+            { section: "Hotel Collections", entries: ["Four Seasons", "One & Only", "Montage Hotels", "Proper Hotels", "Leading Hotels of the World", "Relais & Châteaux"] },
+            { section: "Recognition & Awards", entries: ["Michelin Keys", "Forbes Five Star"] },
+            { section: "Loyalty Programs", entries: ["Marriott Bonvoy", "Hilton Honors", "World of Hyatt", "IHG One Rewards"] },
+          ]}
+        />
+      </div>
+    </div>
+  );
+}
