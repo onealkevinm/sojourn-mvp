@@ -1089,7 +1089,7 @@ RULES:
 
     const tryGenerate = async () => {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 58000);
+      const timeout = setTimeout(() => controller.abort(), 90000);
       try {
         const res = await fetch("https://api.anthropic.com/v1/messages", {
           method: "POST",
@@ -1097,7 +1097,7 @@ RULES:
           headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
           body: JSON.stringify({
             model: "claude-sonnet-4-20250514",
-            max_tokens: 4000,
+            max_tokens: 2000,
             system: buildSystemPrompt(),
             messages: [{ role: "user", content: userMessage }],
           })
@@ -1176,7 +1176,7 @@ RULES:
         headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
-          max_tokens: 4000,
+          max_tokens: 2000,
           system: `You are Sojourn, an AI travel decision engine mid-conversation. The user has already seen their options and is now refining or asking follow-up questions.
 
 RESPONSE RULES:
