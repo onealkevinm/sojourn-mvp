@@ -719,7 +719,7 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
   );
 };
 
-const TripCard = ({ option, isExpanded, onToggle }) => {
+const TripCard = ({ option, isExpanded, onToggle, onItinerary }) => {
   const isRec = option.id === 1;
   return (
     <div onClick={onToggle} style={{
@@ -772,11 +772,173 @@ const TripCard = ({ option, isExpanded, onToggle }) => {
           <div style={{ marginTop: "12px", padding: "12px 16px", background: option.tagColor + "0e", borderRadius: "12px", border: `1px solid ${option.tagColor}22` }}>
             <div style={{ color: option.tagColor, fontSize: "12px" }}>✦ {option.loyaltyHighlight}</div>
           </div>
-          <button style={{ width: "100%", marginTop: "18px", padding: "14px", background: option.tagColor, color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>
-            Book This Trip →
-          </button>
+          <div style={{ display: "flex", gap: "10px", marginTop: "18px" }}>
+            <button onClick={() => onItinerary && onItinerary(option)} style={{ flex: 1, padding: "14px", background: "rgba(255,255,255,0.04)", color: "#b0a898", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", fontSize: "12px", fontWeight: "600", cursor: "pointer", letterSpacing: "0.06em", fontFamily: "'Playfair Display',Georgia,serif" }}>
+              View as Itinerary ↗
+            </button>
+            <button style={{ flex: 2, padding: "14px", background: option.tagColor, color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>
+              Book This Trip →
+            </button>
+          </div>
         </div>
       )}
+    </div>
+  );
+};
+
+
+const ItineraryOverlay = ({ option, tripSummary, onClose }) => {
+  if (!option) return null;
+
+  // Group components by city for multi-city trips
+  const flights = option.components.filter(c => c.label === "Flight" || c.label === "Return Flight" || c.label?.includes("Flight"));
+  const hotels = option.components.filter(c => c.label?.toLowerCase().includes("hotel") || c.label?.toLowerCase().includes("accommodation"));
+  const ground = option.components.filter(c => !c.label?.toLowerCase().includes("flight") && !c.label?.toLowerCase().includes("hotel") && !c.label?.toLowerCase().includes("accommodation"));
+
+  // Build day-by-day structure
+  const origin = tripSummary?.origin || "Origin";
+  const destination = tripSummary?.destination || "Destination";
+  const dates = tripSummary?.dates || "Dates TBD";
+
+  // Detect multi-city from hotel components
+  const isMultiCity = hotels.length > 1;
+
+  const needsBooking = [
+    ...(!option.components.some(c => c.label === "Flight") ? [] : []),
+    "Flights — book via airline website or travel agent",
+    ...hotels.map(h => `${h.detail?.split("·")[0]?.trim() || "Hotel"} — book directly or via hotel website`),
+    ...(option.components.some(c => c.detail?.toLowerCase().includes("michelin") || c.detail?.toLowerCase().includes("restaurant") || c.detail?.toLowerCase().includes("dining")) ? ["Restaurant reservations — book via OpenTable, Resy, or directly"] : []),
+    ...(option.components.some(c => c.detail?.toLowerCase().includes("helicopter")) ? ["Helicopter transfer — arrange via operator in advance"] : []),
+  ];
+
+  const handlePrint = () => window.print();
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "24px 16px", overflowY: "auto" }} onClick={onClose}>
+      <div style={{ background: "#0e0c0a", border: "1px solid rgba(201,168,76,0.2)", borderRadius: "20px", width: "100%", maxWidth: "620px", padding: "32px", position: "relative", animation: "fadeUp 0.3s ease forwards" }} onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "28px" }}>
+          <div>
+            <div style={{ fontSize: "10px", letterSpacing: "0.3em", color: "#C9A84C", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>Sojourn · Itinerary Preview</div>
+            <div style={{ fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif", color: "#e8e4dc", lineHeight: "1.2" }}>{option.headline}</div>
+            <div style={{ color: "#555", fontSize: "12px", marginTop: "4px" }}>{dates} · {origin} → {destination}</div>
+          </div>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <button onClick={handlePrint} style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.2)", color: "#C9A84C", padding: "8px 14px", borderRadius: "10px", cursor: "pointer", fontSize: "11px", fontFamily: "serif", letterSpacing: "0.08em" }}>Export PDF ↓</button>
+            <button onClick={onClose} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#666", width: "32px", height: "32px", borderRadius: "8px", cursor: "pointer", fontSize: "16px", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+          </div>
+        </div>
+
+        {/* Cost summary strip */}
+        <div style={{ display: "flex", gap: "16px", padding: "14px 18px", background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: "12px", marginBottom: "28px" }}>
+          <div><div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", fontFamily: "serif" }}>TOTAL</div><div style={{ color: "#e8e4dc", fontSize: "18px", fontFamily: "serif" }}>${option.totalCost?.toLocaleString()}</div></div>
+          <div style={{ width: "1px", background: "rgba(255,255,255,0.06)" }} />
+          <div><div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", fontFamily: "serif" }}>POINTS EARNED</div><div style={{ color: "#C9A84C", fontSize: "13px", marginTop: "2px" }}>{option.pointsEarned}</div></div>
+          <div style={{ width: "1px", background: "rgba(255,255,255,0.06)" }} />
+          <div><div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", fontFamily: "serif" }}>NET VALUE</div><div style={{ color: "#4CC97A", fontSize: "18px", fontFamily: "serif" }}>${option.netValue?.toLocaleString()}</div></div>
+        </div>
+
+        {/* Flights section */}
+        {flights.length > 0 && (
+          <div style={{ marginBottom: "24px" }}>
+            <div style={{ color: "#C9A84C", fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px", paddingBottom: "6px", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>✈ Flights</div>
+            {flights.map((f, i) => (
+              <div key={i} style={{ padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "10px", marginBottom: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div>
+                    <div style={{ color: "#b0a898", fontSize: "13px", marginBottom: "4px" }}>{f.label}</div>
+                    <div style={{ color: "#e8e4dc", fontSize: "13px", fontFamily: "serif" }}>{f.detail}</div>
+                    <div style={{ color: "#555", fontSize: "11px", marginTop: "3px" }}>📋 Needs booking · {f.card}</div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "serif" }}>{f.value}</div>
+                    <div style={{ color: "#C9A84C", fontSize: "11px" }}>{f.points}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Hotels section — per city if multi-city */}
+        {hotels.length > 0 && (
+          <div style={{ marginBottom: "24px" }}>
+            <div style={{ color: "#C9A84C", fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px", paddingBottom: "6px", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>🏨 Accommodation{isMultiCity ? " — by City" : ""}</div>
+            {hotels.map((h, i) => (
+              <div key={i} style={{ padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "10px", marginBottom: "8px" }}>
+                {isMultiCity && <div style={{ color: "#C9A84C", fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>City {i + 1}</div>}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div>
+                    <div style={{ color: "#e8e4dc", fontSize: "13px", fontFamily: "serif", marginBottom: "3px" }}>{h.detail?.split("·")[0]?.trim()}</div>
+                    <div style={{ color: "#7a7468", fontSize: "12px" }}>{h.detail?.split("·").slice(1).join("·").trim()}</div>
+                    <div style={{ color: "#555", fontSize: "11px", marginTop: "3px" }}>📋 Needs booking · {h.card}</div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "serif" }}>{h.value}</div>
+                    <div style={{ color: "#C9A84C", fontSize: "11px" }}>{h.points}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Ground / other components */}
+        {ground.length > 0 && (
+          <div style={{ marginBottom: "24px" }}>
+            <div style={{ color: "#C9A84C", fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px", paddingBottom: "6px", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>🚗 Ground & Transfers</div>
+            {ground.map((g, i) => (
+              <div key={i} style={{ padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "10px", marginBottom: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <div>
+                    <div style={{ color: "#b0a898", fontSize: "12px", marginBottom: "3px" }}>{g.label}</div>
+                    <div style={{ color: "#7a7468", fontSize: "12px" }}>{g.detail}</div>
+                    {g.detail?.toLowerCase().includes("helicopter") && <div style={{ color: "#C9A84C", fontSize: "11px", marginTop: "3px" }}>⚡ Arrange in advance</div>}
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ color: "#e8e4dc", fontSize: "14px", fontFamily: "serif" }}>{g.value}</div>
+                    <div style={{ color: "#C9A84C", fontSize: "11px" }}>{g.points}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Still needs booking */}
+        <div style={{ padding: "16px 18px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", marginBottom: "24px" }}>
+          <div style={{ color: "#888", fontSize: "10px", letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>📋 Still Needs Booking Outside Sojourn</div>
+          {option.components.map((c, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "8px", marginBottom: "6px" }}>
+              <span style={{ color: "#C9A84C", fontSize: "10px", marginTop: "2px", flexShrink: 0 }}>▪</span>
+              <span style={{ color: "#6a6460", fontSize: "12px", lineHeight: "1.5" }}>
+                {c.label?.toLowerCase().includes("flight") ? `${c.label} — book via ${c.card?.split("·")[0]?.trim() || "airline"} or travel agent` :
+                 c.label?.toLowerCase().includes("hotel") ? `${c.detail?.split("·")[0]?.trim() || c.label} — book directly or via hotel website` :
+                 c.detail?.toLowerCase().includes("helicopter") ? "Helicopter transfer — arrange via operator well in advance" :
+                 c.detail?.toLowerCase().includes("eurostar") ? "Eurostar — book via eurostar.com" :
+                 `${c.label} — arrange locally`}
+              </span>
+            </div>
+          ))}
+          {option.whyThis?.toLowerCase().includes("dining") || option.tags?.some(t => t.toLowerCase().includes("michelin") || t.toLowerCase().includes("dining")) ? (
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", marginBottom: "6px" }}>
+              <span style={{ color: "#C9A84C", fontSize: "10px", marginTop: "2px" }}>▪</span>
+              <span style={{ color: "#6a6460", fontSize: "12px" }}>Restaurant reservations — book via OpenTable, Resy, or directly with property</span>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Loyalty highlight */}
+        <div style={{ padding: "12px 16px", background: `${option.tagColor}0e`, border: `1px solid ${option.tagColor}22`, borderRadius: "10px", marginBottom: "20px" }}>
+          <div style={{ color: option.tagColor, fontSize: "12px" }}>✦ {option.loyaltyHighlight}</div>
+        </div>
+
+        {/* Book button */}
+        <button style={{ width: "100%", padding: "16px", background: option.tagColor, color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "14px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>
+          Book This Trip →
+        </button>
+      </div>
     </div>
   );
 };
@@ -850,6 +1012,7 @@ export default function SojournApp() {
   const [refineLoading, setRefineLoading] = useState(false);
   const [refineMessages, setRefineMessages] = useState([]);
   const [refineLoadingMessage, setRefineLoadingMessage] = useState("");
+  const [itineraryOption, setItineraryOption] = useState(null);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [userProfile, setUserProfile] = useState(USER_PROFILE);
   const recognitionRef = useRef(null);
@@ -1134,7 +1297,8 @@ Please respond to the refinement request now.` }
   }
 
   if (phase === "results") {
-    return (
+    return (<>
+      {itineraryOption && <ItineraryOverlay option={itineraryOption} tripSummary={tripSummary} onClose={() => setItineraryOption(null)} />}
       <div style={{ minHeight: "100vh", background: "#080706", fontFamily: "'DM Sans',system-ui,sans-serif", color: "#e8e4dc" }}>
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
@@ -1186,7 +1350,7 @@ Please respond to the refinement request now.` }
           ) : expandedId ? (
             <div style={{ animation: "fadeUp 0.3s ease forwards" }}>
               <button onClick={() => setExpandedId(null)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", color: "#888", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", marginBottom: "16px" }}>← All Options</button>
-              <TripCard option={tripOptions.find(o => o.id === expandedId)} isExpanded={true} onToggle={() => setExpandedId(null)} />
+              <TripCard option={tripOptions.find(o => o.id === expandedId)} isExpanded={true} onToggle={() => setExpandedId(null)} onItinerary={(opt) => setItineraryOption(opt)} />
               <div style={{ marginTop: "14px" }}>
                 <div style={{ color: "#555", fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>Other Options</div>
                 <div style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "8px" }} className="card-scroll">
@@ -1256,6 +1420,7 @@ Please respond to the refinement request now.` }
           <div style={{ color: "#2a2a2a", fontSize: "10px", textAlign: "center", marginTop: "6px", letterSpacing: "0.05em" }}>Ask Sojourn to refine, swap a component, or explore alternatives</div>
         </div>
       </div>
+    </>
     );
   }
 
