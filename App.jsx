@@ -53,8 +53,7 @@ When ready to generate options, your ENTIRE response must be a single raw JSON o
       "tagColor": "#C9A84C",
       "headline": "Airline + Hotel combo name",
       "subhead": "One sentence explaining why this is the best overall option for this specific user",
-      "score": 94,
-      "totalCost": 1840,
+      "      "totalCost": 1840,
       "pointsEarned": "18,400 pts",
       "pointsValue": 368,
       "netValue": 1472,
@@ -104,7 +103,6 @@ CARD ROUTING LOGIC: For each trip component, recommend the card from the user's 
 
 REDEMPTION LOGIC: For "Best Points Redemption", identify the highest-value redemption opportunity from the user's balances. The redemption field should be: { "program": "program name", "pointsUsed": "X pts", "valueRedeemed": "$X" }
 
-SCORING: Score each option 0-100. Recommended should be highest (88-96). Score reflects overall fit to this specific user's profile and stated preferences.
 
 NET VALUE: netValue = totalCost - pointsValue (lower is better — reflects true economic cost after points earned)
 
@@ -736,10 +734,7 @@ const TripCard = ({ option, isExpanded, onToggle }) => {
       {isRec && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: "linear-gradient(90deg,transparent,#C9A84C,transparent)" }} />}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "18px" }}>
         <span style={{ background: option.tagColor + "18", color: option.tagColor, fontSize: "11px", padding: "5px 12px", borderRadius: "12px", fontFamily: "'Playfair Display',Georgia,serif", border: `1px solid ${option.tagColor}33` }}>{option.tag}</span>
-        <div style={{ textAlign: "right" }}>
-          <div style={{ color: "#e8e4dc", fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif" }}>{option.score}</div>
-          <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em" }}>SCORE</div>
-        </div>
+
       </div>
       <div style={{ marginBottom: "16px" }}>
         <div style={{ color: "#e8e4dc", fontSize: "15px", fontWeight: "600", lineHeight: "1.3", marginBottom: "7px", fontFamily: "'Playfair Display',Georgia,serif" }}>{option.headline}</div>
@@ -887,7 +882,7 @@ LOYALTY: ${(p.loyaltyAccounts||[]).map(a=>`${a.program}(${a.tier},${a.balance})`
 BRANDS: ${(p.preferredBrands||[]).slice(0,15).join(", ")}
 
 REQUIRED JSON (no extra text, start with {):
-{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","score":90,"totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","value":"","detail":"UA 234 · SFO→JFK · Departs 7:45am → Arrives 4:02pm · 5h 17m","points":"","card":""},{"label":"Return Flight","value":"","detail":"UA 235 · JFK→SFO · Departs 8:00pm → Arrives 11:15pm · 6h 15m","points":"","card":""},{"label":"Hotel","value":"","detail":"","points":"","card":""},{"label":"Ground","value":"","detail":"","points":"","card":""}]}]}
+{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","value":"","detail":"UA 234 · SFO→JFK · Departs 7:45am → Arrives 4:02pm · 5h 17m","points":"","card":""},{"label":"Return Flight","value":"","detail":"UA 235 · JFK→SFO · Departs 8:00pm → Arrives 11:15pm · 6h 15m","points":"","card":""},{"label":"Hotel","value":"","detail":"","points":"","card":""},{"label":"Ground","value":"","detail":"","points":"","card":""}]}]}
 
 TAGS IN ORDER: 1=Recommended/#C9A84C, 2=Best Points Earned/#4C9AC9, 3=Best Points Redemption/#4CC97A(redemption required), 4=Lowest Cost/#C9C94C, 5=Fastest/#C94C8A, 6=Quality Upgrade/#9A4CC9
 
