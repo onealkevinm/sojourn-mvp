@@ -927,10 +927,12 @@ RULES:
         });
         clearTimeout(timeout);
         const data = await res.json();
+        if (data.error) throw new Error(`API error: ${data.error.type} - ${data.error.message}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${JSON.stringify(data)}`);
         const text = data.content?.[0]?.text?.trim() || "";
         const start = text.indexOf("{");
         const end = text.lastIndexOf("}");
-        if (start === -1 || end === -1) throw new Error("No JSON found");
+        if (start === -1 || end === -1) throw new Error(`No JSON in response: ${text.slice(0,200)}`);
         const parsed = JSON.parse(text.slice(start, end + 1));
         if (!parsed.options?.length) throw new Error("No options array");
         return parsed;
@@ -953,7 +955,7 @@ RULES:
         setTripSummary(parsed.tripSummary);
         setPhase("results");
       } catch(e2) {
-        setMessages(prev => [...prev, { role: "assistant", text: "Having trouble generating your options — please try again in a moment." }]);
+        setMessages(prev => [...prev, { role: "assistant", text: `Error: ${e2.message}` }]);
       }
     } finally {
       setLoading(false);
