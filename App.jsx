@@ -849,6 +849,7 @@ export default function SojournApp() {
   const [refineInput, setRefineInput] = useState("");
   const [refineLoading, setRefineLoading] = useState(false);
   const [refineMessages, setRefineMessages] = useState([]);
+  const [refineLoadingMessage, setRefineLoadingMessage] = useState("");
   const [loadingMessage, setLoadingMessage] = useState("");
   const [userProfile, setUserProfile] = useState(USER_PROFILE);
   const recognitionRef = useRef(null);
@@ -992,6 +993,20 @@ RULES:
     setRefineInput("");
     setRefineMessages(prev => [...prev, { role: "user", text: msg }]);
     setRefineLoading(true);
+
+    const refineSteps = [
+      "Thinking through your request...",
+      "Reviewing current options...",
+      "Checking your loyalty accounts...",
+      "Finding the best alternatives...",
+      "Refining your options...",
+    ];
+    let refineStepIdx = 0;
+    setRefineLoadingMessage(refineSteps[0]);
+    const refineInterval = setInterval(() => {
+      refineStepIdx = (refineStepIdx + 1) % refineSteps.length;
+      setRefineLoadingMessage(refineSteps[refineStepIdx]);
+    }, 2000);
     try {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
@@ -1089,6 +1104,8 @@ Please respond to the refinement request now.` }
       setRefineMessages(prev => [...prev, { role: "assistant", text: "Something went wrong. Please try again." }]);
     } finally {
       setRefineLoading(false);
+      clearInterval(refineInterval);
+      setRefineLoadingMessage("");
     }
   };
 
@@ -1190,7 +1207,7 @@ Please respond to the refinement request now.` }
         {/* Refine bar — persistent on results screen */}
         <div style={{ padding: "0 28px 12px" }}>
           {refineMessages.length > 0 && (
-            <div style={{ marginBottom: "12px", display: "flex", flexDirection: "column", gap: "8px", maxHeight: "160px", overflowY: "auto" }}>
+            <div style={{ marginBottom: "12px", display: "flex", flexDirection: "column", gap: "8px", maxHeight: "240px", overflowY: "auto" }}>
               {refineMessages.map((msg, i) => (
                 <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
                   <div style={{
@@ -1207,6 +1224,12 @@ Please respond to the refinement request now.` }
               ))}
             </div>
           )}
+          {refineLoading && refineLoadingMessage && (
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", marginBottom: "8px", background: "rgba(201,168,76,0.05)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: "12px" }}>
+              <TypingIndicator />
+              <span style={{ color: "#C9A84C", fontSize: "12px", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic" }}>{refineLoadingMessage}</span>
+            </div>
+          )}
           <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: "14px", padding: "4px 4px 4px 16px", display: "flex", alignItems: "center", gap: "8px" }}>
             <input
               value={refineInput}
@@ -1217,7 +1240,7 @@ Please respond to the refinement request now.` }
             />
             {refineLoading ? (
               <div style={{ width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#C9A84C", animation: "bounce 1.2s ease infinite" }} />
+                <TypingIndicator />
               </div>
             ) : (
               <button onClick={handleRefine} disabled={!refineInput.trim()} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", cursor: refineInput.trim() ? "pointer" : "default", background: refineInput.trim() ? "#C9A84C" : "rgba(201,168,76,0.1)", color: refineInput.trim() ? "#0a0908" : "#555", fontSize: "14px", fontWeight: "bold", flexShrink: 0 }}>↑</button>
