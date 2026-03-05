@@ -854,6 +854,7 @@ export default function SojournApp() {
   const [refineInput, setRefineInput] = useState("");
   const [refineLoading, setRefineLoading] = useState(false);
   const [refineMessages, setRefineMessages] = useState([]);
+  const [loadingMessage, setLoadingMessage] = useState("");
   const [userProfile, setUserProfile] = useState(USER_PROFILE);
   const recognitionRef = useRef(null);
   const bottomRef = useRef(null);
@@ -910,6 +911,23 @@ RULES:
       return;
     }
 
+    const loadingSteps = [
+      "Reviewing your loyalty accounts...",
+      "Checking points balances and tier status...",
+      "Sourcing flight options from your home airport...",
+      "Matching hotels to your preferred brands...",
+      "Optimizing card routing for maximum rewards...",
+      "Calculating net value across all options...",
+      "Ranking and finalizing your 6 options...",
+    ];
+    let stepIndex = 0;
+    setLoadingMessage(loadingSteps[0]);
+    const messageInterval = setInterval(() => {
+      stepIndex = (stepIndex + 1) % loadingSteps.length;
+      setLoadingMessage(loadingSteps[stepIndex]);
+    }, 2400);
+    const clearMessages = () => { clearInterval(messageInterval); setLoadingMessage(""); };
+
     const tryGenerate = async () => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 58000);
@@ -959,6 +977,7 @@ RULES:
       }
     } finally {
       setLoading(false);
+      clearMessages();
     }
   };
 
@@ -1028,26 +1047,29 @@ Please respond to the refinement request now.` }
       const data = await res.json();
       const replyText = data.content?.[0]?.text?.trim() || "";
 
-      // Try to parse as new options set
+      // Try to parse as new options set — strip any text before the JSON
       try {
         const start = replyText.indexOf("{");
         const end = replyText.lastIndexOf("}");
         if (start !== -1 && end !== -1) {
-          const parsed = JSON.parse(replyText.slice(start, end + 1));
+          const jsonStr = replyText.slice(start, end + 1);
+          const parsed = JSON.parse(jsonStr);
           if (parsed.options?.length > 0) {
             setTripOptions(parsed.options);
-            setTripSummary(parsed.tripSummary);
+            setTripSummary(parsed.tripSummary || tripSummary);
             setExpandedId(null);
             setShowCompare(false);
-            setRefineMessages(prev => [...prev, { role: "assistant", text: "I've updated your options based on that." }]);
+            setRefineMessages(prev => [...prev, { role: "assistant", text: replyText.slice(0, start).trim() || "I've updated your options based on that." }]);
             setRefineLoading(false);
             return;
           }
         }
       } catch (e) {}
 
-      // Conversational response
-      setRefineMessages(prev => [...prev, { role: "assistant", text: replyText }]);
+      // Conversational response — strip any JSON that leaked into the text
+      const jsonStart = replyText.indexOf("[{");
+      const cleanReply = jsonStart > 0 ? replyText.slice(0, jsonStart).trim() : replyText;
+      setRefineMessages(prev => [...prev, { role: "assistant", text: cleanReply }]);
     } catch (e) {
       setRefineMessages(prev => [...prev, { role: "assistant", text: "Something went wrong. Please try again." }]);
     } finally {
@@ -1244,8 +1266,11 @@ Please respond to the refinement request now.` }
             </div>
           ))}
           {loading && (
-            <div style={{ display: "flex", justifyContent: "flex-start" }}>
+            <div style={{ display: "flex", justifyContent: "flex-start", flexDirection: "column", gap: "8px" }}>
               <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "18px 18px 18px 4px" }}><TypingIndicator /></div>
+              {loadingMessage && (
+                <div style={{ color: "#C9A84C", fontSize: "12px", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic", paddingLeft: "4px", animation: "fadeUp 0.4s ease forwards" }}>{loadingMessage}</div>
+              )}
             </div>
           )}
           <div ref={bottomRef} />
