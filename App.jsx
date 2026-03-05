@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 
-const ANTHROPIC_KEY = typeof import.meta !== "undefined" && import.meta.env?.VITE_ANTHROPIC_KEY || "";
+const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
 
 // ─── Simulated user profile (will eventually come from OAuth integrations) ───
 const USER_PROFILE = {
@@ -903,6 +903,12 @@ RULES:
   const callClaude = async (userMessage) => {
     conversationRef.current = [...conversationRef.current, { role: "user", content: userMessage }];
     setLoading(true);
+
+    if (!ANTHROPIC_KEY) {
+      setMessages(prev => [...prev, { role: "assistant", text: "Configuration error: API key not found. Please check environment variables." }]);
+      setLoading(false);
+      return;
+    }
 
     const tryGenerate = async () => {
       const controller = new AbortController();
