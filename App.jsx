@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 
-const ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
+const ANTHROPIC_KEY = typeof import.meta !== "undefined" && import.meta.env?.VITE_ANTHROPIC_KEY || "";
 
 // ─── Simulated user profile (will eventually come from OAuth integrations) ───
 const USER_PROFILE = {
@@ -911,7 +911,7 @@ RULES:
         const res = await fetch("https://api.anthropic.com/v1/messages", {
           method: "POST",
           signal: controller.signal,
-          headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+          headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
           body: JSON.stringify({
             model: "claude-sonnet-4-20250514",
             max_tokens: 4000,
@@ -973,7 +973,7 @@ RULES:
     try {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
           max_tokens: 4000,
