@@ -72,7 +72,7 @@ const LOYALTY_OPTIONS = {
     { program: "Singapore KrisFlyer", tiers: ["None", "KrisFlyer", "KrisFlyer Elite Silver", "KrisFlyer Elite Gold"] },
   ],
   car: [
-    { program: "Hertz Gold Plus Rewards", tiers: ["None", "Gold", "Five Star", "President's Circle"] },
+    { program: "Hertz Gold Plus Rewards", tiers: ["None", "Gold", "Five Star", "Presidents Circle"] },
     { program: "Avis Preferred", tiers: ["None", "Preferred", "Select", "Chairman"] },
     { program: "Enterprise Plus", tiers: ["None", "Silver", "Gold", "Platinum"] },
     { program: "National Emerald Club", tiers: ["None", "Emerald Club", "Executive", "Executive Elite"] },
