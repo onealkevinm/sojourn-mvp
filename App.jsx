@@ -473,7 +473,7 @@ const OnboardingFlow = ({ onComplete }) => {
             <div style={{ fontSize: "26px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "6px" }}>Which cards do you carry?</div>
             <div style={{ color: "#555", fontSize: "13px", marginBottom: "18px", lineHeight: "1.6" }}>Select all that apply. Sojourn routes each component to the card that earns the most rewards.</div>
             <input value={cardSearch} onChange={e => setCardSearch(e.target.value)} placeholder="Search cards..." style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "9px 14px", color: "#e8e4dc", fontSize: "13px", marginBottom: "14px", boxSizing: "border-box", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "7px", marginBottom: "14px", maxHeight: "240px", overflowY: "auto" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "7px", marginBottom: "14px", maxHeight: "340px", overflowY: "auto" }}>
               {filteredCards.map(({ name }) => <Chip key={name} label={name} active={selectedCards.includes(name)} onClick={() => toggleCard(name)} />)}
             </div>
 
@@ -726,21 +726,21 @@ const TripCard = ({ option, isExpanded, onToggle }) => {
       width: isExpanded ? "100%" : "300px", minWidth: isExpanded ? "unset" : "300px",
       background: isRec ? "linear-gradient(145deg,#1a1712,#13110e)" : "linear-gradient(145deg,#131211,#0e0d0c)",
       border: isRec ? "1px solid rgba(201,168,76,0.35)" : "1px solid rgba(255,255,255,0.08)",
-      borderRadius: "20px", padding: "26px", cursor: "pointer",
+      borderRadius: "20px", padding: "18px", cursor: "pointer",
       transition: "all 0.35s cubic-bezier(0.4,0,0.2,1)",
       boxShadow: isRec ? "0 8px 40px rgba(201,168,76,0.12),0 2px 8px rgba(0,0,0,0.4)" : "0 4px 20px rgba(0,0,0,0.3)",
       position: "relative", overflow: "hidden", flexShrink: 0,
     }}>
       {isRec && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: "linear-gradient(90deg,transparent,#C9A84C,transparent)" }} />}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "18px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
         <span style={{ background: option.tagColor + "18", color: option.tagColor, fontSize: "11px", padding: "5px 12px", borderRadius: "12px", fontFamily: "'Playfair Display',Georgia,serif", border: `1px solid ${option.tagColor}33` }}>{option.tag}</span>
 
       </div>
       <div style={{ marginBottom: "16px" }}>
-        <div style={{ color: "#e8e4dc", fontSize: "15px", fontWeight: "600", lineHeight: "1.3", marginBottom: "7px", fontFamily: "'Playfair Display',Georgia,serif" }}>{option.headline}</div>
+        <div style={{ color: "#e8e4dc", fontSize: "15px", fontWeight: "600", lineHeight: "1.3", marginBottom: "4px", fontFamily: "'Playfair Display',Georgia,serif" }}>{option.headline}</div>
         <div style={{ color: "#7a7468", fontSize: "12px", lineHeight: "1.5" }}>{option.subhead}</div>
       </div>
-      <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginBottom: "18px" }}>
+      <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginBottom: "12px" }}>
         {option.tags.map(t => <span key={t} style={{ background: "rgba(255,255,255,0.05)", color: "#8a8278", fontSize: "10px", padding: "3px 8px", borderRadius: "8px" }}>{t}</span>)}
       </div>
       {option.redemption && (
@@ -749,7 +749,7 @@ const TripCard = ({ option, isExpanded, onToggle }) => {
           <div style={{ color: "#7a9e7a", fontSize: "11px" }}>{option.redemption.program} · {option.redemption.pointsUsed} → {option.redemption.valueRedeemed} value</div>
         </div>
       )}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingTop: "14px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
         <div>
           <div style={{ color: "#e8e4dc", fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif" }}>${option.totalCost.toLocaleString()}</div>
           <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", marginTop: "2px" }}>TOTAL ESTIMATED</div>
@@ -1016,6 +1016,11 @@ RULES:
           max_tokens: 4000,
           system: `You are Sojourn, an AI travel decision engine mid-conversation. The user has already seen their options and is now refining or asking follow-up questions.
 
+RESPONSE RULES:
+- If generating a new set of options, start with 1-2 sentences summarizing what you changed (e.g. "Kept the helicopter transfer, swapped to boutique hotels in both cities, and brought total under $10K.") then output the JSON immediately after.
+- If answering conversationally, be specific and crisp — name properties, quote prices, give door-to-door times. Never be vague.
+- Never say just "I've updated your options" — always say specifically what changed and why.
+
 Current trip options shown to user:
 ${JSON.stringify(tripOptions)}
 
@@ -1086,7 +1091,9 @@ Please respond to the refinement request now.` }
         if (parsed.summary) setTripSummary(parsed.summary);
         setExpandedId(null);
         setShowCompare(false);
-        setRefineMessages(prev => [...prev, { role: "assistant", text: parsed.preamble || "I've updated your options based on that." }]);
+        const summary = parsed.preamble || "";
+        const confirmation = summary.length > 10 ? summary : "Updated your options — cards now reflect your latest preferences.";
+        setRefineMessages(prev => [...prev, { role: "assistant", text: confirmation }]);
         setRefineLoading(false);
         return;
       }
@@ -1207,7 +1214,7 @@ Please respond to the refinement request now.` }
         {/* Refine bar — persistent on results screen */}
         <div style={{ padding: "0 28px 12px" }}>
           {refineMessages.length > 0 && (
-            <div style={{ marginBottom: "12px", display: "flex", flexDirection: "column", gap: "8px", maxHeight: "240px", overflowY: "auto" }}>
+            <div style={{ marginBottom: "12px", display: "flex", flexDirection: "column", gap: "8px", maxHeight: "340px", overflowY: "auto" }}>
               {refineMessages.map((msg, i) => (
                 <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
                   <div style={{
