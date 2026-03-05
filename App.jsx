@@ -1082,9 +1082,11 @@ Please respond to the refinement request now.` }
       }
 
       // Conversational response — strip any JSON that leaked into the text
+      const idxArray = replyText.indexOf("[{");
+      const idxObj = replyText.indexOf('{"id"');
       const jsonStart = Math.min(
-        replyText.indexOf("[{") > -1 ? replyText.indexOf("[{") : Infinity,
-        replyText.indexOf("{"id"") > -1 ? replyText.indexOf("{"id"") : Infinity,
+        idxArray > -1 ? idxArray : Infinity,
+        idxObj > -1 ? idxObj : Infinity,
       );
       const cleanReply = jsonStart < Infinity ? replyText.slice(0, jsonStart).trim() : replyText;
       setRefineMessages(prev => [...prev, { role: "assistant", text: cleanReply || replyText }]);
