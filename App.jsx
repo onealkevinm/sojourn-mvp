@@ -1047,29 +1047,47 @@ Please respond to the refinement request now.` }
       const data = await res.json();
       const replyText = data.content?.[0]?.text?.trim() || "";
 
-      // Try to parse as new options set — strip any text before the JSON
-      try {
-        const start = replyText.indexOf("{");
-        const end = replyText.lastIndexOf("}");
-        if (start !== -1 && end !== -1) {
-          const jsonStr = replyText.slice(start, end + 1);
-          const parsed = JSON.parse(jsonStr);
-          if (parsed.options?.length > 0) {
-            setTripOptions(parsed.options);
-            setTripSummary(parsed.tripSummary || tripSummary);
-            setExpandedId(null);
-            setShowCompare(false);
-            setRefineMessages(prev => [...prev, { role: "assistant", text: replyText.slice(0, start).trim() || "I've updated your options based on that." }]);
-            setRefineLoading(false);
-            return;
+      // Try to parse as new options set — handle multiple JSON formats
+      const tryParseRefine = (text) => {
+        // Format 1: full {tripSummary, options:[]} wrapper
+        try {
+          const start = text.indexOf("{");
+          const end = text.lastIndexOf("}");
+          if (start !== -1 && end !== -1) {
+            const parsed = JSON.parse(text.slice(start, end + 1));
+            if (parsed.options?.length > 0) return { options: parsed.options, summary: parsed.tripSummary, preamble: text.slice(0, start).trim() };
           }
-        }
-      } catch (e) {}
+        } catch(e) {}
+        // Format 2: raw array [{id:1...}]
+        try {
+          const start = text.indexOf("[{");
+          const end = text.lastIndexOf("}]");
+          if (start !== -1 && end !== -1) {
+            const parsed = JSON.parse(text.slice(start, end + 2));
+            if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].id) return { options: parsed, summary: null, preamble: text.slice(0, start).trim() };
+          }
+        } catch(e) {}
+        return null;
+      };
+
+      const parsed = tryParseRefine(replyText);
+      if (parsed) {
+        setTripOptions(parsed.options);
+        if (parsed.summary) setTripSummary(parsed.summary);
+        setExpandedId(null);
+        setShowCompare(false);
+        setRefineMessages(prev => [...prev, { role: "assistant", text: parsed.preamble || "I've updated your options based on that." }]);
+        setRefineLoading(false);
+        return;
+      }
 
       // Conversational response — strip any JSON that leaked into the text
-      const jsonStart = replyText.indexOf("[{");
-      const cleanReply = jsonStart > 0 ? replyText.slice(0, jsonStart).trim() : replyText;
-      setRefineMessages(prev => [...prev, { role: "assistant", text: cleanReply }]);
+      const jsonStart = Math.min(
+        replyText.indexOf("[{") > -1 ? replyText.indexOf("[{") : Infinity,
+        replyText.indexOf("{"id"") > -1 ? replyText.indexOf("{"id"") : Infinity,
+      );
+      const cleanReply = jsonStart < Infinity ? replyText.slice(0, jsonStart).trim() : replyText;
+      setRefineMessages(prev => [...prev, { role: "assistant", text: cleanReply || replyText }]);
     } catch (e) {
       setRefineMessages(prev => [...prev, { role: "assistant", text: "Something went wrong. Please try again." }]);
     } finally {
