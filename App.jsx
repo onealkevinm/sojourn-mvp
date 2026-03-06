@@ -678,7 +678,13 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary }) => {
             <div style={{ color: "#666", fontSize: "10px", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Trip Components</div>
             {option.components.map(c => <ComponentRow key={c.label + c.value} {...c} />)}
           </div>
-          <div style={{ marginTop: "18px", padding: "14px 16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)" }}>
+          {option.whyThis && (
+            <div style={{ marginTop: "18px", padding: "14px 16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "5px" }}>Why This Option</div>
+              <div style={{ color: "#b0a898", fontSize: "13px", lineHeight: "1.6" }}>{option.whyThis}</div>
+            </div>
+          )}
+          <div style={{ marginTop: "12px", padding: "14px 16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)" }}>
             <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "5px" }}>Tradeoff</div>
             <div style={{ color: "#8a8278", fontSize: "13px", lineHeight: "1.5", fontStyle: "italic" }}>{option.tradeoff}</div>
           </div>
@@ -1305,6 +1311,31 @@ Please respond now.`,
       let replyText = data.content?.[0]?.text?.trim() || "";
 
       // Try to parse as new options set — handle multiple JSON formats
+      const normalizeOptions = (raw) => {
+        // Normalize alternate field names the AI sometimes uses
+        return raw.map((o, i) => ({
+          id: o.id || i + 1,
+          tag: o.tag || o.type || "Option",
+          tagColor: o.tagColor || o.color || "#C9A84C",
+          headline: o.headline || o.title || o.name || "",
+          subhead: o.subhead || o.subtitle || o.description || "",
+          totalCost: typeof o.totalCost === "number" ? o.totalCost : parseInt(String(o.totalCost||o.price||"0").replace(/[^0-9]/g,"")) || 0,
+          pointsEarned: o.pointsEarned || o.points_earned || "",
+          pointsValue: typeof o.pointsValue === "number" ? o.pointsValue : parseInt(String(o.pointsValue||"0").replace(/[^0-9]/g,"")) || 0,
+          netValue: typeof o.netValue === "number" ? o.netValue : parseInt(String(o.netValue||"0").replace(/[^0-9]/g,"")) || 0,
+          redemption: o.redemption || null,
+          tags: o.tags || [],
+          tradeoff: o.tradeoff || "",
+          loyaltyHighlight: o.loyaltyHighlight || o.loyaltyBenefit || "",
+          whyThis: o.whyThis || o.why || o.reason || "",
+          components: o.components || [
+            { label: "Flight", value: o.flight || "", detail: o.flight || "", points: "", card: "" },
+            { label: "Hotel", value: o.price || "", detail: (o.property || o.brand || "") + (o.location ? " · " + o.location : "") + (o.nights ? " · " + o.nights + " nights" : "") + (o.rooms ? " · " + o.rooms : ""), points: "", card: "" },
+            { label: "Ground", value: o.rental || "", detail: o.rental || "", points: "", card: "" },
+          ],
+        }));
+      };
+
       const tryParseRefine = (text) => {
         // Strip markdown fences first
         text = text.replace(/```json/g, "").replace(/```/g, "").trim();
@@ -1314,16 +1345,17 @@ Please respond now.`,
           const end = text.lastIndexOf("}");
           if (start !== -1 && end !== -1) {
             const parsed = JSON.parse(text.slice(start, end + 1));
-            if (parsed.options?.length > 0) return { options: parsed.options, summary: parsed.tripSummary, preamble: text.slice(0, start).trim() };
+            const arr = parsed.options || parsed.cards || parsed.tripOptions;
+            if (arr?.length > 0) return { options: normalizeOptions(arr), summary: parsed.tripSummary, preamble: text.slice(0, start).trim() };
           }
         } catch(e) {}
-        // Format 2: raw array [{id:1...}]
+        // Format 2: raw array [{id:1...}] or [{tag:...}]
         try {
           const start = text.indexOf("[{");
           const end = text.lastIndexOf("}]");
           if (start !== -1 && end !== -1) {
             const parsed = JSON.parse(text.slice(start, end + 2));
-            if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].id) return { options: parsed, summary: null, preamble: text.slice(0, start).trim() };
+            if (Array.isArray(parsed) && parsed.length > 0) return { options: normalizeOptions(parsed), summary: null, preamble: text.slice(0, start).trim() };
           }
         } catch(e) {}
         return null;
