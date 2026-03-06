@@ -1,5 +1,33 @@
 import { useState, useRef, useEffect } from "react";
 
+// ── Analytics ──────────────────────────────────────────────────────────────────
+const MIXPANEL_TOKEN = "d7e668765a8c"; // Replace with your token
+const mp = {
+  _did: null,
+  deviceId() {
+    if (!this._did) {
+      try {
+        this._did = localStorage.getItem("mp_did") || Math.random().toString(36).slice(2);
+        localStorage.setItem("mp_did", this._did);
+      } catch(e) { this._did = Math.random().toString(36).slice(2); }
+    }
+    return this._did;
+  },
+  track(event, props = {}) {
+    if (MIXPANEL_TOKEN === "YOUR_MIXPANEL_TOKEN") return; // No-op until token set
+    try {
+      fetch("https://api.mixpanel.com/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "data=" + encodeURIComponent(JSON.stringify({
+          event,
+          properties: { token: MIXPANEL_TOKEN, distinct_id: this.deviceId(), time: Date.now() / 1000, ...props }
+        }))
+      });
+    } catch(e) {}
+  }
+};
+
 const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
 
 // ─── Simulated user profile (will eventually come from OAuth integrations) ───
@@ -702,7 +730,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary }) => {
             <button onClick={() => onItinerary && onItinerary(option)} style={{ flex: 1, padding: "14px", background: "rgba(255,255,255,0.04)", color: "#b0a898", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", fontSize: "12px", fontWeight: "600", cursor: "pointer", letterSpacing: "0.06em", fontFamily: "'Playfair Display',Georgia,serif" }}>
               View as Itinerary ↗
             </button>
-            <button style={{ flex: 2, padding: "14px", background: option.tagColor, color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>
+            <button onClick={(e) => { e.stopPropagation(); mp.track("book_intent", { tag: option.tag, headline: option.headline, total_cost: option.totalCost, net_value: option.netValue, destination: option.subhead }); alert("Booking coming soon! We logged your interest in: " + option.headline); }} style={{ flex: 2, padding: "14px", background: option.tagColor, color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>
               Book This Trip →
             </button>
           </div>
@@ -1009,6 +1037,7 @@ const BottomDrawer = ({ label, count, items }) => {
 // ─── Main App ──────────────────────────────────────────────────────────────────
 
 export default function SojournApp() {
+  useEffect(() => { mp.track("session_start"); }, []);
   const [phase, setPhase] = useState(() => { try { return localStorage.getItem("sojourn_profile") ? "chat" : "onboarding"; } catch(e) { return "onboarding"; } }); // onboarding | chat | results
   const [messages, setMessages] = useState([
     { role: "assistant", text: "Where to next? Tell me about your trip — destination, rough dates, who's traveling, any preferences or must-haves. The more context you share, the sharper the options." }
@@ -1243,6 +1272,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         setTripOptions(parsed.options);
         setTripSummary(parsed.tripSummary);
         setPhase("results");
+        mp.track("cards_generated", { destination: parsed.tripSummary?.destination || "unknown", option_count: parsed.options?.length || 0 });
       } catch(e2) {
         setMessages(prev => [...prev, { role: "assistant", text: "Having trouble generating your options — please try again." }]);
       }
@@ -1253,6 +1283,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
   };
 
     const handleSend = () => {
+      mp.track("query_submitted", { query_length: input.length });
     if (!input.trim() || loading) return;
     const msg = input.trim();
     setInput("");
@@ -1263,6 +1294,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
   const handleKeyDown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } };
 
   const handleRefine = async () => {
+    mp.track("refinement_submitted", { message_count: refineMessages.length, message: refineInput.slice(0, 100) });
     if (!refineInput.trim() || refineLoading) return;
     const msg = refineInput.trim();
     setRefineInput("");
@@ -1555,7 +1587,7 @@ Please respond now.`,
             <div style={{ fontSize: "11px", letterSpacing: "0.25em", color: "#C9A84C", textTransform: "uppercase", marginBottom: "3px", fontFamily: "serif" }}>Sojourn · AI</div>
             <div style={{ fontSize: "12px", color: "#555" }}>Your travel, optimized.</div>
           </div>
-          <button onClick={resetApp} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "#666", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px" }}>New Trip</button>
+          <button onClick={() => { mp.track("new_trip_started"); resetApp(); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "#666", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px" }}>New Trip</button>
         </div>
 
         {tripSummary && (
@@ -1582,7 +1614,7 @@ Please respond now.`,
             <div style={{ color: "#555", fontSize: "12px" }}>Tap a card to explore · Scroll to see all</div>
           </div>
           {!showCompare && !expandedId && (
-            <button onClick={() => setShowCompare(true)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", color: "#888", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", whiteSpace: "nowrap" }}>Compare All →</button>
+            <button onClick={() => { mp.track("compare_view_opened"); setShowCompare(true); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", color: "#888", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", whiteSpace: "nowrap" }}>Compare All →</button>
           )}
         </div>
 
@@ -1592,7 +1624,7 @@ Please respond now.`,
           ) : expandedId ? (
             <div style={{ animation: "fadeUp 0.3s ease forwards" }}>
               <button onClick={() => setExpandedId(null)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", color: "#888", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", marginBottom: "16px" }}>← All Options</button>
-              <TripCard option={tripOptions.find(o => o.id === expandedId)} isExpanded={true} onToggle={() => setExpandedId(null)} onItinerary={(opt) => setItineraryOption(opt)} />
+              <TripCard option={tripOptions.find(o => o.id === expandedId)} isExpanded={true} onToggle={() => setExpandedId(null)} onItinerary={(opt) => { mp.track("itinerary_viewed", { tag: opt.tag, headline: opt.headline }); setItineraryOption(opt); }} />
               <div style={{ marginTop: "14px" }}>
                 <div style={{ color: "#555", fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>Other Options</div>
                 <div style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "8px" }} className="card-scroll">
@@ -1610,7 +1642,7 @@ Please respond now.`,
             <div className="card-scroll" style={{ display: "flex", gap: "14px", overflowX: "auto", paddingBottom: "16px", paddingRight: "56px", scrollSnapType: "x mandatory" }}>
               {tripOptions.map((opt, i) => (
                 <div key={opt.id} style={{ scrollSnapAlign: "start", animation: `fadeUp 0.5s ease ${i * 0.07}s forwards`, opacity: 0 }}>
-                  <TripCard option={opt} isExpanded={false} onToggle={() => setExpandedId(expandedId === opt.id ? null : opt.id)} />
+                  <TripCard option={opt} isExpanded={false} onToggle={() => { const opening = expandedId !== opt.id; if (opening) mp.track("card_expanded", { tag: opt.tag, headline: opt.headline, total_cost: opt.totalCost }); setExpandedId(expandedId === opt.id ? null : opt.id); }} />
                 </div>
               ))}
             </div>
