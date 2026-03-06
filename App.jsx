@@ -1248,8 +1248,8 @@ TRAVELER PROFILE:
 ORIGINAL TRIP REQUEST: ${conversationRef.current?.[0]?.content || "unknown"}
 
 CURRENT OPTIONS SHOWING:
-${tripOptions.map(o => `[${o.tag}] ${o.headline} ($${o.totalCost}) — ${o.components.filter(c=>c.label.toLowerCase().includes("hotel")).map(c=>c.detail?.split("·")[0]?.trim()).join(", ")}`).join("
-")}
+${tripOptions.map(o => "[" + o.tag + "] " + o.headline + " ($" + o.totalCost + ") - " + o.components.filter(c=>c.label.toLowerCase().includes("hotel")).map(c=>c.detail ? c.detail.split(" ")[0] : "").join(", ")).join("\n")}
+
 
 WHEN TO GENERATE NEW CARDS:
 - User wants changes: swap, replace, remove, add, update, "yes", "yes please", any budget or preference change
