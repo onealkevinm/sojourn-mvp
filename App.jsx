@@ -970,7 +970,8 @@ RULES:
 - Route each component to the card earning the most rewards
 - Budget = out-of-pocket spend. Points are the lever between cost and value.
 - If budget stated: Lowest Cost = best value at/near that budget. If no budget: Lowest Cost = cheapest option.
-- netValue = totalCost - pointsValue`;
+- netValue = totalCost - pointsValue
+- CRITICAL: Use only plain ASCII characters in JSON. No accented letters (write "Hotel" not "Hôtel"), no smart quotes, no apostrophes in property names or values (write "LHotel" not "L'Hotel").`;
   };
 
   const callClaude = async (userMessage) => {
