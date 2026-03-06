@@ -1516,7 +1516,7 @@ Please respond now.`,
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
           max_tokens: 300,
-          system: "Extract 3-6 DURABLE traveler preference signals from this conversation — things true on their NEXT trip too, not specifics of this one. INCLUDE: style preferences (hates trapped resort feel), logistical preferences (always wants direct flights), quality standards (boutique over mega-resorts), recurring family needs (connecting rooms), weather minimums, destination affinities reflecting lasting taste. EXCLUDE: anything trip-specific (these dates, this hotel name, current points balance, this destination). Return ONLY a JSON array of short strings, no markdown, no preamble. Good: ["dislikes large confined resort feel", "needs direct flights", "boutique over branded mega-resorts", "needs 80F+ beach weather"]. Bad (too specific): ["liked Hawks Cay", "asked about April", "has 68400 points"]", "prefers direct flights", "needs 80F+ weather", "Hawaii resonates strongly", "boutique/distinctive properties preferred"]",
+          system: "system: "Extract 3-6 DURABLE traveler preference signals from this conversation — things true on their NEXT trip too, not specifics of this one. INCLUDE: style preferences, logistical preferences, quality standards, recurring family needs, weather minimums, destination affinities. EXCLUDE: anything trip-specific like dates, this hotel name, current points balance. Return ONLY a JSON array of short strings, no markdown, no preamble.",
           messages: [{ role: "user", content: convoText.slice(0, 3000) }]
         })
       });
