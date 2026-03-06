@@ -669,7 +669,14 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary }) => {
           <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", marginTop: "2px" }}>TOTAL ESTIMATED</div>
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ color: option.tagColor, fontSize: "12px" }}>earns ${typeof option.pointsValue === "number" ? option.pointsValue.toLocaleString() : String(option.pointsValue).replace(/^\$+/,"")} value via {option.pointsEarned}</div>
+          <div style={{ color: option.tagColor, fontSize: "12px" }}>
+          {(() => {
+            const pv = option.pointsValue || 0;
+            // If pointsValue is 0, estimate from pointsEarned string (e.g. "4,480 UR" -> ~$67)
+            const estimated = pv === 0 ? Math.round((parseInt((option.pointsEarned||"").replace(/[^0-9]/g,""))||0) * 0.015) : pv;
+            return estimated > 0 ? `earns $${estimated.toLocaleString()} value via ${option.pointsEarned}` : `earns ${option.pointsEarned}`;
+          })()}
+        </div>
           <div style={{ color: "#4a4a4a", fontSize: "11px", marginTop: "3px" }}>net ${typeof option.netValue === "number" ? option.netValue.toLocaleString() : String(option.netValue).replace(/^\$+/,"")} after pts</div>
         </div>
       </div>
@@ -1077,11 +1084,14 @@ INTELLIGENCE RULES:
 - Room configs must match party size — be specific: "Two adjoining king rooms" not "hotel room"
 - Flight details: airline + flight number, route, depart time, arrive time, duration, nonstop/connections
 - Hotel details: property name, specific room type, nights, neighborhood/proximity to key landmarks
+- headline: ALWAYS follow this format: "[Location] · [Brand] · [Distinctive Element]" — e.g. "Maui · Andaz · Overwater Suite" or "Key Biscayne · Ritz-Carlton · Family Suites" or "Turks & Caicos · Amanyara · Direct JetBlue". Location first, brand second, what makes this option unique third. Never lead with the brand alone.
+- subhead: one sentence describing the experience character — e.g. "Boutique adults-contemporary resort steps from Wailea Beach"
 - tradeoff: one crisp specific sentence naming the actual tradeoff
 - whyThis: 2-3 sentences specific to THIS traveler's profile and THIS trip's preferences
 - Honor all stated constraints: weather minimums, family-friendly, geography, budget
 - ASCII only — no accented characters, smart quotes, or apostrophes in string values
 - totalCost, pointsValue, netValue: plain integers only (11850 not "$11,850")
+- pointsValue: the DOLLAR VALUE of points earned (e.g. if earning 4,480 UR points at 1.5cpp, pointsValue = 67). Never leave as 0 if points are being earned.
 - netValue = totalCost - pointsValue
 
 LOYALTY BRAND PORTFOLIOS — boutique sub-brands that still earn full loyalty points:
