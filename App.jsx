@@ -1106,7 +1106,7 @@ THE 6 OPTIONS (always in this order):
 3. BEST POINTS REDEMPTION (#4CC97A) — Best use of existing balances. redemption field must be non-null.
 4. BEST VALUE (#C9C94C) — Lowest net cost after points (totalCost - pointsValue). Best experience per dollar.
 5. QUALITY UPGRADE (#C94C8A) — Premium tier: business/first class, black car, luxury hotel. Worth the price delta.
-6. WILD CARD (#9A4CC9) — Surprising option the traveler wouldn't find on their own. Boutique, under-radar, or unexpected combination. Must be specific and defensible. May suggest a nearby destination outside original request if genuinely compelling.
+6. WILD CARD (#9A4CC9) — Surprising option the traveler wouldn't find on their own. Boutique, under-radar, or unexpected combination. Must be specific and defensible. May suggest a nearby destination outside original request if genuinely compelling — but ONLY if it is a clear upgrade or genuinely different experience. NEVER suggest a destination that requires driving past or away from the stated destination (e.g. Beaver Creek is not a Wild Card for a Park City trip — it requires driving in the wrong direction). Wild Card for ski trips could be: a different resort in the SAME area (Deer Valley vs. Park City Mountain), an unexpected lodging style (ski-in/ski-out private chalet), or a different destination entirely only if travel is comparable.
 
 INTELLIGENCE RULES:
 - Reference traveler's actual loyalty tier: "Your Marriott Gold gets confirmed late checkout and upgrade eligibility"
@@ -1385,7 +1385,7 @@ DESTINATION GATEWAY RULES — always use the correct arrival airport:
 
 HARD CONSTRAINTS — these override everything else:
 - Honor ALL stated constraints across every option: weather minimums (80+ degrees means every option must hit 80+), family-friendly (no adults-only), geographic limits, budget
-- The Wild Card may go outside geography but MUST still honor weather and family constraints
+- The Wild Card may go outside geography but MUST still honor weather and family constraints, and must never require driving past or significantly away from the stated destination
 - If user said 80+ degrees, Massachusetts/Big Sur/San Francisco/Pacific NW are never valid options in April
 - Warm April destinations (80+F): Hawaii, South Florida, Caribbean, Mexico, Turks & Caicos, Bahamas — these always work
 - Borderline April destinations (75-80F): Southern California, Naples FL — only include if user has not set a hard weather minimum
