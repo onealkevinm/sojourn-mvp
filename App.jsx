@@ -864,6 +864,92 @@ const TypingIndicator = () => (
   </div>
 );
 
+const PointsDashboardDrawer = ({ profile }) => {
+  const [open, setOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("points");
+
+  const cards = profile?.cards || [];
+  const loyalty = profile?.loyaltyAccounts || [];
+
+  // Estimate cpp (cents per point) by program
+  const cpp = {
+    "Chase Ultimate Rewards": 1.5, "Amex Membership Rewards": 1.4,
+    "Citi ThankYou": 1.3, "Capital One Miles": 1.2,
+    "United MileagePlus": 1.4, "Delta SkyMiles": 1.2,
+    "American AAdvantage": 1.3, "Alaska Mileage Plan": 1.5,
+    "JetBlue TrueBlue": 1.3, "Southwest Rapid Rewards": 1.5,
+    "Marriott Bonvoy": 0.8, "Hilton Honors": 0.5,
+    "World of Hyatt": 1.7, "IHG One Rewards": 0.6,
+    "Wyndham Rewards": 0.9,
+  };
+
+  const totalPointsValue = loyalty.reduce((sum, a) => {
+    const bal = parseInt((a.balance||"0").replace(/,/g,"")) || 0;
+    const rate = cpp[a.program] || 1.0;
+    return sum + Math.round(bal * rate / 100);
+  }, 0);
+
+  return (
+    <div style={{ flex: 1, position: "relative" }}>
+      <button onClick={() => setOpen(!open)} style={{ width: "100%", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: open ? "12px 12px 0 0" : "12px", padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+        <span style={{ color: "#444", fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif" }}>Points & Cards</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ background: "rgba(201,168,76,0.08)", color: "#C9A84C", fontSize: "10px", padding: "2px 7px", borderRadius: "8px", border: "1px solid rgba(201,168,76,0.2)" }}>~${totalPointsValue.toLocaleString()} value</span>
+          <span style={{ color: "#444", fontSize: "10px", display: "inline-block", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</span>
+        </div>
+      </button>
+      {open && (
+        <div style={{ position: "absolute", bottom: "100%", left: 0, right: 0, background: "#0e0d0c", border: "1px solid rgba(255,255,255,0.07)", borderBottom: "none", borderRadius: "12px 12px 0 0", zIndex: 10, maxHeight: "320px", overflowY: "auto" }}>
+          {/* Tabs */}
+          <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "0 14px" }}>
+            {["points", "cards"].map(tab => (
+              <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: "10px 14px", background: "none", border: "none", borderBottom: activeTab === tab ? "2px solid #C9A84C" : "2px solid transparent", color: activeTab === tab ? "#C9A84C" : "#444", fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif", cursor: "pointer" }}>
+                {tab === "points" ? "Loyalty Points" : "Credit Cards"}
+              </button>
+            ))}
+          </div>
+          <div style={{ padding: "14px" }}>
+            {activeTab === "points" && (
+              <div>
+                <div style={{ color: "#555", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>Estimated Portfolio Value: <span style={{ color: "#C9A84C" }}>${totalPointsValue.toLocaleString()}</span></div>
+                {loyalty.length === 0 && <div style={{ color: "#444", fontSize: "12px" }}>No loyalty accounts added yet</div>}
+                {loyalty.map((a, i) => {
+                  const bal = parseInt((a.balance||"0").replace(/,/g,"")) || 0;
+                  const rate = cpp[a.program] || 1.0;
+                  const val = Math.round(bal * rate / 100);
+                  return (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                      <div>
+                        <div style={{ color: "#b0a898", fontSize: "12px" }}>{a.program}</div>
+                        <div style={{ color: "#555", fontSize: "11px" }}>{a.tier} · {a.balance} pts</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ color: "#C9A84C", fontSize: "13px", fontFamily: "serif" }}>${val.toLocaleString()}</div>
+                        <div style={{ color: "#444", fontSize: "10px" }}>~{rate}¢/pt</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {activeTab === "cards" && (
+              <div>
+                {cards.length === 0 && <div style={{ color: "#444", fontSize: "12px" }}>No cards added yet</div>}
+                {cards.map((c, i) => (
+                  <div key={i} style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                    <div style={{ color: "#b0a898", fontSize: "12px", marginBottom: "2px" }}>{c.name}</div>
+                    <div style={{ color: "#555", fontSize: "11px" }}>{c.multipliers || "Rewards card"}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const BottomDrawer = ({ label, count, items }) => {
   const [open, setOpen] = useState(false);
   return (
@@ -912,7 +998,7 @@ const BottomDrawer = ({ label, count, items }) => {
 export default function SojournApp() {
   const [phase, setPhase] = useState("onboarding"); // onboarding | chat | results
   const [messages, setMessages] = useState([
-    { role: "assistant", text: "Where are you headed? Tell me about your trip — destination, rough dates, any preferences or constraints. I'll handle the rest." }
+    { role: "assistant", text: "Where to next? Tell me about your trip — destination, rough dates, who's traveling, any preferences or must-haves. The more context you share, the sharper the options." }
   ]);
   const [input, setInput] = useState("");
   const [listening, setListening] = useState(false);
@@ -931,6 +1017,7 @@ export default function SojournApp() {
   const recognitionRef = useRef(null);
   const bottomRef = useRef(null);
   const conversationRef = useRef([]);
+  const [conciergeMode, setConciergeMode] = useState(true); // true = conversational, false = generating cards
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
 
@@ -980,11 +1067,65 @@ RULES:
     setLoading(true);
 
     if (!ANTHROPIC_KEY) {
-      setMessages(prev => [...prev, { role: "assistant", text: "Configuration error: API key not found. Please check environment variables." }]);
+      setMessages(prev => [...prev, { role: "assistant", text: "Configuration error: API key not found." }]);
       setLoading(false);
       return;
     }
 
+    // ── CONCIERGE MODE: clarify before generating ──────────────────────────
+    if (conciergeMode) {
+      try {
+        const p = userProfile;
+        const tp = p.travelProfile || {};
+        const res = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 400,
+            system: `You are Sojourn, an expert travel concierge. You help travelers clarify their trip before generating optimized options.
+
+Traveler profile: home airport=${tp.homeAirport||"unknown"}, travel types=${(tp.travelTypes||[]).join(", ")}, cards=${(p.cards||[]).map(c=>c.name).join(", ")}.
+
+Your job: Decide whether you have enough information to generate great options, or whether one focused question would meaningfully improve the results.
+
+CRITICAL MISSING INFO (always ask if absent): number of travelers, travel dates or timeframe.
+USEFUL BUT INFERABLE: budget (can be inferred from profile), hotel preference (from brands), airline (from loyalty).
+NEVER ASK: things already in their profile, multiple questions at once, obvious details.
+
+If you have enough to generate excellent options — destination, rough dates, party size — respond with EXACTLY:
+READY: [one sentence reflecting back what you heard, e.g. "Got it — Seattle to Miami, 5 nights in mid-April, family of 4, beach focus."] Ready for me to generate your options?
+
+If one critical piece is missing, ask ONE focused question. Be warm and brief. No bullet points.
+
+Conversation so far: ${JSON.stringify(conversationRef.current)}`,
+            messages: [{ role: "user", content: userMessage }],
+          })
+        });
+        const data = await res.json();
+        const reply = data.content?.[0]?.text?.trim() || "";
+
+        if (reply.startsWith("READY:")) {
+          // Enough info — show confirmation and offer to generate
+          const confirmation = reply.replace("READY:", "").trim();
+          setMessages(prev => [...prev, { role: "assistant", text: confirmation, isReadyPrompt: true }]);
+          setConciergeMode(false);
+        } else {
+          // Need more info — show question
+          setMessages(prev => [...prev, { role: "assistant", text: reply }]);
+        }
+      } catch(e) {
+        // If concierge fails, just generate directly
+        setConciergeMode(false);
+        setLoading(false);
+        callClaude(userMessage);
+        return;
+      }
+      setLoading(false);
+      return;
+    }
+
+    // ── GENERATION MODE: produce cards ────────────────────────────────────
     const loadingSteps = [
       "Reviewing your loyalty accounts...",
       "Checking points balances and tier status...",
@@ -1002,6 +1143,8 @@ RULES:
     }, 2400);
     const clearMessages = () => { clearInterval(messageInterval); setLoadingMessage(""); };
 
+    const fullContext = conversationRef.current.map(m => m.content).join(" ");
+
     const tryGenerate = async () => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 90000);
@@ -1014,24 +1157,20 @@ RULES:
             model: "claude-sonnet-4-20250514",
             max_tokens: 4000,
             system: buildSystemPrompt(),
-            messages: [{ role: "user", content: userMessage }],
+            messages: [{ role: "user", content: fullContext }],
           })
         });
         clearTimeout(timeout);
         const data = await res.json();
         if (data.error) throw new Error(`API error: ${data.error.type} - ${data.error.message}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}: ${JSON.stringify(data)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const text = data.content?.[0]?.text?.trim() || "";
-        const start = text.indexOf("{");
-        const end = text.lastIndexOf("}");
-        if (start === -1 || end === -1) throw new Error(`No JSON in response: ${text.slice(0,200)}`);
-        // Strip markdown fences
         let cleanText = text.replace(/```json/g, "").replace(/```/g, "").trim();
-        const start2 = cleanText.indexOf("{");
-        const end2 = cleanText.lastIndexOf("}");
-        let jsonStr = (start2 !== -1 && end2 !== -1) ? cleanText.slice(start2, end2 + 1) : text.slice(start, end + 1);
-        // Fix common AI JSON issues: smart quotes, unescaped apostrophes in values
-        jsonStr = jsonStr.replace(/[‘’]/g, "\'").replace(/[“”]/g, '\"');
+        const s = cleanText.indexOf("{");
+        const e = cleanText.lastIndexOf("}");
+        if (s === -1 || e === -1) throw new Error("No JSON in response");
+        let jsonStr = cleanText.slice(s, e + 1);
+        jsonStr = jsonStr.replace(/['']/g, "'").replace(/[""]/g, '"');
         const parsed = JSON.parse(jsonStr);
         if (!parsed.options?.length) throw new Error("No options array");
         return parsed;
@@ -1047,7 +1186,6 @@ RULES:
       setTripSummary(parsed.tripSummary);
       setPhase("results");
     } catch(e) {
-      // One automatic retry
       try {
         const parsed = await tryGenerate();
         setTripOptions(parsed.options);
@@ -1062,7 +1200,7 @@ RULES:
     }
   };
 
-  const handleSend = () => {
+    const handleSend = () => {
     if (!input.trim() || loading) return;
     const msg = input.trim();
     setInput("");
@@ -1099,41 +1237,44 @@ RULES:
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
           max_tokens: 4000,
-          system: `You are Sojourn, a travel optimization engine. The user has seen their trip options and wants to refine them.
+          system: `You are Sojourn, an expert travel advisor. The traveler has seen their options and wants to refine or explore further.
 
-WHEN TO GENERATE NEW CARDS vs RESPOND CONVERSATIONALLY:
-- Generate new cards when: user wants changes (swap, update, replace, add, remove, include, "yes", "yes please", budget changes, preference changes)
-- Respond conversationally when: user asks a factual question or wants information without requesting changes
-
-WHEN GENERATING NEW CARDS:
-- Output 1-2 sentences summarizing exactly what changed, then immediately output the complete JSON
-- Use this exact schema: {"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[...]}
-- Generate exactly 6 options with tags: Recommended/#C9A84C, Best Points Earned/#4C9AC9, Best Points Redemption/#4CC97A, Lowest Cost/#C9C94C, Fastest/#C94C8A, Quality Upgrade/#9A4CC9
-- Each option needs: id, tag, tagColor, headline, subhead, totalCost, pointsEarned, pointsValue, netValue, redemption, tags, tradeoff, loyaltyHighlight, whyThis, components
-- Each component needs: label, value, detail, points, card
-- Always include Flight, Return Flight, Hotel, Ground components
-- netValue = totalCost - pointsValue
-- whyThis should be specific to this user's loyalty programs, card benefits, and stated preferences
-
-WHEN RESPONDING CONVERSATIONALLY:
-- Be specific: name properties, quote prices, give door-to-door times
-- Reference the user's actual loyalty status and card benefits
-- End with an offer to update the cards if relevant
-
-Original trip request: ${conversationRef.current?.[0]?.content || "unknown"}
-
-Current options:
-${tripOptions.map(o => `[${o.tag}] ${o.headline} — $${o.totalCost} — Hotels: ${o.components.filter(c=>c.label.toLowerCase().includes("hotel")).map(c=>c.detail?.split("·")[0]?.trim()).join(", ")} — Flights: ${o.components.filter(c=>c.label.toLowerCase().includes("flight")).map(c=>c.detail).join(" / ")}`).join("\n")}
-
-CRITICAL CONSTRAINTS: The user's original request defined the destination/geography. When regenerating cards, NEVER suggest destinations outside what the user originally requested or what they have explicitly approved in this refinement conversation. If the user said "Florida and Hawaii", only show Florida and Hawaii options.
-
-User profile:
+TRAVELER PROFILE:
 - Home airport: ${userProfile.travelProfile?.homeAirport || "unknown"}
 - Cards: ${userProfile.cards.map(c=>c.name).join(", ")}
-- Loyalty: ${userProfile.loyaltyAccounts.map(a=>`${a.program}(${a.tier},${a.balance})`).join(", ")}
-- Brands: ${(userProfile.preferredBrands||[]).slice(0,15).join(", ")}
+- Loyalty: ${userProfile.loyaltyAccounts.map(a=>`${a.program} (${a.tier}, ${a.balance} pts)`).join(", ")}
+- Preferred brands: ${(userProfile.preferredBrands||[]).slice(0,15).join(", ")}
 
-Please respond to the refinement request now.`,
+ORIGINAL TRIP REQUEST: ${conversationRef.current?.[0]?.content || "unknown"}
+
+CURRENT OPTIONS SHOWING:
+${tripOptions.map(o => `[${o.tag}] ${o.headline} ($${o.totalCost}) — ${o.components.filter(c=>c.label.toLowerCase().includes("hotel")).map(c=>c.detail?.split("·")[0]?.trim()).join(", ")}`).join("
+")}
+
+WHEN TO GENERATE NEW CARDS:
+- User wants changes: swap, replace, remove, add, update, "yes", "yes please", any budget or preference change
+- Always output preamble (1-2 sentences summarizing what changed) THEN immediately the complete JSON
+- NEVER claim you swapped something without outputting new JSON
+
+WHEN TO RESPOND CONVERSATIONALLY:
+- Factual questions, comparisons, requests for more information
+- Be specific: name properties, quote prices, give times
+- Reference the traveler's loyalty tier and card benefits by name
+- End with an offer to update cards if relevant
+
+GEOGRAPHIC CONSTRAINT: Honor all stated constraints (no adults-only if kids mentioned, budget limits, geographic limits) across ALL options EXCEPT the Wild Card. The Wild Card may suggest a nearby or related destination the traveler may not have considered — but only if it is genuinely compelling and you explain why. All other 5 options must stay within the requested geography.
+
+CARD QUALITY RULES (when generating new cards):
+- Each option must be genuinely distinct with a clear optimization angle
+- whyThis: 2-3 sentences, specific to THIS traveler's loyalty status and THIS trip
+- tradeoff: one crisp specific sentence — never generic
+- Room configs must match party size
+- Reference actual card multipliers and loyalty tier benefits
+- Tags: Recommended/#C9A84C, Best Points Earned/#4C9AC9, Best Points Redemption/#4CC97A, Best Value/#C9C94C, Quality Upgrade/#C94C8A, Wild Card/#9A4CC9
+- totalCost/pointsValue/netValue: plain integers only
+- ASCII only — no accented chars or smart quotes
+
+Please respond now.`,
           messages: [
             ...refineMessages.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text })),
             { role: "user", content: msg }
@@ -1207,10 +1348,13 @@ Please respond to the refinement request now.`,
   };
 
   const resetApp = () => {
-    setPhase("chat"); setMessages([{ role: "assistant", text: "Where are you headed? Tell me about your trip — destination, rough dates, any preferences or constraints. I'll handle the rest." }]);
+    setPhase("chat");
+    setMessages([{ role: "assistant", text: "Where to next? Tell me about your trip — destination, rough dates, who's traveling, any preferences. The more you share, the sharper the options." }]);
     setInput(""); setTripOptions([]); setTripSummary(null);
     setExpandedId(null); setShowCompare(false);
+    setConciergeMode(true);
     conversationRef.current = [];
+    setRefineMessages([]);
   };
 
   // ── Results screen ──
@@ -1393,8 +1537,13 @@ Please respond to the refinement request now.`,
       {!isFirst && (
         <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px 0", display: "flex", flexDirection: "column", gap: "14px" }}>
           {messages.slice(1).map((msg, i) => (
-            <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start", animation: "fadeUp 0.3s ease forwards" }}>
+            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start", animation: "fadeUp 0.3s ease forwards" }}>
               <div style={{ maxWidth: "80%", padding: "12px 16px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.role === "user" ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)", border: msg.role === "user" ? "1px solid rgba(201,168,76,0.25)" : "1px solid rgba(255,255,255,0.07)", color: msg.role === "user" ? "#e8e4dc" : "#b0a898", fontSize: "14px", lineHeight: "1.6", fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit", fontStyle: msg.role === "assistant" ? "italic" : "normal" }}>{msg.text}</div>
+              {msg.isReadyPrompt && (
+                <button onClick={() => { setConciergeMode(false); callClaude("Generate my options now based on everything discussed."); }} style={{ marginTop: "10px", padding: "11px 22px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "20px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.06em", fontFamily: "'Playfair Display',Georgia,serif" }}>
+                  Generate My Options →
+                </button>
+              )}
             </div>
           ))}
           {loading && (
@@ -1423,23 +1572,14 @@ Please respond to the refinement request now.`,
         </div>
       )}
 
-      {/* Bottom drawers — Connected Accounts + Preferred Brands */}
+      {/* Bottom drawers */}
       <div style={{ padding: "0 24px 24px", flexShrink: 0, display: "flex", gap: "10px" }}>
-        <BottomDrawer
-          label="Connected Accounts"
-          count={USER_PROFILE.cards.length + USER_PROFILE.loyaltyAccounts.length}
-          items={[
-            { section: "Cards", entries: USER_PROFILE.cards.map(c => c.name) },
-            { section: "Loyalty Programs", entries: USER_PROFILE.loyaltyAccounts.map(a => `${a.program} · ${a.balance}`) },
-          ]}
-        />
+        <PointsDashboardDrawer profile={userProfile} />
         <BottomDrawer
           label="Preferred Brands"
-          count={12}
+          count={(userProfile.preferredBrands||[]).length}
           items={[
-            { section: "Hotel Collections", entries: ["Four Seasons", "One & Only", "Montage Hotels", "Proper Hotels", "Leading Hotels of the World", "Relais & Châteaux"] },
-            { section: "Recognition & Awards", entries: ["Michelin Keys", "Forbes Five Star"] },
-            { section: "Loyalty Programs", entries: ["Marriott Bonvoy", "Hilton Honors", "World of Hyatt", "IHG One Rewards"] },
+            { section: "Your Selections", entries: (userProfile.preferredBrands||[]).slice(0,20) },
           ]}
         />
       </div>
