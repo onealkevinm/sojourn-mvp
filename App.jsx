@@ -1049,7 +1049,7 @@ RULES:
         setTripSummary(parsed.tripSummary);
         setPhase("results");
       } catch(e2) {
-        setMessages(prev => [...prev, { role: "assistant", text: "Having trouble generating your options — please try again." }]);
+        setMessages(prev => [...prev, { role: "assistant", text: `Debug — raw response: ${e2.message}` }]);
       }
     } finally {
       setLoading(false);
