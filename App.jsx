@@ -602,7 +602,7 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <div style={{ color: "#666", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif" }}>{label}</div>
-          {isFlight && duration && <div style={{ color: "#555", fontSize: "10px", background: "rgba(255,255,255,0.04)", padding: "2px 7px", borderRadius: "6px" }}>{duration}</div>}
+          {isFlight && !times && duration && <div style={{ color: "#555", fontSize: "10px", background: "rgba(255,255,255,0.04)", padding: "2px 7px", borderRadius: "6px" }}>{duration}</div>}
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "serif" }}>{value}</div>
@@ -616,9 +616,10 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
             <span style={{ color: "#C9A84C", fontSize: "13px", letterSpacing: "0.05em" }}>{route}</span>
           </div>
           {times && (
-            <div style={{ background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: "8px", padding: "8px 12px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: "8px", padding: "8px 12px", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
               <span style={{ color: "#C9A84C", fontSize: "11px" }}>✈</span>
               <span style={{ color: "#c0b8ae", fontSize: "13px" }}>{times}</span>
+              {duration && <span style={{ color: "#888", fontSize: "12px", marginLeft: "4px" }}>({duration})</span>}
             </div>
           )}
         </div>
@@ -646,23 +647,18 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary }) => {
       position: "relative", overflow: "hidden", flexShrink: 0,
     }}>
       {isRec && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: "linear-gradient(90deg,transparent,#C9A84C,transparent)" }} />}
+      {/* Collapsed header — always visible */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
         <span style={{ background: option.tagColor + "18", color: option.tagColor, fontSize: "11px", padding: "5px 12px", borderRadius: "12px", fontFamily: "'Playfair Display',Georgia,serif", border: `1px solid ${option.tagColor}33` }}>{option.tag}</span>
-
       </div>
       <div style={{ marginBottom: "16px" }}>
         <div style={{ color: "#e8e4dc", fontSize: "15px", fontWeight: "600", lineHeight: "1.3", marginBottom: "4px", fontFamily: "'Playfair Display',Georgia,serif" }}>{option.headline}</div>
         <div style={{ color: "#7a7468", fontSize: "12px", lineHeight: "1.5" }}>{option.subhead}</div>
       </div>
       <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginBottom: "12px" }}>
-        {option.tags.map(t => <span key={t} style={{ background: "rgba(255,255,255,0.05)", color: "#8a8278", fontSize: "10px", padding: "3px 8px", borderRadius: "8px" }}>{t}</span>)}
+        {(option.tags||[]).map(t => <span key={t} style={{ background: "rgba(255,255,255,0.05)", color: "#8a8278", fontSize: "10px", padding: "3px 8px", borderRadius: "8px" }}>{t}</span>)}
       </div>
-      {option.redemption && (
-        <div style={{ background: "rgba(76,201,122,0.08)", border: "1px solid rgba(76,201,122,0.25)", borderRadius: "10px", padding: "10px 12px", marginBottom: "14px" }}>
-          <div style={{ color: "#4CC97A", fontSize: "11px", marginBottom: "2px" }}>✦ Points Redemption Applied</div>
-          <div style={{ color: "#7a9e7a", fontSize: "11px" }}>{option.redemption.program} · {option.redemption.pointsUsed} → {option.redemption.valueRedeemed} value</div>
-        </div>
-      )}
+      {/* Cost row — always visible at bottom of collapsed card */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
         <div>
           <div style={{ color: "#e8e4dc", fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif" }}>${typeof option.totalCost === "number" ? option.totalCost.toLocaleString() : String(option.totalCost).replace(/^\$+/,"")}</div>
@@ -670,28 +666,24 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary }) => {
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{ color: option.tagColor, fontSize: "12px" }}>
-          {(() => {
-            const pv = option.pointsValue || 0;
-            // If pointsValue is 0, estimate from pointsEarned string (e.g. "4,480 UR" -> ~$67)
-            const estimated = pv === 0 ? Math.round((parseInt((option.pointsEarned||"").replace(/[^0-9]/g,""))||0) * 0.015) : pv;
-            return estimated > 0 ? `earns $${estimated.toLocaleString()} value via ${option.pointsEarned}` : `earns ${option.pointsEarned}`;
-          })()}
-        </div>
-          <div style={{ color: "#4a4a4a", fontSize: "11px", marginTop: "3px" }}>net ${typeof option.netValue === "number" ? option.netValue.toLocaleString() : String(option.netValue).replace(/^\$+/,"")} after pts</div>
+            {(() => {
+              const pv = option.pointsValue || 0;
+              const estimated = pv === 0 ? Math.round((parseInt((option.pointsEarned||"").replace(/[^0-9]/g,""))||0) * 0.015) : pv;
+              return estimated > 0 ? `earns $${estimated.toLocaleString()} value via ${option.pointsEarned}` : (option.pointsEarned ? `earns ${option.pointsEarned}` : "");
+            })()}
+          </div>
+          <div style={{ color: "#4a4a4a", fontSize: "11px", marginTop: "3px" }}>net ${typeof option.netValue === "number" ? option.netValue.toLocaleString() : String(option.netValue||0).replace(/^\$+/,"")} after pts</div>
         </div>
       </div>
       {isExpanded && (
         <div style={{ marginTop: "26px", animation: "fadeUp 0.3s ease forwards" }} onClick={e => e.stopPropagation()}>
-          {/* Headline + Why This at top */}
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "20px", marginBottom: "16px" }}>
-            <div style={{ color: "#e8e4dc", fontSize: "17px", fontWeight: "600", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.3", marginBottom: "14px" }}>{option.headline}</div>
-            {option.whyThis && (
-              <div style={{ marginBottom: "4px" }}>
-                <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>Why This Option</div>
-                <div style={{ color: "#b0a898", fontSize: "13px", lineHeight: "1.7" }}>{option.whyThis}</div>
-              </div>
-            )}
-          </div>
+          {/* Why This — no repeated headline */}
+          {option.whyThis && (
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "20px", marginBottom: "16px" }}>
+              <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "8px" }}>Why This Option</div>
+              <div style={{ color: "#b0a898", fontSize: "13px", lineHeight: "1.7" }}>{option.whyThis}</div>
+            </div>
+          )}
           {/* Tradeoff */}
           {option.tradeoff && (
             <div style={{ padding: "12px 16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)", marginBottom: "16px" }}>
@@ -699,10 +691,17 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary }) => {
               <div style={{ color: "#8a8278", fontSize: "13px", lineHeight: "1.5", fontStyle: "italic" }}>{option.tradeoff}</div>
             </div>
           )}
+          {/* Points Redemption */}
+          {option.redemption && (
+            <div style={{ background: "rgba(76,201,122,0.08)", border: "1px solid rgba(76,201,122,0.25)", borderRadius: "10px", padding: "10px 12px", marginBottom: "14px" }}>
+              <div style={{ color: "#4CC97A", fontSize: "11px", marginBottom: "2px" }}>✦ Points Redemption Applied</div>
+              <div style={{ color: "#7a9e7a", fontSize: "11px" }}>{option.redemption.program} · {option.redemption.pointsUsed} → {option.redemption.valueRedeemed} value</div>
+            </div>
+          )}
           {/* Trip Components */}
           <div style={{ marginBottom: "6px" }}>
             <div style={{ color: "#666", fontSize: "10px", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Trip Components</div>
-            {option.components.map(c => <ComponentRow key={c.label + c.value} {...c} />)}
+            {(option.components||[]).map(c => <ComponentRow key={c.label + c.value} {...c} />)}
           </div>
           <div style={{ marginTop: "12px", padding: "12px 16px", background: option.tagColor + "0e", borderRadius: "12px", border: `1px solid ${option.tagColor}22` }}>
             <div style={{ color: option.tagColor, fontSize: "12px" }}>✦ {option.loyaltyHighlight}</div>
@@ -1090,7 +1089,7 @@ INTELLIGENCE RULES:
 - Reference traveler's actual loyalty tier: "Your Marriott Gold gets confirmed late checkout and upgrade eligibility"
 - Reference specific card multipliers: "Chase Sapphire Reserve 3x on hotels = 2,400 UR points worth ~$48"
 - Room configs must match party size — be specific: "Two adjoining king rooms" not "hotel room"
-- Flight details: airline + flight number, route, depart time, arrive time, duration, nonstop/connections
+- Flight details format: "AA 123 · SEA→MIA · Departs 7:45am → Arrives 4:02pm · 5h 17m nonstop" — duration MUST always be the last segment so it displays prominently next to flight times
 - Hotel details: property name, specific room type, nights, neighborhood/proximity to key landmarks
 - headline: ALWAYS follow this format: "[Location] · [Brand] · [Distinctive Element]" — e.g. "Maui · Andaz · Overwater Suite" or "Key Biscayne · Ritz-Carlton · Family Suites" or "Turks & Caicos · Amanyara · Direct JetBlue". Location first, brand second, what makes this option unique third. Never lead with the brand alone.
 - subhead: one sentence describing the experience character — e.g. "Boutique adults-contemporary resort steps from Wailea Beach"
@@ -1513,7 +1512,7 @@ Please respond now.`,
         <div style={{ padding: "24px 28px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <div style={{ fontSize: "11px", letterSpacing: "0.25em", color: "#C9A84C", textTransform: "uppercase", marginBottom: "3px", fontFamily: "serif" }}>Sojourn · AI</div>
-            <div style={{ fontSize: "12px", color: "#555" }}>Spend less. Travel smarter.</div>
+            <div style={{ fontSize: "12px", color: "#555" }}>Your travel, optimized.</div>
           </div>
           <button onClick={resetApp} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "#666", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px" }}>New Trip</button>
         </div>
@@ -1642,7 +1641,7 @@ Please respond now.`,
       {/* Header */}
       <div style={{ padding: "28px 24px 0", textAlign: "center" }}>
         <div style={{ fontSize: "11px", letterSpacing: "0.3em", color: "#C9A84C", textTransform: "uppercase", marginBottom: "4px", fontFamily: "serif" }}>Sojourn · AI</div>
-        <div style={{ fontSize: "12px", color: "#555" }}>Spend less. Travel smarter.</div>
+        <div style={{ fontSize: "12px", color: "#555" }}>Your travel, optimized.</div>
       </div>
 
       {/* Hero — centerpoint on first load */}
