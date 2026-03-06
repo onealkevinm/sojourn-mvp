@@ -1024,7 +1024,8 @@ RULES:
         const start = text.indexOf("{");
         const end = text.lastIndexOf("}");
         if (start === -1 || end === -1) throw new Error(`No JSON in response: ${text.slice(0,200)}`);
-        console.log("RAW API RESPONSE:", text.slice(0, 500));
+        console.log("FULL RESPONSE LENGTH:", text.length);
+        console.log("RAW API RESPONSE:", text.slice(0, 2000));
         let jsonStr = text.slice(start, end + 1);
         // Fix common AI JSON issues: smart quotes, unescaped apostrophes in values
         jsonStr = jsonStr.replace(/[‘’]/g, "\'").replace(/[“”]/g, '\"');
