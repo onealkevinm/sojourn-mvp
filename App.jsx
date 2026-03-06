@@ -1288,7 +1288,16 @@ WHEN TO RESPOND CONVERSATIONALLY:
 - Reference the traveler's loyalty tier and card benefits by name
 - End with an offer to update cards if relevant
 
-GEOGRAPHIC CONSTRAINT: Honor all stated constraints (no adults-only if kids mentioned, budget limits, geographic limits) across ALL options EXCEPT the Wild Card. The Wild Card may suggest a nearby or related destination the traveler may not have considered — but only if it is genuinely compelling and you explain why. All other 5 options must stay within the requested geography.
+HARD CONSTRAINTS — these override everything else:
+- Honor ALL stated constraints across every option: weather minimums (80+ degrees means every option must hit 80+), family-friendly (no adults-only), geographic limits, budget
+- The Wild Card may go outside geography but MUST still honor weather and family constraints
+- If user said 80+ degrees, Massachusetts/Big Sur/San Francisco/Pacific NW are never valid options in April
+- Warm April destinations (80+F): Hawaii, South Florida, Caribbean, Mexico, Turks & Caicos, Bahamas — these always work
+- Borderline April destinations (75-80F): Southern California, Naples FL — only include if user has not set a hard weather minimum
+
+JSON SCHEMA — you MUST use exactly these field names or cards will not display:
+{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","value":"","detail":"","points":"","card":""},{"label":"Return Flight","value":"","detail":"","points":"","card":""},{"label":"Hotel","value":"","detail":"","points":"","card":""},{"label":"Ground","value":"","detail":"","points":"","card":""}]}]}
+NEVER use: results, cards, tripOptions, color, title, property, priceStructure — these will break the display.
 
 CARD QUALITY RULES (when generating new cards):
 - Each option must be genuinely distinct with a clear optimization angle
@@ -1345,7 +1354,7 @@ Please respond now.`,
           const end = text.lastIndexOf("}");
           if (start !== -1 && end !== -1) {
             const parsed = JSON.parse(text.slice(start, end + 1));
-            const arr = parsed.options || parsed.cards || parsed.tripOptions;
+            const arr = parsed.options || parsed.cards || parsed.tripOptions || parsed.results;
             if (arr?.length > 0) return { options: normalizeOptions(arr), summary: parsed.tripSummary, preamble: text.slice(0, start).trim() };
           }
         } catch(e) {}
