@@ -647,34 +647,26 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary }) => {
       position: "relative", overflow: "hidden", flexShrink: 0,
     }}>
       {isRec && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: "linear-gradient(90deg,transparent,#C9A84C,transparent)" }} />}
-      {/* Collapsed header — always visible */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+      {/* Collapsed header — tag + price on same row, headline below */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
         <span style={{ background: option.tagColor + "18", color: option.tagColor, fontSize: "11px", padding: "5px 12px", borderRadius: "12px", fontFamily: "'Playfair Display',Georgia,serif", border: `1px solid ${option.tagColor}33` }}>{option.tag}</span>
+        <span style={{ color: "#e8e4dc", fontSize: "18px", fontFamily: "'Playfair Display',Georgia,serif" }}>${typeof option.totalCost === "number" ? option.totalCost.toLocaleString() : String(option.totalCost).replace(/^\$+/,"")}</span>
       </div>
-      <div style={{ marginBottom: "16px" }}>
-        <div style={{ color: "#e8e4dc", fontSize: "15px", fontWeight: "600", lineHeight: "1.3", marginBottom: "4px", fontFamily: "'Playfair Display',Georgia,serif" }}>{option.headline}</div>
-        <div style={{ color: "#7a7468", fontSize: "12px", lineHeight: "1.5" }}>{option.subhead}</div>
+      <div style={{ marginBottom: "8px" }}>
+        <div style={{ color: "#e8e4dc", fontSize: "15px", fontWeight: "600", lineHeight: "1.3", marginBottom: "3px", fontFamily: "'Playfair Display',Georgia,serif" }}>{option.headline}</div>
+        <div style={{ color: "#7a7468", fontSize: "12px", lineHeight: "1.4" }}>{option.subhead}</div>
       </div>
-      <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginBottom: "12px" }}>
-        {(option.tags||[]).map(t => <span key={t} style={{ background: "rgba(255,255,255,0.05)", color: "#8a8278", fontSize: "10px", padding: "3px 8px", borderRadius: "8px" }}>{t}</span>)}
-      </div>
-      {/* Cost row — always visible at bottom of collapsed card */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-        <div>
-          <div style={{ color: "#e8e4dc", fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif" }}>${typeof option.totalCost === "number" ? option.totalCost.toLocaleString() : String(option.totalCost).replace(/^\$+/,"")}</div>
-          <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", marginTop: "2px" }}>TOTAL ESTIMATED</div>
-        </div>
-        <div style={{ textAlign: "right" }}>
-          <div style={{ color: option.tagColor, fontSize: "12px" }}>
-            {(() => {
-              const pv = option.pointsValue || 0;
-              const estimated = pv === 0 ? Math.round((parseInt((option.pointsEarned||"").replace(/[^0-9]/g,""))||0) * 0.015) : pv;
-              return estimated > 0 ? `earns $${estimated.toLocaleString()} value via ${option.pointsEarned}` : (option.pointsEarned ? `earns ${option.pointsEarned}` : "");
-            })()}
+      {/* Points earned — compact single line */}
+      {(() => {
+        const pv = option.pointsValue || 0;
+        const estimated = pv === 0 ? Math.round((parseInt((option.pointsEarned||"").replace(/[^0-9]/g,""))||0) * 0.015) : pv;
+        return estimated > 0 ? (
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "8px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+            <span style={{ color: option.tagColor, fontSize: "11px" }}>earns ${estimated.toLocaleString()} via {option.pointsEarned}</span>
+            <span style={{ color: "#4a4a4a", fontSize: "11px" }}>net ${typeof option.netValue === "number" ? option.netValue.toLocaleString() : String(option.netValue||0).replace(/^\$+/,"")} after pts</span>
           </div>
-          <div style={{ color: "#4a4a4a", fontSize: "11px", marginTop: "3px" }}>net ${typeof option.netValue === "number" ? option.netValue.toLocaleString() : String(option.netValue||0).replace(/^\$+/,"")} after pts</div>
-        </div>
-      </div>
+        ) : null;
+      })()}
       {isExpanded && (
         <div style={{ marginTop: "26px", animation: "fadeUp 0.3s ease forwards" }} onClick={e => e.stopPropagation()}>
           {/* Why This — no repeated headline */}
@@ -1065,6 +1057,7 @@ export default function SojournApp() {
     const cardList = (p.cards||[]).map(c=>c.name).join(", ");
     const loyaltyList = (p.loyaltyAccounts||[]).map(a=>a.program+" ("+a.tier+", "+a.balance+" pts)").join(", ");
     const brandList = (p.preferredBrands||[]).slice(0,15).join(", ");
+    const learnedList = learnedPrefs.length > 0 ? learnedPrefs.join("; ") : null;
     return `You are Sojourn, an expert travel advisor and optimization engine. Reason carefully across this traveler's cards, loyalty programs, and preferences to surface 6 genuinely differentiated options.
 
 TRAVELER PROFILE:
@@ -1072,7 +1065,8 @@ TRAVELER PROFILE:
 - Travel frequency: ${tp.frequency||"unknown"}
 - Travel types: ${(tp.travelTypes||[]).join(", ")}
 - Credit cards: ${cardList}
-- Loyalty accounts: ${loyaltyList}
+- Loyalty accounts: ${loyaltyList}${learnedList ? `
+- LEARNED FROM PAST TRIPS: ${learnedList}` : ""}
 - Preferred hotel brands: ${brandList}
 
 Generate exactly 6 options as raw JSON. Output ONLY JSON — no markdown, no explanation, start with { end with }.
@@ -1213,6 +1207,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
           body: JSON.stringify({
             model: "claude-sonnet-4-20250514",
             max_tokens: 4000,
+            temperature: 0.5,
             system: buildSystemPrompt(),
             messages: [{ role: "user", content: fullContext }],
           })
@@ -1477,6 +1472,10 @@ Please respond now.`,
   };
 
   const resetApp = () => {
+    // Extract preferences from completed session before resetting
+    if (refineMessages.length > 0 || conversationRef.current.length > 0) {
+      extractAndSavePreferences(refineMessages, conversationRef.current.map(m => ({ role: m.role, text: m.content })));
+    }
     setPhase("chat");
     setMessages([{ role: "assistant", text: "Where to next? Tell me about your trip — destination, rough dates, who's traveling, any preferences. The more you share, the sharper the options." }]);
     setInput(""); setTripOptions([]); setTripSummary(null);
@@ -1490,6 +1489,48 @@ Please respond now.`,
     try { localStorage.removeItem("sojourn_profile"); } catch(e) {}
     setUserProfile({});
     setPhase("onboarding");
+  };
+
+  // Learned preferences — persists across sessions
+  const loadLearnedPrefs = () => {
+    try { const s = localStorage.getItem("sojourn_learned"); return s ? JSON.parse(s) : []; } catch(e) { return []; }
+  };
+  const [learnedPrefs, setLearnedPrefs] = useState(() => loadLearnedPrefs());
+
+  const saveLearnedPrefs = (prefs) => {
+    try { localStorage.setItem("sojourn_learned", JSON.stringify(prefs)); } catch(e) {}
+    setLearnedPrefs(prefs);
+  };
+
+  // Extract preference signals from a completed session and store them
+  const extractAndSavePreferences = async (refineConvo, tripConvo) => {
+    if (refineConvo.length < 2 && tripConvo.length < 2) return;
+    const convoText = [...tripConvo, ...refineConvo]
+      .filter(m => m.text || m.content)
+      .map(m => (m.role === "user" ? "User: " : "Sojourn: ") + (m.text || m.content))
+      .join("\n");
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 300,
+          system: "Extract 3-6 DURABLE traveler preference signals from this conversation — things true on their NEXT trip too, not specifics of this one. INCLUDE: style preferences (hates trapped resort feel), logistical preferences (always wants direct flights), quality standards (boutique over mega-resorts), recurring family needs (connecting rooms), weather minimums, destination affinities reflecting lasting taste. EXCLUDE: anything trip-specific (these dates, this hotel name, current points balance, this destination). Return ONLY a JSON array of short strings, no markdown, no preamble. Good: ["dislikes large confined resort feel", "needs direct flights", "boutique over branded mega-resorts", "needs 80F+ beach weather"]. Bad (too specific): ["liked Hawks Cay", "asked about April", "has 68400 points"]", "prefers direct flights", "needs 80F+ weather", "Hawaii resonates strongly", "boutique/distinctive properties preferred"]",
+          messages: [{ role: "user", content: convoText.slice(0, 3000) }]
+        })
+      });
+      const data = await res.json();
+      const raw = data.content?.[0]?.text?.trim() || "[]";
+      const cleaned = raw.replace(/```json/g,"").replace(/```/g,"").trim();
+      const newSignals = JSON.parse(cleaned);
+      if (Array.isArray(newSignals) && newSignals.length > 0) {
+        const existing = loadLearnedPrefs();
+        // Merge, dedupe loosely, cap at 20 signals
+        const merged = [...existing, ...newSignals].filter((v,i,a) => a.findIndex(x => x.toLowerCase().includes(v.toLowerCase().split(" ")[0])) === i).slice(-20);
+        saveLearnedPrefs(merged);
+      }
+    } catch(e) { console.log("Pref extraction failed silently", e); }
   };
 
   // ── Results screen ──
