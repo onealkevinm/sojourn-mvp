@@ -565,7 +565,7 @@ const CompareView = ({ options, onBack }) => (
                 <div style={{ color: "#b0a898", fontSize: "13px" }}>{opt.headline}</div>
               </td>
               <td style={{ padding: "16px", textAlign: "right", verticalAlign: "top" }}>
-                <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "serif" }}>${opt.totalCost.toLocaleString()}</div>
+                <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "serif" }}>{typeof opt.totalCost === "number" ? opt.totalCost.toLocaleString() : String(opt.totalCost).replace(/^\$+/,"")}</div>
                 {opt.redemption && <div style={{ color: "#4CC97A", fontSize: "11px" }}>−{opt.redemption.valueRedeemed} redeemed</div>}
               </td>
               <td style={{ padding: "16px", textAlign: "right", verticalAlign: "top" }}>
@@ -664,12 +664,12 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary }) => {
       )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
         <div>
-          <div style={{ color: "#e8e4dc", fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif" }}>${option.totalCost.toLocaleString()}</div>
+          <div style={{ color: "#e8e4dc", fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif" }}>{typeof option.totalCost === "number" ? option.totalCost.toLocaleString() : String(option.totalCost).replace(/^\$+/,"")}</div>
           <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", marginTop: "2px" }}>TOTAL ESTIMATED</div>
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ color: option.tagColor, fontSize: "12px" }}>earns ${option.pointsValue} value via {option.pointsEarned}</div>
-          <div style={{ color: "#4a4a4a", fontSize: "11px", marginTop: "3px" }}>net ${option.netValue.toLocaleString()} after pts</div>
+          <div style={{ color: option.tagColor, fontSize: "12px" }}>earns ${typeof option.pointsValue === "number" ? option.pointsValue.toLocaleString() : String(option.pointsValue).replace(/^\$+/,"")} value via {option.pointsEarned}</div>
+          <div style={{ color: "#4a4a4a", fontSize: "11px", marginTop: "3px" }}>net ${typeof option.netValue === "number" ? option.netValue.toLocaleString() : String(option.netValue).replace(/^\$+/,"")} after pts</div>
         </div>
       </div>
       {isExpanded && (
@@ -745,11 +745,11 @@ const ItineraryOverlay = ({ option, tripSummary, onClose }) => {
 
         {/* Cost summary strip */}
         <div style={{ display: "flex", gap: "16px", padding: "14px 18px", background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: "12px", marginBottom: "28px" }}>
-          <div><div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", fontFamily: "serif" }}>TOTAL</div><div style={{ color: "#e8e4dc", fontSize: "18px", fontFamily: "serif" }}>${option.totalCost?.toLocaleString()}</div></div>
+          <div><div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", fontFamily: "serif" }}>TOTAL</div><div style={{ color: "#e8e4dc", fontSize: "18px", fontFamily: "serif" }}>{typeof option.totalCost === "number" ? option.totalCost.toLocaleString() : String(option.totalCost||0).replace(/^\$+/,"")}</div></div>
           <div style={{ width: "1px", background: "rgba(255,255,255,0.06)" }} />
           <div><div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", fontFamily: "serif" }}>POINTS EARNED</div><div style={{ color: "#C9A84C", fontSize: "13px", marginTop: "2px" }}>{option.pointsEarned}</div></div>
           <div style={{ width: "1px", background: "rgba(255,255,255,0.06)" }} />
-          <div><div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", fontFamily: "serif" }}>NET VALUE</div><div style={{ color: "#4CC97A", fontSize: "18px", fontFamily: "serif" }}>${option.netValue?.toLocaleString()}</div></div>
+          <div><div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", fontFamily: "serif" }}>NET VALUE</div><div style={{ color: "#4CC97A", fontSize: "18px", fontFamily: "serif" }}>{typeof option.netValue === "number" ? option.netValue.toLocaleString() : String(option.netValue||0).replace(/^\$+/,"")}</div></div>
         </div>
 
         {/* Flights section */}
@@ -971,6 +971,7 @@ RULES:
 - Budget = out-of-pocket spend. Points are the lever between cost and value.
 - If budget stated: Lowest Cost = best value at/near that budget. If no budget: Lowest Cost = cheapest option.
 - netValue = totalCost - pointsValue
+- CRITICAL: totalCost, pointsValue, netValue must be plain numbers (e.g. 11850 not "$11,850"). Never use dollar signs in numeric fields.
 - CRITICAL: Use only plain ASCII characters in JSON. No accented letters (write "Hotel" not "Hôtel"), no smart quotes, no apostrophes in property names or values (write "LHotel" not "L'Hotel").`;
   };
 
@@ -1024,7 +1025,11 @@ RULES:
         const start = text.indexOf("{");
         const end = text.lastIndexOf("}");
         if (start === -1 || end === -1) throw new Error(`No JSON in response: ${text.slice(0,200)}`);
-        let jsonStr = text.slice(start, end + 1);
+        // Strip markdown fences
+        let cleanText = text.replace(/```json/g, "").replace(/```/g, "").trim();
+        const start2 = cleanText.indexOf("{");
+        const end2 = cleanText.lastIndexOf("}");
+        let jsonStr = (start2 !== -1 && end2 !== -1) ? cleanText.slice(start2, end2 + 1) : text.slice(start, end + 1);
         // Fix common AI JSON issues: smart quotes, unescaped apostrophes in values
         jsonStr = jsonStr.replace(/[‘’]/g, "\'").replace(/[“”]/g, '\"');
         const parsed = JSON.parse(jsonStr);
@@ -1129,14 +1134,19 @@ User profile:
 - Brands: ${(userProfile.preferredBrands||[]).slice(0,15).join(", ")}
 
 Please respond to the refinement request now.`,
-          messages: [{ role: "user", content: msg }],
+          messages: [
+            ...refineMessages.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text })),
+            { role: "user", content: msg }
+          ],
         })
       });
       const data = await res.json();
-      const replyText = data.content?.[0]?.text?.trim() || "";
+      let replyText = data.content?.[0]?.text?.trim() || "";
 
       // Try to parse as new options set — handle multiple JSON formats
       const tryParseRefine = (text) => {
+        // Strip markdown fences first
+        text = text.replace(/```json/g, "").replace(/```/g, "").trim();
         // Format 1: full {tripSummary, options:[]} wrapper
         try {
           const start = text.indexOf("{");
@@ -1172,6 +1182,8 @@ Please respond to the refinement request now.`,
       }
 
       // Conversational response — strip any JSON that leaked into the text
+      // Strip any markdown fences from conversational response
+      replyText = replyText.replace(/```json/g, "").replace(/```/g, "").trim();
       const idxArray = replyText.indexOf("[{");
       const idxObj = replyText.indexOf('{"id"');
       const jsonStart = Math.min(
@@ -1267,8 +1279,8 @@ Please respond to the refinement request now.`,
                   {tripOptions.filter(o => o.id !== expandedId).map(opt => (
                     <div key={opt.id} onClick={() => setExpandedId(opt.id)} style={{ flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "12px 14px", cursor: "pointer", minWidth: "155px" }}>
                       <div style={{ color: opt.tagColor, fontSize: "10px", marginBottom: "4px" }}>{opt.tag}</div>
-                      <div style={{ color: "#b0a898", fontSize: "13px", fontFamily: "serif" }}>${opt.totalCost.toLocaleString()}</div>
-                      <div style={{ color: "#555", fontSize: "11px" }}>net ${opt.netValue.toLocaleString()}</div>
+                      <div style={{ color: "#b0a898", fontSize: "13px", fontFamily: "serif" }}>{typeof opt.totalCost === "number" ? opt.totalCost.toLocaleString() : String(opt.totalCost).replace(/^\$+/,"")}</div>
+                      <div style={{ color: "#555", fontSize: "11px" }}>net {typeof opt.netValue === "number" ? opt.netValue.toLocaleString() : String(opt.netValue).replace(/^\$+/,"")}</div>
                     </div>
                   ))}
                 </div>
