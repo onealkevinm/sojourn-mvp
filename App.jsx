@@ -1115,7 +1115,12 @@ WHEN RESPONDING CONVERSATIONALLY:
 - Reference the user's actual loyalty status and card benefits
 - End with an offer to update the cards if relevant
 
-Current options: ${JSON.stringify(tripOptions.map(o => ({id:o.id, tag:o.tag, headline:o.headline, totalCost:o.totalCost, components:o.components})))}
+Original trip request: ${conversationRef.current?.[0]?.content || "unknown"}
+
+Current options:
+${tripOptions.map(o => `[${o.tag}] ${o.headline} — $${o.totalCost} — Hotels: ${o.components.filter(c=>c.label.toLowerCase().includes("hotel")).map(c=>c.detail?.split("·")[0]?.trim()).join(", ")} — Flights: ${o.components.filter(c=>c.label.toLowerCase().includes("flight")).map(c=>c.detail).join(" / ")}`).join("\n")}
+
+CRITICAL CONSTRAINTS: The user's original request defined the destination/geography. When regenerating cards, NEVER suggest destinations outside what the user originally requested or what they have explicitly approved in this refinement conversation. If the user said "Florida and Hawaii", only show Florida and Hawaii options.
 
 User profile:
 - Home airport: ${userProfile.travelProfile?.homeAirport || "unknown"}
