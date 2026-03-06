@@ -1123,8 +1123,8 @@ User profile:
 - Loyalty: ${userProfile.loyaltyAccounts.map(a=>`${a.program}(${a.tier},${a.balance})`).join(", ")}
 - Brands: ${(userProfile.preferredBrands||[]).slice(0,15).join(", ")}
 
-Please respond to the refinement request now.` }
-          ],
+Please respond to the refinement request now.`,
+          messages: [{ role: "user", content: msg }],
         })
       });
       const data = await res.json();
