@@ -1023,7 +1023,10 @@ RULES:
         const start = text.indexOf("{");
         const end = text.lastIndexOf("}");
         if (start === -1 || end === -1) throw new Error(`No JSON in response: ${text.slice(0,200)}`);
-        const parsed = JSON.parse(text.slice(start, end + 1));
+        let jsonStr = text.slice(start, end + 1);
+        // Fix common AI JSON issues: smart quotes, unescaped apostrophes in values
+        jsonStr = jsonStr.replace(/[‘’]/g, "\'").replace(/[“”]/g, '\"');
+        const parsed = JSON.parse(jsonStr);
         if (!parsed.options?.length) throw new Error("No options array");
         return parsed;
       } catch(e) {
@@ -1045,7 +1048,7 @@ RULES:
         setTripSummary(parsed.tripSummary);
         setPhase("results");
       } catch(e2) {
-        setMessages(prev => [...prev, { role: "assistant", text: `Error: ${e2.message}` }]);
+        setMessages(prev => [...prev, { role: "assistant", text: "Having trouble generating your options — please try again." }]);
       }
     } finally {
       setLoading(false);
