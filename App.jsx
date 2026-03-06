@@ -1100,8 +1100,11 @@ RESPONSE RULES:
 - When the user requests changes (swap, update, replace, add, include, refresh, "yes", "yes please", any confirmation of a suggestion) — you MUST output a full new set of 6 JSON options. Start with 1-2 sentences summarizing what changed, then immediately output the complete JSON.
 - When the user asks a factual question, comparison, or wants advice without requesting a change — respond conversationally. Be specific: name properties, quote prices, give door-to-door times. 
 - CRITICAL: If you say you swapped or changed something, you MUST include the full JSON immediately after. Never claim to have updated cards without outputting new JSON.
-- JSON format: start with preamble summary sentence(s), then immediately output {"tripSummary":...,"options":[...]} with all 6 options, same schema as original.
-- Keep whyThis explanations personalized and specific — reference the user's loyalty status, card benefits, and stated preferences.
+- JSON format: start with 1-2 preamble sentences, then output the COMPLETE JSON object. Schema MUST be:
+{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","value":"","detail":"","points":"","card":""},{"label":"Return Flight","value":"","detail":"","points":"","card":""},{"label":"Hotel","value":"","detail":"","points":"","card":""},{"label":"Ground","value":"","detail":"","points":"","card":""}]}]}
+- tripSummary MUST be an object, options MUST be an array of objects. Never use strings for these fields.
+- Include all 6 options with ids 1-6 and correct tags: Recommended/#C9A84C, Best Points Earned/#4C9AC9, Best Points Redemption/#4CC97A, Lowest Cost/#C9C94C, Fastest/#C94C8A, Quality Upgrade/#9A4CC9
+- Keep whyThis personalized — reference loyalty status, card benefits, stated preferences.
 
 Current trip options shown to user:
 ${JSON.stringify(tripOptions)}
