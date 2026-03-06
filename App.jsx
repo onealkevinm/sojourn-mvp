@@ -545,7 +545,7 @@ const OnboardingFlow = ({ onComplete }) => {
 
 // ─── Components ──────────────────────────────────────────────────────────────
 
-const CompareView = ({ options, onBack }) => (
+const CompareView = ({ options, onBack, onSelectOption }) => (
   <div style={{ animation: "fadeUp 0.4s ease forwards" }}>
     <button onClick={onBack} style={{ background: "none", border: "1px solid rgba(255,255,255,0.2)", color: "#aaa", padding: "8px 16px", borderRadius: "20px", cursor: "pointer", marginBottom: "24px", fontSize: "13px" }}>← Back to Cards</button>
     <div style={{ overflowX: "auto" }}>
@@ -559,10 +559,11 @@ const CompareView = ({ options, onBack }) => (
         </thead>
         <tbody>
           {options.map((opt, i) => (
-            <tr key={opt.id} style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: i === 0 ? "rgba(201,168,76,0.04)" : "transparent" }}>
+            <tr key={opt.id} onClick={() => onSelectOption && onSelectOption(opt.id)} style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: i === 0 ? "rgba(201,168,76,0.04)" : "transparent", cursor: "pointer", transition: "background 0.15s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"} onMouseLeave={e => e.currentTarget.style.background = i === 0 ? "rgba(201,168,76,0.04)" : "transparent"}>
               <td style={{ padding: "16px", verticalAlign: "top" }}>
                 <span style={{ background: opt.tagColor + "18", color: opt.tagColor, fontSize: "10px", padding: "3px 8px", borderRadius: "10px", fontFamily: "serif", display: "inline-block", marginBottom: "6px" }}>{opt.tag}</span>
                 <div style={{ color: "#b0a898", fontSize: "13px" }}>{opt.headline}</div>
+                <div style={{ color: "#444", fontSize: "10px", marginTop: "4px", letterSpacing: "0.05em" }}>View details →</div>
               </td>
               <td style={{ padding: "16px", textAlign: "right", verticalAlign: "top" }}>
                 <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "serif" }}>{typeof opt.totalCost === "number" ? opt.totalCost.toLocaleString() : String(opt.totalCost).replace(/^\$+/,"")}</div>
@@ -1083,6 +1084,19 @@ INTELLIGENCE RULES:
 - totalCost, pointsValue, netValue: plain integers only (11850 not "$11,850")
 - netValue = totalCost - pointsValue
 
+LOYALTY BRAND PORTFOLIOS — boutique sub-brands that still earn full loyalty points:
+- Marriott Bonvoy: Autograph Collection, Edition, Design Hotels, Tribute Portfolio, W Hotels, Westin, Le Meridien, The Luxury Collection — all earn Bonvoy and qualify for Gold/Platinum benefits
+- World of Hyatt: Andaz, Thompson Hotels, Alila, Unbound Collection, Joie de Vivre, tommie, Caption — all earn Hyatt points and Discoverist/Explorist/Globalist benefits apply
+- Hilton Honors: Curio Collection, Tapestry Collection, Tempo, Canopy — all earn Hilton points with full status benefits
+- IHG One: Vignette Collection, Hotel Indigo, Kimpton — boutique-feeling with full IHG point earning
+- When a traveler wants boutique character but also wants to earn points, ALWAYS consider these sub-brands before defaulting to independent properties or large flagship hotels
+
+DESTINATION DIVERSITY RULE:
+- When a query is open-ended or exploratory (mentions multiple destinations, says "open to ideas", or gives no single destination) — NEVER place more than 2 options in the same destination city or island
+- Spread options across the geographic possibility space: e.g. for "beach vacation, Florida or Hawaii, open to ideas" use 2 Hawaii, 2 Florida, 1 Caribbean, 1 Wild Card
+- Only converge on a single destination when the user has explicitly narrowed to it or refinement has confirmed it
+- Each of the 6 options should feel like a genuinely different trip, not a variation of the same trip in the same place
+
 REQUIRED JSON SCHEMA:
 {"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","value":"","detail":"","points":"","card":""},{"label":"Return Flight","value":"","detail":"","points":"","card":""},{"label":"Hotel","value":"","detail":"","points":"","card":""},{"label":"Ground","value":"","detail":"","points":"","card":""}]}]}`;
   };
@@ -1481,7 +1495,7 @@ Please respond now.`,
 
         <div style={{ padding: "0 28px 48px" }}>
           {showCompare ? (
-            <CompareView options={tripOptions} onBack={() => setShowCompare(false)} />
+            <CompareView options={tripOptions} onBack={() => setShowCompare(false)} onSelectOption={(id) => { setShowCompare(false); setExpandedId(id); }} />
           ) : expandedId ? (
             <div style={{ animation: "fadeUp 0.3s ease forwards" }}>
               <button onClick={() => setExpandedId(null)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", color: "#888", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", marginBottom: "16px" }}>← All Options</button>
