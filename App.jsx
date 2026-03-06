@@ -300,7 +300,7 @@ const OnboardingFlow = ({ onComplete }) => {
         {/* Step 0 — Welcome */}
         {step === 0 && (
           <div>
-            <div style={{ fontSize: "36px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.15", marginBottom: "16px" }}>Spend less.<br />Travel smarter.</div>
+            <div style={{ fontSize: "36px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.15", marginBottom: "16px" }}>Your travel,<br />optimized.</div>
             <div style={{ color: "#666", fontSize: "15px", lineHeight: "1.7", marginBottom: "32px" }}>Sojourn optimizes every trip across your credit cards, loyalty programs, and personal preferences — all at once, in plain language.</div>
             <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginBottom: "36px" }}>
               {["Optimizes cards, loyalty programs, and brand preferences simultaneously", "Surfaces points redemption opportunities you would otherwise miss", "Gets smarter and more personalized with every trip"].map(t => (
@@ -665,7 +665,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary }) => {
       )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
         <div>
-          <div style={{ color: "#e8e4dc", fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif" }}>{typeof option.totalCost === "number" ? option.totalCost.toLocaleString() : String(option.totalCost).replace(/^\$+/,"")}</div>
+          <div style={{ color: "#e8e4dc", fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif" }}>${typeof option.totalCost === "number" ? option.totalCost.toLocaleString() : String(option.totalCost).replace(/^\$+/,"")}</div>
           <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", marginTop: "2px" }}>TOTAL ESTIMATED</div>
         </div>
         <div style={{ textAlign: "right" }}>
@@ -684,9 +684,12 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary }) => {
         <div style={{ marginTop: "26px", animation: "fadeUp 0.3s ease forwards" }} onClick={e => e.stopPropagation()}>
           {/* Headline + Why This at top */}
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "20px", marginBottom: "16px" }}>
-            <div style={{ color: "#e8e4dc", fontSize: "17px", fontWeight: "600", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.3", marginBottom: "12px" }}>{option.headline}</div>
+            <div style={{ color: "#e8e4dc", fontSize: "17px", fontWeight: "600", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.3", marginBottom: "14px" }}>{option.headline}</div>
             {option.whyThis && (
-              <div style={{ color: "#b0a898", fontSize: "13px", lineHeight: "1.7" }}>{option.whyThis}</div>
+              <div style={{ marginBottom: "4px" }}>
+                <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>Why This Option</div>
+                <div style={{ color: "#b0a898", fontSize: "13px", lineHeight: "1.7" }}>{option.whyThis}</div>
+              </div>
             )}
           </div>
           {/* Tradeoff */}
@@ -1337,6 +1340,20 @@ FLIGHT ROUTE KNOWLEDGE — Seattle (SEA) to common beach destinations:
 - SEA-NAS (Nassau): 1 stop via Miami or Atlanta
 - Caribbean/BVI/Turks: always 1-2 stops via Miami or Atlanta
 - Delta Platinum status: upgrades and priority most valuable on longer nonstop legs
+
+DESTINATION GATEWAY RULES — always use the correct arrival airport:
+- Florida Keys (Key Largo, Islamorada, Marathon, Key West): fly into MIA or FLL, never ATL — ATL adds 2+ hours
+- Key West specifically: MIA then drive 3.5h, or FLL then drive 4h, or direct to EYW (Key West airport, limited service)
+- Naples FL / Marco Island: fly into RSW (Fort Myers) or MIA
+- Sanibel/Captiva: fly into RSW (Fort Myers)
+- 30A / Destin / Panama City: fly into VPS or PNS
+- Savannah / Hilton Head: fly into SAV
+- Charleston SC: fly into CHS — Alaska has direct SEA-CHS seasonally
+- Sea Island / Golden Isles GA: fly into BQK (Brunswick) or SAV
+- Turks & Caicos: fly into PLS via MIA or JFK
+- St. Barts: fly into SXM (St. Maarten) then ferry or puddle-jump
+- BVI (Virgin Gorda, Tortola): fly into EIS via SJU (San Juan) or STT (St. Thomas)
+- Nevis: fly into NEV via SJU or ATL
 
 HARD CONSTRAINTS — these override everything else:
 - Honor ALL stated constraints across every option: weather minimums (80+ degrees means every option must hit 80+), family-friendly (no adults-only), geographic limits, budget
