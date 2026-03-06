@@ -996,7 +996,7 @@ const BottomDrawer = ({ label, count, items }) => {
 // ─── Main App ──────────────────────────────────────────────────────────────────
 
 export default function SojournApp() {
-  const [phase, setPhase] = useState("onboarding"); // onboarding | chat | results
+  const [phase, setPhase] = useState(() => { try { return localStorage.getItem("sojourn_profile") ? "chat" : "onboarding"; } catch(e) { return "onboarding"; } }); // onboarding | chat | results
   const [messages, setMessages] = useState([
     { role: "assistant", text: "Where to next? Tell me about your trip — destination, rough dates, who's traveling, any preferences or must-haves. The more context you share, the sharper the options." }
   ]);
@@ -1013,7 +1013,10 @@ export default function SojournApp() {
   const [refineLoadingMessage, setRefineLoadingMessage] = useState("");
   const [itineraryOption, setItineraryOption] = useState(null);
   const [loadingMessage, setLoadingMessage] = useState("");
-  const [userProfile, setUserProfile] = useState(USER_PROFILE);
+  const getSavedProfile = () => {
+    try { const s = localStorage.getItem("sojourn_profile"); return s ? JSON.parse(s) : null; } catch(e) { return null; }
+  };
+  const [userProfile, setUserProfile] = useState(() => getSavedProfile() || USER_PROFILE);
   const recognitionRef = useRef(null);
   const bottomRef = useRef(null);
   const conversationRef = useRef([]);
@@ -1262,10 +1265,10 @@ TRAVELER PROFILE:
 - Loyalty: ${userProfile.loyaltyAccounts.map(a=>`${a.program} (${a.tier}, ${a.balance} pts)`).join(", ")}
 - Preferred brands: ${(userProfile.preferredBrands||[]).slice(0,15).join(", ")}
 
-ORIGINAL TRIP REQUEST: ${conversationRef.current?.[0]?.content || "unknown"}
+ORIGINAL TRIP REQUEST: ${(conversationRef.current&&conversationRef.current[0]&&conversationRef.current[0].content) || "unknown"}
 
 CURRENT OPTIONS SHOWING:
-${tripOptions.map(o => "[" + o.tag + "] " + o.headline + " ($" + o.totalCost + ") - " + o.components.filter(c=>c.label.toLowerCase().includes("hotel")).map(c=>c.detail ? c.detail.split(" ")[0] : "").join(", ")).join("\n")}
+${(tripOptions||[]).map(o => "[" + (o.tag||"") + "] " + (o.headline||"") + " ($" + (o.totalCost||0) + ") - " + (o.components||[]).filter(c=>c.label&&c.label.toLowerCase().includes("hotel")).map(c=>c.detail ? c.detail.split(" ")[0] : "").join(", ")).join("\n")}
 
 
 WHEN TO GENERATE NEW CARDS:
@@ -1293,7 +1296,7 @@ CARD QUALITY RULES (when generating new cards):
 
 Please respond now.`,
           messages: [
-            ...refineMessages.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text })),
+            ...(refineMessages||[]).filter(m=>m&&m.text).map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text || "" })),
             { role: "user", content: msg }
           ],
         })
@@ -1351,7 +1354,8 @@ Please respond now.`,
       const cleanReply = jsonStart < Infinity ? replyText.slice(0, jsonStart).trim() : replyText;
       setRefineMessages(prev => [...prev, { role: "assistant", text: cleanReply || replyText }]);
     } catch (e) {
-      setRefineMessages(prev => [...prev, { role: "assistant", text: "Something went wrong. Please try again." }]);
+      console.error("Refine error:", e);
+      try { setRefineMessages(prev => [...prev, { role: "assistant", text: "Something went wrong — please try again." }]); } catch(e2) {}
     } finally {
       setRefineLoading(false);
       clearInterval(refineInterval);
@@ -1361,6 +1365,7 @@ Please respond now.`,
 
   const handleOnboardingComplete = (profile) => {
     setUserProfile(profile);
+    try { localStorage.setItem("sojourn_profile", JSON.stringify(profile)); } catch(e) {}
     setPhase("chat");
   };
 
@@ -1372,6 +1377,12 @@ Please respond now.`,
     setConciergeMode(true);
     conversationRef.current = [];
     setRefineMessages([]);
+  };
+
+  const clearProfile = () => {
+    try { localStorage.removeItem("sojourn_profile"); } catch(e) {}
+    setUserProfile({});
+    setPhase("onboarding");
   };
 
   // ── Results screen ──
