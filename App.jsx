@@ -1131,6 +1131,8 @@ LOYALTY BRAND PORTFOLIOS — boutique sub-brands that still earn full loyalty po
 - IHG One: Vignette Collection, Hotel Indigo, Kimpton — boutique-feeling with full IHG point earning
 - When a traveler wants boutique character but also wants to earn points, ALWAYS consider these sub-brands before defaulting to independent properties or large flagship hotels
 
+MULTI-CITY TRIPS: If the query involves multiple destinations (e.g. Chicago + Park City, Paris + London), structure each option to cover ALL legs. Use additional components beyond the standard 4 — e.g. "Flight to Chicago", "Chicago Hotel", "Flight to SLC", "Park City Hotel", "Rental Car", etc. Keep each component detail concise to stay within token limits. The headline should reflect the full trip: "Chicago + Park City · Marriott + Deer Valley"
+
 DESTINATION DIVERSITY RULE:
 - When a query is open-ended or exploratory (mentions multiple destinations, says "open to ideas", or gives no single destination) — NEVER place more than 2 options in the same destination city or island
 - Spread options across the geographic possibility space: e.g. for "beach vacation, Florida or Hawaii, open to ideas" use 2 Hawaii, 2 Florida, 1 Caribbean, 1 Wild Card
@@ -1227,7 +1229,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
 
     const tryGenerate = async () => {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 90000);
+      const timeout = setTimeout(() => controller.abort(), 120000);
       try {
         const res = await fetch("https://api.anthropic.com/v1/messages", {
           method: "POST",
@@ -1235,7 +1237,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
           headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
           body: JSON.stringify({
             model: "claude-sonnet-4-20250514",
-            max_tokens: 4000,
+            max_tokens: 6000,
             temperature: 0.5,
             system: buildSystemPrompt(),
             messages: [{ role: "user", content: fullContext }],
