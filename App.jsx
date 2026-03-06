@@ -1011,7 +1011,7 @@ RULES:
           headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
           body: JSON.stringify({
             model: "claude-sonnet-4-20250514",
-            max_tokens: 2000,
+            max_tokens: 4000,
             system: buildSystemPrompt(),
             messages: [{ role: "user", content: userMessage }],
           })
@@ -1024,8 +1024,6 @@ RULES:
         const start = text.indexOf("{");
         const end = text.lastIndexOf("}");
         if (start === -1 || end === -1) throw new Error(`No JSON in response: ${text.slice(0,200)}`);
-        console.log("FULL RESPONSE LENGTH:", text.length);
-        console.log("RAW API RESPONSE:", text.slice(0, 2000));
         let jsonStr = text.slice(start, end + 1);
         // Fix common AI JSON issues: smart quotes, unescaped apostrophes in values
         jsonStr = jsonStr.replace(/[‘’]/g, "\'").replace(/[“”]/g, '\"');
@@ -1051,7 +1049,7 @@ RULES:
         setTripSummary(parsed.tripSummary);
         setPhase("results");
       } catch(e2) {
-        setMessages(prev => [...prev, { role: "assistant", text: `Debug — raw response: ${e2.message}` }]);
+        setMessages(prev => [...prev, { role: "assistant", text: "Having trouble generating your options — please try again." }]);
       }
     } finally {
       setLoading(false);
