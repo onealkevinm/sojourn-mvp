@@ -682,19 +682,24 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary }) => {
       </div>
       {isExpanded && (
         <div style={{ marginTop: "26px", animation: "fadeUp 0.3s ease forwards" }} onClick={e => e.stopPropagation()}>
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "22px", marginBottom: "6px" }}>
-            <div style={{ color: "#666", fontSize: "10px", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Trip Components</div>
-            {option.components.map(c => <ComponentRow key={c.label + c.value} {...c} />)}
+          {/* Headline + Why This at top */}
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "20px", marginBottom: "16px" }}>
+            <div style={{ color: "#e8e4dc", fontSize: "17px", fontWeight: "600", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.3", marginBottom: "12px" }}>{option.headline}</div>
+            {option.whyThis && (
+              <div style={{ color: "#b0a898", fontSize: "13px", lineHeight: "1.7" }}>{option.whyThis}</div>
+            )}
           </div>
-          {option.whyThis && (
-            <div style={{ marginTop: "18px", padding: "14px 16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "5px" }}>Why This Option</div>
-              <div style={{ color: "#b0a898", fontSize: "13px", lineHeight: "1.6" }}>{option.whyThis}</div>
+          {/* Tradeoff */}
+          {option.tradeoff && (
+            <div style={{ padding: "12px 16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)", marginBottom: "16px" }}>
+              <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "5px" }}>Tradeoff</div>
+              <div style={{ color: "#8a8278", fontSize: "13px", lineHeight: "1.5", fontStyle: "italic" }}>{option.tradeoff}</div>
             </div>
           )}
-          <div style={{ marginTop: "12px", padding: "14px 16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)" }}>
-            <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "5px" }}>Tradeoff</div>
-            <div style={{ color: "#8a8278", fontSize: "13px", lineHeight: "1.5", fontStyle: "italic" }}>{option.tradeoff}</div>
+          {/* Trip Components */}
+          <div style={{ marginBottom: "6px" }}>
+            <div style={{ color: "#666", fontSize: "10px", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Trip Components</div>
+            {option.components.map(c => <ComponentRow key={c.label + c.value} {...c} />)}
           </div>
           <div style={{ marginTop: "12px", padding: "12px 16px", background: option.tagColor + "0e", borderRadius: "12px", border: `1px solid ${option.tagColor}22` }}>
             <div style={{ color: option.tagColor, fontSize: "12px" }}>✦ {option.loyaltyHighlight}</div>
@@ -1311,6 +1316,27 @@ WHEN TO RESPOND CONVERSATIONALLY:
 - Be specific: name properties, quote prices, give times
 - Reference the traveler's loyalty tier and card benefits by name
 - End with an offer to update cards if relevant
+
+CONCIERGE TONE RULES — critical:
+- Never say "I don't have access to real-time data" or "I can't verify" or "you should check" — this breaks trust
+- If uncertain about a specific fact, hedge confidently: "Alaska typically runs seasonal directs SEA-MIA in spring — worth confirming on their site before booking" not "I'm not sure, please verify yourself"
+- Never expose internal limitations or backpedal awkwardly — a good concierge says "let me check on that" and comes back with a useful answer
+- If you stated something wrong, correct it cleanly in one sentence and move forward — don't over-explain or apologize
+- Always maintain the posture of a knowledgeable advisor who is being appropriately careful, not an AI exposing its constraints
+
+FLIGHT ROUTE KNOWLEDGE — Seattle (SEA) to common beach destinations:
+- SEA-HNL (Honolulu): Alaska and Hawaiian direct, ~5h45m
+- SEA-OGG (Maui): Alaska direct seasonal, ~6h15m  
+- SEA-KOA (Kona): Alaska direct seasonal, ~6h
+- SEA-MIA (Miami): Alaska seasonal direct (spring/summer), otherwise 1 stop via LAX/PHX
+- SEA-FLL (Fort Lauderdale): Alaska seasonal, typically 1 stop
+- SEA-TPA (Tampa): Usually 1 stop via Denver or Phoenix
+- SEA-MCO (Orlando): Delta seasonal, typically 1 stop
+- SEA-SAN (San Diego): Alaska and Southwest direct, ~2h30m
+- SEA-CUN (Cancun): Alaska seasonal direct
+- SEA-NAS (Nassau): 1 stop via Miami or Atlanta
+- Caribbean/BVI/Turks: always 1-2 stops via Miami or Atlanta
+- Delta Platinum status: upgrades and priority most valuable on longer nonstop legs
 
 HARD CONSTRAINTS — these override everything else:
 - Honor ALL stated constraints across every option: weather minimums (80+ degrees means every option must hit 80+), family-friendly (no adults-only), geographic limits, budget
