@@ -121,11 +121,21 @@ const LOYALTY_OPTIONS = {
 };
 
 const LOYALTY_BRAND_MAP = {
-  "Marriott Bonvoy": ["Marriott", "Westin", "Sheraton", "W Hotels", "St. Regis", "Ritz-Carlton", "EDITION", "Autograph Collection", "Renaissance", "Le Méridien", "The Luxury Collection"],
-  "Hilton Honors": ["Hilton", "Conrad", "Waldorf Astoria", "Curio Collection", "DoubleTree", "Canopy", "Tapestry Collection", "LXR Hotels"],
-  "World of Hyatt": ["Park Hyatt", "Grand Hyatt", "Andaz", "Hyatt Regency", "Alila", "Thompson Hotels", "Hyatt Centric"],
-  "IHG One Rewards": ["InterContinental", "Kimpton", "Six Senses", "Regent", "Hotel Indigo"],
+  "Marriott Bonvoy": ["Marriott", "Westin", "Sheraton", "W Hotels", "St. Regis", "Ritz-Carlton", "EDITION", "Autograph Collection", "Renaissance", "Le Meridien", "The Luxury Collection", "Design Hotels", "Tribute Portfolio", "Delta Hotels", "Courtyard", "Residence Inn", "Springhill Suites", "Fairfield", "AC Hotels", "Aloft", "Element", "Moxy", "Four Points"],
+  "Hilton Honors": ["Hilton", "Conrad", "Waldorf Astoria", "Curio Collection", "DoubleTree", "Canopy", "Tapestry Collection", "LXR Hotels", "Embassy Suites", "Hampton Inn", "Homewood Suites", "Home2 Suites", "Tempo", "Motto", "Tru"],
+  "World of Hyatt": ["Park Hyatt", "Grand Hyatt", "Andaz", "Hyatt Regency", "Alila", "Thompson Hotels", "Hyatt Centric", "JdV by Hyatt", "Caption by Hyatt", "tommie", "Unbound Collection", "Joie de Vivre", "Hyatt Place", "Hyatt House"],
+  "IHG One Rewards": ["InterContinental", "Kimpton", "Six Senses", "Regent", "Hotel Indigo", "Vignette Collection", "voco", "Crowne Plaza", "Holiday Inn", "Even Hotels", "Staybridge Suites"],
+  "Wyndham Rewards": ["Wyndham Grand", "Registry Collection", "La Quinta", "Trademark Collection", "Dolce Hotels", "Wingate", "Hawthorn Suites", "Microtel", "Days Inn", "Super 8"],
+  "Choice Privileges": ["Cambria Hotels", "Ascend Collection", "Comfort Inn", "Quality Inn", "Clarion", "Sleep Inn", "Econo Lodge"],
 };
+
+// Independent hotels — explicitly NOT in any major loyalty program
+const INDEPENDENT_HOTELS = [
+  "Peninsula", "Four Seasons", "Rosewood", "Mandarin Oriental", "Aman", "Amanyara", "Amanjiwo",
+  "Belmond", "Montage", "Auberge", "Relais & Chateaux", "Small Luxury Hotels",
+  "1 Hotels", "Ace Hotels", "Surf Hotel", "Blackberry Farm", "Brush Creek Ranch",
+  "Sandy Lane", "Eden Rock", "Round Hill", "Jade Mountain"
+];
 
 const BRAND_CATEGORIES = [
   {
@@ -1100,6 +1110,7 @@ TRAVELER PROFILE:
 - Travel types: ${(tp.travelTypes||[]).join(", ")}
 - Credit cards: ${cardList}
 - Hotel loyalty: ${hotelLoyalty||"none"}
+- Brand-to-program mapping: Marriott Bonvoy covers ${(LOYALTY_BRAND_MAP["Marriott Bonvoy"]||[]).slice(0,8).join(", ")} and more. Hyatt covers ${(LOYALTY_BRAND_MAP["World of Hyatt"]||[]).slice(0,8).join(", ")} and more. Hilton covers ${(LOYALTY_BRAND_MAP["Hilton Honors"]||[]).slice(0,6).join(", ")} and more.
 - Airline miles: ${airlineLoyalty||"none"}${learnedList ? `
 - LEARNED FROM PAST TRIPS: ${learnedList}` : ""}
 - Preferred hotel brands: ${brandList}
@@ -1136,11 +1147,24 @@ INTELLIGENCE RULES:
 - netValue = totalCost - pointsValue
 
 LOYALTY BRAND PORTFOLIOS — boutique sub-brands that still earn full loyalty points:
-- Marriott Bonvoy: Autograph Collection, Edition, Design Hotels, Tribute Portfolio, W Hotels, Westin, Le Meridien, The Luxury Collection — all earn Bonvoy and qualify for Gold/Platinum benefits
-- World of Hyatt: Andaz, Thompson Hotels, Alila, Unbound Collection, Joie de Vivre, tommie, Caption — all earn Hyatt points and Discoverist/Explorist/Globalist benefits apply
-- Hilton Honors: Curio Collection, Tapestry Collection, Tempo, Canopy — all earn Hilton points with full status benefits
-- IHG One: Vignette Collection, Hotel Indigo, Kimpton — boutique-feeling with full IHG point earning
-- When a traveler wants boutique character but also wants to earn points, ALWAYS consider these sub-brands before defaulting to independent properties or large flagship hotels
+- Marriott Bonvoy: Autograph Collection, Edition, Design Hotels, Tribute Portfolio, W Hotels, Westin, Le Meridien, The Luxury Collection, Ritz-Carlton, St. Regis, EDITION — all earn Bonvoy and qualify for Gold/Platinum benefits
+- World of Hyatt: Andaz, Thompson Hotels, Alila, Unbound Collection, Joie de Vivre, tommie, Caption, Park Hyatt, Grand Hyatt, Hyatt Regency, Hyatt Centric — all earn Hyatt points
+- Hilton Honors: Curio Collection, Tapestry Collection, Tempo, Canopy, Conrad, Waldorf Astoria, LXR — all earn Hilton points
+- IHG One: Vignette Collection, Hotel Indigo, Kimpton, InterContinental, Six Senses — full IHG point earning
+- When a traveler wants boutique character but also wants to earn points, ALWAYS consider these sub-brands before defaulting to independent properties
+
+INDEPENDENT HOTELS — these do NOT earn major loyalty points (no Bonvoy, Hyatt, Hilton, IHG):
+- Peninsula Hotels (PenClub only — not Marriott, not Hyatt)
+- Four Seasons (own program only — not affiliated with any major chain)
+- Rosewood Hotels (own program — not Marriott or Hyatt)
+- Mandarin Oriental (own program — not affiliated)
+- Aman Resorts (no meaningful loyalty program)
+- Belmond (own program — not affiliated)
+- Montage Hotels (own program — not affiliated)
+- Auberge Resorts (own program — not affiliated)
+- Relais & Chateaux (designation only — individual properties may or may not be in a loyalty program)
+- Small Luxury Hotels of the World (designation only — not a loyalty program)
+CRITICAL: NEVER assign Marriott, Hyatt, or Hilton points to independent hotels. If suggesting an independent hotel, pointsEarned should reflect credit card earning only (e.g. "2x via Amex Platinum on hotels") not loyalty program points.
 
 MULTI-CITY TRIPS: If the query involves multiple destinations (e.g. Chicago + Park City, Paris + London), structure each option to cover ALL legs. Use additional components beyond the standard 4 — e.g. "Flight to Chicago", "Chicago Hotel", "Flight to SLC", "Park City Hotel", "Rental Car", etc. Keep each component detail concise to stay within token limits. The headline should reflect the full trip: "Chicago + Park City · Marriott + Deer Valley"
 
