@@ -1,32 +1,34 @@
 import { useState, useRef, useEffect } from "react";
 
 // ── Analytics ──────────────────────────────────────────────────────────────────
-const MIXPANEL_TOKEN = "d7e668765a8c"; // Replace with your token
+const MIXPANEL_TOKEN = "d7e668765a8c";
 const mp = {
-  _did: null,
-  deviceId() {
-    if (!this._did) {
-      try {
-        this._did = localStorage.getItem("mp_did") || Math.random().toString(36).slice(2);
-        localStorage.setItem("mp_did", this._did);
-      } catch(e) { this._did = Math.random().toString(36).slice(2); }
-    }
-    return this._did;
+  ready: false,
+  queue: [],
+  init() {
+    if (this.ready || typeof window === "undefined") return;
+    // Load Mixpanel SDK via script tag
+    (function(c,a){window.mixpanel=a;var b=c.createElement("script");b.type="text/javascript";b.async=!0;b.src="https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js";var d=c.getElementsByTagName("script")[0];d.parentNode.insertBefore(b,d);a._i=[];a.init=function(e,f,g){function c(a,b){var c=b.split(".");2==c.length&&(a=a[c[0]],b=c[1]);a[b]=function(){a.push([b].concat(Array.prototype.slice.call(arguments,0)))}}var h=a;"undefined"!==typeof g?h=a[g]=[]:g="mixpanel";h.people=h.people||[];h.toString=function(a){var b="mixpanel";"mixpanel"!==g&&(b+="."+g);a||(b+=" (stub)");return b};h.people.toString=function(){return h.toString(1)+".people (stub)"};i="disable time_event track track_pageview track_links track_forms track_with_groups add_group set_group remove_group register register_once alias unregister identify name_tag set_config reset opt_in_tracking opt_out_tracking has_opted_in_tracking has_opted_out_tracking clear_opt_in_out_tracking start_batch_senders people.set people.set_once people.unset people.increment people.append people.union people.track_charge people.clear_charges people.delete_user people.remove".split(" ");for(var j=0;j<i.length;j++)c(h,i[j]);var k="set set_once union unset remove delete".split(" ");h.get_group=function(){function a(c){b[c]=function(){call2_args=arguments;call2=[c].concat(Array.prototype.slice.call(call2_args,0));h.push([e,call2])}}for(var b={},d=0;d<k.length;d++)a(k[d]);return b};a._i.push([e,f,g])};a.__SV=1.2})(document,window.mixpanel||[]);
+    window.mixpanel.init(MIXPANEL_TOKEN, { persistence: "localStorage" });
+    this.ready = true;
+    this.queue.forEach(([e,p]) => window.mixpanel.track(e, p));
+    this.queue = [];
   },
   track(event, props = {}) {
-    if (MIXPANEL_TOKEN === "YOUR_MIXPANEL_TOKEN") return; // No-op until token set
     try {
-      fetch("https://api.mixpanel.com/track", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: "data=" + encodeURIComponent(JSON.stringify({
-          event,
-          properties: { token: MIXPANEL_TOKEN, distinct_id: this.deviceId(), time: Date.now() / 1000, ...props }
-        }))
-      });
+      if (typeof window !== "undefined" && window.mixpanel && window.mixpanel.track) {
+        window.mixpanel.track(event, props);
+      } else {
+        this.queue.push([event, props]);
+        this.init();
+      }
     } catch(e) {}
   }
 };
+// Initialize immediately
+if (typeof window !== "undefined") {
+  setTimeout(() => mp.init(), 0);
+}
 
 const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
 
