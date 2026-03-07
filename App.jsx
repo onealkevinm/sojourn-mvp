@@ -1086,7 +1086,10 @@ export default function SojournApp() {
     const p = userProfile;
     const tp = p.travelProfile || {};
     const cardList = (p.cards||[]).map(c=>c.name).join(", ");
-    const loyaltyList = (p.loyaltyAccounts||[]).map(a=>a.program+" ("+a.tier+", "+a.balance+" pts)").join(", ");
+    const airlinePrograms = ["United MileagePlus","Delta SkyMiles","American AAdvantage","Alaska Mileage Plan","Southwest Rapid Rewards","JetBlue TrueBlue","Emirates Skywards","British Airways Avios","Air France Flying Blue","Singapore KrisFlyer"];
+    const hotelLoyalty = (p.loyaltyAccounts||[]).filter(a=>!airlinePrograms.includes(a.program)).map(a=>a.program+" ("+a.tier+", "+a.balance+")").join(", ");
+    const airlineLoyalty = (p.loyaltyAccounts||[]).filter(a=>airlinePrograms.includes(a.program)).map(a=>a.program+" ("+a.tier+", "+a.balance+")").join(", ");
+    const loyaltyList = (p.loyaltyAccounts||[]).map(a=>a.program+" ("+a.tier+", "+a.balance+")").join(", ");
     const brandList = (p.preferredBrands||[]).slice(0,15).join(", ");
     const learnedList = learnedPrefs.length > 0 ? learnedPrefs.join("; ") : null;
     return `You are Sojourn, an expert travel advisor and optimization engine. Reason carefully across this traveler's cards, loyalty programs, and preferences to surface 6 genuinely differentiated options.
@@ -1096,7 +1099,8 @@ TRAVELER PROFILE:
 - Travel frequency: ${tp.frequency||"unknown"}
 - Travel types: ${(tp.travelTypes||[]).join(", ")}
 - Credit cards: ${cardList}
-- Loyalty accounts: ${loyaltyList}${learnedList ? `
+- Hotel loyalty: ${hotelLoyalty||"none"}
+- Airline miles: ${airlineLoyalty||"none"}${learnedList ? `
 - LEARNED FROM PAST TRIPS: ${learnedList}` : ""}
 - Preferred hotel brands: ${brandList}
 
@@ -1335,7 +1339,8 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
 TRAVELER PROFILE:
 - Home airport: ${userProfile.travelProfile?.homeAirport || "unknown"}
 - Cards: ${userProfile.cards.map(c=>c.name).join(", ")}
-- Loyalty: ${userProfile.loyaltyAccounts.map(a=>`${a.program} (${a.tier}, ${a.balance} pts)`).join(", ")}
+- Hotel loyalty: ${(userProfile.loyaltyAccounts||[]).filter(a=>!["United MileagePlus","Delta SkyMiles","American AAdvantage","Alaska Mileage Plan","Southwest Rapid Rewards","JetBlue TrueBlue"].includes(a.program)).map(a=>`${a.program} (${a.tier}, ${a.balance})`).join(", ")}
+- Airline miles: ${(userProfile.loyaltyAccounts||[]).filter(a=>["United MileagePlus","Delta SkyMiles","American AAdvantage","Alaska Mileage Plan","Southwest Rapid Rewards","JetBlue TrueBlue"].includes(a.program)).map(a=>`${a.program} (${a.tier}, ${a.balance})`).join(", ")}
 - Preferred brands: ${(userProfile.preferredBrands||[]).slice(0,15).join(", ")}
 
 ORIGINAL TRIP REQUEST: ${(conversationRef.current&&conversationRef.current[0]&&conversationRef.current[0].content) || "unknown"}
