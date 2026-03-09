@@ -779,61 +779,100 @@ const ItineraryOverlay = ({ option, tripSummary, onClose }) => {
     return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
   };
 
-  // Build day-by-day schedule from components
-  const flights = option.components.filter(c => c.label?.toLowerCase().includes("flight"));
-  const hotels = option.components.filter(c => c.label?.toLowerCase().includes("hotel") || c.label?.toLowerCase().includes("accommodation"));
-  const ground = option.components.filter(c => !c.label?.toLowerCase().includes("flight") && !c.label?.toLowerCase().includes("hotel") && !c.label?.toLowerCase().includes("accommodation"));
-  const isMultiCity = hotels.length > 1;
+  // Build day-by-day schedule using component.day field (with fallback for legacy cards)
+  const components = option.components || [];
+  
+  // Determine total days from components
+  const maxDay = components.reduce((m, c) => Math.max(m, c.day || 1), 1);
+  const returnComp = components.find(c => c.label?.toLowerCase().includes("return") || c.label?.toLowerCase().includes("departure"));
+  const totalDays = returnComp?.day || maxDay + 1;
+  const totalNights = totalDays - 1 || 3;
 
-  // Build structured days
-  const outboundFlight = flights.find(f => !f.label?.toLowerCase().includes("return"));
-  const returnFlight = flights.find(f => f.label?.toLowerCase().includes("return"));
-  const totalNights = hotels.reduce((sum, h) => {
-    const m = h.detail?.match(/(\d+)\s*night/i);
-    return sum + (m ? parseInt(m[1]) : 1);
-  }, 0) || 3;
+  // Icon mapper by component type
+  const getIcon = (label) => {
+    const l = (label || "").toLowerCase();
+    if (l.includes("flight") || l.includes("air")) return "✈";
+    if (l.includes("train") || l.includes("amtrak") || l.includes("rail")) return "🚆";
+    if (l.includes("ferry") || l.includes("boat")) return "⛴";
+    if (l.includes("hotel") || l.includes("resort") || l.includes("inn") || l.includes("lodge")) return "🏨";
+    if (l.includes("rental home") || l.includes("airbnb") || l.includes("villa") || l.includes("cottage")) return "🏡";
+    if (l.includes("car") || l.includes("ground") || l.includes("transfer") || l.includes("rental")) return "🚗";
+    if (l.includes("bike") || l.includes("cycle")) return "🚲";
+    return "📍";
+  };
 
+  const getTime = (c, dayComponents) => {
+    const l = (c.label || "").toLowerCase();
+    if (l.includes("return") || l.includes("departure")) return "Afternoon";
+    if (l.includes("flight") || l.includes("train") || l.includes("ferry")) {
+      // Outbound transport on day 1 = morning
+      if ((c.day || 1) === 1) return "Morning";
+      return "Afternoon";
+    }
+    if (l.includes("hotel") || l.includes("inn") || l.includes("resort") || l.includes("lodge") || l.includes("villa") || l.includes("cottage")) return "Afternoon";
+    if (l.includes("ground") || l.includes("car") || l.includes("transfer")) return "On Arrival";
+    return "Morning";
+  };
+
+  // Group components by day
+  const componentsByDay = {};
+  components.forEach(c => {
+    const d = c.day || 1;
+    if (!componentsByDay[d]) componentsByDay[d] = [];
+    componentsByDay[d].push(c);
+  });
+
+  // Build days array
   const days = [];
-  // Day 1 — Departure
-  days.push({
-    dayNum: 1,
-    label: formatDay(0),
-    badge: "Departure",
-    items: [
-      outboundFlight ? { time: "Morning", icon: "✈", title: outboundFlight.label, detail: outboundFlight.detail, value: outboundFlight.value, points: outboundFlight.points, card: outboundFlight.card, bookUrl: null } : null,
-      hotels[0] ? { time: "Afternoon", icon: "🏨", title: "Check In", detail: hotels[0].detail, value: hotels[0].value, points: hotels[0].points, card: hotels[0].card, bookUrl: null } : null,
-      { time: "Evening", icon: "🍽", title: "Dinner", detail: "Explore local dining — ask your hotel concierge for same-day recommendations", value: null, points: null, card: null, bookUrl: "https://www.opentable.com" },
-    ].filter(Boolean)
-  });
-  // Middle days
-  for (let i = 1; i < totalNights; i++) {
-    const isLastFull = i === totalNights - 1;
-    days.push({
-      dayNum: i + 1,
-      label: formatDay(i),
-      badge: isMultiCity && i === Math.floor(totalNights / 2) ? "Transit Day" : "Full Day",
-      items: [
-        { time: "Morning", icon: "☀", title: "Explore", detail: `Full day in ${destination} — sightseeing, activities, local experiences`, value: null, points: null, card: null, bookUrl: null },
-        isLastFull ? { time: "Evening", icon: "🍽", title: "Farewell Dinner", detail: "Reserve in advance — ask hotel for top picks or book via Resy", value: null, points: null, card: null, bookUrl: "https://resy.com" } : { time: "Afternoon", icon: "🍽", title: "Lunch", detail: "Local dining — walk-ins welcome at most spots", value: null, points: null, card: null, bookUrl: null },
-        isMultiCity && i === Math.floor(totalNights / 2) && hotels[1] ? { time: "Afternoon", icon: "🚗", title: "Transfer & Check In", detail: hotels[1].detail, value: hotels[1].value, points: hotels[1].points, card: hotels[1].card, bookUrl: null } : null,
-      ].filter(Boolean)
+  for (let d = 1; d <= totalDays; d++) {
+    const dayComps = componentsByDay[d] || [];
+    const isFirst = d === 1;
+    const isLast = d === totalDays;
+    const isTransit = dayComps.some(c => {
+      const l = (c.label||"").toLowerCase();
+      return (l.includes("hotel") || l.includes("inn") || l.includes("resort")) && d > 1 && d < totalDays;
     });
-  }
-  // Last day — Departure
-  days.push({
-    dayNum: totalNights + 1,
-    label: formatDay(totalNights),
-    badge: "Return",
-    items: [
-      { time: "Morning", icon: "🧳", title: "Check Out", detail: "Pack up, settle bill, store luggage if return flight is later", value: null, points: null, card: null, bookUrl: null },
-      returnFlight ? { time: "Afternoon", icon: "✈", title: returnFlight.label, detail: returnFlight.detail, value: returnFlight.value, points: returnFlight.points, card: returnFlight.card, bookUrl: null } : null,
-    ].filter(Boolean)
-  });
 
-  // Ground / other components injected into day 1
-  ground.forEach(g => {
-    days[0].items.splice(1, 0, { time: "On Arrival", icon: "🚗", title: g.label, detail: g.detail, value: g.value, points: g.points, card: g.card, bookUrl: null });
-  });
+    const badge = isFirst ? "Departure" : isLast ? "Return" : isTransit ? "Transit Day" : "Full Day";
+
+    const items = [];
+
+    // Structured booked components for this day
+    dayComps.forEach(c => {
+      items.push({
+        time: getTime(c, dayComps),
+        icon: getIcon(c.label),
+        title: c.label,
+        detail: c.detail,
+        value: c.value,
+        points: c.points,
+        card: c.card,
+        bookUrl: null
+      });
+    });
+
+    // Filler items for full days
+    if (!isFirst && !isLast && dayComps.length === 0) {
+      items.push({ time: "Morning", icon: "☀", title: "Explore", detail: `Full day in ${destination} — activities, dining, local experiences`, value: null, points: null, card: null, bookUrl: null });
+      items.push({ time: "Evening", icon: "🍽", title: d === totalDays - 1 ? "Farewell Dinner" : "Dinner", detail: "Book ahead via Resy for top spots", value: null, points: null, card: null, bookUrl: "https://resy.com" });
+    }
+
+    // Day 1 always gets an evening dinner placeholder if not already covered
+    if (isFirst && !items.some(i => i.icon === "🍽")) {
+      items.push({ time: "Evening", icon: "🍽", title: "Dinner", detail: "Ask hotel concierge for same-day recommendations", value: null, points: null, card: null, bookUrl: "https://www.opentable.com" });
+    }
+
+    // Last day checkout note
+    if (isLast) {
+      items.unshift({ time: "Morning", icon: "🧳", title: "Check Out", detail: "Settle bill, store luggage if departing later", value: null, points: null, card: null, bookUrl: null });
+    }
+
+    // Sort items by time priority
+    const timePriority = { "Morning": 0, "On Arrival": 1, "Afternoon": 2, "Evening": 3 };
+    items.sort((a, b) => (timePriority[a.time] ?? 2) - (timePriority[b.time] ?? 2));
+
+    days.push({ dayNum: d, label: formatDay(d - 1), badge, items });
+  }
 
   const handlePrint = () => window.print();
 
@@ -1340,7 +1379,7 @@ DESTINATION DIVERSITY RULE:
 - Each of the 6 options should feel like a genuinely different trip, not a variation of the same trip in the same place
 
 REQUIRED JSON SCHEMA:
-{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","value":"","detail":"","points":"","card":""},{"label":"Return Flight","value":"","detail":"","points":"","card":""},{"label":"Hotel","value":"","detail":"","points":"","card":""},{"label":"Ground","value":"","detail":"","points":"","card":""}]}]}`;
+{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}]}]}. CRITICAL: every component MUST include a day integer (1-based) indicating which trip day it starts. Multi-property stays get separate components each with their own day. Return transport day = total nights + 1.`;
   };
 
 
@@ -1584,12 +1623,13 @@ WHEN TO RESPOND CONVERSATIONALLY:
 
 DEEP DIVE MODE${focusedOptionId ? " — ACTIVE" : ""}:
 ${focusedOptionId ? `The traveler has chosen the ${tripOptions.find(o=>o.id===focusedOptionId)?.tag} option: "${tripOptions.find(o=>o.id===focusedOptionId)?.headline}". You are now in guided confirmation mode.
-- DO NOT suggest alternatives or other options
-- Walk through each component (flight → hotel → ground) with specific confirming questions
-- Ask one confirming question at a time, then wait for response
-- Provide the data needed to answer each question (e.g. "The 7am SEA-SFO direct on Alaska takes 2h15m and gets you in before noon — does that timing work for you?")
-- After all components confirmed, close with: "Your itinerary has been updated with all your preferences. When you're ready, proceed to checkout to lock this trip in."
-- Tone: warm, confident, forward-moving — you are a concierge helping finalize, not a salesperson closing` : "Standard refinement mode — present options and answer questions."}
+- Frame it as: "Let's go through each part of this trip together"
+- Work through transportation, lodging, and other components — use those words, not "flight/hotel/ground" which may not apply
+- Ask one confirming question per component, provide the key data point the traveler needs to answer it
+- If there is a next-best alternative (different departure time, different room type, different transfer option), mention it once briefly then drop it — do not keep offering alternatives
+- After 3 confirmed components shift tone to: "Everything's looking good — anything else you want to review before booking?" rather than continuing to enumerate every detail
+- When done, close with exactly one sentence: "Your itinerary is set — click 'Book This Trip' whenever you're ready." Stop there. Do not add more.
+- Tone: warm, confident, forward-moving — concierge finalizing, not salesperson closing` : "Standard refinement mode — present options and answer questions."}
 
 CONCIERGE TONE RULES — critical:
 - Never say "I don't have access to real-time data" or "I can't verify" or "you should check" — this breaks trust
@@ -1635,7 +1675,7 @@ HARD CONSTRAINTS — these override everything else:
 - Borderline April destinations (75-80F): Southern California, Naples FL — only include if user has not set a hard weather minimum
 
 JSON SCHEMA — you MUST use exactly these field names or cards will not display:
-{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","value":"","detail":"","points":"","card":""},{"label":"Return Flight","value":"","detail":"","points":"","card":""},{"label":"Hotel","value":"","detail":"","points":"","card":""},{"label":"Ground","value":"","detail":"","points":"","card":""}]}]}
+{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}]}]}. CRITICAL: every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day.
 NEVER use: results, cards, tripOptions, color, title, property, priceStructure — these will break the display.
 
 CARD QUALITY RULES (when generating new cards):
@@ -1959,7 +1999,7 @@ Please respond now.`,
                         setDeepDiveConfirmed(true);
                         mp.track("deep_dive_started", { optionId: msg.optionId, tag: opt?.tag });
                         setRefineMessages(prev => [...prev, { role: "assistant", text: `Perfect — let's go through this together. I'll confirm each component so there are no surprises at booking.` }]);
-                        setTimeout(() => setRefineInput(`Walk me through the ${opt?.tag} option component by component — flight, hotel, and ground — with confirming questions so I feel completely confident before booking.`), 300);
+                        setTimeout(() => setRefineInput(`Let's go through each part of this trip together — transportation, lodging, and any other components. For each one, ask me a single confirming question and give me the key detail I need to answer it. If there's a next-best alternative (different departure time, different room type), mention it once briefly. After three confirmed components, check if I have any remaining questions rather than continuing to enumerate.`), 300);
                       }} style={{ padding: "8px 18px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'Playfair Display',Georgia,serif" }}>
                         Yes, let's do it →
                       </button>
