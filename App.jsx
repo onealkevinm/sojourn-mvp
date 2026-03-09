@@ -592,7 +592,7 @@ const CompareView = ({ options, onBack, onSelectOption }) => (
       <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "800px" }}>
         <thead>
           <tr>
-            {["Option", "Total Cost", "Points Value", "Net Value", "Why This Option"].map(h => (
+            {["Option", "Total Cost", "Est. Points Value", "Net Cost", "Why This Option"].map(h => (
               <th key={h} style={{ textAlign: h === "Option" || h === "Why This Option" ? "left" : "right", padding: "12px 16px", color: "#555", fontSize: "11px", fontFamily: "serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>{h}</th>
             ))}
           </tr>
@@ -607,7 +607,7 @@ const CompareView = ({ options, onBack, onSelectOption }) => (
               </td>
               <td style={{ padding: "16px", textAlign: "right", verticalAlign: "top" }}>
                 <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "serif" }}>{typeof opt.totalCost === "number" ? opt.totalCost.toLocaleString() : String(opt.totalCost).replace(/^\$+/,"")}</div>
-                {opt.redemption && <div style={{ color: "#4CC97A", fontSize: "11px" }}>−{opt.redemption.valueRedeemed} redeemed</div>}
+                {opt.redemption && <div style={{ color: "#4CC97A", fontSize: "11px" }}>Includes redemption · −{opt.redemption.valueRedeemed}</div>}
               </td>
               <td style={{ padding: "16px", textAlign: "right", verticalAlign: "top" }}>
                 <div style={{ color: opt.tagColor, fontSize: "14px" }}>+${opt.pointsValue}</div>
@@ -703,7 +703,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary }) => {
         return estimated > 0 ? (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "8px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
             <span style={{ color: option.tagColor, fontSize: "11px" }}>earns ${estimated.toLocaleString()} via {option.pointsEarned}</span>
-            <span style={{ color: "#4a4a4a", fontSize: "11px" }}>net ${typeof option.netValue === "number" ? option.netValue.toLocaleString() : String(option.netValue||0).replace(/^\$+/,"")} after pts</span>
+            <span style={{ color: "#4a4a4a", fontSize: "11px" }}>net cost ${typeof option.netValue === "number" ? option.netValue.toLocaleString() : String(option.netValue||0).replace(/^\$+/,"")} after pts</span>
           </div>
         ) : null;
       })()}
@@ -727,7 +727,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary }) => {
           {option.redemption && (
             <div style={{ background: "rgba(76,201,122,0.08)", border: "1px solid rgba(76,201,122,0.25)", borderRadius: "10px", padding: "10px 12px", marginBottom: "14px" }}>
               <div style={{ color: "#4CC97A", fontSize: "11px", marginBottom: "2px" }}>✦ Points Redemption Applied</div>
-              <div style={{ color: "#7a9e7a", fontSize: "11px" }}>{option.redemption.program} · {option.redemption.pointsUsed} → {option.redemption.valueRedeemed} value</div>
+              <div style={{ color: "#7a9e7a", fontSize: "11px" }}>Includes redemption · {option.redemption.program} · {option.redemption.pointsUsed} → {option.redemption.valueRedeemed} value</div>
             </div>
           )}
           {/* Trip Components */}
@@ -800,9 +800,9 @@ const ItineraryOverlay = ({ option, tripSummary, onClose }) => {
         <div style={{ display: "flex", gap: "16px", padding: "14px 18px", background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: "12px", marginBottom: "28px" }}>
           <div><div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", fontFamily: "serif" }}>TOTAL</div><div style={{ color: "#e8e4dc", fontSize: "18px", fontFamily: "serif" }}>{typeof option.totalCost === "number" ? option.totalCost.toLocaleString() : String(option.totalCost||0).replace(/^\$+/,"")}</div></div>
           <div style={{ width: "1px", background: "rgba(255,255,255,0.06)" }} />
-          <div><div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", fontFamily: "serif" }}>POINTS EARNED</div><div style={{ color: "#C9A84C", fontSize: "13px", marginTop: "2px" }}>{option.pointsEarned}</div></div>
+          <div><div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", fontFamily: "serif" }}>EST. POINTS VALUE EARNED</div><div style={{ color: "#C9A84C", fontSize: "13px", marginTop: "2px" }}>{option.pointsEarned}</div></div>
           <div style={{ width: "1px", background: "rgba(255,255,255,0.06)" }} />
-          <div><div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", fontFamily: "serif" }}>NET VALUE</div><div style={{ color: "#4CC97A", fontSize: "18px", fontFamily: "serif" }}>{typeof option.netValue === "number" ? option.netValue.toLocaleString() : String(option.netValue||0).replace(/^\$+/,"")}</div></div>
+          <div><div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", fontFamily: "serif" }}>NET COST</div><div style={{ color: "#4CC97A", fontSize: "18px", fontFamily: "serif" }}>{typeof option.netValue === "number" ? option.netValue.toLocaleString() : String(option.netValue||0).replace(/^\$+/,"")}</div></div>
         </div>
 
         {/* Flights section */}
@@ -1251,7 +1251,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
       "Sourcing flight options from your home airport...",
       "Matching hotels to your preferred brands...",
       "Optimizing card routing for maximum rewards...",
-      "Calculating net value across all options...",
+      "Calculating net cost across all options...",
       "Ranking and finalizing your 6 options...",
     ];
     let stepIndex = 0;
@@ -1763,11 +1763,11 @@ Please respond now.`,
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 24px 12px", animation: "fadeUp 0.5s ease forwards" }}>
           <div style={{ marginBottom: "32px" }}>
             <div style={{ fontSize: "32px", fontFamily: "'Playfair Display',Georgia,serif", color: "#e8e4dc", lineHeight: "1.2", marginBottom: "12px" }}>Where are you going?</div>
-            <div style={{ color: "#555", fontSize: "14px", lineHeight: "1.6", maxWidth: "420px" }}>Tell me your trip in plain language — destination, dates, preferences, budget, and any constraints. Include who you're traveling with if relevant. I'll optimize across all your cards and loyalty programs.</div>
+            <div style={{ color: "#555", fontSize: "14px", lineHeight: "1.6", maxWidth: "420px" }}>Tell me about your trip — or start with just a feeling. Sojourn optimizes every option across your cards and loyalty programs, and can help you explore destinations, find hidden gems, discover events, and uncover dining experiences you wouldn't find on your own. Not sure where to go? Start there.</div>
           </div>
           <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "18px", padding: "4px 4px 4px 18px", display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "16px" }}>
             <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
-              placeholder={`e.g. "New York next week, direct flights, back by Thursday. I'm thinking around $2,000 but open if the value is there. Maximize my points."`}
+              placeholder={`Where to? Try: "4 days in Japan in October, two adults, first time" · "surprise me with a long weekend under $1,500" · "best use of my Hyatt points this winter" · "Chicago for work, what should I do after hours?"`}
               rows={3} style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "15px", lineHeight: "1.6", padding: "12px 0", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
             <div style={{ display: "flex", gap: "6px", paddingBottom: "8px", flexShrink: 0 }}>
               <button onClick={listening ? () => { recognitionRef.current?.stop(); setListening(false); } : startListening} style={{ width: "38px", height: "38px", borderRadius: "10px", border: "none", cursor: "pointer", background: listening ? "rgba(201,76,76,0.2)" : "rgba(255,255,255,0.06)", color: listening ? "#C94C4C" : "#666", fontSize: "16px", animation: listening ? "pulse 1.2s infinite" : "none" }}>🎤</button>
@@ -1775,7 +1775,16 @@ Please respond now.`,
             </div>
           </div>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            {["NYC next week, direct flights, back by Thursday", "Chicago conference, maximize Marriott points", "LA on a budget, use my United miles"].map(ex => (
+            {[
+              "NYC next week, direct flights, back by Thursday",
+              "I want a beach trip in March — where should I go?",
+              "Chicago conference, maximize Marriott points",
+              "Surprise me — romantic weekend under $2k from Seattle",
+              "Best use of my Hyatt points this winter",
+              "Tokyo for 10 days in October, two adults, first time",
+              "LA on a budget, use my United miles",
+              "Portland long weekend — dining, culture, no agenda",
+            ].map(ex => (
               <button key={ex} onClick={() => setInput(ex)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "#6a6460", borderRadius: "20px", padding: "7px 14px", cursor: "pointer", fontSize: "12px" }}>{ex}</button>
             ))}
           </div>
