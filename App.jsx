@@ -1775,25 +1775,33 @@ Please respond now.`,
         // Top card
         const topCard = cards[0];
 
-        const basePrompts = [
-          `Surprise me — best long weekend from ${airportCity} under $2,000`,
-          "I want a beach trip in March — where should I go?",
-          "Tokyo for 10 days in October, two adults, first time",
-          "NYC next week, direct flights, back by Thursday",
-          "Portland long weekend — dining, culture, no agenda",
-          "Family ski trip for spring break, 2 adults 3 kids",
-        ];
-        const personalizedPrompts = [];
-        if (topHotel) personalizedPrompts.push(`Best use of my ${topHotel.program} points — ${topHotel.balance} to spend`);
-        if (topAirline) personalizedPrompts.push(`Use my ${topAirline.program} miles — ${topAirline.balance} available`);
-        if (topCard) personalizedPrompts.push(`Maximize my ${topCard.name} on a weekend getaway`);
-        const allPrompts = [...personalizedPrompts, ...basePrompts].slice(0, 8);
+        // 5 prompts: 1 personalized points, 4 evocative/inspirational
+        const allPrompts = [];
+
+        // 1. Personalized — top loyalty program
+        if (topHotel) allPrompts.push(`I have ${topHotel.balance} ${topHotel.program} points — where should I go?`);
+        else if (topAirline) allPrompts.push(`I have ${topAirline.balance} ${topAirline.program} miles — what trip should I take?`);
+
+        // 2. Inspiration — unknown destination
+        allPrompts.push(`I need a reset. Somewhere warm, late April — surprise me.`);
+
+        // 3. Exploration — vibe-driven
+        allPrompts.push(`Best long weekend from ${airportCity} I haven't thought of yet`);
+
+        // 4. Occasion-driven
+        allPrompts.push("Anniversary trip — somewhere unforgettable, open budget");
+
+        // 5. First-time international
+        allPrompts.push("First time in Japan — 10 days, two adults, where to start?");
+
+        // Trim to 5
+        const finalPrompts = allPrompts.slice(0, 5);
 
         return (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 32px 12px", animation: "fadeUp 0.5s ease forwards" }}>
           <div style={{ marginBottom: "28px", textAlign: "center", maxWidth: "600px", width: "100%" }}>
             <div style={{ fontSize: "36px", fontFamily: "'Playfair Display',Georgia,serif", color: "#e8e4dc", lineHeight: "1.2", marginBottom: "14px" }}>Every great trip begins with a conversation.</div>
-            <div style={{ color: "#6a6460", fontSize: "15px", lineHeight: "1.7", maxWidth: "540px", margin: "0 auto" }}>Tell me about your trip — or start with an idea. Explore destinations, discover events and dining, build an itinerary, and book your trip — all in one conversation. Sojourn optimizes every option across your credit cards and loyalty programs.</div>
+            <div style={{ color: "#6a6460", fontSize: "15px", lineHeight: "1.7", maxWidth: "540px", margin: "0 auto" }}>Tell me about your trip — or start with an idea. Explore destinations, discover events and dining, build an itinerary, and book your trip — all in one conversation. Every recommendation shaped by your travel style, loyalty status, and credit cards.</div>
           </div>
           <div style={{ width: "100%", maxWidth: "640px" }}>
             <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: "6px 6px 6px 20px", display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "18px" }}>
@@ -1805,9 +1813,9 @@ Please respond now.`,
                 <button onClick={handleSend} disabled={!input.trim() || loading} style={{ width: "40px", height: "40px", borderRadius: "12px", border: "none", cursor: input.trim() && !loading ? "pointer" : "default", background: input.trim() && !loading ? "#C9A84C" : "rgba(201,168,76,0.15)", color: input.trim() && !loading ? "#0a0908" : "#555", fontSize: "18px", fontWeight: "bold" }}>↑</button>
               </div>
             </div>
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center" }}>
-              {allPrompts.map(ex => (
-                <button key={ex} onClick={() => setInput(ex)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "#6a6460", borderRadius: "20px", padding: "8px 16px", cursor: "pointer", fontSize: "12px", whiteSpace: "nowrap" }}>{ex}</button>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center", maxWidth: "640px" }}>
+              {finalPrompts.map(ex => (
+                <button key={ex} onClick={() => setInput(ex)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "#6a6460", borderRadius: "20px", padding: "8px 16px", cursor: "pointer", fontSize: "12px" }}>{ex}</button>
               ))}
             </div>
           </div>
