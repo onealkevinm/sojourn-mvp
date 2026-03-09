@@ -674,7 +674,7 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
   );
 };
 
-const TripCard = ({ option, isExpanded, onToggle, onItinerary }) => {
+const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss }) => {
   const isRec = option.id === 1;
   return (
     <div onClick={onToggle} style={{
@@ -690,7 +690,10 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary }) => {
       {/* Collapsed header — tag + price on same row, headline below */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
         <span style={{ background: option.tagColor + "18", color: option.tagColor, fontSize: "11px", padding: "5px 12px", borderRadius: "12px", fontFamily: "'Playfair Display',Georgia,serif", border: `1px solid ${option.tagColor}33` }}>{option.tag}</span>
-        <span style={{ color: "#e8e4dc", fontSize: "18px", fontFamily: "'Playfair Display',Georgia,serif" }}>${typeof option.totalCost === "number" ? option.totalCost.toLocaleString() : String(option.totalCost).replace(/^\$+/,"")}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span style={{ color: "#e8e4dc", fontSize: "18px", fontFamily: "'Playfair Display',Georgia,serif" }}>${typeof option.totalCost === "number" ? option.totalCost.toLocaleString() : String(option.totalCost).replace(/^\$+/,"")}</span>
+          {onDismiss && !isExpanded && <button onClick={e => { e.stopPropagation(); onDismiss(option.id); }} title="Not for me" style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", color: "#444", fontSize: "11px", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, lineHeight: 1 }}>✕</button>}
+        </div>
       </div>
       <div style={{ marginBottom: "8px" }}>
         <div style={{ color: "#e8e4dc", fontSize: "15px", fontWeight: "600", lineHeight: "1.3", marginBottom: "3px", fontFamily: "'Playfair Display',Georgia,serif" }}>{option.headline}</div>
@@ -1124,6 +1127,21 @@ const OptimizingForBar = ({ profile, setProfile }) => {
                   </div>
                 );
               })}
+              {/* Add new loyalty program not already in list */}
+              <div style={{ marginTop: "12px", display: "flex", gap: "8px" }}>
+                <select id="loyalty-add-select" style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#6a6460", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }}>
+                  <option value="">Add a program not listed...</option>
+                  {["Marriott Bonvoy","World of Hyatt","Hilton Honors","IHG One Rewards","Wyndham Rewards","Choice Privileges","United MileagePlus","Delta SkyMiles","American AAdvantage","Alaska Mileage Plan","Southwest Rapid Rewards","JetBlue TrueBlue","Emirates Skywards","British Airways Avios","Air France Flying Blue","Singapore KrisFlyer","Hertz Gold Plus Rewards","National Emerald Club","Avis Preferred","Enterprise Plus"].filter(p => !loyalty.find(a => a.program === p)).map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+                <button onClick={() => {
+                  const sel = document.getElementById("loyalty-add-select");
+                  const val = sel?.value;
+                  if (val) {
+                    setProfile({ ...profile, loyaltyAccounts: [...(profile.loyaltyAccounts||[]), { program: val, tier: "Member", balance: "" }] });
+                    sel.value = "";
+                  }
+                }} style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: "8px", color: "#C9A84C", fontSize: "11px", padding: "6px 12px", cursor: "pointer" }}>Add</button>
+              </div>
             </div>
           )}
           {activePanel === "cards" && (
@@ -1172,12 +1190,15 @@ const OptimizingForBar = ({ profile, setProfile }) => {
         <button onClick={() => toggle("loyalty")} style={pillStyle(activePanel === "loyalty")}>
           Loyalty {activeLoyalty.length > 0 ? `· ${activeLoyalty.length}` : ""}
           {totalValue > 0 ? <span style={{ color: "#C9A84C", marginLeft: "4px" }}>est. ${totalValue.toLocaleString()}</span> : ""}
+          <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "loyalty" ? "▴" : "▾"}</span>
         </button>
         <button onClick={() => toggle("cards")} style={pillStyle(activePanel === "cards")}>
           Cards {cards.length > 0 ? `· ${cards.length}` : ""}
+          <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "cards" ? "▴" : "▾"}</span>
         </button>
         <button onClick={() => toggle("brands")} style={pillStyle(activePanel === "brands")}>
           Brands {brands.length > 0 ? `· ${brands.length}` : ""}
+          <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "brands" ? "▴" : "▾"}</span>
         </button>
       </div>
     </div>
@@ -1199,6 +1220,10 @@ export default function SojournApp() {
   const [tripSummary, setTripSummary] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [showCompare, setShowCompare] = useState(false);
+  const [dismissedIds, setDismissedIds] = useState([]);
+  const [showDismissed, setShowDismissed] = useState(false);
+  const [focusedOptionId, setFocusedOptionId] = useState(null); // 6b — single option deep dive mode
+  const [deepDiveConfirmed, setDeepDiveConfirmed] = useState(false);
   const [refineInput, setRefineInput] = useState("");
   const [refineLoading, setRefineLoading] = useState(false);
   const [refineMessages, setRefineMessages] = useState([]);
@@ -1470,6 +1495,22 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
 
   const handleKeyDown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } };
 
+  // Detect if user is expressing preference for a specific option
+  const detectFocusIntent = (msg, options) => {
+    const lower = msg.toLowerCase();
+    const preferenceSignals = ["let's go with", "let's do this", "going with", "i'll take", "lock in", "i'm sold", "sold on", "book this", "let's book", "i've decided", "decided on", "this is the one", "that's the one", "let's lock", "i want to book", "ready to book"];
+    const hasSignal = preferenceSignals.some(s => lower.includes(s));
+    if (!hasSignal) return null;
+    // Try to match to a specific option by tag or keyword
+    for (const opt of options) {
+      const tag = (opt.tag || "").toLowerCase();
+      const headline = (opt.headline || "").toLowerCase();
+      const keywords = [...tag.split(" "), ...headline.split(" ").slice(0, 4)];
+      if (keywords.some(k => k.length > 3 && lower.includes(k))) return opt.id;
+    }
+    return null;
+  };
+
   const handleRefine = async () => {
     mp.track("refinement_submitted", { message_count: refineMessages.length, message: refineInput.slice(0, 100) });
     if (!refineInput.trim() || refineLoading) return;
@@ -1477,6 +1518,23 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
     setRefineInput("");
     setRefineMessages(prev => [...prev, { role: "user", text: msg }]);
     setRefineLoading(true);
+
+    // 6b trigger — check for explicit preference signal
+    const activeOptions = tripOptions.filter(o => !dismissedIds.includes(o.id));
+    if (!deepDiveConfirmed && !focusedOptionId) {
+      const detectedId = detectFocusIntent(msg, activeOptions);
+      if (detectedId) {
+        const opt = tripOptions.find(o => o.id === detectedId);
+        setRefineLoading(false);
+        setRefineMessages(prev => [...prev, {
+          role: "assistant",
+          text: `Great choice — the ${opt.tag} option is a strong fit for this trip. Want me to focus in and walk you through all the details so you feel completely confident before booking?`,
+          isDeepDivePrompt: true,
+          optionId: detectedId
+        }]);
+        return;
+      }
+    }
 
     const refineSteps = [
       "Thinking through your request...",
@@ -1510,7 +1568,7 @@ TRAVELER PROFILE:
 ORIGINAL TRIP REQUEST: ${(conversationRef.current&&conversationRef.current[0]&&conversationRef.current[0].content) || "unknown"}
 
 CURRENT OPTIONS SHOWING:
-${(tripOptions||[]).map(o => "[" + (o.tag||"") + "] " + (o.headline||"") + " ($" + (o.totalCost||0) + ") - " + (o.components||[]).filter(c=>c.label&&c.label.toLowerCase().includes("hotel")).map(c=>c.detail ? c.detail.split(" ")[0] : "").join(", ")).join("\n")}
+${(tripOptions||[]).filter(o => !dismissedIds.includes(o.id)).map(o => "[" + (o.tag||"") + "] " + (o.headline||"") + " ($" + (o.totalCost||0) + ")").join("\n")}${dismissedIds.length > 0 ? "\nDismissed by user (do not regenerate these): " + tripOptions.filter(o => dismissedIds.includes(o.id)).map(o => o.headline).join(", ") : ""}
 
 
 WHEN TO GENERATE NEW CARDS:
@@ -1523,6 +1581,15 @@ WHEN TO RESPOND CONVERSATIONALLY:
 - Be specific: name properties, quote prices, give times
 - Reference the traveler's loyalty tier and card benefits by name
 - End with an offer to update cards if relevant
+
+DEEP DIVE MODE${focusedOptionId ? " — ACTIVE" : ""}:
+${focusedOptionId ? `The traveler has chosen the ${tripOptions.find(o=>o.id===focusedOptionId)?.tag} option: "${tripOptions.find(o=>o.id===focusedOptionId)?.headline}". You are now in guided confirmation mode.
+- DO NOT suggest alternatives or other options
+- Walk through each component (flight → hotel → ground) with specific confirming questions
+- Ask one confirming question at a time, then wait for response
+- Provide the data needed to answer each question (e.g. "The 7am SEA-SFO direct on Alaska takes 2h15m and gets you in before noon — does that timing work for you?")
+- After all components confirmed, close with: "Your itinerary has been updated with all your preferences. When you're ready, proceed to checkout to lock this trip in."
+- Tone: warm, confident, forward-moving — you are a concierge helping finalize, not a salesperson closing` : "Standard refinement mode — present options and answer questions."}
 
 CONCIERGE TONE RULES — critical:
 - Never say "I don't have access to real-time data" or "I can't verify" or "you should check" — this breaks trust
@@ -1689,7 +1756,7 @@ Please respond now.`,
     }
     setPhase("chat");
     setMessages([{ role: "assistant", text: "Where to next? Tell me about your trip — destination, rough dates, who's traveling, any preferences. The more you share, the sharper the options." }]);
-    setInput(""); setTripOptions([]); setTripSummary(null);
+    setInput(""); setTripOptions([]); setTripSummary(null); setDismissedIds([]); setShowDismissed(false); setFocusedOptionId(null); setDeepDiveConfirmed(false);
     setExpandedId(null); setShowCompare(false);
     setConciergeMode(true);
     conversationRef.current = [];
@@ -1789,7 +1856,9 @@ Please respond now.`,
 
         <div style={{ padding: "20px 28px 14px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <div>
-            <div style={{ fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "3px" }}>6 options, optimized for you</div>
+            <div style={{ fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "3px" }}>
+              {tripOptions.filter(o => !dismissedIds.includes(o.id)).length} option{tripOptions.filter(o => !dismissedIds.includes(o.id)).length !== 1 ? "s" : ""}, optimized for you
+            </div>
             <div style={{ color: "#555", fontSize: "12px" }}>Tap a card to explore · Scroll to see all</div>
           </div>
           {!showCompare && !expandedId && (
@@ -1799,7 +1868,7 @@ Please respond now.`,
 
         <div style={{ padding: "0 28px 48px" }}>
           {showCompare ? (
-            <CompareView options={tripOptions} onBack={() => setShowCompare(false)} onSelectOption={(id) => { setShowCompare(false); setExpandedId(id); }} />
+            <CompareView options={tripOptions.filter(o => !dismissedIds.includes(o.id))} onBack={() => setShowCompare(false)} onSelectOption={(id) => { setShowCompare(false); setExpandedId(id); }} />
           ) : expandedId ? (
             <div style={{ animation: "fadeUp 0.3s ease forwards" }}>
               <button onClick={() => setExpandedId(null)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", color: "#888", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", marginBottom: "16px" }}>← All Options</button>
@@ -1807,7 +1876,7 @@ Please respond now.`,
               <div style={{ marginTop: "14px" }}>
                 <div style={{ color: "#555", fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>Other Options</div>
                 <div style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "8px" }} className="card-scroll">
-                  {tripOptions.filter(o => o.id !== expandedId).map(opt => (
+                  {tripOptions.filter(o => o.id !== expandedId && !dismissedIds.includes(o.id)).map(opt => (
                     <div key={opt.id} onClick={() => setExpandedId(opt.id)} style={{ flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "12px 14px", cursor: "pointer", minWidth: "155px" }}>
                       <div style={{ color: opt.tagColor, fontSize: "10px", marginBottom: "4px" }}>{opt.tag}</div>
                       <div style={{ color: "#b0a898", fontSize: "13px", fontFamily: "serif" }}>{typeof opt.totalCost === "number" ? opt.totalCost.toLocaleString() : String(opt.totalCost).replace(/^\$+/,"")}</div>
@@ -1819,9 +1888,49 @@ Please respond now.`,
             </div>
           ) : (
             <div className="card-scroll" style={{ display: "flex", gap: "14px", overflowX: "auto", paddingBottom: "16px", paddingRight: "56px", scrollSnapType: "x mandatory" }}>
-              {tripOptions.map((opt, i) => (
-                <div key={opt.id} style={{ scrollSnapAlign: "start", animation: `fadeUp 0.5s ease ${i * 0.07}s forwards`, opacity: 0 }}>
-                  <TripCard option={opt} isExpanded={false} onToggle={() => { const opening = expandedId !== opt.id; if (opening) mp.track("card_expanded", { tag: opt.tag, headline: opt.headline, total_cost: opt.totalCost }); setExpandedId(expandedId === opt.id ? null : opt.id); }} />
+              {tripOptions.filter(o => !dismissedIds.includes(o.id)).map((opt, i) => (
+                <div key={opt.id} style={{ scrollSnapAlign: "start", animation: `fadeUp 0.5s ease ${i * 0.07}s forwards`, opacity: 0, position: "relative" }}>
+                  {focusedOptionId && opt.id !== focusedOptionId && (
+                    <div style={{ position: "absolute", inset: 0, background: "rgba(8,7,6,0.65)", borderRadius: "20px", zIndex: 2, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(1px)" }}>
+                      <span style={{ color: "#333", fontSize: "10px", letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "serif" }}>On hold</span>
+                    </div>
+                  )}
+                  <TripCard option={opt} isExpanded={false}
+                    onToggle={() => { const opening = expandedId !== opt.id; if (opening) mp.track("card_expanded", { tag: opt.tag, headline: opt.headline, total_cost: opt.totalCost }); setExpandedId(expandedId === opt.id ? null : opt.id); }}
+                    onDismiss={(id) => {
+                      mp.track("card_dismissed", { tag: opt.tag, headline: opt.headline });
+                      const newDismissed = [...dismissedIds, id];
+                      setDismissedIds(newDismissed);
+                      const remaining = tripOptions.filter(o => !newDismissed.includes(o.id));
+                      if (remaining.length === 1 && !deepDiveConfirmed && !focusedOptionId) {
+                        const last = remaining[0];
+                        // Soft prompt only — don't auto-commit, let user confirm
+                        setRefineMessages(prev => [...prev, {
+                          role: "assistant",
+                          text: `Looks like the ${last.tag} — ${last.headline} — is your only remaining option. Want me to focus in and walk you through every detail before you book? Or if you'd like to restore any dismissed options, tap "show" below the cards.`,
+                          isDeepDivePrompt: true,
+                          optionId: last.id
+                        }]);
+                      }
+                    }}
+                  />
+                </div>
+              ))}
+              {/* Dismissed options ghost link */}
+              {dismissedIds.length > 0 && (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minWidth: "120px", flexShrink: 0 }}>
+                  <button onClick={() => setShowDismissed(!showDismissed)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "10px 14px", color: "#3a3a3a", fontSize: "11px", cursor: "pointer", textAlign: "center", lineHeight: "1.5" }}>
+                    {dismissedIds.length} hidden{"
+"}
+                    <span style={{ color: "#555", fontSize: "10px" }}>{showDismissed ? "hide" : "show"}</span>
+                  </button>
+                </div>
+              )}
+              {/* Dismissed cards shown as ghost */}
+              {showDismissed && tripOptions.filter(o => dismissedIds.includes(o.id)).map(opt => (
+                <div key={opt.id} style={{ scrollSnapAlign: "start", opacity: 0.35, position: "relative" }}>
+                  <TripCard option={opt} isExpanded={false} onToggle={() => {}} />
+                  <button onClick={() => setDismissedIds(prev => prev.filter(id => id !== opt.id))} style={{ position: "absolute", bottom: "12px", left: "50%", transform: "translateX(-50%)", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", color: "#888", fontSize: "11px", padding: "6px 14px", cursor: "pointer", whiteSpace: "nowrap" }}>Restore</button>
                 </div>
               ))}
             </div>
@@ -1833,7 +1942,7 @@ Please respond now.`,
           {refineMessages.length > 0 && (
             <div style={{ marginBottom: "12px", display: "flex", flexDirection: "column", gap: "8px", maxHeight: "340px", overflowY: "auto" }}>
               {refineMessages.map((msg, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
+                <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
                   <div style={{
                     maxWidth: "85%", padding: "10px 14px",
                     borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
@@ -1844,6 +1953,23 @@ Please respond now.`,
                     fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit",
                     fontStyle: msg.role === "assistant" ? "italic" : "normal",
                   }}>{msg.text}</div>
+                  {msg.isDeepDivePrompt && !deepDiveConfirmed && (
+                    <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                      <button onClick={() => {
+                        const opt = tripOptions.find(o => o.id === msg.optionId);
+                        setFocusedOptionId(msg.optionId);
+                        setDeepDiveConfirmed(true);
+                        mp.track("deep_dive_started", { optionId: msg.optionId, tag: opt?.tag });
+                        setRefineMessages(prev => [...prev, { role: "assistant", text: `Perfect — let's go through this together. I'll confirm each component so there are no surprises at booking.` }]);
+                        setTimeout(() => setRefineInput(`Walk me through the ${opt?.tag} option component by component — flight, hotel, and ground — with confirming questions so I feel completely confident before booking.`), 300);
+                      }} style={{ padding: "8px 18px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'Playfair Display',Georgia,serif" }}>
+                        Yes, let's do it →
+                      </button>
+                      <button onClick={() => setRefineMessages(prev => prev.filter((_, idx) => idx !== i))} style={{ padding: "8px 14px", background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", color: "#555", fontSize: "12px", cursor: "pointer" }}>
+                        Keep all options
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
