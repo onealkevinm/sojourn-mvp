@@ -1075,6 +1075,7 @@ export default function SojournApp() {
   const bottomRef = useRef(null);
   const conversationRef = useRef([]);
   const [conciergeMode, setConciergeMode] = useState(true); // true = conversational, false = generating cards
+  const [showProfileEdit, setShowProfileEdit] = useState(false);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
 
@@ -1758,6 +1759,75 @@ Please respond now.`,
         <div style={{ fontSize: "12px", color: "#555" }}>Your travel, optimized.</div>
       </div>
 
+      {/* Optimization Bar — persistent profile summary */}
+      {phase === "chat" && !showProfileEdit && (
+        <div style={{ padding: "8px 24px 0", display: "flex", justifyContent: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: "24px", padding: "6px 14px 6px 12px", flexWrap: "wrap", maxWidth: "860px", width: "100%" }}>
+            <span style={{ color: "#C9A84C", fontSize: "10px", letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "serif", flexShrink: 0 }}>Optimizing for</span>
+            <span style={{ color: "#555", fontSize: "10px", margin: "0 2px" }}>·</span>
+            {(() => {
+              const loyalty = userProfile?.loyaltyAccounts || [];
+              const cards = userProfile?.cards || [];
+              const brands = userProfile?.selectedBrands || [];
+              const topLoyalty = loyalty.filter(a => a.tier && a.tier !== "None").slice(0, 3).map(a => a.program.replace(" Bonvoy","").replace(" Honors","").replace(" MileagePlus","").replace(" SkyMiles","").replace(" Mileage Plan","").replace(" AAdvantage",""));
+              const topCards = cards.slice(0, 2).map(c => c.name.replace("Chase ","").replace("Amex ","").replace("American Express ",""));
+              const items = [...topLoyalty, ...topCards].filter(Boolean).slice(0, 5);
+              return items.length > 0 ? items.map((item, i) => (
+                <span key={i} style={{ color: "#8a8078", fontSize: "11px" }}>{item}{i < items.length - 1 ? <span style={{ color: "#333", margin: "0 4px" }}>·</span> : ""}</span>
+              )) : <span style={{ color: "#555", fontSize: "11px" }}>No profile set</span>;
+            })()}
+            <button onClick={() => setShowProfileEdit(true)} style={{ marginLeft: "auto", background: "none", border: "none", color: "#C9A84C", fontSize: "11px", cursor: "pointer", padding: "0 2px", flexShrink: 0, fontFamily: "'DM Sans',system-ui,sans-serif" }}>✎ edit</button>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Edit Drawer */}
+      {showProfileEdit && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => setShowProfileEdit(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0f0e0d", border: "1px solid rgba(201,168,76,0.2)", borderRadius: "20px", padding: "28px", width: "90%", maxWidth: "480px", maxHeight: "80vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <div style={{ fontSize: "18px", fontFamily: "'Playfair Display',Georgia,serif", color: "#e8e4dc" }}>Your Profile</div>
+              <button onClick={() => setShowProfileEdit(false)} style={{ background: "none", border: "none", color: "#555", fontSize: "20px", cursor: "pointer" }}>✕</button>
+            </div>
+            {/* Loyalty programs */}
+            <div style={{ marginBottom: "20px" }}>
+              <div style={{ color: "#C9A84C", fontSize: "10px", letterSpacing: "0.18em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px", paddingBottom: "6px", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>Loyalty Programs</div>
+              {(userProfile?.loyaltyAccounts || []).filter(a => a.tier && a.tier !== "None").map((acct, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                  <div>
+                    <div style={{ color: "#e8e4dc", fontSize: "13px" }}>{acct.program}</div>
+                    <div style={{ color: "#555", fontSize: "11px" }}>{acct.tier} · {acct.balance}</div>
+                  </div>
+                  <button onClick={() => {
+                    const updated = { ...userProfile, loyaltyAccounts: userProfile.loyaltyAccounts.map(a => a.program === acct.program ? { ...a, tier: "None", balance: "" } : a) };
+                    setUserProfile(updated);
+                    try { localStorage.setItem("sojourn_profile", JSON.stringify(updated)); } catch(e) {}
+                  }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", color: "#555", fontSize: "11px", padding: "3px 8px", cursor: "pointer" }}>Remove</button>
+                </div>
+              ))}
+            </div>
+            {/* Credit cards */}
+            <div style={{ marginBottom: "20px" }}>
+              <div style={{ color: "#C9A84C", fontSize: "10px", letterSpacing: "0.18em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px", paddingBottom: "6px", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>Credit Cards</div>
+              {(userProfile?.cards || []).map((card, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                  <div style={{ color: "#e8e4dc", fontSize: "13px" }}>{card.name}</div>
+                  <button onClick={() => {
+                    const updated = { ...userProfile, cards: userProfile.cards.filter(c => c.name !== card.name) };
+                    setUserProfile(updated);
+                    try { localStorage.setItem("sojourn_profile", JSON.stringify(updated)); } catch(e) {}
+                  }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", color: "#555", fontSize: "11px", padding: "3px 8px", cursor: "pointer" }}>Remove</button>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button onClick={() => setShowProfileEdit(false)} style={{ padding: "10px 20px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "'Playfair Display',Georgia,serif" }}>Done</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero — centerpoint on first load */}
       {isFirst && (() => {
         const tp = userProfile?.travelProfile || {};
@@ -1797,14 +1867,19 @@ Please respond now.`,
         // Trim to 5
         const finalPrompts = allPrompts.slice(0, 5);
 
+        // 2-2-1 prompt layout
+        const row1 = finalPrompts.slice(0, 2);
+        const row2 = finalPrompts.slice(2, 4);
+        const row3 = finalPrompts.slice(4, 5);
+
         return (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 32px 12px", animation: "fadeUp 0.5s ease forwards" }}>
-          <div style={{ marginBottom: "28px", textAlign: "center", maxWidth: "600px", width: "100%" }}>
-            <div style={{ fontSize: "36px", fontFamily: "'Playfair Display',Georgia,serif", color: "#e8e4dc", lineHeight: "1.2", marginBottom: "14px" }}>Every great trip begins with a conversation.</div>
-            <div style={{ color: "#6a6460", fontSize: "15px", lineHeight: "1.7", maxWidth: "540px", margin: "0 auto" }}>Tell me about your trip — or start with an idea. Explore destinations, discover events and dining, build an itinerary, and book your trip — all in one conversation. Every recommendation shaped by your travel style, loyalty status, and credit cards.</div>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 24px 12px", animation: "fadeUp 0.5s ease forwards" }}>
+          <div style={{ marginBottom: "24px", textAlign: "center", width: "100%", maxWidth: "860px" }}>
+            <div style={{ fontSize: "38px", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic", color: "#e8e4dc", lineHeight: "1.1", marginBottom: "16px", whiteSpace: "nowrap" }}>Every great trip begins with a conversation.</div>
+            <div style={{ color: "#6a6460", fontSize: "15px", lineHeight: "1.7", maxWidth: "580px", margin: "0 auto" }}>Tell me about your trip — or start with an idea. Explore destinations, discover events and dining, build an itinerary, and book your trip — all in one conversation. Every recommendation shaped by your travel style, loyalty status, and credit cards.</div>
           </div>
-          <div style={{ width: "100%", maxWidth: "640px" }}>
-            <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: "6px 6px 6px 20px", display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "18px" }}>
+          <div style={{ width: "100%", maxWidth: "860px" }}>
+            <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: "6px 6px 6px 22px", display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "18px" }}>
               <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
                 placeholder={`Where to? e.g. "4 days in Japan in October, two adults" · "surprise me with a long weekend under $1,500" · "best use of my Hyatt points this winter"`}
                 rows={4} style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "15px", lineHeight: "1.7", padding: "14px 0", fontFamily: "'DM Sans',system-ui,sans-serif", resize: "none" }} />
@@ -1813,10 +1888,17 @@ Please respond now.`,
                 <button onClick={handleSend} disabled={!input.trim() || loading} style={{ width: "40px", height: "40px", borderRadius: "12px", border: "none", cursor: input.trim() && !loading ? "pointer" : "default", background: input.trim() && !loading ? "#C9A84C" : "rgba(201,168,76,0.15)", color: input.trim() && !loading ? "#0a0908" : "#555", fontSize: "18px", fontWeight: "bold" }}>↑</button>
               </div>
             </div>
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center", maxWidth: "640px" }}>
-              {finalPrompts.map(ex => (
-                <button key={ex} onClick={() => setInput(ex)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "#6a6460", borderRadius: "20px", padding: "8px 16px", cursor: "pointer", fontSize: "12px" }}>{ex}</button>
-              ))}
+            {/* 2-2-1 prompt rows */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center" }}>
+              <div style={{ display: "flex", gap: "8px", justifyContent: "center", width: "100%" }}>
+                {row1.map(ex => <button key={ex} onClick={() => setInput(ex)} style={{ flex: 1, maxWidth: "420px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "#6a6460", borderRadius: "20px", padding: "9px 18px", cursor: "pointer", fontSize: "12px", textAlign: "center" }}>{ex}</button>)}
+              </div>
+              <div style={{ display: "flex", gap: "8px", justifyContent: "center", width: "100%" }}>
+                {row2.map(ex => <button key={ex} onClick={() => setInput(ex)} style={{ flex: 1, maxWidth: "420px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "#6a6460", borderRadius: "20px", padding: "9px 18px", cursor: "pointer", fontSize: "12px", textAlign: "center" }}>{ex}</button>)}
+              </div>
+              <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+                {row3.map(ex => <button key={ex} onClick={() => setInput(ex)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "#6a6460", borderRadius: "20px", padding: "9px 24px", cursor: "pointer", fontSize: "12px" }}>{ex}</button>)}
+              </div>
             </div>
           </div>
         </div>
