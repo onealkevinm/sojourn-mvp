@@ -1759,39 +1759,61 @@ Please respond now.`,
       </div>
 
       {/* Hero — centerpoint on first load */}
-      {isFirst && (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 24px 12px", animation: "fadeUp 0.5s ease forwards" }}>
-          <div style={{ marginBottom: "32px", textAlign: "center", maxWidth: "520px", width: "100%" }}>
-            <div style={{ fontSize: "32px", fontFamily: "'Playfair Display',Georgia,serif", color: "#e8e4dc", lineHeight: "1.2", marginBottom: "12px" }}>Where are you going?</div>
-            <div style={{ color: "#555", fontSize: "14px", lineHeight: "1.6" }}>Tell me about your trip — or start with an idea. Sojourn optimizes every option across your credit cards and loyalty programs. Explore destinations, discover events and dining, build an itinerary, and book your trip — all in one conversation.</div>
+      {isFirst && (() => {
+        const tp = userProfile?.travelProfile || {};
+        const loyalty = userProfile?.loyaltyAccounts || [];
+        const cards = userProfile?.cards || [];
+        const airport = tp.homeAirport || "SEA";
+        const airportCity = { SEA: "Seattle", SFO: "San Francisco", LAX: "Los Angeles", JFK: "New York", ORD: "Chicago", BOS: "Boston", MIA: "Miami", DEN: "Denver", ATL: "Atlanta", DFW: "Dallas", PDX: "Portland", SLC: "Salt Lake City" }[airport] || airport;
+
+        // Top hotel program
+        const hotelPrograms = ["Marriott Bonvoy","World of Hyatt","Hilton Honors","IHG One Rewards"];
+        const topHotel = loyalty.find(a => hotelPrograms.includes(a.program) && a.tier && a.tier !== "None");
+        // Top airline program
+        const airlinePrograms = ["Alaska Mileage Plan","Delta SkyMiles","United MileagePlus","American AAdvantage","Southwest Rapid Rewards"];
+        const topAirline = loyalty.find(a => airlinePrograms.includes(a.program) && parseInt((a.balance||"0").replace(/[^0-9]/g,"")) > 5000);
+        // Top card
+        const topCard = cards[0];
+
+        const basePrompts = [
+          `Surprise me — best long weekend from ${airportCity} under $2,000`,
+          "I want a beach trip in March — where should I go?",
+          "Tokyo for 10 days in October, two adults, first time",
+          "NYC next week, direct flights, back by Thursday",
+          "Portland long weekend — dining, culture, no agenda",
+          "Family ski trip for spring break, 2 adults 3 kids",
+        ];
+        const personalizedPrompts = [];
+        if (topHotel) personalizedPrompts.push(`Best use of my ${topHotel.program} points — ${topHotel.balance} to spend`);
+        if (topAirline) personalizedPrompts.push(`Use my ${topAirline.program} miles — ${topAirline.balance} available`);
+        if (topCard) personalizedPrompts.push(`Maximize my ${topCard.name} on a weekend getaway`);
+        const allPrompts = [...personalizedPrompts, ...basePrompts].slice(0, 8);
+
+        return (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 32px 12px", animation: "fadeUp 0.5s ease forwards" }}>
+          <div style={{ marginBottom: "28px", textAlign: "center", maxWidth: "600px", width: "100%" }}>
+            <div style={{ fontSize: "36px", fontFamily: "'Playfair Display',Georgia,serif", color: "#e8e4dc", lineHeight: "1.2", marginBottom: "14px" }}>Every great trip begins with a conversation.</div>
+            <div style={{ color: "#6a6460", fontSize: "15px", lineHeight: "1.7", maxWidth: "540px", margin: "0 auto" }}>Tell me about your trip — or start with an idea. Explore destinations, discover events and dining, build an itinerary, and book your trip — all in one conversation. Sojourn optimizes every option across your credit cards and loyalty programs.</div>
           </div>
-          <div style={{ width: "100%", maxWidth: "520px" }}>
-          <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "18px", padding: "4px 4px 4px 18px", display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "16px" }}>
-            <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
-              placeholder={`Where to? Try: "4 days in Japan in October, two adults, first time" · "surprise me with a long weekend under $1,500" · "best use of my Hyatt points this winter" · "Chicago for work, what should I do after hours?"`}
-              rows={3} style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "15px", lineHeight: "1.6", padding: "12px 0", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
-            <div style={{ display: "flex", gap: "6px", paddingBottom: "8px", flexShrink: 0 }}>
-              <button onClick={listening ? () => { recognitionRef.current?.stop(); setListening(false); } : startListening} style={{ width: "38px", height: "38px", borderRadius: "10px", border: "none", cursor: "pointer", background: listening ? "rgba(201,76,76,0.2)" : "rgba(255,255,255,0.06)", color: listening ? "#C94C4C" : "#666", fontSize: "16px", animation: listening ? "pulse 1.2s infinite" : "none" }}>🎤</button>
-              <button onClick={handleSend} disabled={!input.trim() || loading} style={{ width: "38px", height: "38px", borderRadius: "10px", border: "none", cursor: input.trim() && !loading ? "pointer" : "default", background: input.trim() && !loading ? "#C9A84C" : "rgba(201,168,76,0.15)", color: input.trim() && !loading ? "#0a0908" : "#555", fontSize: "18px", fontWeight: "bold" }}>↑</button>
+          <div style={{ width: "100%", maxWidth: "640px" }}>
+            <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: "6px 6px 6px 20px", display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "18px" }}>
+              <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
+                placeholder={`Where to? e.g. "4 days in Japan in October, two adults" · "surprise me with a long weekend under $1,500" · "best use of my Hyatt points this winter"`}
+                rows={4} style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "15px", lineHeight: "1.7", padding: "14px 0", fontFamily: "'DM Sans',system-ui,sans-serif", resize: "none" }} />
+              <div style={{ display: "flex", gap: "6px", paddingBottom: "10px", flexShrink: 0 }}>
+                <button onClick={listening ? () => { recognitionRef.current?.stop(); setListening(false); } : startListening} style={{ width: "40px", height: "40px", borderRadius: "12px", border: "none", cursor: "pointer", background: listening ? "rgba(201,76,76,0.2)" : "rgba(255,255,255,0.06)", color: listening ? "#C94C4C" : "#666", fontSize: "16px", animation: listening ? "pulse 1.2s infinite" : "none" }}>🎤</button>
+                <button onClick={handleSend} disabled={!input.trim() || loading} style={{ width: "40px", height: "40px", borderRadius: "12px", border: "none", cursor: input.trim() && !loading ? "pointer" : "default", background: input.trim() && !loading ? "#C9A84C" : "rgba(201,168,76,0.15)", color: input.trim() && !loading ? "#0a0908" : "#555", fontSize: "18px", fontWeight: "bold" }}>↑</button>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center" }}>
+              {allPrompts.map(ex => (
+                <button key={ex} onClick={() => setInput(ex)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "#6a6460", borderRadius: "20px", padding: "8px 16px", cursor: "pointer", fontSize: "12px", whiteSpace: "nowrap" }}>{ex}</button>
+              ))}
             </div>
           </div>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center" }}>
-            {[
-              "NYC next week, direct flights, back by Thursday",
-              "I want a beach trip in March — where should I go?",
-              "Chicago conference, maximize Marriott points",
-              "Surprise me — romantic weekend under $2k from Seattle",
-              "Best use of my Hyatt points this winter",
-              "Tokyo for 10 days in October, two adults, first time",
-              "LA on a budget, use my United miles",
-              "Portland long weekend — dining, culture, no agenda",
-            ].map(ex => (
-              <button key={ex} onClick={() => setInput(ex)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "#6a6460", borderRadius: "20px", padding: "7px 14px", cursor: "pointer", fontSize: "12px" }}>{ex}</button>
-            ))}
-          </div>
-          </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Message thread — after first exchange */}
       {!isFirst && (
