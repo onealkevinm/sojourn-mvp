@@ -719,6 +719,21 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss }) => {
               <div style={{ color: "#b0a898", fontSize: "13px", lineHeight: "1.7" }}>{option.whyThis}</div>
             </div>
           )}
+          {/* Experiences — dining, activities surfaced in conversation */}
+          {option.experiences && option.experiences.length > 0 && (
+            <div style={{ marginBottom: "16px" }}>
+              <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>Dining & Experiences</div>
+              {option.experiences.map((e, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "9px 12px", background: "rgba(201,168,76,0.04)", border: "1px solid rgba(201,168,76,0.1)", borderRadius: "10px", marginBottom: "6px" }}>
+                  <div>
+                    <div style={{ color: "#b0a898", fontSize: "12px", marginBottom: "2px" }}>{e.icon} {e.title} <span style={{ color: "#444", fontSize: "10px" }}>· Day {e.day}</span></div>
+                    <div style={{ color: "#6a6460", fontSize: "11px", lineHeight: "1.5" }}>{e.detail}</div>
+                  </div>
+                  {e.bookUrl && <a href={e.bookUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#C9A84C", fontSize: "10px", textDecoration: "none", flexShrink: 0, borderBottom: "1px solid rgba(201,168,76,0.3)", marginLeft: "12px", marginTop: "2px" }}>Book →</a>}
+                </div>
+              ))}
+            </div>
+          )}
           {/* Tradeoff */}
           {option.tradeoff && (
             <div style={{ padding: "12px 16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.06)", marginBottom: "16px" }}>
@@ -851,14 +866,33 @@ const ItineraryOverlay = ({ option, tripSummary, onClose }) => {
       });
     });
 
-    // Filler items for full days
-    if (!isFirst && !isLast && dayComps.length === 0) {
+    // Inject experiences for this day (restaurants, activities, breweries, etc.)
+    const dayExperiences = (option.experiences || []).filter(e => e.day === d);
+    dayExperiences.forEach(e => {
+      items.push({
+        time: e.time || "Evening",
+        icon: e.icon || "🍽",
+        title: e.title || "",
+        detail: e.detail || "",
+        value: null, points: null, card: null,
+        bookUrl: e.bookUrl || null,
+        isExperience: true
+      });
+    });
+
+    // Filler items only if no experiences cover this day
+    const hasExperienceDinner = dayExperiences.some(e => (e.time||"").toLowerCase() === "evening" || (e.icon||"").includes("🍽"));
+    const hasExperienceMorning = dayExperiences.some(e => (e.time||"").toLowerCase() === "morning");
+
+    if (!isFirst && !isLast && dayComps.length === 0 && dayExperiences.length === 0) {
       items.push({ time: "Morning", icon: "☀", title: "Explore", detail: `Full day in ${destination} — activities, dining, local experiences`, value: null, points: null, card: null, bookUrl: null });
+    }
+    if (!isFirst && !isLast && !hasExperienceDinner) {
       items.push({ time: "Evening", icon: "🍽", title: d === totalDays - 1 ? "Farewell Dinner" : "Dinner", detail: "Book ahead via Resy for top spots", value: null, points: null, card: null, bookUrl: "https://resy.com" });
     }
 
-    // Day 1 always gets an evening dinner placeholder if not already covered
-    if (isFirst && !items.some(i => i.icon === "🍽")) {
+    // Day 1 dinner placeholder only if no experience covers it
+    if (isFirst && !items.some(i => i.icon === "🍽") && !hasExperienceDinner) {
       items.push({ time: "Evening", icon: "🍽", title: "Dinner", detail: "Ask hotel concierge for same-day recommendations", value: null, points: null, card: null, bookUrl: "https://www.opentable.com" });
     }
 
@@ -1379,7 +1413,7 @@ DESTINATION DIVERSITY RULE:
 - Each of the 6 options should feel like a genuinely different trip, not a variation of the same trip in the same place
 
 REQUIRED JSON SCHEMA:
-{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}]}]}. CRITICAL: every component MUST include a day integer (1-based) indicating which trip day it starts. Multi-property stays get separate components each with their own day. Return transport day = total nights + 1.`;
+{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[{"day":2,"time":"Evening","icon":"🍽","title":"Le Pigeon","detail":"James Beard-winning French-inspired, 6 blocks from hotel — book via Resy","bookUrl":"https://resy.com"},{"day":3,"time":"Morning","title":"Tasty n Alder","icon":"🍳","detail":"Korean fried chicken and waffles, 8 blocks — walk-in or OpenTable","bookUrl":"https://www.opentable.com"}]}]}. CRITICAL: (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] is REQUIRED — populate it with every dining, activity, brewery, distillery, or excursion discussed in the conversation, each with day, time, icon, title, detail, and bookUrl. If no experiences discussed, use an empty array.`;
   };
 
 
@@ -1628,7 +1662,7 @@ ${focusedOptionId ? `The traveler has chosen the ${tripOptions.find(o=>o.id===fo
 - Ask one confirming question per component, provide the key data point the traveler needs to answer it
 - If there is a next-best alternative (different departure time, different room type, different transfer option), mention it once briefly then drop it — do not keep offering alternatives
 - After 3 confirmed components shift tone to: "Everything's looking good — anything else you want to review before booking?" rather than continuing to enumerate every detail
-- When done, close with exactly one sentence: "Your itinerary is set — click 'Book This Trip' whenever you're ready." Stop there. Do not add more.
+- When done, close with exactly one sentence: "Your trip is set — click 'Book This Trip' whenever you're ready." Stop there. Do not add more.
 - Tone: warm, confident, forward-moving — concierge finalizing, not salesperson closing` : "Standard refinement mode — present options and answer questions."}
 
 CONCIERGE TONE RULES — critical:
@@ -1675,7 +1709,7 @@ HARD CONSTRAINTS — these override everything else:
 - Borderline April destinations (75-80F): Southern California, Naples FL — only include if user has not set a hard weather minimum
 
 JSON SCHEMA — you MUST use exactly these field names or cards will not display:
-{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}]}]}. CRITICAL: every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day.
+{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[{"day":2,"time":"Evening","icon":"🍽","title":"","detail":"","bookUrl":""}]}]}. CRITICAL: (1) every component MUST include a day integer. (2) experiences[] MUST include every dining/activity/brewery/distillery discussed — each with day, time, icon, title, detail, bookUrl. Empty array if none discussed.
 NEVER use: results, cards, tripOptions, color, title, property, priceStructure — these will break the display.
 
 CARD QUALITY RULES (when generating new cards):
