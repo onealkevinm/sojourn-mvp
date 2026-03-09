@@ -756,143 +756,168 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary }) => {
 const ItineraryOverlay = ({ option, tripSummary, onClose }) => {
   if (!option) return null;
 
-  // Group components by city for multi-city trips
-  const flights = option.components.filter(c => c.label === "Flight" || c.label === "Return Flight" || c.label?.includes("Flight"));
-  const hotels = option.components.filter(c => c.label?.toLowerCase().includes("hotel") || c.label?.toLowerCase().includes("accommodation"));
-  const ground = option.components.filter(c => !c.label?.toLowerCase().includes("flight") && !c.label?.toLowerCase().includes("hotel") && !c.label?.toLowerCase().includes("accommodation"));
-
-  // Build day-by-day structure
   const origin = tripSummary?.origin || "Origin";
   const destination = tripSummary?.destination || "Destination";
-  const dates = tripSummary?.dates || "Dates TBD";
+  const rawDates = tripSummary?.dates || "";
 
-  // Detect multi-city from hotel components
+  // Parse start date from trip summary
+  const parseStartDate = (dateStr) => {
+    try {
+      const match = dateStr.match(/(\w+ \d+|\d+\/\d+)/);
+      if (match) return new Date(match[0] + ", 2025");
+    } catch(e) {}
+    return new Date();
+  };
+  const startDate = parseStartDate(rawDates);
+
+  const formatDay = (offset) => {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + offset);
+    return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  };
+
+  // Build day-by-day schedule from components
+  const flights = option.components.filter(c => c.label?.toLowerCase().includes("flight"));
+  const hotels = option.components.filter(c => c.label?.toLowerCase().includes("hotel") || c.label?.toLowerCase().includes("accommodation"));
+  const ground = option.components.filter(c => !c.label?.toLowerCase().includes("flight") && !c.label?.toLowerCase().includes("hotel") && !c.label?.toLowerCase().includes("accommodation"));
   const isMultiCity = hotels.length > 1;
 
-  const needsBooking = [
-    ...(!option.components.some(c => c.label === "Flight") ? [] : []),
-    "Flights — book via airline website or travel agent",
-    ...hotels.map(h => `${h.detail?.split("·")[0]?.trim() || "Hotel"} — book directly or via hotel website`),
-    ...(option.components.some(c => c.detail?.toLowerCase().includes("michelin") || c.detail?.toLowerCase().includes("restaurant") || c.detail?.toLowerCase().includes("dining")) ? ["Restaurant reservations — book via OpenTable, Resy, or directly"] : []),
-    ...(option.components.some(c => c.detail?.toLowerCase().includes("helicopter")) ? ["Helicopter transfer — arrange via operator in advance"] : []),
-  ];
+  // Build structured days
+  const outboundFlight = flights.find(f => !f.label?.toLowerCase().includes("return"));
+  const returnFlight = flights.find(f => f.label?.toLowerCase().includes("return"));
+  const totalNights = hotels.reduce((sum, h) => {
+    const m = h.detail?.match(/(\d+)\s*night/i);
+    return sum + (m ? parseInt(m[1]) : 1);
+  }, 0) || 3;
+
+  const days = [];
+  // Day 1 — Departure
+  days.push({
+    dayNum: 1,
+    label: formatDay(0),
+    badge: "Departure",
+    items: [
+      outboundFlight ? { time: "Morning", icon: "✈", title: outboundFlight.label, detail: outboundFlight.detail, value: outboundFlight.value, points: outboundFlight.points, card: outboundFlight.card, bookUrl: null } : null,
+      hotels[0] ? { time: "Afternoon", icon: "🏨", title: "Check In", detail: hotels[0].detail, value: hotels[0].value, points: hotels[0].points, card: hotels[0].card, bookUrl: null } : null,
+      { time: "Evening", icon: "🍽", title: "Dinner", detail: "Explore local dining — ask your hotel concierge for same-day recommendations", value: null, points: null, card: null, bookUrl: "https://www.opentable.com" },
+    ].filter(Boolean)
+  });
+  // Middle days
+  for (let i = 1; i < totalNights; i++) {
+    const isLastFull = i === totalNights - 1;
+    days.push({
+      dayNum: i + 1,
+      label: formatDay(i),
+      badge: isMultiCity && i === Math.floor(totalNights / 2) ? "Transit Day" : "Full Day",
+      items: [
+        { time: "Morning", icon: "☀", title: "Explore", detail: `Full day in ${destination} — sightseeing, activities, local experiences`, value: null, points: null, card: null, bookUrl: null },
+        isLastFull ? { time: "Evening", icon: "🍽", title: "Farewell Dinner", detail: "Reserve in advance — ask hotel for top picks or book via Resy", value: null, points: null, card: null, bookUrl: "https://resy.com" } : { time: "Afternoon", icon: "🍽", title: "Lunch", detail: "Local dining — walk-ins welcome at most spots", value: null, points: null, card: null, bookUrl: null },
+        isMultiCity && i === Math.floor(totalNights / 2) && hotels[1] ? { time: "Afternoon", icon: "🚗", title: "Transfer & Check In", detail: hotels[1].detail, value: hotels[1].value, points: hotels[1].points, card: hotels[1].card, bookUrl: null } : null,
+      ].filter(Boolean)
+    });
+  }
+  // Last day — Departure
+  days.push({
+    dayNum: totalNights + 1,
+    label: formatDay(totalNights),
+    badge: "Return",
+    items: [
+      { time: "Morning", icon: "🧳", title: "Check Out", detail: "Pack up, settle bill, store luggage if return flight is later", value: null, points: null, card: null, bookUrl: null },
+      returnFlight ? { time: "Afternoon", icon: "✈", title: returnFlight.label, detail: returnFlight.detail, value: returnFlight.value, points: returnFlight.points, card: returnFlight.card, bookUrl: null } : null,
+    ].filter(Boolean)
+  });
+
+  // Ground / other components injected into day 1
+  ground.forEach(g => {
+    days[0].items.splice(1, 0, { time: "On Arrival", icon: "🚗", title: g.label, detail: g.detail, value: g.value, points: g.points, card: g.card, bookUrl: null });
+  });
 
   const handlePrint = () => window.print();
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "24px 16px", overflowY: "auto" }} onClick={onClose}>
-      <div style={{ background: "#0e0c0a", border: "1px solid rgba(201,168,76,0.2)", borderRadius: "20px", width: "100%", maxWidth: "620px", padding: "32px", position: "relative", animation: "fadeUp 0.3s ease forwards" }} onClick={e => e.stopPropagation()}>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 1000, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "24px 16px", overflowY: "auto" }} onClick={onClose}>
+      <div style={{ background: "#0e0c0a", border: "1px solid rgba(201,168,76,0.2)", borderRadius: "20px", width: "100%", maxWidth: "680px", padding: "36px", position: "relative", animation: "fadeUp 0.3s ease forwards" }} onClick={e => e.stopPropagation()}>
 
         {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "28px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
           <div>
-            <div style={{ fontSize: "10px", letterSpacing: "0.3em", color: "#C9A84C", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>Sojourn · Itinerary Preview</div>
-            <div style={{ fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif", color: "#e8e4dc", lineHeight: "1.2" }}>{option.headline}</div>
-            <div style={{ color: "#555", fontSize: "12px", marginTop: "4px" }}>{dates} · {origin} → {destination}</div>
+            <div style={{ fontSize: "10px", letterSpacing: "0.3em", color: "#C9A84C", textTransform: "uppercase", fontFamily: "serif", marginBottom: "8px" }}>Sojourn · Trip Itinerary</div>
+            <div style={{ fontSize: "24px", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic", color: "#e8e4dc", lineHeight: "1.2" }}>{option.headline}</div>
+            <div style={{ color: "#555", fontSize: "12px", marginTop: "6px" }}>{rawDates} · {origin} → {destination}</div>
           </div>
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", flexShrink: 0 }}>
             <button onClick={handlePrint} style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.2)", color: "#C9A84C", padding: "8px 14px", borderRadius: "10px", cursor: "pointer", fontSize: "11px", fontFamily: "serif", letterSpacing: "0.08em" }}>Export PDF ↓</button>
             <button onClick={onClose} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#666", width: "32px", height: "32px", borderRadius: "8px", cursor: "pointer", fontSize: "16px", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
           </div>
         </div>
 
-        {/* Cost summary strip */}
-        <div style={{ display: "flex", gap: "16px", padding: "14px 18px", background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: "12px", marginBottom: "28px" }}>
-          <div><div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", fontFamily: "serif" }}>TOTAL</div><div style={{ color: "#e8e4dc", fontSize: "18px", fontFamily: "serif" }}>{typeof option.totalCost === "number" ? option.totalCost.toLocaleString() : String(option.totalCost||0).replace(/^\$+/,"")}</div></div>
+        {/* Cost strip */}
+        <div style={{ display: "flex", gap: "20px", padding: "14px 18px", background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: "12px", margin: "20px 0 32px" }}>
+          <div><div style={{ color: "#555", fontSize: "9px", letterSpacing: "0.12em", fontFamily: "serif", marginBottom: "3px" }}>TOTAL COST</div><div style={{ color: "#e8e4dc", fontSize: "18px", fontFamily: "serif" }}>${typeof option.totalCost === "number" ? option.totalCost.toLocaleString() : String(option.totalCost||0).replace(/^\$+/,"")}</div></div>
           <div style={{ width: "1px", background: "rgba(255,255,255,0.06)" }} />
-          <div><div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", fontFamily: "serif" }}>EST. POINTS VALUE EARNED</div><div style={{ color: "#C9A84C", fontSize: "13px", marginTop: "2px" }}>{option.pointsEarned}</div></div>
+          <div><div style={{ color: "#555", fontSize: "9px", letterSpacing: "0.12em", fontFamily: "serif", marginBottom: "3px" }}>EST. POINTS EARNED</div><div style={{ color: "#C9A84C", fontSize: "13px", marginTop: "2px" }}>{option.pointsEarned}</div></div>
           <div style={{ width: "1px", background: "rgba(255,255,255,0.06)" }} />
-          <div><div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em", fontFamily: "serif" }}>NET COST</div><div style={{ color: "#4CC97A", fontSize: "18px", fontFamily: "serif" }}>{typeof option.netValue === "number" ? option.netValue.toLocaleString() : String(option.netValue||0).replace(/^\$+/,"")}</div></div>
+          <div><div style={{ color: "#555", fontSize: "9px", letterSpacing: "0.12em", fontFamily: "serif", marginBottom: "3px" }}>NET COST</div><div style={{ color: "#4CC97A", fontSize: "18px", fontFamily: "serif" }}>${typeof option.netValue === "number" ? option.netValue.toLocaleString() : String(option.netValue||0).replace(/^\$+/,"")}</div></div>
+          <div style={{ marginLeft: "auto" }}>
+            <div style={{ padding: "6px 12px", background: `${option.tagColor}15`, border: `1px solid ${option.tagColor}30`, borderRadius: "8px" }}>
+              <div style={{ color: option.tagColor, fontSize: "10px", fontFamily: "serif", letterSpacing: "0.08em" }}>{option.tag}</div>
+            </div>
+          </div>
         </div>
 
-        {/* Flights section */}
-        {flights.length > 0 && (
-          <div style={{ marginBottom: "24px" }}>
-            <div style={{ color: "#C9A84C", fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px", paddingBottom: "6px", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>✈ Flights</div>
-            {flights.map((f, i) => (
-              <div key={i} style={{ padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "10px", marginBottom: "8px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div>
-                    <div style={{ color: "#b0a898", fontSize: "13px", marginBottom: "4px" }}>{f.label}</div>
-                    <div style={{ color: "#e8e4dc", fontSize: "13px", fontFamily: "serif" }}>{f.detail}</div>
-                    <div style={{ color: "#555", fontSize: "11px", marginTop: "3px" }}>📋 Needs booking · {f.card}</div>
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "serif" }}>{f.value}</div>
-                    <div style={{ color: "#C9A84C", fontSize: "11px" }}>{f.points}</div>
-                  </div>
+        {/* Day-by-day schedule */}
+        <div style={{ marginBottom: "28px" }}>
+          {days.map((day, di) => (
+            <div key={di} style={{ marginBottom: "24px" }}>
+              {/* Day header */}
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+                <div style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.25)", borderRadius: "8px", padding: "4px 10px", flexShrink: 0 }}>
+                  <div style={{ color: "#C9A84C", fontSize: "9px", letterSpacing: "0.14em", fontFamily: "serif", textTransform: "uppercase" }}>Day {day.dayNum}</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: "#e8e4dc", fontSize: "13px", fontFamily: "'Playfair Display',Georgia,serif" }}>{day.label}</div>
+                </div>
+                <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "6px", padding: "2px 8px" }}>
+                  <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.1em" }}>{day.badge}</div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
 
-        {/* Hotels section — per city if multi-city */}
-        {hotels.length > 0 && (
-          <div style={{ marginBottom: "24px" }}>
-            <div style={{ color: "#C9A84C", fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px", paddingBottom: "6px", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>🏨 Accommodation{isMultiCity ? " — by City" : ""}</div>
-            {hotels.map((h, i) => (
-              <div key={i} style={{ padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "10px", marginBottom: "8px" }}>
-                {isMultiCity && <div style={{ color: "#C9A84C", fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>City {i + 1}</div>}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div>
-                    <div style={{ color: "#e8e4dc", fontSize: "13px", fontFamily: "serif", marginBottom: "3px" }}>{h.detail?.split("·")[0]?.trim()}</div>
-                    <div style={{ color: "#7a7468", fontSize: "12px" }}>{h.detail?.split("·").slice(1).join("·").trim()}</div>
-                    <div style={{ color: "#555", fontSize: "11px", marginTop: "3px" }}>📋 Needs booking · {h.card}</div>
+              {/* Timeline items */}
+              <div style={{ marginLeft: "12px", borderLeft: "1px solid rgba(255,255,255,0.06)", paddingLeft: "20px", display: "flex", flexDirection: "column", gap: "1px" }}>
+                {day.items.map((item, ii) => (
+                  <div key={ii} style={{ display: "flex", gap: "14px", padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "10px", marginBottom: "6px", position: "relative" }}>
+                    {/* Timeline dot */}
+                    <div style={{ position: "absolute", left: "-26px", top: "18px", width: "8px", height: "8px", borderRadius: "50%", background: item.value ? "#C9A84C" : "rgba(255,255,255,0.1)", border: "1px solid rgba(201,168,76,0.3)", flexShrink: 0 }} />
+                    {/* Time badge */}
+                    <div style={{ flexShrink: 0, width: "70px" }}>
+                      <div style={{ color: "#444", fontSize: "10px", letterSpacing: "0.08em", fontFamily: "serif", textTransform: "uppercase", paddingTop: "2px" }}>{item.time}</div>
+                    </div>
+                    {/* Icon + content */}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px" }}>
+                        <div>
+                          <div style={{ color: "#b0a898", fontSize: "13px", marginBottom: "3px" }}>{item.icon} {item.title}</div>
+                          <div style={{ color: "#6a6460", fontSize: "12px", lineHeight: "1.5" }}>{item.detail}</div>
+                          {item.card && <div style={{ color: "#3a3a3a", fontSize: "10px", marginTop: "4px" }}>Use: {item.card}</div>}
+                          {item.bookUrl && (
+                            <a href={item.bookUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#C9A84C", fontSize: "10px", textDecoration: "none", marginTop: "4px", display: "inline-block", borderBottom: "1px solid rgba(201,168,76,0.3)" }}>
+                              Book → {item.bookUrl.replace("https://","").replace("www.","")}
+                            </a>
+                          )}
+                        </div>
+                        {item.value && (
+                          <div style={{ textAlign: "right", flexShrink: 0 }}>
+                            <div style={{ color: "#e8e4dc", fontSize: "14px", fontFamily: "serif" }}>{item.value}</div>
+                            {item.points && <div style={{ color: "#C9A84C", fontSize: "10px", marginTop: "2px" }}>{item.points}</div>}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "serif" }}>{h.value}</div>
-                    <div style={{ color: "#C9A84C", fontSize: "11px" }}>{h.points}</div>
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* Ground / other components */}
-        {ground.length > 0 && (
-          <div style={{ marginBottom: "24px" }}>
-            <div style={{ color: "#C9A84C", fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px", paddingBottom: "6px", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>🚗 Ground & Transfers</div>
-            {ground.map((g, i) => (
-              <div key={i} style={{ padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "10px", marginBottom: "8px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <div>
-                    <div style={{ color: "#b0a898", fontSize: "12px", marginBottom: "3px" }}>{g.label}</div>
-                    <div style={{ color: "#7a7468", fontSize: "12px" }}>{g.detail}</div>
-                    {g.detail?.toLowerCase().includes("helicopter") && <div style={{ color: "#C9A84C", fontSize: "11px", marginTop: "3px" }}>⚡ Arrange in advance</div>}
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ color: "#e8e4dc", fontSize: "14px", fontFamily: "serif" }}>{g.value}</div>
-                    <div style={{ color: "#C9A84C", fontSize: "11px" }}>{g.points}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Still needs booking */}
-        <div style={{ padding: "16px 18px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", marginBottom: "24px" }}>
-          <div style={{ color: "#888", fontSize: "10px", letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>📋 Still Needs Booking Outside Sojourn</div>
-          {option.components.map((c, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "8px", marginBottom: "6px" }}>
-              <span style={{ color: "#C9A84C", fontSize: "10px", marginTop: "2px", flexShrink: 0 }}>▪</span>
-              <span style={{ color: "#6a6460", fontSize: "12px", lineHeight: "1.5" }}>
-                {c.label?.toLowerCase().includes("flight") ? `${c.label} — book via ${c.card?.split("·")[0]?.trim() || "airline"} or travel agent` :
-                 c.label?.toLowerCase().includes("hotel") ? `${c.detail?.split("·")[0]?.trim() || c.label} — book directly or via hotel website` :
-                 c.detail?.toLowerCase().includes("helicopter") ? "Helicopter transfer — arrange via operator well in advance" :
-                 c.detail?.toLowerCase().includes("eurostar") ? "Eurostar — book via eurostar.com" :
-                 `${c.label} — arrange locally`}
-              </span>
             </div>
           ))}
-          {option.whyThis?.toLowerCase().includes("dining") || option.tags?.some(t => t.toLowerCase().includes("michelin") || t.toLowerCase().includes("dining")) ? (
-            <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", marginBottom: "6px" }}>
-              <span style={{ color: "#C9A84C", fontSize: "10px", marginTop: "2px" }}>▪</span>
-              <span style={{ color: "#6a6460", fontSize: "12px" }}>Restaurant reservations — book via OpenTable, Resy, or directly with property</span>
-            </div>
-          ) : null}
         </div>
 
         {/* Loyalty highlight */}
@@ -900,8 +925,8 @@ const ItineraryOverlay = ({ option, tripSummary, onClose }) => {
           <div style={{ color: option.tagColor, fontSize: "12px" }}>✦ {option.loyaltyHighlight}</div>
         </div>
 
-        {/* Book button */}
-        <button style={{ width: "100%", padding: "16px", background: option.tagColor, color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "14px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>
+        {/* Book CTA */}
+        <button onClick={() => { mp.track("book_intent", { tag: option.tag, headline: option.headline, total_cost: option.totalCost, destination: option.subhead }); alert("Booking coming soon! We logged your interest in: " + option.headline); }} style={{ width: "100%", padding: "16px", background: option.tagColor, color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "14px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>
           Book This Trip →
         </button>
       </div>
@@ -1080,7 +1105,7 @@ const OptimizingForBar = ({ profile, setProfile }) => {
         <div style={{ background: "#0e0d0c", border: "1px solid rgba(201,168,76,0.15)", borderRadius: "14px 14px 0 0", padding: "16px 18px", marginBottom: "0", maxHeight: "260px", overflowY: "auto" }}>
           {activePanel === "loyalty" && (
             <div>
-              <div style={{ color: "#C9A84C", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Loyalty Programs · Est. Portfolio Value: <span style={{ color: "#e8e4dc" }}>${totalValue.toLocaleString()}</span></div>
+              <div style={{ color: "#C9A84C", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Loyalty Programs · Est. Portfolio Value: <span style={{ color: "#e8e4dc" }}>est. ${totalValue.toLocaleString()}</span></div>
               {loyalty.map((a, i) => {
                 const bal = parseInt((a.balance||"0").replace(/,/g,"")) || 0;
                 const val = Math.round(bal * (cpp[a.program] || 1.0) / 100);
@@ -1092,7 +1117,7 @@ const OptimizingForBar = ({ profile, setProfile }) => {
                       <div style={{ color: "#555", fontSize: "11px" }}>{a.tier}{a.balance ? ` · ${a.balance}` : ""}</div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      {isActive && <div style={{ color: "#C9A84C", fontSize: "12px", fontFamily: "serif" }}>${val.toLocaleString()}</div>}
+                      {isActive && <div style={{ color: "#C9A84C", fontSize: "12px", fontFamily: "serif" }}>est. ${val.toLocaleString()}</div>}
                       {isActive && <button onClick={() => setProfile({ ...profile, loyaltyAccounts: profile.loyaltyAccounts.map(x => x.program === a.program ? { ...x, tier: "None", balance: "" } : x) })} style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", color: "#555", fontSize: "10px", padding: "2px 7px", cursor: "pointer" }}>✕</button>}
                       {!isActive && <button onClick={() => setProfile({ ...profile, loyaltyAccounts: profile.loyaltyAccounts.map(x => x.program === a.program ? { ...x, tier: "Member", balance: "" } : x) })} style={{ background: "none", border: "1px solid rgba(201,168,76,0.2)", borderRadius: "6px", color: "#C9A84C", fontSize: "10px", padding: "2px 7px", cursor: "pointer" }}>+ add</button>}
                     </div>
@@ -1130,7 +1155,12 @@ const OptimizingForBar = ({ profile, setProfile }) => {
                     <span onClick={() => setProfile({ ...profile, selectedBrands: brands.filter(x => x !== b), preferredBrands: brands.filter(x => x !== b) })} style={{ cursor: "pointer", color: "#555", fontSize: "10px" }}>✕</span>
                   </span>
                 ))}
-                {brands.length === 0 && <div style={{ color: "#555", fontSize: "12px" }}>No brand preferences set — add them in onboarding.</div>}
+                {brands.length === 0 && <div style={{ color: "#555", fontSize: "12px", marginBottom: "10px" }}>No brand preferences set yet.</div>}
+              </div>
+              <div style={{ marginTop: "12px", display: "flex", gap: "8px" }}>
+                <input id="brand-add-input" placeholder="Add a brand (e.g. Andaz, Kimpton)..." style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#e8e4dc", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }} list="brand-suggestions" />
+                <datalist id="brand-suggestions">{["Andaz","Thompson Hotels","Alila","Park Hyatt","Grand Hyatt","Autograph Collection","Edition","W Hotels","Kimpton","Hotel Indigo","Six Senses","Curio Collection","Tapestry Collection","Conrad","Waldorf Astoria","The Luxury Collection","Ritz-Carlton","St. Regis","Westin","Le Meridien"].map(b => <option key={b} value={b} />)}</datalist>
+                <button onClick={() => { const inp = document.getElementById("brand-add-input"); const val = inp?.value?.trim(); if (val && !brands.includes(val)) { setProfile({ ...profile, selectedBrands: [...brands, val], preferredBrands: [...brands, val] }); if (inp) inp.value = ""; } }} style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: "8px", color: "#C9A84C", fontSize: "11px", padding: "6px 12px", cursor: "pointer" }}>Add</button>
               </div>
             </div>
           )}
@@ -1141,7 +1171,7 @@ const OptimizingForBar = ({ profile, setProfile }) => {
         <span style={{ color: "#444", fontSize: "10px", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "serif", flexShrink: 0 }}>Optimizing for</span>
         <button onClick={() => toggle("loyalty")} style={pillStyle(activePanel === "loyalty")}>
           Loyalty {activeLoyalty.length > 0 ? `· ${activeLoyalty.length}` : ""}
-          {totalValue > 0 ? <span style={{ color: "#C9A84C", marginLeft: "4px" }}>~${totalValue.toLocaleString()}</span> : ""}
+          {totalValue > 0 ? <span style={{ color: "#C9A84C", marginLeft: "4px" }}>est. ${totalValue.toLocaleString()}</span> : ""}
         </button>
         <button onClick={() => toggle("cards")} style={pillStyle(activePanel === "cards")}>
           Cards {cards.length > 0 ? `· ${cards.length}` : ""}
