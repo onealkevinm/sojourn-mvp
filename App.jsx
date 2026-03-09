@@ -1760,11 +1760,12 @@ Please respond now.`,
 
       {/* Hero — centerpoint on first load */}
       {isFirst && (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 24px 12px", animation: "fadeUp 0.5s ease forwards" }}>
-          <div style={{ marginBottom: "32px" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 24px 12px", animation: "fadeUp 0.5s ease forwards" }}>
+          <div style={{ marginBottom: "32px", textAlign: "center", maxWidth: "520px", width: "100%" }}>
             <div style={{ fontSize: "32px", fontFamily: "'Playfair Display',Georgia,serif", color: "#e8e4dc", lineHeight: "1.2", marginBottom: "12px" }}>Where are you going?</div>
-            <div style={{ color: "#555", fontSize: "14px", lineHeight: "1.6", maxWidth: "420px" }}>Tell me about your trip — or start with just a feeling. Sojourn optimizes every option across your cards and loyalty programs, and can help you explore destinations, find hidden gems, discover events, and uncover dining experiences you wouldn't find on your own. Not sure where to go? Start there.</div>
+            <div style={{ color: "#555", fontSize: "14px", lineHeight: "1.6" }}>Tell me about your trip — or start with an idea. Sojourn optimizes every option across your credit cards and loyalty programs. Explore destinations, discover events and dining, build an itinerary, and book your trip — all in one conversation.</div>
           </div>
+          <div style={{ width: "100%", maxWidth: "520px" }}>
           <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "18px", padding: "4px 4px 4px 18px", display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "16px" }}>
             <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
               placeholder={`Where to? Try: "4 days in Japan in October, two adults, first time" · "surprise me with a long weekend under $1,500" · "best use of my Hyatt points this winter" · "Chicago for work, what should I do after hours?"`}
@@ -1774,7 +1775,7 @@ Please respond now.`,
               <button onClick={handleSend} disabled={!input.trim() || loading} style={{ width: "38px", height: "38px", borderRadius: "10px", border: "none", cursor: input.trim() && !loading ? "pointer" : "default", background: input.trim() && !loading ? "#C9A84C" : "rgba(201,168,76,0.15)", color: input.trim() && !loading ? "#0a0908" : "#555", fontSize: "18px", fontWeight: "bold" }}>↑</button>
             </div>
           </div>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center" }}>
             {[
               "NYC next week, direct flights, back by Thursday",
               "I want a beach trip in March — where should I go?",
@@ -1787,6 +1788,7 @@ Please respond now.`,
             ].map(ex => (
               <button key={ex} onClick={() => setInput(ex)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "#6a6460", borderRadius: "20px", padding: "7px 14px", cursor: "pointer", fontSize: "12px" }}>{ex}</button>
             ))}
+          </div>
           </div>
         </div>
       )}
