@@ -1920,9 +1920,7 @@ Please respond now.`,
               {dismissedIds.length > 0 && (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minWidth: "120px", flexShrink: 0 }}>
                   <button onClick={() => setShowDismissed(!showDismissed)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "10px 14px", color: "#3a3a3a", fontSize: "11px", cursor: "pointer", textAlign: "center", lineHeight: "1.5" }}>
-                    {dismissedIds.length} hidden{"
-"}
-                    <span style={{ color: "#555", fontSize: "10px" }}>{showDismissed ? "hide" : "show"}</span>
+                    {dismissedIds.length} hidden · <span style={{ color: "#555", fontSize: "10px" }}>{showDismissed ? "hide" : "show"}</span>
                   </button>
                 </div>
               )}
