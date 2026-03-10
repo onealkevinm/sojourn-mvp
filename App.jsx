@@ -557,8 +557,7 @@ const OnboardingFlow = ({ onComplete }) => {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <button onClick={() => setStep(3)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "#666", padding: "10px 18px", borderRadius: "12px", cursor: "pointer", fontSize: "12px" }}>← Back</button>
               <div style={{ display: "flex", gap: "10px" }}>
-                <button onClick={() => {
-                  setDebugMsg("Clicked...");
+                <button onClick={() => {setDebugMsg("Clicked...");
                   try {
                     setDebugMsg("Building profile...");
                     const profile = {
@@ -1413,7 +1412,7 @@ DESTINATION DIVERSITY RULE:
 - Each of the 6 options should feel like a genuinely different trip, not a variation of the same trip in the same place
 
 REQUIRED JSON SCHEMA:
-{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[{"day":2,"time":"Evening","icon":"🍽","title":"Le Pigeon","detail":"James Beard-winning French-inspired, 6 blocks from hotel — book via Resy","bookUrl":"https://resy.com"},{"day":3,"time":"Morning","title":"Tasty n Alder","icon":"🍳","detail":"Korean fried chicken and waffles, 8 blocks — walk-in or OpenTable","bookUrl":"https://www.opentable.com"}]}]}. CRITICAL: (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] is REQUIRED — populate it with every dining, activity, brewery, distillery, or excursion discussed in the conversation, each with day, time, icon, title, detail, and bookUrl. If no experiences discussed, use an empty array.`;
+{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] must be an EMPTY ARRAY by default. ONLY populate it if the user has explicitly requested specific dining, activities, breweries, distilleries, or excursions in this conversation and asked for them to be included. Never speculatively generate experiences.`;
   };
 
 
@@ -1584,12 +1583,17 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
     return null;
   };
 
-  const handleRefine = async () => {
-    mp.track("refinement_submitted", { message_count: refineMessages.length, message: refineInput.slice(0, 100) });
-    if (!refineInput.trim() || refineLoading) return;
-    const msg = refineInput.trim();
-    setRefineInput("");
-    setRefineMessages(prev => [...prev, { role: "user", text: msg }]);
+  const handleRefine = async (directMsg) => {
+    const msg = directMsg || refineInput.trim();
+    if (!msg || refineLoading) return;
+    const isDeepDiveTrigger = msg.startsWith("__deepdive__");
+    const optIdFromTrigger = isDeepDiveTrigger ? parseInt(msg.replace("__deepdive__","")) : null;
+    mp.track("refinement_submitted", { message_count: refineMessages.length, message: isDeepDiveTrigger ? "deep_dive_trigger" : msg.slice(0, 100) });
+    if (!directMsg) setRefineInput("");
+    // For deep dive trigger — don't show user message, inject as silent system nudge
+    if (!isDeepDiveTrigger) {
+      setRefineMessages(prev => [...prev, { role: "user", text: msg }]);
+    }
     setRefineLoading(true);
 
     // 6b trigger — check for explicit preference signal
@@ -1658,11 +1662,11 @@ WHEN TO RESPOND CONVERSATIONALLY:
 DEEP DIVE MODE${focusedOptionId ? " — ACTIVE" : ""}:
 ${focusedOptionId ? `The traveler has chosen the ${tripOptions.find(o=>o.id===focusedOptionId)?.tag} option: "${tripOptions.find(o=>o.id===focusedOptionId)?.headline}". You are now in guided confirmation mode.
 - Frame it as: "Let's go through each part of this trip together"
-- Work through transportation, lodging, and other components — use those words, not "flight/hotel/ground" which may not apply
-- Ask one confirming question per component, provide the key data point the traveler needs to answer it
-- If there is a next-best alternative (different departure time, different room type, different transfer option), mention it once briefly then drop it — do not keep offering alternatives
-- After 3 confirmed components shift tone to: "Everything's looking good — anything else you want to review before booking?" rather than continuing to enumerate every detail
-- When done, close with exactly one sentence: "Your trip is set — click 'Book This Trip' whenever you're ready." Stop there. Do not add more.
+- Cover ALL components in ONE opening message — transportation, lodging, other — with one key detail each
+- End that message with a single question: "Does everything look good, or is there anything you'd like to adjust?"
+- If they flag something specific, drill into just that component
+- If there's a next-best alternative (different departure time, different room type), mention it once briefly inline
+- When everything is confirmed, close with exactly one sentence: "Your trip is set — click 'Book This Trip' whenever you're ready." Stop there.
 - Tone: warm, confident, forward-moving — concierge finalizing, not salesperson closing` : "Standard refinement mode — present options and answer questions."}
 
 CONCIERGE TONE RULES — critical:
@@ -1709,7 +1713,7 @@ HARD CONSTRAINTS — these override everything else:
 - Borderline April destinations (75-80F): Southern California, Naples FL — only include if user has not set a hard weather minimum
 
 JSON SCHEMA — you MUST use exactly these field names or cards will not display:
-{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[{"day":2,"time":"Evening","icon":"🍽","title":"","detail":"","bookUrl":""}]}]}. CRITICAL: (1) every component MUST include a day integer. (2) experiences[] MUST include every dining/activity/brewery/distillery discussed — each with day, time, icon, title, detail, bookUrl. Empty array if none discussed.
+{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer. (2) experiences[] is EMPTY by default. Only populate it when the user has explicitly requested specific dining or activities and asked for them to be included in their trip. Never generate experiences speculatively.
 NEVER use: results, cards, tripOptions, color, title, property, priceStructure — these will break the display.
 
 CARD QUALITY RULES (when generating new cards):
@@ -1725,7 +1729,9 @@ CARD QUALITY RULES (when generating new cards):
 Please respond now.`,
           messages: [
             ...(refineMessages||[]).filter(m=>m&&m.text).map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text || "" })),
-            { role: "user", content: msg }
+            { role: "user", content: isDeepDiveTrigger
+                ? `Please walk me through this trip now. Cover all components — transportation, lodging, and anything else — in one message with the key details for each. Then ask one single question: does everything look good, or is there anything to adjust? Keep it concise.`
+                : msg }
           ],
         })
       });
@@ -2025,6 +2031,14 @@ Please respond now.`,
                     fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit",
                     fontStyle: msg.role === "assistant" ? "italic" : "normal",
                   }}>{msg.text}</div>
+                  {msg.text?.includes("Your trip is set") && focusedOptionId && (() => {
+                    const opt = tripOptions.find(o => o.id === focusedOptionId);
+                    return (
+                      <button onClick={() => { mp.track("book_intent", { tag: opt?.tag, headline: opt?.headline, total_cost: opt?.totalCost, source: "deep_dive_close" }); alert("Booking coming soon! We logged your interest in: " + opt?.headline); }} style={{ marginTop: "10px", padding: "12px 24px", background: opt?.tagColor || "#C9A84C", color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>
+                        Book This Trip →
+                      </button>
+                    );
+                  })()}
                   {msg.isDeepDivePrompt && !deepDiveConfirmed && (
                     <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
                       <button onClick={() => {
@@ -2032,8 +2046,8 @@ Please respond now.`,
                         setFocusedOptionId(msg.optionId);
                         setDeepDiveConfirmed(true);
                         mp.track("deep_dive_started", { optionId: msg.optionId, tag: opt?.tag });
-                        setRefineMessages(prev => [...prev, { role: "assistant", text: `Perfect — let's go through this together. I'll confirm each component so there are no surprises at booking.` }]);
-                        setTimeout(() => setRefineInput(`Let's go through each part of this trip together — transportation, lodging, and any other components. For each one, ask me a single confirming question and give me the key detail I need to answer it. If there's a next-best alternative (different departure time, different room type), mention it once briefly. After three confirmed components, check if I have any remaining questions rather than continuing to enumerate.`), 300);
+                        // Directly trigger guided tour — no seeded visible message, no setTimeout
+                        handleRefine(`__deepdive__${msg.optionId}`);
                       }} style={{ padding: "8px 18px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'Playfair Display',Georgia,serif" }}>
                         Yes, let's do it →
                       </button>
