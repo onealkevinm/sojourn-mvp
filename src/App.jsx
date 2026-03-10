@@ -585,47 +585,131 @@ const OnboardingFlow = ({ onComplete }) => {
 
 // ─── Components ──────────────────────────────────────────────────────────────
 
-const CompareView = ({ options, onBack, onSelectOption }) => (
-  <div style={{ animation: "fadeUp 0.4s ease forwards" }}>
-    <button onClick={onBack} style={{ background: "none", border: "1px solid rgba(255,255,255,0.2)", color: "#aaa", padding: "8px 16px", borderRadius: "20px", cursor: "pointer", marginBottom: "24px", fontSize: "13px" }}>← Back to Cards</button>
-    <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "800px" }}>
-        <thead>
-          <tr>
-            {["Option", "Total Cost", "Est. Points Value", "Net Cost", "Why This Option"].map(h => (
-              <th key={h} style={{ textAlign: h === "Option" || h === "Why This Option" ? "left" : "right", padding: "12px 16px", color: "#555", fontSize: "11px", fontFamily: "serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {options.map((opt, i) => (
-            <tr key={opt.id} onClick={() => onSelectOption && onSelectOption(opt.id)} style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: i === 0 ? "rgba(201,168,76,0.04)" : "transparent", cursor: "pointer", transition: "background 0.15s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"} onMouseLeave={e => e.currentTarget.style.background = i === 0 ? "rgba(201,168,76,0.04)" : "transparent"}>
-              <td style={{ padding: "16px", verticalAlign: "top" }}>
-                <span style={{ background: opt.tagColor + "18", color: opt.tagColor, fontSize: "10px", padding: "3px 8px", borderRadius: "10px", fontFamily: "serif", display: "inline-block", marginBottom: "6px" }}>{opt.tag}</span>
-                <div style={{ color: "#b0a898", fontSize: "13px" }}>{opt.headline}</div>
-                <div style={{ color: "#444", fontSize: "10px", marginTop: "4px", letterSpacing: "0.05em" }}>View details →</div>
-              </td>
-              <td style={{ padding: "16px", textAlign: "right", verticalAlign: "top" }}>
-                <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "serif" }}>{typeof opt.totalCost === "number" ? opt.totalCost.toLocaleString() : String(opt.totalCost).replace(/^\$+/,"")}</div>
-                {opt.redemption && <div style={{ color: "#4CC97A", fontSize: "11px" }}>Includes redemption · −{opt.redemption.valueRedeemed}</div>}
-              </td>
-              <td style={{ padding: "16px", textAlign: "right", verticalAlign: "top" }}>
-                <div style={{ color: opt.tagColor, fontSize: "14px" }}>+${opt.pointsValue}</div>
-                <div style={{ color: "#555", fontSize: "11px" }}>{opt.pointsEarned}</div>
-              </td>
-              <td style={{ padding: "16px", textAlign: "right", verticalAlign: "top" }}>
-                <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "serif" }}>${opt.netValue.toLocaleString()}</div>
-                <div style={{ color: "#555", fontSize: "10px" }}>after pts value</div>
-              </td>
-              <td style={{ padding: "16px", verticalAlign: "top", maxWidth: "260px" }}>
-                <div style={{ color: "#b0a898", fontSize: "13px", lineHeight: "1.5" }}>{opt.whyThis}</div>
-              </td>
+const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOptionId, showDismissed, setShowDismissed, hiddenOptions }) => {
+  const [hovered, setHovered] = React.useState(null);
+
+  return (
+    <div style={{ animation: "fadeUp 0.35s ease forwards" }}>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "700px" }}>
+          <thead>
+            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <th style={{ textAlign: "left", padding: "10px 16px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "32%" }}>Option</th>
+              <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Total Cost</th>
+              <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Est. Points Earned</th>
+              <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Net Cost</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "26%" }}>Why This</th>
+              <th style={{ width: "32px" }}></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {options.map((opt, i) => {
+              const isRec = opt.id === 1;
+              const isFocused = focusedOptionId === opt.id;
+              const isOnHold = focusedOptionId && !isFocused;
+              const isHov = hovered === opt.id;
+              const hotel = (opt.components||[]).find(c => c.label?.toLowerCase().includes("hotel") || c.label?.toLowerCase().includes("accommodation"));
+              const flight = (opt.components||[]).find(c => c.label === "Flight");
+              return (
+                <tr
+                  key={opt.id}
+                  onClick={() => !isOnHold && onSelectOption && onSelectOption(opt.id)}
+                  onMouseEnter={() => setHovered(opt.id)}
+                  onMouseLeave={() => setHovered(null)}
+                  style={{
+                    borderBottom: "1px solid rgba(255,255,255,0.05)",
+                    background: isFocused ? "rgba(201,168,76,0.07)" : isRec && !isOnHold ? "rgba(201,168,76,0.03)" : isHov && !isOnHold ? "rgba(255,255,255,0.03)" : "transparent",
+                    cursor: isOnHold ? "default" : "pointer",
+                    opacity: isOnHold ? 0.25 : 1,
+                    transition: "all 0.2s",
+                    animation: `fadeUp 0.45s ease ${i * 0.06}s both`,
+                  }}
+                >
+                  {/* Option name + tag */}
+                  <td style={{ padding: "16px 16px", verticalAlign: "middle" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+                      <span style={{ background: opt.tagColor + "18", color: opt.tagColor, fontSize: "10px", padding: "3px 9px", borderRadius: "10px", fontFamily: "serif", border: `1px solid ${opt.tagColor}22`, whiteSpace: "nowrap" }}>{opt.tag}</span>
+                      {isRec && !isOnHold && <span style={{ color: "#C9A84C", fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif" }}>★ Top Pick</span>}
+                      {isFocused && <span style={{ color: "#C9A84C", fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif" }}>● Selected</span>}
+                    </div>
+                    <div style={{ color: "#d8d4cc", fontSize: "13px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.3", marginBottom: "4px" }}>{opt.headline}</div>
+                    <div style={{ color: "#555", fontSize: "11px" }}>{opt.subhead}</div>
+                    {hotel && <div style={{ color: "#3a3a3a", fontSize: "10px", marginTop: "4px" }}>{hotel.detail?.split("·")[0]?.trim()}</div>}
+                    {!isOnHold && <div style={{ color: isHov ? "#C9A84C" : "#333", fontSize: "10px", marginTop: "5px", letterSpacing: "0.05em", transition: "color 0.15s" }}>View details →</div>}
+                  </td>
+
+                  {/* Total cost */}
+                  <td style={{ padding: "16px 12px", textAlign: "right", verticalAlign: "middle" }}>
+                    <div style={{ color: "#e8e4dc", fontSize: "16px", fontFamily: "'Playfair Display',Georgia,serif" }}>
+                      ${typeof opt.totalCost === "number" ? opt.totalCost.toLocaleString() : String(opt.totalCost||0).replace(/^\$+/,"")}
+                    </div>
+                    {opt.redemption && <div style={{ color: "#4CC97A", fontSize: "10px", marginTop: "2px" }}>Redemption applied</div>}
+                  </td>
+
+                  {/* Points earned */}
+                  <td style={{ padding: "16px 12px", textAlign: "right", verticalAlign: "middle" }}>
+                    {opt.pointsValue > 0
+                      ? <div style={{ color: opt.tagColor, fontSize: "13px" }}>+${opt.pointsValue?.toLocaleString()}</div>
+                      : <div style={{ color: "#333", fontSize: "12px" }}>—</div>
+                    }
+                    <div style={{ color: "#444", fontSize: "10px", marginTop: "2px", maxWidth: "120px", marginLeft: "auto" }}>{opt.pointsEarned}</div>
+                  </td>
+
+                  {/* Net cost */}
+                  <td style={{ padding: "16px 12px", textAlign: "right", verticalAlign: "middle" }}>
+                    <div style={{ color: "#e8e4dc", fontSize: "16px", fontFamily: "'Playfair Display',Georgia,serif" }}>
+                      ${typeof opt.netValue === "number" ? opt.netValue.toLocaleString() : String(opt.netValue||0).replace(/^\$+/,"")}
+                    </div>
+                    <div style={{ color: "#444", fontSize: "10px", marginTop: "2px" }}>after pts</div>
+                  </td>
+
+                  {/* Why this */}
+                  <td style={{ padding: "16px 12px", verticalAlign: "middle" }}>
+                    <div style={{ color: "#7a7468", fontSize: "12px", lineHeight: "1.55" }}>{opt.whyThis}</div>
+                    {opt.tradeoff && <div style={{ color: "#3a3a3a", fontSize: "10px", marginTop: "5px", fontStyle: "italic" }}>{opt.tradeoff}</div>}
+                  </td>
+
+                  {/* Dismiss X */}
+                  <td style={{ padding: "0 10px", textAlign: "center", verticalAlign: "middle" }}>
+                    {!isOnHold && onDismiss && (
+                      <button
+                        onClick={e => { e.stopPropagation(); onDismiss(opt.id); }}
+                        title="Not for me"
+                        style={{ background: "none", border: "none", color: "#2a2a2a", fontSize: "13px", cursor: "pointer", padding: "4px 6px", borderRadius: "6px", lineHeight: 1 }}
+                        onMouseEnter={e => e.currentTarget.style.color = "#666"}
+                        onMouseLeave={e => e.currentTarget.style.color = "#2a2a2a"}
+                      >✕</button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Dismissed / hidden options footer */}
+      {hiddenOptions && hiddenOptions.length > 0 && (
+        <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "10px", paddingLeft: "16px" }}>
+          <button onClick={() => setShowDismissed(!showDismissed)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "5px 12px", color: "#444", fontSize: "11px", cursor: "pointer" }}>
+            {hiddenOptions.length} hidden · {showDismissed ? "hide" : "show"}
+          </button>
+        </div>
+      )}
+      {showDismissed && hiddenOptions && hiddenOptions.map(opt => (
+        <div key={opt.id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 16px", opacity: 0.35, borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+          <span style={{ color: opt.tagColor, fontSize: "10px" }}>{opt.tag}</span>
+          <span style={{ color: "#555", fontSize: "12px", flex: 1 }}>{opt.headline}</span>
+          <button onClick={() => { /* restore handled outside */ onDismiss && onDismiss(opt.id, true); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#555", fontSize: "10px", padding: "3px 10px", cursor: "pointer" }}>Restore</button>
+        </div>
+      ))}
     </div>
-  </div>
+  );
+};
+
+// Keep CompareView as alias (used nowhere now but safe to keep)
+const CompareView = ({ options, onBack, onSelectOption }) => (
+  <GridView options={options} onSelectOption={onSelectOption} />
 );
 
 const ComponentRow = ({ label, value, detail, points, card }) => {
@@ -1413,7 +1497,7 @@ DESTINATION DIVERSITY RULE:
 - Each of the 6 options should feel like a genuinely different trip, not a variation of the same trip in the same place
 
 REQUIRED JSON SCHEMA:
-{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[{"day":2,"time":"Evening","icon":"🍽","title":"Le Pigeon","detail":"James Beard-winning French-inspired, 6 blocks from hotel — book via Resy","bookUrl":"https://resy.com"},{"day":3,"time":"Morning","title":"Tasty n Alder","icon":"🍳","detail":"Korean fried chicken and waffles, 8 blocks — walk-in or OpenTable","bookUrl":"https://www.opentable.com"}]}]}. CRITICAL: (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] is REQUIRED — populate it with every dining, activity, brewery, distillery, or excursion discussed in the conversation, each with day, time, icon, title, detail, and bookUrl. If no experiences discussed, use an empty array.`;
+{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] must be an EMPTY ARRAY by default. ONLY populate it if the user has explicitly requested specific dining, activities, breweries, distilleries, or excursions in this conversation and asked for them to be included. Never speculatively generate experiences.`;
   };
 
 
@@ -1571,7 +1655,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
   // Detect if user is expressing preference for a specific option
   const detectFocusIntent = (msg, options) => {
     const lower = msg.toLowerCase();
-    const preferenceSignals = ["let's go with", "let's do this", "going with", "i'll take", "lock in", "i'm sold", "sold on", "book this", "let's book", "i've decided", "decided on", "this is the one", "that's the one", "let's lock", "i want to book", "ready to book"];
+    const preferenceSignals = ["let's go with", "let's do this", "going with", "i'll take", "lock in", "i'm sold", "sold on", "book this", "let's book", "i've decided", "decided on", "this is the one", "that's the one", "let's lock", "i want to book", "ready to book", "i would like to go with", "i'd like to go with", "i want to go with", "i'm going with", "i'll go with", "let's do the", "i want the", "i'll take the", "i'm ready to book"];
     const hasSignal = preferenceSignals.some(s => lower.includes(s));
     if (!hasSignal) return null;
     // Try to match to a specific option by tag or keyword
@@ -1584,12 +1668,17 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
     return null;
   };
 
-  const handleRefine = async () => {
-    mp.track("refinement_submitted", { message_count: refineMessages.length, message: refineInput.slice(0, 100) });
-    if (!refineInput.trim() || refineLoading) return;
-    const msg = refineInput.trim();
-    setRefineInput("");
-    setRefineMessages(prev => [...prev, { role: "user", text: msg }]);
+  const handleRefine = async (directMsg) => {
+    const msg = directMsg || refineInput.trim();
+    if (!msg || refineLoading) return;
+    const isDeepDiveTrigger = msg.startsWith("__deepdive__");
+    const optIdFromTrigger = isDeepDiveTrigger ? parseInt(msg.replace("__deepdive__","")) : null;
+    mp.track("refinement_submitted", { message_count: refineMessages.length, message: isDeepDiveTrigger ? "deep_dive_trigger" : msg.slice(0, 100) });
+    if (!directMsg) setRefineInput("");
+    // For deep dive trigger — don't show user message, inject as silent system nudge
+    if (!isDeepDiveTrigger) {
+      setRefineMessages(prev => [...prev, { role: "user", text: msg }]);
+    }
     setRefineLoading(true);
 
     // 6b trigger — check for explicit preference signal
@@ -1644,26 +1733,35 @@ CURRENT OPTIONS SHOWING:
 ${(tripOptions||[]).filter(o => !dismissedIds.includes(o.id)).map(o => "[" + (o.tag||"") + "] " + (o.headline||"") + " ($" + (o.totalCost||0) + ")").join("\n")}${dismissedIds.length > 0 ? "\nDismissed by user (do not regenerate these): " + tripOptions.filter(o => dismissedIds.includes(o.id)).map(o => o.headline).join(", ") : ""}
 
 
-WHEN TO GENERATE NEW CARDS:
+WHEN TO GENERATE NEW CARDS — do this immediately, no confirmation needed:
 - User wants changes: swap, replace, remove, add, update, "yes", "yes please", any budget or preference change
+- User asks to add restaurants, activities, breweries, or any experiences to an option — add them to experiences[] and regenerate immediately
+- User says "add X to the itinerary", "include X", "put X in", "update the itinerary", "publish the itinerary", "can you update the cards" — regenerate immediately
 - Always output preamble (1-2 sentences summarizing what changed) THEN immediately the complete JSON
-- NEVER claim you swapped something without outputting new JSON
+- NEVER claim you updated or added something without outputting new JSON — if you say you added it, the JSON must be in your response
+- NEVER ask "shall I update the cards?" or "just say yes to update" — if the intent is clear, just do it
 
 WHEN TO RESPOND CONVERSATIONALLY:
-- Factual questions, comparisons, requests for more information
+- Factual questions, comparisons, requests for more information about a specific option
+- Recommending restaurants/activities is conversational — but as soon as the user says "add those" or "include those", switch to card generation immediately
 - Be specific: name properties, quote prices, give times
 - Reference the traveler's loyalty tier and card benefits by name
-- End with an offer to update cards if relevant
 
 DEEP DIVE MODE${focusedOptionId ? " — ACTIVE" : ""}:
 ${focusedOptionId ? `The traveler has chosen the ${tripOptions.find(o=>o.id===focusedOptionId)?.tag} option: "${tripOptions.find(o=>o.id===focusedOptionId)?.headline}". You are now in guided confirmation mode.
 - Frame it as: "Let's go through each part of this trip together"
-- Work through transportation, lodging, and other components — use those words, not "flight/hotel/ground" which may not apply
-- Ask one confirming question per component, provide the key data point the traveler needs to answer it
-- If there is a next-best alternative (different departure time, different room type, different transfer option), mention it once briefly then drop it — do not keep offering alternatives
-- After 3 confirmed components shift tone to: "Everything's looking good — anything else you want to review before booking?" rather than continuing to enumerate every detail
-- When done, close with exactly one sentence: "Your trip is set — click 'Book This Trip' whenever you're ready." Stop there. Do not add more.
+- Cover ALL components in ONE opening message — transportation, lodging, other — with one key detail each
+- End that message with a single question: "Does everything look good, or is there anything you'd like to adjust?"
+- If they flag something specific, drill into just that component
+- If there's a next-best alternative (different departure time, different room type), mention it once briefly inline
+- When everything is confirmed, close with exactly one sentence: "Your trip is set — click 'Book This Trip' whenever you're ready." Stop there.
 - Tone: warm, confident, forward-moving — concierge finalizing, not salesperson closing` : "Standard refinement mode — present options and answer questions."}
+
+BOOKING INTENT DETECTION — critical:
+- If the traveler says anything like "I would like to go with", "I want the X option", "let's do the X", "I'm going with X", "ready to book" — treat this as a booking intent signal
+- Respond with the soft deep-dive prompt: "Great choice — want me to walk you through the details before you book?" with Yes/Keep options
+- NEVER respond to booking intent with a generic checklist of external booking links — that breaks the experience entirely
+- NEVER say "book on amtrak.com" or "search for hotels" — you are the concierge, not a search engine
 
 CONCIERGE TONE RULES — critical:
 - Never say "I don't have access to real-time data" or "I can't verify" or "you should check" — this breaks trust
@@ -1709,7 +1807,7 @@ HARD CONSTRAINTS — these override everything else:
 - Borderline April destinations (75-80F): Southern California, Naples FL — only include if user has not set a hard weather minimum
 
 JSON SCHEMA — you MUST use exactly these field names or cards will not display:
-{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[{"day":2,"time":"Evening","icon":"🍽","title":"","detail":"","bookUrl":""}]}]}. CRITICAL: (1) every component MUST include a day integer. (2) experiences[] MUST include every dining/activity/brewery/distillery discussed — each with day, time, icon, title, detail, bookUrl. Empty array if none discussed.
+{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer. (2) experiences[] is EMPTY by default. Only populate it when the user has explicitly requested specific dining or activities and asked for them to be included in their trip. Never generate experiences speculatively.
 NEVER use: results, cards, tripOptions, color, title, property, priceStructure — these will break the display.
 
 CARD QUALITY RULES (when generating new cards):
@@ -1725,7 +1823,9 @@ CARD QUALITY RULES (when generating new cards):
 Please respond now.`,
           messages: [
             ...(refineMessages||[]).filter(m=>m&&m.text).map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text || "" })),
-            { role: "user", content: msg }
+            { role: "user", content: isDeepDiveTrigger
+                ? `Please walk me through this trip now. Cover all components — transportation, lodging, and anything else — in one message with the key details for each. Then ask one single question: does everything look good, or is there anything to adjust? Keep it concise.`
+                : msg }
           ],
         })
       });
@@ -1928,84 +2028,63 @@ Please respond now.`,
           </div>
         )}
 
-        <div style={{ padding: "20px 28px 14px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <div style={{ padding: "20px 28px 10px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <div>
             <div style={{ fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "3px" }}>
               {tripOptions.filter(o => !dismissedIds.includes(o.id)).length} option{tripOptions.filter(o => !dismissedIds.includes(o.id)).length !== 1 ? "s" : ""}, optimized for you
             </div>
-            <div style={{ color: "#555", fontSize: "12px" }}>Tap a card to explore · Scroll to see all</div>
+            <div style={{ color: "#555", fontSize: "12px" }}>{expandedId ? "Viewing details · click back to compare all" : "Click any option to explore · dismiss to narrow"}</div>
           </div>
-          {!showCompare && !expandedId && (
-            <button onClick={() => { mp.track("compare_view_opened"); setShowCompare(true); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", color: "#888", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", whiteSpace: "nowrap" }}>Compare All →</button>
-          )}
         </div>
 
         <div style={{ padding: "0 28px 48px" }}>
-          {showCompare ? (
-            <CompareView options={tripOptions.filter(o => !dismissedIds.includes(o.id))} onBack={() => setShowCompare(false)} onSelectOption={(id) => { setShowCompare(false); setExpandedId(id); }} />
-          ) : expandedId ? (
+          {expandedId ? (
             <div style={{ animation: "fadeUp 0.3s ease forwards" }}>
-              <button onClick={() => setExpandedId(null)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", color: "#888", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", marginBottom: "16px" }}>← All Options</button>
+              <button onClick={() => setExpandedId(null)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", color: "#888", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", marginBottom: "16px" }}>← Back to Grid</button>
               <TripCard option={tripOptions.find(o => o.id === expandedId)} isExpanded={true} onToggle={() => setExpandedId(null)} onItinerary={(opt) => { mp.track("itinerary_viewed", { tag: opt.tag, headline: opt.headline }); setItineraryOption(opt); }} />
-              <div style={{ marginTop: "14px" }}>
-                <div style={{ color: "#555", fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>Other Options</div>
-                <div style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "8px" }} className="card-scroll">
+              {/* Other options mini-strip */}
+              <div style={{ marginTop: "20px" }}>
+                <div style={{ color: "#333", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>Other Options</div>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                   {tripOptions.filter(o => o.id !== expandedId && !dismissedIds.includes(o.id)).map(opt => (
-                    <div key={opt.id} onClick={() => setExpandedId(opt.id)} style={{ flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "12px 14px", cursor: "pointer", minWidth: "155px" }}>
-                      <div style={{ color: opt.tagColor, fontSize: "10px", marginBottom: "4px" }}>{opt.tag}</div>
-                      <div style={{ color: "#b0a898", fontSize: "13px", fontFamily: "serif" }}>{typeof opt.totalCost === "number" ? opt.totalCost.toLocaleString() : String(opt.totalCost).replace(/^\$+/,"")}</div>
-                      <div style={{ color: "#555", fontSize: "11px" }}>net {typeof opt.netValue === "number" ? opt.netValue.toLocaleString() : String(opt.netValue).replace(/^\$+/,"")}</div>
-                    </div>
+                    <button key={opt.id} onClick={() => setExpandedId(opt.id)} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${focusedOptionId === opt.id ? opt.tagColor + "44" : "rgba(255,255,255,0.07)"}`, borderRadius: "10px", padding: "8px 12px", cursor: "pointer", textAlign: "left", opacity: focusedOptionId && focusedOptionId !== opt.id ? 0.35 : 1 }}>
+                      <div style={{ color: opt.tagColor, fontSize: "9px", marginBottom: "2px" }}>{opt.tag}</div>
+                      <div style={{ color: "#b0a898", fontSize: "12px", fontFamily: "serif" }}>${typeof opt.totalCost === "number" ? opt.totalCost.toLocaleString() : String(opt.totalCost).replace(/^\$+/,"")}</div>
+                    </button>
                   ))}
                 </div>
               </div>
             </div>
           ) : (
-            <div className="card-scroll" style={{ display: "flex", gap: "14px", overflowX: "auto", paddingBottom: "16px", paddingRight: "56px", scrollSnapType: "x mandatory" }}>
-              {tripOptions.filter(o => !dismissedIds.includes(o.id)).map((opt, i) => (
-                <div key={opt.id} style={{ scrollSnapAlign: "start", animation: `fadeUp 0.5s ease ${i * 0.07}s forwards`, opacity: 0, position: "relative" }}>
-                  {focusedOptionId && opt.id !== focusedOptionId && (
-                    <div style={{ position: "absolute", inset: 0, background: "rgba(8,7,6,0.65)", borderRadius: "20px", zIndex: 2, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(1px)" }}>
-                      <span style={{ color: "#333", fontSize: "10px", letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "serif" }}>On hold</span>
-                    </div>
-                  )}
-                  <TripCard option={opt} isExpanded={false}
-                    onToggle={() => { const opening = expandedId !== opt.id; if (opening) mp.track("card_expanded", { tag: opt.tag, headline: opt.headline, total_cost: opt.totalCost }); setExpandedId(expandedId === opt.id ? null : opt.id); }}
-                    onDismiss={(id) => {
-                      mp.track("card_dismissed", { tag: opt.tag, headline: opt.headline });
-                      const newDismissed = [...dismissedIds, id];
-                      setDismissedIds(newDismissed);
-                      const remaining = tripOptions.filter(o => !newDismissed.includes(o.id));
-                      if (remaining.length === 1 && !deepDiveConfirmed && !focusedOptionId) {
-                        const last = remaining[0];
-                        // Soft prompt only — don't auto-commit, let user confirm
-                        setRefineMessages(prev => [...prev, {
-                          role: "assistant",
-                          text: `Looks like the ${last.tag} — ${last.headline} — is your only remaining option. Want me to focus in and walk you through every detail before you book? Or if you'd like to restore any dismissed options, tap "show" below the cards.`,
-                          isDeepDivePrompt: true,
-                          optionId: last.id
-                        }]);
-                      }
-                    }}
-                  />
-                </div>
-              ))}
-              {/* Dismissed options ghost link */}
-              {dismissedIds.length > 0 && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minWidth: "120px", flexShrink: 0 }}>
-                  <button onClick={() => setShowDismissed(!showDismissed)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "10px 14px", color: "#3a3a3a", fontSize: "11px", cursor: "pointer", textAlign: "center", lineHeight: "1.5" }}>
-                    {dismissedIds.length} hidden · <span style={{ color: "#555", fontSize: "10px" }}>{showDismissed ? "hide" : "show"}</span>
-                  </button>
-                </div>
-              )}
-              {/* Dismissed cards shown as ghost */}
-              {showDismissed && tripOptions.filter(o => dismissedIds.includes(o.id)).map(opt => (
-                <div key={opt.id} style={{ scrollSnapAlign: "start", opacity: 0.35, position: "relative" }}>
-                  <TripCard option={opt} isExpanded={false} onToggle={() => {}} />
-                  <button onClick={() => setDismissedIds(prev => prev.filter(id => id !== opt.id))} style={{ position: "absolute", bottom: "12px", left: "50%", transform: "translateX(-50%)", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", color: "#888", fontSize: "11px", padding: "6px 14px", cursor: "pointer", whiteSpace: "nowrap" }}>Restore</button>
-                </div>
-              ))}
-            </div>
+            <GridView
+              options={tripOptions.filter(o => !dismissedIds.includes(o.id))}
+              onSelectOption={(id) => { mp.track("card_expanded", { tag: tripOptions.find(o=>o.id===id)?.tag, headline: tripOptions.find(o=>o.id===id)?.headline }); setExpandedId(id); }}
+              onDismiss={(id, restore) => {
+                if (restore) {
+                  setDismissedIds(prev => prev.filter(x => x !== id));
+                  return;
+                }
+                const opt = tripOptions.find(o => o.id === id);
+                mp.track("card_dismissed", { tag: opt?.tag, headline: opt?.headline });
+                const newDismissed = [...dismissedIds, id];
+                setDismissedIds(newDismissed);
+                const remaining = tripOptions.filter(o => !newDismissed.includes(o.id));
+                if (remaining.length === 1 && !deepDiveConfirmed && !focusedOptionId) {
+                  const last = remaining[0];
+                  setRefineMessages(prev => [...prev, {
+                    role: "assistant",
+                    text: `Looks like the ${last.tag} — ${last.headline} — is your only remaining option. Want me to focus in and walk you through every detail before you book? Or if you'd like to restore any dismissed options, tap "show" below.`,
+                    isDeepDivePrompt: true,
+                    optionId: last.id
+                  }]);
+                }
+              }}
+              dismissedIds={dismissedIds}
+              focusedOptionId={focusedOptionId}
+              showDismissed={showDismissed}
+              setShowDismissed={setShowDismissed}
+              hiddenOptions={tripOptions.filter(o => dismissedIds.includes(o.id))}
+            />
           )}
         </div>
 
@@ -2025,6 +2104,14 @@ Please respond now.`,
                     fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit",
                     fontStyle: msg.role === "assistant" ? "italic" : "normal",
                   }}>{msg.text}</div>
+                  {msg.text?.includes("Your trip is set") && focusedOptionId && (() => {
+                    const opt = tripOptions.find(o => o.id === focusedOptionId);
+                    return (
+                      <button onClick={() => { mp.track("book_intent", { tag: opt?.tag, headline: opt?.headline, total_cost: opt?.totalCost, source: "deep_dive_close" }); alert("Booking coming soon! We logged your interest in: " + opt?.headline); }} style={{ marginTop: "10px", padding: "12px 24px", background: opt?.tagColor || "#C9A84C", color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>
+                        Book This Trip →
+                      </button>
+                    );
+                  })()}
                   {msg.isDeepDivePrompt && !deepDiveConfirmed && (
                     <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
                       <button onClick={() => {
@@ -2032,8 +2119,8 @@ Please respond now.`,
                         setFocusedOptionId(msg.optionId);
                         setDeepDiveConfirmed(true);
                         mp.track("deep_dive_started", { optionId: msg.optionId, tag: opt?.tag });
-                        setRefineMessages(prev => [...prev, { role: "assistant", text: `Perfect — let's go through this together. I'll confirm each component so there are no surprises at booking.` }]);
-                        setTimeout(() => setRefineInput(`Let's go through each part of this trip together — transportation, lodging, and any other components. For each one, ask me a single confirming question and give me the key detail I need to answer it. If there's a next-best alternative (different departure time, different room type), mention it once briefly. After three confirmed components, check if I have any remaining questions rather than continuing to enumerate.`), 300);
+                        // Directly trigger guided tour — no seeded visible message, no setTimeout
+                        handleRefine(`__deepdive__${msg.optionId}`);
                       }} style={{ padding: "8px 18px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'Playfair Display',Georgia,serif" }}>
                         Yes, let's do it →
                       </button>
@@ -2065,7 +2152,7 @@ Please respond now.`,
                 <TypingIndicator />
               </div>
             ) : (
-              <button onClick={handleRefine} disabled={!refineInput.trim()} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", cursor: refineInput.trim() ? "pointer" : "default", background: refineInput.trim() ? "#C9A84C" : "rgba(201,168,76,0.1)", color: refineInput.trim() ? "#0a0908" : "#555", fontSize: "14px", fontWeight: "bold", flexShrink: 0 }}>↑</button>
+              <button onClick={handleRefine} disabled={!refineInput.trim()} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", cursor: refineInput.trim() ? "pointer" : "default", background: refineInput.trim() ? "#C9A84C" : "rgba(201,168,76,0.1)", color: refineInput.trim() ? "#0a0908" : "#555", fontSize: "14px", fontWeight: "bold", flexShrink: 0 }}>&#8593;</button>
             )}
           </div>
           <div style={{ color: "#2a2a2a", fontSize: "10px", textAlign: "center", marginTop: "6px", letterSpacing: "0.05em" }}>Ask Sojourn to refine, swap a component, or explore alternatives</div>
@@ -2150,8 +2237,8 @@ Please respond now.`,
                 placeholder={`Where to? e.g. "4 days in Japan in October, two adults" · "surprise me with a long weekend under $1,500" · "best use of my Hyatt points this winter"`}
                 rows={4} style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "15px", lineHeight: "1.7", padding: "14px 0", fontFamily: "'DM Sans',system-ui,sans-serif", resize: "none" }} />
               <div style={{ display: "flex", gap: "6px", paddingBottom: "10px", flexShrink: 0 }}>
-                <button onClick={listening ? () => { recognitionRef.current?.stop(); setListening(false); } : startListening} style={{ width: "40px", height: "40px", borderRadius: "12px", border: "none", cursor: "pointer", background: listening ? "rgba(201,76,76,0.2)" : "rgba(255,255,255,0.06)", color: listening ? "#C94C4C" : "#666", fontSize: "16px", animation: listening ? "pulse 1.2s infinite" : "none" }}>🎤</button>
-                <button onClick={handleSend} disabled={!input.trim() || loading} style={{ width: "40px", height: "40px", borderRadius: "12px", border: "none", cursor: input.trim() && !loading ? "pointer" : "default", background: input.trim() && !loading ? "#C9A84C" : "rgba(201,168,76,0.15)", color: input.trim() && !loading ? "#0a0908" : "#555", fontSize: "18px", fontWeight: "bold" }}>↑</button>
+                <button onClick={listening ? () => { recognitionRef.current?.stop(); setListening(false); } : startListening} style={{ width: "40px", height: "40px", borderRadius: "12px", border: "none", cursor: "pointer", background: listening ? "rgba(201,76,76,0.2)" : "rgba(255,255,255,0.06)", color: listening ? "#C94C4C" : "#666", fontSize: "16px", animation: listening ? "pulse 1.2s infinite" : "none" }}>&#127908;</button>
+                <button onClick={handleSend} disabled={!input.trim() || loading} style={{ width: "40px", height: "40px", borderRadius: "12px", border: "none", cursor: input.trim() && !loading ? "pointer" : "default", background: input.trim() && !loading ? "#C9A84C" : "rgba(201,168,76,0.15)", color: input.trim() && !loading ? "#0a0908" : "#555", fontSize: "18px", fontWeight: "bold" }}>&#8593;</button>
               </div>
             </div>
             {/* 2-2-1 prompt rows */}
@@ -2203,8 +2290,8 @@ Please respond now.`,
             <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Reply..." rows={2}
               style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "14px", lineHeight: "1.5", padding: "10px 0", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
             <div style={{ display: "flex", gap: "6px", paddingBottom: "6px", flexShrink: 0 }}>
-              <button onClick={listening ? () => { recognitionRef.current?.stop(); setListening(false); } : startListening} style={{ width: "36px", height: "36px", borderRadius: "10px", border: "none", cursor: "pointer", background: listening ? "rgba(201,76,76,0.2)" : "rgba(255,255,255,0.06)", color: listening ? "#C94C4C" : "#666", fontSize: "16px", animation: listening ? "pulse 1.2s infinite" : "none" }}>🎤</button>
-              <button onClick={handleSend} disabled={!input.trim() || loading} style={{ width: "36px", height: "36px", borderRadius: "10px", border: "none", cursor: input.trim() && !loading ? "pointer" : "default", background: input.trim() && !loading ? "#C9A84C" : "rgba(201,168,76,0.15)", color: input.trim() && !loading ? "#0a0908" : "#555", fontSize: "16px", fontWeight: "bold" }}>↑</button>
+              <button onClick={listening ? () => { recognitionRef.current?.stop(); setListening(false); } : startListening} style={{ width: "36px", height: "36px", borderRadius: "10px", border: "none", cursor: "pointer", background: listening ? "rgba(201,76,76,0.2)" : "rgba(255,255,255,0.06)", color: listening ? "#C94C4C" : "#666", fontSize: "16px", animation: listening ? "pulse 1.2s infinite" : "none" }}>&#127908;</button>
+              <button onClick={handleSend} disabled={!input.trim() || loading} style={{ width: "36px", height: "36px", borderRadius: "10px", border: "none", cursor: input.trim() && !loading ? "pointer" : "default", background: input.trim() && !loading ? "#C9A84C" : "rgba(201,168,76,0.15)", color: input.trim() && !loading ? "#0a0908" : "#555", fontSize: "16px", fontWeight: "bold" }}>&#8593;</button>
             </div>
           </div>
         </div>
@@ -2214,11 +2301,6 @@ Please respond now.`,
       <OptimizingForBar profile={userProfile} setProfile={(updated) => {
         setUserProfile(updated);
         try { localStorage.setItem("sojourn_profile", JSON.stringify(updated)); } catch(e) {}
-      }} />
-    </div>
-  );
-}
-
       }} />
     </div>
   );
