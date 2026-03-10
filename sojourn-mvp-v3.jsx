@@ -1116,8 +1116,7 @@ const BottomDrawer = ({ label, count, items }) => {
           cursor: "pointer", transition: "all 0.2s",
         }}
       >
-        <span style={{ color: "#444", fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif" }}>{label}</span>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <span style={{ color: "#444", fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif" }}>{label}</span><div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <span style={{ background: "rgba(201,168,76,0.08)", color: "#5a4a2a", fontSize: "10px", padding: "2px 7px", borderRadius: "8px", border: "1px solid rgba(201,168,76,0.12)" }}>{count}</span>
           <span style={{ color: "#444", fontSize: "10px", display: "inline-block", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</span>
         </div>
@@ -1570,7 +1569,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
   // Detect if user is expressing preference for a specific option
   const detectFocusIntent = (msg, options) => {
     const lower = msg.toLowerCase();
-    const preferenceSignals = ["let's go with", "let's do this", "going with", "i'll take", "lock in", "i'm sold", "sold on", "book this", "let's book", "i've decided", "decided on", "this is the one", "that's the one", "let's lock", "i want to book", "ready to book"];
+    const preferenceSignals = ["let's go with", "let's do this", "going with", "i'll take", "lock in", "i'm sold", "sold on", "book this", "let's book", "i've decided", "decided on", "this is the one", "that's the one", "let's lock", "i want to book", "ready to book", "i would like to go with", "i'd like to go with", "i want to go with", "i'm going with", "i'll go with", "let's do the", "i want the", "i'll take the", "i'm ready to book"];
     const hasSignal = preferenceSignals.some(s => lower.includes(s));
     if (!hasSignal) return null;
     // Try to match to a specific option by tag or keyword
@@ -1648,16 +1647,19 @@ CURRENT OPTIONS SHOWING:
 ${(tripOptions||[]).filter(o => !dismissedIds.includes(o.id)).map(o => "[" + (o.tag||"") + "] " + (o.headline||"") + " ($" + (o.totalCost||0) + ")").join("\n")}${dismissedIds.length > 0 ? "\nDismissed by user (do not regenerate these): " + tripOptions.filter(o => dismissedIds.includes(o.id)).map(o => o.headline).join(", ") : ""}
 
 
-WHEN TO GENERATE NEW CARDS:
+WHEN TO GENERATE NEW CARDS — do this immediately, no confirmation needed:
 - User wants changes: swap, replace, remove, add, update, "yes", "yes please", any budget or preference change
+- User asks to add restaurants, activities, breweries, or any experiences to an option — add them to experiences[] and regenerate immediately
+- User says "add X to the itinerary", "include X", "put X in", "update the itinerary", "publish the itinerary", "can you update the cards" — regenerate immediately
 - Always output preamble (1-2 sentences summarizing what changed) THEN immediately the complete JSON
-- NEVER claim you swapped something without outputting new JSON
+- NEVER claim you updated or added something without outputting new JSON — if you say you added it, the JSON must be in your response
+- NEVER ask "shall I update the cards?" or "just say yes to update" — if the intent is clear, just do it
 
 WHEN TO RESPOND CONVERSATIONALLY:
-- Factual questions, comparisons, requests for more information
+- Factual questions, comparisons, requests for more information about a specific option
+- Recommending restaurants/activities is conversational — but as soon as the user says "add those" or "include those", switch to card generation immediately
 - Be specific: name properties, quote prices, give times
 - Reference the traveler's loyalty tier and card benefits by name
-- End with an offer to update cards if relevant
 
 DEEP DIVE MODE${focusedOptionId ? " — ACTIVE" : ""}:
 ${focusedOptionId ? `The traveler has chosen the ${tripOptions.find(o=>o.id===focusedOptionId)?.tag} option: "${tripOptions.find(o=>o.id===focusedOptionId)?.headline}". You are now in guided confirmation mode.
@@ -1669,7 +1671,11 @@ ${focusedOptionId ? `The traveler has chosen the ${tripOptions.find(o=>o.id===fo
 - When everything is confirmed, close with exactly one sentence: "Your trip is set — click 'Book This Trip' whenever you're ready." Stop there.
 - Tone: warm, confident, forward-moving — concierge finalizing, not salesperson closing` : "Standard refinement mode — present options and answer questions."}
 
-CONCIERGE TONE RULES — critical:
+BOOKING INTENT DETECTION — critical:
+- If the traveler says anything like "I would like to go with", "I want the X option", "let's do the X", "I'm going with X", "ready to book" — treat this as a booking intent signal
+- Respond with the soft deep-dive prompt: "Great choice — want me to walk you through the details before you book?" with Yes/Keep options
+- NEVER respond to booking intent with a generic checklist of external booking links — that breaks the experience entirely
+- NEVER say "book on amtrak.com" or "search for hotels" — you are the concierge, not a search engineCONCIERGE TONE RULES — critical:
 - Never say "I don't have access to real-time data" or "I can't verify" or "you should check" — this breaks trust
 - If uncertain about a specific fact, hedge confidently: "Alaska typically runs seasonal directs SEA-MIA in spring — worth confirming on their site before booking" not "I'm not sure, please verify yourself"
 - Never expose internal limitations or backpedal awkwardly — a good concierge says "let me check on that" and comes back with a useful answer
@@ -2228,7 +2234,3 @@ Please respond now.`,
       <OptimizingForBar profile={userProfile} setProfile={(updated) => {
         setUserProfile(updated);
         try { localStorage.setItem("sojourn_profile", JSON.stringify(updated)); } catch(e) {}
-      }} />
-    </div>
-  );
-}
