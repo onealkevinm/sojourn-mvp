@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import React { useState, useRef, useEffect } from "react";
 
 // ── Analytics ──────────────────────────────────────────────────────────────────
 const MIXPANEL_TOKEN = "d7e668765a8c";
