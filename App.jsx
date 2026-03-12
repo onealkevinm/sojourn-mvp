@@ -2315,12 +2315,16 @@ Please respond now.`,
               <span style={{ color: "#C9A84C", fontSize: "12px", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic" }}>{refineLoadingMessage}</span>
             </div>
           )}
+          <div style={{ marginBottom: "10px" }}>
+            <div style={{ color: "#b0a898", fontSize: "13px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "3px" }}>Make it yours.</div>
+            <div style={{ color: "#555", fontSize: "11px", lineHeight: "1.5" }}>Ask about dining, drinks, activities, or any details you want to explore — or adjust the plan entirely.</div>
+          </div>
           <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: "14px", padding: "4px 4px 4px 16px", display: "flex", alignItems: "center", gap: "8px" }}>
             <input
               value={refineInput}
               onChange={e => setRefineInput(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") handleRefine(); }}
-              placeholder="Refine your trip — e.g. &quot;any other Marriott options?&quot; or &quot;swap the hotel for something quieter&quot;"
+              placeholder="e.g. &quot;any breweries nearby?&quot; or &quot;swap the hotel for something quieter&quot;"
               style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "13px", padding: "10px 0", fontFamily: "'DM Sans',system-ui,sans-serif", outline: "none" }}
             />
             {refineLoading ? (
@@ -2331,7 +2335,7 @@ Please respond now.`,
               <button onClick={handleRefine} disabled={!refineInput.trim()} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", cursor: refineInput.trim() ? "pointer" : "default", background: refineInput.trim() ? "#C9A84C" : "rgba(201,168,76,0.1)", color: refineInput.trim() ? "#0a0908" : "#555", fontSize: "14px", fontWeight: "bold", flexShrink: 0 }}>&#8593;</button>
             )}
           </div>
-          <div style={{ color: "#2a2a2a", fontSize: "10px", textAlign: "center", marginTop: "6px", letterSpacing: "0.05em" }}>Ask Sojourn to refine, swap a component, or explore alternatives</div>
+          
         </div>
       </div>
     </>
