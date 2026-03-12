@@ -1013,18 +1013,9 @@ const ItineraryOverlay = ({ option, tripSummary, onClose }) => {
           </div>
         </div>
 
-        {/* Cost strip */}
-        <div style={{ display: "flex", gap: "20px", padding: "14px 18px", background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: "12px", margin: "20px 0 32px" }}>
-          <div><div style={{ color: "#555", fontSize: "9px", letterSpacing: "0.12em", fontFamily: "serif", marginBottom: "3px" }}>TOTAL COST</div><div style={{ color: "#e8e4dc", fontSize: "18px", fontFamily: "serif" }}>${typeof option.totalCost === "number" ? option.totalCost.toLocaleString() : String(option.totalCost||0).replace(/^\$+/,"")}</div></div>
-          <div style={{ width: "1px", background: "rgba(255,255,255,0.06)" }} />
-          <div><div style={{ color: "#555", fontSize: "9px", letterSpacing: "0.12em", fontFamily: "serif", marginBottom: "3px" }}>EST. POINTS EARNED</div><div style={{ color: "#C9A84C", fontSize: "13px", marginTop: "2px" }}>{option.pointsEarned}</div></div>
-          <div style={{ width: "1px", background: "rgba(255,255,255,0.06)" }} />
-          <div><div style={{ color: "#555", fontSize: "9px", letterSpacing: "0.12em", fontFamily: "serif", marginBottom: "3px" }}>NET COST</div><div style={{ color: "#4CC97A", fontSize: "18px", fontFamily: "serif" }}>${typeof option.netValue === "number" ? option.netValue.toLocaleString() : String(option.netValue||0).replace(/^\$+/,"")}</div></div>
-          <div style={{ marginLeft: "auto" }}>
-            <div style={{ padding: "6px 12px", background: `${option.tagColor}15`, border: `1px solid ${option.tagColor}30`, borderRadius: "8px" }}>
-              <div style={{ color: option.tagColor, fontSize: "10px", fontFamily: "serif", letterSpacing: "0.08em" }}>{option.tag}</div>
-            </div>
-          </div>
+        {/* Option tag */}
+        <div style={{ margin: "16px 0 28px" }}>
+          <span style={{ padding: "5px 12px", background: `${option.tagColor}15`, border: `1px solid ${option.tagColor}30`, borderRadius: "8px", color: option.tagColor, fontSize: "11px", fontFamily: "serif", letterSpacing: "0.08em" }}>{option.tag}</span>
         </div>
 
         {/* Day-by-day schedule */}
@@ -1067,12 +1058,7 @@ const ItineraryOverlay = ({ option, tripSummary, onClose }) => {
                             </a>
                           )}
                         </div>
-                        {item.value && (
-                          <div style={{ textAlign: "right", flexShrink: 0 }}>
-                            <div style={{ color: "#e8e4dc", fontSize: "14px", fontFamily: "serif" }}>{item.value}</div>
-                            {item.points && <div style={{ color: "#C9A84C", fontSize: "10px", marginTop: "2px" }}>{item.points}</div>}
-                          </div>
-                        )}
+
                       </div>
                     </div>
                   </div>
@@ -1874,6 +1860,7 @@ Please respond now.`,
           tradeoff: o.tradeoff || "",
           loyaltyHighlight: o.loyaltyHighlight || o.loyaltyBenefit || "",
           whyThis: o.whyThis || o.why || o.reason || "",
+          experiences: Array.isArray(o.experiences) ? o.experiences : [],
           components: o.components || [
             { label: "Flight", value: o.flight || "", detail: o.flight || "", points: "", card: "" },
             { label: "Hotel", value: o.price || "", detail: (o.property || o.brand || "") + (o.location ? " · " + o.location : "") + (o.nights ? " · " + o.nights + " nights" : "") + (o.rooms ? " · " + o.rooms : ""), points: "", card: "" },
