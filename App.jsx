@@ -159,9 +159,22 @@ const BRAND_CATEGORIES = [
   },
   {
     key: "recognition",
-    label: "Quality Recognition",
-    sublabel: "Award and rating systems",
-    brands: ["Michelin Keys", "Michelin Stars (restaurant)", "Forbes Five Star", "AAA Five Diamond", "Condé Nast Gold List"],
+    label: "Quality & Discovery",
+    sublabel: "Award and rating systems you trust",
+    brands: [
+      "Michelin Keys (hotel)",
+      "Michelin Stars (restaurant)",
+      "Michelin Bib Gourmand",
+      "Forbes Five Star",
+      "AAA Five Diamond",
+      "Condé Nast Gold List",
+      "T+L Hot List",
+      "Eater 38 / City Lists",
+      "James Beard Nominated",
+      "James Beard Award Winner",
+      "Bon Appétit Hot 10",
+      "Diners, Drive-Ins and Dives",
+    ],
   },
   {
     key: "style_business",
@@ -193,12 +206,7 @@ const BRAND_CATEGORIES = [
     sublabel: "Carriers you prefer when available",
     brands: ["United", "Delta", "American", "Alaska", "JetBlue", "Southwest", "Emirates", "Lufthansa", "Singapore Airlines", "British Airways", "Air France", "Cathay Pacific"],
   },
-  {
-    key: "quality_budget",
-    label: "Quality / Value",
-    sublabel: "Best value without sacrificing quality",
-    brands: ["Hyatt Place", "Courtyard by Marriott", "Hampton Inn", "AC Hotels", "Aloft", "Element Hotels", "Moxy Hotels"],
-  },
+
   {
     key: "ground_pref",
     label: "Ground Transport Preferences",
@@ -239,6 +247,7 @@ const OnboardingFlow = ({ onComplete }) => {
   const [loyaltyAccounts, setLoyaltyAccounts] = useState(defaultLoyalty);
   const [selectedBrands, setSelectedBrands] = useState(["Four Seasons", "Leading Hotels of the World", "Relais & Châteaux", "Michelin Keys"]);
   const [expandedBrandCat, setExpandedBrandCat] = useState(null);
+  const [expandedLoyaltyCat, setExpandedLoyaltyCat] = useState("hotel"); // Open hotel by default
   const [debugMsg, setDebugMsg] = useState("");
   const [travelProfile, setTravelProfile] = useState({
     homeAirport: "",
@@ -462,41 +471,57 @@ const OnboardingFlow = ({ onComplete }) => {
             <div style={{ fontSize: "26px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "6px" }}>Your loyalty programs</div>
             <div style={{ color: "#555", fontSize: "13px", marginBottom: "20px", lineHeight: "1.6" }}>Select your programs, tier, and approximate balance. Sojourn will factor these into every recommendation.</div>
 
-            <div style={{ maxHeight: "400px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "24px", marginBottom: "8px" }}>
-              {[
-                { label: "Hotel Programs", key: "hotel" },
-                { label: "Airline Programs", key: "airline" },
-                { label: "Car Rental", key: "car" },
-                { label: "Rideshare & Ground", key: "rideshare" },
-              ].map(({ label, key }) => (
-                <div key={key}>
-                  <div style={{ color: "#C9A84C", fontSize: "10px", letterSpacing: "0.18em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px", paddingBottom: "6px", borderBottom: "1px solid rgba(201,168,76,0.15)" }}>{label}</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    {LOYALTY_OPTIONS[key].map(({ program, tiers }) => {
-                      const acct = loyaltyAccounts[program] || { selected: false, tier: tiers[0], balance: "" };
-                      return (
-                        <div key={program} style={{ background: acct.selected ? "rgba(201,168,76,0.05)" : "rgba(255,255,255,0.02)", border: `1px solid ${acct.selected ? "rgba(201,168,76,0.22)" : "rgba(255,255,255,0.05)"}`, borderRadius: "10px", padding: "10px 12px", transition: "all 0.2s" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: acct.selected ? "10px" : "0" }}>
-                            <div onClick={() => toggleLoyalty(program)} style={{ width: "17px", height: "17px", borderRadius: "4px", border: `1px solid ${acct.selected ? "#C9A84C" : "rgba(255,255,255,0.15)"}`, background: acct.selected ? "#C9A84C" : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
-                              {acct.selected && <span style={{ color: "#0a0908", fontSize: "10px", fontWeight: "bold" }}>✓</span>}
-                            </div>
-                            <span onClick={() => toggleLoyalty(program)} style={{ color: acct.selected ? "#e8e4dc" : "#6a6460", fontSize: "13px", cursor: "pointer", flex: 1 }}>{program}</span>
-                          </div>
-                          {acct.selected && (
-                            <div style={{ display: "flex", gap: "8px", paddingLeft: "27px" }}>
-                              <select value={acct.tier} onChange={e => setTier(program, e.target.value)} style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#b0a898", fontSize: "12px", cursor: "pointer", fontFamily: "'DM Sans',system-ui,sans-serif" }}>
-                                {tiers.map(t => <option key={t} value={t} style={{ background: "#1a1a1a" }}>{t}</option>)}
-                              </select>
-                              <input value={acct.balance} onChange={e => setBalance(program, e.target.value)} placeholder="Balance (e.g. 45,000)" style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#e8e4dc", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+            {/* Loyalty categories as expandable accordions — no hidden scroll */}
+            {[
+              { label: "Hotel Programs", key: "hotel", hint: "Marriott, Hyatt, Hilton..." },
+              { label: "Airline Programs", key: "airline", hint: "United, Delta, Alaska..." },
+              { label: "Car Rental", key: "car", hint: "Hertz, Avis, Enterprise..." },
+              { label: "Rideshare & Ground", key: "rideshare", hint: "Uber, Lyft..." },
+            ].map(({ label, key, hint }) => {
+              const selectedCount = LOYALTY_OPTIONS[key].filter(({ program }) => loyaltyAccounts[program]?.selected).length;
+              const isOpen = expandedLoyaltyCat === key;
+              return (
+                <div key={key} style={{ border: `1px solid ${selectedCount > 0 ? "rgba(201,168,76,0.25)" : "rgba(255,255,255,0.07)"}`, borderRadius: "12px", marginBottom: "8px", background: selectedCount > 0 ? "rgba(201,168,76,0.04)" : "rgba(255,255,255,0.02)", overflow: "hidden" }}>
+                  {/* Header — always visible, click to expand */}
+                  <div onClick={() => setExpandedLoyaltyCat(isOpen ? null : key)} style={{ padding: "13px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", userSelect: "none" }}>
+                    <div>
+                      <span style={{ color: selectedCount > 0 ? "#c0b8ae" : "#6a6460", fontSize: "13px", fontWeight: "500" }}>{label}</span>
+                      {!isOpen && <span style={{ color: "#333", fontSize: "11px", marginLeft: "8px" }}>{hint}</span>}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                      {selectedCount > 0 && <span style={{ background: "rgba(201,168,76,0.15)", color: "#C9A84C", fontSize: "10px", padding: "2px 8px", borderRadius: "8px", fontFamily: "serif" }}>{selectedCount} selected</span>}
+                      <span style={{ color: "#555", fontSize: "11px" }}>{isOpen ? "▲" : "▼"}</span>
+                    </div>
                   </div>
+                  {/* Expanded programs list */}
+                  {isOpen && (
+                    <div style={{ padding: "0 16px 14px", display: "flex", flexDirection: "column", gap: "7px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                      {LOYALTY_OPTIONS[key].map(({ program, tiers }) => {
+                        const acct = loyaltyAccounts[program] || { selected: false, tier: tiers[0], balance: "" };
+                        return (
+                          <div key={program} style={{ background: acct.selected ? "rgba(201,168,76,0.05)" : "rgba(255,255,255,0.02)", border: `1px solid ${acct.selected ? "rgba(201,168,76,0.2)" : "rgba(255,255,255,0.05)"}`, borderRadius: "9px", padding: "9px 11px", transition: "all 0.15s", marginTop: "4px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: acct.selected ? "9px" : "0" }}>
+                              <div onClick={() => toggleLoyalty(program)} style={{ width: "17px", height: "17px", borderRadius: "4px", border: `1px solid ${acct.selected ? "#C9A84C" : "rgba(255,255,255,0.15)"}`, background: acct.selected ? "#C9A84C" : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+                                {acct.selected && <span style={{ color: "#0a0908", fontSize: "10px", fontWeight: "bold" }}>✓</span>}
+                              </div>
+                              <span onClick={() => toggleLoyalty(program)} style={{ color: acct.selected ? "#e8e4dc" : "#6a6460", fontSize: "13px", cursor: "pointer", flex: 1 }}>{program}</span>
+                            </div>
+                            {acct.selected && (
+                              <div style={{ display: "flex", gap: "8px", paddingLeft: "27px" }}>
+                                <select value={acct.tier} onChange={e => setTier(program, e.target.value)} style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#b0a898", fontSize: "12px", cursor: "pointer", fontFamily: "'DM Sans',system-ui,sans-serif" }}>
+                                  {tiers.map(t => <option key={t} value={t} style={{ background: "#1a1a1a" }}>{t}</option>)}
+                                </select>
+                                <input value={acct.balance} onChange={e => setBalance(program, e.target.value)} placeholder="Balance (e.g. 45,000)" style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#e8e4dc", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
+              );
+            })}
 
             <NavButtons onBack={() => setStep(2)} onNext={() => setStep(4)} nextLabel="Next: Brands →" />
           </div>
