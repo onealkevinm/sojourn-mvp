@@ -112,6 +112,7 @@ const LOYALTY_OPTIONS = {
     { program: "Zipcar", tiers: ["None", "Member"] },
   ],
   rideshare: [
+    { program: "Uber", tiers: ["Regular User"] },
     { program: "Uber One", tiers: ["None", "Member"] },
     { program: "Lyft Pink", tiers: ["None", "Pink", "Pink All Access"] },
     { program: "Blacklane", tiers: ["None", "Member"] },
@@ -200,19 +201,9 @@ const BRAND_CATEGORIES = [
     sublabel: "Independently spirited properties",
     brands: ["Ace Hotel", "Soho House", "Graduate Hotels", "21c Museum Hotels", "Bunkhouse Group", "Standard Hotels", "Freehand Hotels"],
   },
-  {
-    key: "airlines_pref",
-    label: "Preferred Airlines",
-    sublabel: "Carriers you prefer when available",
-    brands: ["United", "Delta", "American", "Alaska", "JetBlue", "Southwest", "Emirates", "Lufthansa", "Singapore Airlines", "British Airways", "Air France", "Cathay Pacific"],
-  },
 
-  {
-    key: "ground_pref",
-    label: "Ground Transport Preferences",
-    sublabel: "Preferred carriers and services on the ground",
-    brands: ["Uber One", "Lyft Pink", "Hertz", "National", "Enterprise", "Avis", "Blacklane", "Blade", "Turo", "Zipcar", "Via", "Public Transit"],
-  },
+
+
 ];
 
 const Chip = ({ label, active, onClick }) => (
@@ -255,7 +246,34 @@ const OnboardingFlow = ({ onComplete }) => {
     travelTypes: [],
   });
 
-  const toggleCard = (card) => setSelectedCards(prev => prev.includes(card) ? prev.filter(c => c !== card) : [...prev, card]);
+  // Card → loyalty auto-populate mapping
+  const CARD_TO_LOYALTY = {
+    "Delta SkyMiles Reserve": "Delta SkyMiles",
+    "Delta SkyMiles Platinum": "Delta SkyMiles",
+    "BofA Alaska Airlines Visa": "Alaska Mileage Plan",
+    "United Explorer Card": "United MileagePlus",
+    "Citi AAdvantage Executive": "American AAdvantage",
+    "Southwest Rapid Rewards Priority": "Southwest Rapid Rewards",
+    "Marriott Bonvoy Boundless": "Marriott Bonvoy",
+    "World of Hyatt Card": "World of Hyatt",
+    "Hilton Honors Amex Surpass": "Hilton Honors",
+  };
+
+  const toggleCard = (card) => {
+    setSelectedCards(prev => {
+      const adding = !prev.includes(card);
+      const next = adding ? [...prev, card] : prev.filter(c => c !== card);
+      // Auto-populate loyalty when adding a co-branded card
+      const linked = CARD_TO_LOYALTY[card];
+      if (linked) {
+        setLoyaltyAccounts(la => ({
+          ...la,
+          [linked]: { ...la[linked], selected: adding || la[linked]?.selected }
+        }));
+      }
+      return next;
+    });
+  };
   const toggleBrand = (brand) => setSelectedBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]);
   const toggleLoyalty = (prog) => setLoyaltyAccounts(prev => ({ ...prev, [prog]: { ...prev[prog], selected: !prev[prog].selected } }));
   const setTier = (prog, tier) => setLoyaltyAccounts(prev => ({ ...prev, [prog]: { ...prev[prog], tier } }));
@@ -349,10 +367,10 @@ const OnboardingFlow = ({ onComplete }) => {
         {/* Step 0 — Welcome */}
         {step === 0 && (
           <div>
-            <div style={{ fontSize: "36px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.15", marginBottom: "16px" }}>Your travel,<br />optimized.</div>
-            <div style={{ color: "#666", fontSize: "15px", lineHeight: "1.7", marginBottom: "32px" }}>Sojourn optimizes every trip across your credit cards, loyalty programs, and personal preferences — all at once, in plain language.</div>
+            <div style={{ fontSize: "36px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.15", marginBottom: "16px", textAlign: "center" }}>Travel the way<br />you were meant to.</div>
+            <div style={{ color: "#666", fontSize: "15px", lineHeight: "1.7", marginBottom: "32px", textAlign: "center" }}>Tell us where you want to go — or let us surprise you. Sojourn builds personalized trips around your loyalty programs, credit cards, and travel style, then helps you book them.</div>
             <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginBottom: "36px" }}>
-              {["Optimizes cards, loyalty programs, and brand preferences simultaneously", "Surfaces points redemption opportunities you would otherwise miss", "Gets smarter and more personalized with every trip"].map(t => (
+              {["Discovers options you'd never find on your own", "Puts your points and cards to work on every trip", "Gets sharper with every conversation"].map(t => (
                 <div key={t} style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
                   <span style={{ color: "#C9A84C", fontSize: "12px", marginTop: "3px", flexShrink: 0 }}>▪</span>
                   <span style={{ color: "#7a7468", fontSize: "14px", lineHeight: "1.5" }}>{t}</span>
@@ -468,7 +486,7 @@ const OnboardingFlow = ({ onComplete }) => {
         {step === 3 && (
           <div>
             <div style={{ marginBottom: "6px", color: "#C9A84C", fontSize: "11px", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "serif" }}>Step 3 of 4</div>
-            <div style={{ fontSize: "26px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "6px" }}>Your loyalty programs</div>
+            <div style={{ fontSize: "26px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "6px" }}>Services & loyalty programs</div>
             <div style={{ color: "#555", fontSize: "13px", marginBottom: "20px", lineHeight: "1.6" }}>Select your programs, tier, and approximate balance. Sojourn will factor these into every recommendation.</div>
 
             {/* Loyalty categories as expandable accordions — no hidden scroll */}
