@@ -634,9 +634,9 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               <th style={{ textAlign: "left", padding: "10px 16px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "32%" }}>Option</th>
-              <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Total Cost</th>
+              <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Cash Out of Pocket</th>
               <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Est. Points Earned</th>
-              <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Net Cost</th>
+              <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Net Value</th>
               <th style={{ textAlign: "left", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "26%" }}>Why This</th>
               <th style={{ width: "32px" }}></th>
             </tr>
@@ -699,7 +699,7 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                     <div style={{ color: "#e8e4dc", fontSize: "16px", fontFamily: "'Playfair Display',Georgia,serif" }}>
                       ${typeof opt.netValue === "number" ? opt.netValue.toLocaleString() : String(opt.netValue||0).replace(/^\$+/,"")}
                     </div>
-                    <div style={{ color: "#444", fontSize: "10px", marginTop: "2px" }}>after pts</div>
+                    <div style={{ color: "#444", fontSize: "10px", marginTop: "2px" }}>est. value</div>
                   </td>
 
                   {/* Why this */}
@@ -753,12 +753,22 @@ const CompareView = ({ options, onBack, onSelectOption }) => (
 
 const ComponentRow = ({ label, value, detail, points, card }) => {
   const isFlight = label === "Flight" || label === "Return Flight";
-  // Parse flight detail for rich display: "UA 234 · SFO→JFK · Departs 7:45am → Arrives 4:02pm · 5h 17m"
   const parts = isFlight ? detail.split(" · ") : [];
   const flightNum = parts[0] || "";
   const route = parts[1] || "";
   const times = parts[2] || "";
   const duration = parts[3] || "";
+
+  // Determine if points field is a redemption or an earning
+  const pointsStr = String(points || "");
+  const isRedemption = /redeem|redeemed|redemption/i.test(pointsStr);
+  const isEarning = /earn|earning|est\./i.test(pointsStr) && !isRedemption;
+
+  // Cash value display
+  const cashNum = typeof value === "number" ? value : parseInt(String(value || "0").replace(/[^0-9]/g,"")) || 0;
+  const cashDisplay = cashNum > 0
+    ? `$${cashNum.toLocaleString()}`
+    : isRedemption ? "$0" : "$0";
 
   return (
     <div style={{ padding: "14px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
@@ -768,12 +778,16 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
           {isFlight && !times && duration && <div style={{ color: "#555", fontSize: "10px", background: "rgba(255,255,255,0.04)", padding: "2px 7px", borderRadius: "6px" }}>{duration}</div>}
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "serif" }}>
-            {value && parseInt(String(value).replace(/[^0-9]/g,"")) > 0
-              ? (typeof value === "number" ? `$${value.toLocaleString()}` : (String(value).startsWith("$") ? value : `$${value}`))
-              : (points ? <span style={{ color: "#4CC97A", fontSize: "13px" }}>via pts</span> : "$0")}
-          </div>
-          <div style={{ color: "#4CC97A", fontSize: "11px" }}>{points}</div>
+          <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "serif" }}>{cashDisplay}</div>
+          {isRedemption && pointsStr && (
+            <div style={{ color: "#4CC97A", fontSize: "11px", marginTop: "2px" }}>{pointsStr}</div>
+          )}
+          {isEarning && pointsStr && (
+            <div style={{ color: "#7a9e9a", fontSize: "11px", marginTop: "2px" }}>{pointsStr}</div>
+          )}
+          {!isRedemption && !isEarning && pointsStr && (
+            <div style={{ color: "#4CC97A", fontSize: "11px", marginTop: "2px" }}>{pointsStr}</div>
+          )}
         </div>
       </div>
       {isFlight && route ? (
@@ -833,7 +847,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss }) => {
         return estimated > 0 ? (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "8px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
             <span style={{ color: option.tagColor, fontSize: "11px" }}>earns ${estimated.toLocaleString()} via {option.pointsEarned}</span>
-            <span style={{ color: "#4a4a4a", fontSize: "11px" }}>net cost ${typeof option.netValue === "number" ? option.netValue.toLocaleString() : String(option.netValue||0).replace(/^\$+/,"")} after pts</span>
+            <span style={{ color: "#4a4a4a", fontSize: "11px" }}>net value ${typeof option.netValue === "number" ? option.netValue.toLocaleString() : String(option.netValue||0).replace(/^\$+/,"")} after earning</span>
           </div>
         ) : null;
       })()}
@@ -1660,7 +1674,21 @@ DESTINATION DIVERSITY RULE:
 - Only converge on a single destination when the user has explicitly narrowed to it or refinement has confirmed it
 - Each of the 6 options should feel like a genuinely different trip, not a variation of the same trip in the same place
 
-COMPONENT VALUE RULE — CRITICAL: component value field is ALWAYS the dollar value of that component — never 0. If paid in cash: value = cash amount. If covered by points: value = dollar equivalent of those points (e.g. 15,000 Delta miles at 1.4cpp = 210, so value = 210). If partially covered: value = cash portion + points value combined. totalCost must equal the sum of all cash-paid component values only (not points value). This allows the user to see what each component is worth even when points cover it.
+COMPONENT VALUE RULE — CRITICAL:
+- component "value" field = cash out of pocket for that component ONLY. Never the points dollar equivalent.
+- If fully covered by points: value = 0
+- If cash paid: value = cash amount (integer)
+- If partially covered: value = cash portion only
+- totalCost = sum of all component cash values (what the traveler actually pays in cash)
+- component "points" field = describe redemption OR earning with explicit language:
+  - If redeeming: "25,000 Delta miles redeemed" or "30,000 Hyatt points redeemed" — always include the word "redeemed"
+  - If earning: "est. 2,400 Delta miles earned" or "est. 4,200 Bonvoy points earned" — always include "est." and "earned"
+  - Never mix redemption and earning in the same points field
+- loyaltyHighlight = plain-English summary of the full points stack: e.g. "25k Delta miles cover both flights · 30k Hyatt points cover hotel · $240 cash for ground transport"
+- whyThis = frame cash figures consistently with what the card shows — if flights are $0 out of pocket, say "flights covered by your miles" not "flights cost $X"
+- pointsEarned (top-level) = earning side only, what this trip generates: "2,400 Delta miles + 4,200 Bonvoy points"
+- pointsValue (top-level) = estimated dollar value of points EARNED (not redeemed) on this trip
+- netValue = totalCost - pointsValue (cash out of pocket minus value of points earned)
 
 REQUIRED JSON SCHEMA:
 {"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] must be an EMPTY ARRAY by default. ONLY populate it if the user has explicitly requested specific dining, activities, breweries, distilleries, or excursions in this conversation and asked for them to be included. Never speculatively generate experiences.`;
@@ -1978,7 +2006,7 @@ HARD CONSTRAINTS — these override everything else:
 - Warm April destinations (80+F): Hawaii, South Florida, Caribbean, Mexico, Turks & Caicos, Bahamas — these always work
 - Borderline April destinations (75-80F): Southern California, Naples FL — only include if user has not set a hard weather minimum
 
-COMPONENT VALUE RULE: component value is ALWAYS the dollar value of that component — never 0. If covered by points: value = dollar equivalent (e.g. 15,000 Delta miles at 1.4cpp = 210). If cash: value = cash amount.
+COMPONENT VALUE RULE: component value = cash out of pocket only (0 if covered by points). points field: use "X miles/points redeemed" for redemptions, "est. X points earned" for earning. loyaltyHighlight summarizes the full stack in plain English.
 
 JSON SCHEMA — you MUST use exactly these field names or cards will not display:
 {"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer. (2) experiences[] is EMPTY by default. Only populate it when the user has explicitly requested specific dining or activities and asked for them to be included in their trip. Never generate experiences speculatively.
