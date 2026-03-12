@@ -967,19 +967,27 @@ const ItineraryOverlay = ({ option, tripSummary, onClose }) => {
     });
 
     // Filler items only if no experiences cover this day
-    const hasExperienceDinner = dayExperiences.some(e => (e.time||"").toLowerCase() === "evening" || (e.icon||"").includes("🍽"));
-    const hasExperienceMorning = dayExperiences.some(e => (e.time||"").toLowerCase() === "morning");
+    const isDinnerExp = (e) => {
+      const t = (e.time || "").toLowerCase();
+      const type = (e.type || "").toLowerCase();
+      const name = (e.name || e.title || "").toLowerCase();
+      return t === "evening" || t.includes("pm") || t.includes("dinner") || t.includes("lunch") ||
+             type === "dining" || type === "restaurant" || type === "brewery" ||
+             name.includes("dinner") || name.includes("restaurant") || name.includes("brewery") || name.includes("lunch");
+    };
+    const hasExperienceDinner = dayExperiences.some(isDinnerExp);
+    const hasExperienceMorning = dayExperiences.some(e => (e.time||"").toLowerCase() === "morning" || (e.time||"").toLowerCase().includes("am"));
 
     if (!isFirst && !isLast && dayComps.length === 0 && dayExperiences.length === 0) {
       items.push({ time: "Morning", icon: "☀", title: "Explore", detail: `Full day in ${destination} — activities, dining, local experiences`, value: null, points: null, card: null, bookUrl: null });
     }
     if (!isFirst && !isLast && !hasExperienceDinner) {
-      items.push({ time: "Evening", icon: "🍽", title: d === totalDays - 1 ? "Farewell Dinner" : "Dinner", detail: "Book ahead via Resy for top spots", value: null, points: null, card: null, bookUrl: "https://resy.com" });
+      items.push({ time: "Evening", icon: "🍽", title: d === totalDays - 1 ? "Farewell Dinner (placeholder)" : "Dinner (placeholder)", detail: "Add a restaurant via the chat to fill this in", value: null, points: null, card: null, bookUrl: null });
     }
 
     // Day 1 dinner placeholder only if no experience covers it
     if (isFirst && !items.some(i => i.icon === "🍽") && !hasExperienceDinner) {
-      items.push({ time: "Evening", icon: "🍽", title: "Dinner", detail: "Ask hotel concierge for same-day recommendations", value: null, points: null, card: null, bookUrl: "https://www.opentable.com" });
+      items.push({ time: "Evening", icon: "🍽", title: "Dinner (placeholder)", detail: "Add a restaurant via the chat to fill this in", value: null, points: null, card: null, bookUrl: null });
     }
 
     // Last day checkout note
