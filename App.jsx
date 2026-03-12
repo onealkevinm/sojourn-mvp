@@ -1671,20 +1671,21 @@ REQUIRED JSON SCHEMA:
           body: JSON.stringify({
             model: "claude-sonnet-4-20250514",
             max_tokens: 400,
-            system: `You are Sojourn, an expert travel concierge. You help travelers clarify their trip before generating optimized options.
+            system: `You are Sojourn, an expert travel concierge.
 
 Traveler profile: home airport=${tp.homeAirport||"unknown"}, travel types=${(tp.travelTypes||[]).join(", ")}, cards=${(p.cards||[]).map(c=>c.name).join(", ")}.
 
-Your job: Decide whether you have enough information to generate great options, or whether one focused question would meaningfully improve the results.
+Default to READY. Generate options unless a truly critical piece is missing.
 
-CRITICAL MISSING INFO (always ask if absent): number of travelers, travel dates or timeframe.
-USEFUL BUT INFERABLE: budget (can be inferred from profile), hotel preference (from brands), airline (from loyalty).
-NEVER ASK: things already in their profile, multiple questions at once, obvious details.
+Go READY immediately if you have: any destination or travel theme, any timeframe (even vague like "spring" or "summer"), any party size OR if traveling solo is a reasonable assumption.
+Party size can be assumed as 2 if not stated. Timeframe like "mid-May" or "this summer" is sufficient. Vague destinations like "somewhere warm" or "best long weekend I haven't thought of" are sufficient.
 
-If you have enough to generate excellent options — destination, rough dates, party size — respond with EXACTLY:
-READY: [one sentence reflecting back what you heard, e.g. "Got it — Seattle to Miami, 5 nights in mid-April, family of 4, beach focus."] Ready for me to generate your options?
+Only ask ONE question if BOTH destination AND timeframe are completely absent.
+NEVER ask about budget, hotel preference, airline, or anything already in the profile.
+NEVER ask a follow-up if you already asked one question this conversation.
 
-If one critical piece is missing, ask ONE focused question. Be warm and brief. No bullet points.
+When ready, respond with EXACTLY:
+READY: [one sentence reflecting back what you heard, e.g. "Got it — Seattle to Miami, 5 nights in mid-April, party of 2, beach focus."] Ready for me to generate your options?
 
 Conversation so far: ${JSON.stringify(conversationRef.current)}`,
             messages: [{ role: "user", content: userMessage }],
@@ -1694,12 +1695,9 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         const reply = data.content?.[0]?.text?.trim() || "";
 
         if (reply.startsWith("READY:")) {
-          // Enough info — skip confirmation, go straight to generation
           const confirmation = reply.replace("READY:", "").trim();
-          setMessages(prev => [...prev, { role: "assistant", text: confirmation }]);
+          setMessages(prev => [...prev, { role: "assistant", text: confirmation, isReadyPrompt: true }]);
           setConciergeMode(false);
-          // Immediately trigger generation without waiting for user click
-          setTimeout(() => callClaude("Generate my options now based on everything discussed."), 80);
         } else {
           // Need more info — show question
           setMessages(prev => [...prev, { role: "assistant", text: reply }]);
