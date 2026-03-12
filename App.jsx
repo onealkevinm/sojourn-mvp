@@ -635,7 +635,7 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               <th style={{ textAlign: "left", padding: "10px 16px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "32%" }}>Option</th>
               <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Cash Out of Pocket</th>
-              <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Est. Points Earned</th>
+              <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Points</th>
               <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Net Value</th>
               <th style={{ textAlign: "left", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "26%" }}>Why This</th>
               <th style={{ width: "32px" }}></th>
@@ -682,16 +682,42 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                     <div style={{ color: "#e8e4dc", fontSize: "16px", fontFamily: "'Playfair Display',Georgia,serif" }}>
                       ${typeof opt.totalCost === "number" ? opt.totalCost.toLocaleString() : String(opt.totalCost||0).replace(/^\$+/,"")}
                     </div>
-                    {opt.redemption && <div style={{ color: "#4CC97A", fontSize: "10px", marginTop: "2px" }}>Redemption applied</div>}
+                    {(opt.redemptions?.length > 1 || (opt.redemptions?.length === 1 && opt.redemption))
+                      ? <div style={{ color: "#4CC97A", fontSize: "10px", marginTop: "2px" }}>Redemptions applied</div>
+                      : opt.redemption || opt.redemptions?.length === 1
+                      ? <div style={{ color: "#4CC97A", fontSize: "10px", marginTop: "2px" }}>Redemption applied</div>
+                      : null}
                   </td>
 
-                  {/* Points earned */}
+                  {/* Points earned / redeemed */}
                   <td style={{ padding: "16px 12px", textAlign: "right", verticalAlign: "middle" }}>
-                    {opt.pointsValue > 0
-                      ? <div style={{ color: opt.tagColor, fontSize: "13px" }}>+${opt.pointsValue?.toLocaleString()}</div>
-                      : <div style={{ color: "#333", fontSize: "12px" }}>—</div>
-                    }
-                    <div style={{ color: "#444", fontSize: "10px", marginTop: "2px", maxWidth: "120px", marginLeft: "auto" }}>{opt.pointsEarned}</div>
+                    {(() => {
+                      const hasRedemptions = opt.redemptions?.length > 0;
+                      const hasEarning = opt.pointsValue > 0;
+                      if (hasRedemptions) {
+                        // Show redemption value summary
+                        const totalRedemptionValue = opt.redemptions.reduce((s, r) => s + (r.dollarsValue || 0), 0);
+                        return (
+                          <div>
+                            {totalRedemptionValue > 0 && <div style={{ color: "#4CC97A", fontSize: "13px" }}>~${totalRedemptionValue.toLocaleString()} redeemed</div>}
+                            {opt.redemptions.map((r, i) => (
+                              <div key={i} style={{ color: "#3a6e4a", fontSize: "10px", marginTop: "2px" }}>
+                                {(r.pointsUsed||0).toLocaleString()} {r.program?.replace(" SkyMiles","").replace(" Honors","").replace(" Bonvoy","")} · {r.centsPerPoint?.toFixed(1)}¢/pt
+                              </div>
+                            ))}
+                            {hasEarning && <div style={{ color: "#4a4540", fontSize: "10px", marginTop: "4px", borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "4px" }}>+${opt.pointsValue.toLocaleString()} earned</div>}
+                          </div>
+                        );
+                      }
+                      return (
+                        <div>
+                          {hasEarning
+                            ? <div style={{ color: opt.tagColor, fontSize: "13px" }}>+${opt.pointsValue?.toLocaleString()}</div>
+                            : <div style={{ color: "#333", fontSize: "12px" }}>—</div>}
+                          <div style={{ color: "#444", fontSize: "10px", marginTop: "2px", maxWidth: "120px", marginLeft: "auto" }}>{opt.pointsEarned}</div>
+                        </div>
+                      );
+                    })()}
                   </td>
 
                   {/* Net cost */}
@@ -1611,9 +1637,9 @@ POINTS-LED QUERY DETECTION: If the user mentions a specific loyalty program with
 
 When a points-led query is detected, map the 6 buckets as follows — destination rules still apply, these redefine how each bucket is expressed:
 1. RECOMMENDED (#C9A84C) — Best overall redemption of the stated program. Sweet spot of value, experience, and availability. whyThis must reference the program redemption explicitly.
-2. BEST POINTS EARNED (#4C9AC9) — Trip that maximizes earning MORE of the stated program (or its transfer partners) so the traveler rebuilds their balance. Name card multipliers and earning rate.
-3. BEST POINTS REDEMPTION (#4CC97A) — Maximum cpp value from the stated program on its NATURAL component (airline miles → flights, hotel points → hotel). Never redirect airline miles to a hotel or hotel points to flights. Show the cpp math explicitly in whyThis: "X miles at Y.Ycpp = $Z value vs $Z cash price — that's [excellent/good/poor] value." Call out if a cash option would beat the redemption value and explain why the redemption still wins on this option (experience, availability, or cpp threshold). redemption field must be non-null and program-specific.
-4. BEST VALUE (#C9C94C) — Stack the stated program on its natural component PLUS secondary programs the traveler holds. RULE: if the stated program is an airline program, it MUST cover the flights (not pay cash for flights while using hotel points). Then layer hotel points on top to cover the accommodation. Show the full stack in whyThis: "X Delta miles cover flights (Y.Ycpp) + Z Hyatt points cover hotel = $N total cash out of pocket." Never build a Best Value option that pays cash for the stated program's natural component while using it nowhere.
+2. BEST POINTS EARNED (#4C9AC9) — Trip that rebuilds the stated program balance fastest. In a points-led query this means: use CASH for flights (earning miles rather than spending them) and pick a hotel that earns the stated program or its partners at a high rate. The goal is coming out ahead on miles. whyThis must show the earning math: "Cash flights earn [X] miles via [card] + hotel earns [Y] [program] points = [Z] total miles earned back." This option should feel meaningfully different from Recommended — not the same destination with slightly different earning.
+3. BEST POINTS REDEMPTION (#4CC97A) — Maximum cpp value from the stated program on its NATURAL component (airline miles → flights, hotel points → hotel). Never redirect airline miles to a hotel or hotel points to flights. In whyThis, spell out the redemption value clearly using this format: "[X] miles used · estimated value $[Y] · [Z.Z] cents per mile — [excellent/strong/solid] value." For context: 2.0+ cents per mile = excellent, 1.4-2.0 = strong, below 1.4 = marginal. Call out if a cash option would beat the redemption value. redemption field must be non-null. redemptions array must include one entry with pointsUsed, dollarsValue, centsPerPoint, component.
+4. BEST VALUE (#C9C94C) — Stack the stated program on its natural component PLUS secondary programs the traveler holds. RULE: if the stated program is an airline program, it MUST cover the flights (not pay cash for flights while using hotel points). Then layer hotel points on top to cover the accommodation. In whyThis, spell out the full stack: "[X] miles used on flights · estimated value $[Y] · [Z.Z] cents per mile. [A] hotel points used · estimated value $[B]. Total cash out of pocket: $[C]." Never build a Best Value option that pays cash for the stated program's natural component.
 5. QUALITY UPGRADE (#C94C8A) — Use stated miles for premium cabin (business/first) AND layer hotel loyalty points for a luxury property. Stack both programs. Show what each covers and the combined cpp across both.
 6. WILD CARD (#9A4CC9) — Either: (a) a surprisingly high-value redemption destination with the stated program the traveler wouldn't think of, OR (b) if a different program offers dramatically better value for this exact trip, name it explicitly with the math (e.g. "Alaska miles get you here for 15k vs Delta's 30k — worth the transfer"). Never substitute without showing the comparison.
 
@@ -1686,12 +1712,13 @@ COMPONENT VALUE RULE — CRITICAL:
   - Never mix redemption and earning in the same points field
 - loyaltyHighlight = plain-English summary of the full points stack: e.g. "25k Delta miles cover both flights · 30k Hyatt points cover hotel · $240 cash for ground transport"
 - whyThis = frame cash figures consistently with what the card shows — if flights are $0 out of pocket, say "flights covered by your miles" not "flights cost $X"
-- pointsEarned (top-level) = earning side only, what this trip generates: "2,400 Delta miles + 4,200 Bonvoy points"
-- pointsValue (top-level) = estimated dollar value of points EARNED (not redeemed) on this trip
-- netValue = totalCost - pointsValue (cash out of pocket minus value of points earned)
+- pointsEarned (top-level) = earning side ONLY — points this trip generates on cash-paid components. CRITICAL: if a component is covered by a redemption, it earns NO points — do NOT include that program in pointsEarned. Example: if Delta miles cover flights, do NOT include "Delta miles earned" in pointsEarned. Only include programs earned on cash-paid components (e.g. hotel cash spend earns Bonvoy, ground spend earns card points).
+- pointsValue (top-level) = estimated dollar value of points EARNED only (not redeemed). If no cash components earn meaningful points, pointsValue = 0 and pointsEarned = "".
+- netValue = totalCost - pointsValue
+- redemptions (top-level array) = list each redemption applied: [{"program": "Delta SkyMiles", "pointsUsed": 50000, "dollarsValue": 700, "centsPerPoint": 1.4, "component": "Flights"}]. One entry per redeemed program. Leave as [] if no redemptions.
 
 REQUIRED JSON SCHEMA:
-{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] must be an EMPTY ARRAY by default. ONLY populate it if the user has explicitly requested specific dining, activities, breweries, distilleries, or excursions in this conversation and asked for them to be included. Never speculatively generate experiences.`;
+{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] must be an EMPTY ARRAY by default. ONLY populate it if the user has explicitly requested specific dining, activities, breweries, distilleries, or excursions in this conversation and asked for them to be included. Never speculatively generate experiences.`;
   };
 
 
@@ -2009,7 +2036,7 @@ HARD CONSTRAINTS — these override everything else:
 COMPONENT VALUE RULE: component value = cash out of pocket only (0 if covered by points). points field: use "X miles/points redeemed" for redemptions, "est. X points earned" for earning. loyaltyHighlight summarizes the full stack in plain English.
 
 JSON SCHEMA — you MUST use exactly these field names or cards will not display:
-{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer. (2) experiences[] is EMPTY by default. Only populate it when the user has explicitly requested specific dining or activities and asked for them to be included in their trip. Never generate experiences speculatively.
+{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer. (2) experiences[] is EMPTY by default. Only populate it when the user has explicitly requested specific dining or activities and asked for them to be included in their trip. Never generate experiences speculatively.
 NEVER use: results, cards, tripOptions, color, title, property, priceStructure — these will break the display.
 
 CARD QUALITY RULES (when generating new cards):
@@ -2064,6 +2091,7 @@ Please respond now.`,
             return rawNV;
           })(),
           redemption: o.redemption || null,
+          redemptions: Array.isArray(o.redemptions) ? o.redemptions : [],
           tags: o.tags || [],
           tradeoff: o.tradeoff || "",
           loyaltyHighlight: o.loyaltyHighlight || o.loyaltyBenefit || "",
