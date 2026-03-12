@@ -995,9 +995,24 @@ const ItineraryOverlay = ({ option, tripSummary, onClose }) => {
       items.unshift({ time: "Morning", icon: "🧳", title: "Check Out", detail: "Settle bill, store luggage if departing later", value: null, points: null, card: null, bookUrl: null });
     }
 
-    // Sort items by time priority
-    const timePriority = { "Morning": 0, "On Arrival": 1, "Afternoon": 2, "Evening": 3 };
-    items.sort((a, b) => (timePriority[a.time] ?? 2) - (timePriority[b.time] ?? 2));
+    // Sort items by time — parse specific times like "10:00 AM" / "7:00 PM" into minutes
+    const parseTimeToMinutes = (t) => {
+      if (!t) return 750; // default ~12:30pm
+      const lower = t.toLowerCase().trim();
+      // Specific time e.g. "10:00 AM", "7:00 PM", "9:30am"
+      const match = lower.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)/);
+      if (match) {
+        let h = parseInt(match[1]);
+        const m = parseInt(match[2] || "0");
+        if (match[3] === "pm" && h !== 12) h += 12;
+        if (match[3] === "am" && h === 12) h = 0;
+        return h * 60 + m;
+      }
+      // Named buckets
+      const buckets = { "morning": 480, "on arrival": 540, "afternoon": 780, "evening": 1080 };
+      return buckets[lower] ?? 750;
+    };
+    items.sort((a, b) => parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time));
 
     days.push({ dayNum: d, label: formatDay(d - 1), badge, items });
   }
@@ -2289,7 +2304,7 @@ Please respond now.`,
               <div style={{ maxWidth: "80%", padding: "12px 16px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.role === "user" ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)", border: msg.role === "user" ? "1px solid rgba(201,168,76,0.25)" : "1px solid rgba(255,255,255,0.07)", color: msg.role === "user" ? "#e8e4dc" : "#b0a898", fontSize: "14px", lineHeight: "1.6", fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit", fontStyle: msg.role === "assistant" ? "italic" : "normal" }}>{msg.text}</div>
               {msg.isReadyPrompt && (
                 <button onClick={() => { setConciergeMode(false); callClaude("Generate my options now based on everything discussed."); }} style={{ marginTop: "10px", padding: "11px 22px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "20px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.06em", fontFamily: "'Playfair Display',Georgia,serif" }}>
-                  Generate My Options →
+                  Show Me What's Possible →
                 </button>
               )}
             </div>
