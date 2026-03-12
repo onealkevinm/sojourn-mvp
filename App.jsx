@@ -2369,33 +2369,43 @@ Please respond now.`,
         const airport = tp.homeAirport || "SEA";
         const airportCity = { SEA: "Seattle", SFO: "San Francisco", LAX: "Los Angeles", JFK: "New York", ORD: "Chicago", BOS: "Boston", MIA: "Miami", DEN: "Denver", ATL: "Atlanta", DFW: "Dallas", PDX: "Portland", SLC: "Salt Lake City" }[airport] || airport;
 
-        // Top hotel program
+        // Build loyalty pills from actual profile — rotate which shows first each session
         const hotelPrograms = ["Marriott Bonvoy","World of Hyatt","Hilton Honors","IHG One Rewards"];
-        const topHotel = loyalty.find(a => hotelPrograms.includes(a.program) && a.tier && a.tier !== "None");
-        // Top airline program
         const airlinePrograms = ["Alaska Mileage Plan","Delta SkyMiles","United MileagePlus","American AAdvantage","Southwest Rapid Rewards"];
-        const topAirline = loyalty.find(a => airlinePrograms.includes(a.program) && parseInt((a.balance||"0").replace(/[^0-9]/g,"")) > 5000);
-        // Top card
-        const topCard = cards[0];
 
-        // 5 prompts: 1 personalized points, 4 evocative/inspirational
+        const formatBalance = (bal) => {
+          if (!bal) return null;
+          const num = bal.replace(/[^0-9,]/g, "").replace(/^0+/, "");
+          return num && parseInt(num.replace(/,/g,"")) > 0 ? num : null;
+        };
+
+        const loyaltyPills = [];
+        loyalty.forEach(a => {
+          const bal = formatBalance(a.balance);
+          if (!bal) return;
+          if (hotelPrograms.includes(a.program) && a.tier && a.tier !== "None") {
+            loyaltyPills.push({ type: "hotel", text: `I have ${bal} ${a.program} points — where should I go?` });
+          } else if (airlinePrograms.includes(a.program) && parseInt(bal.replace(/,/g,"")) > 5000) {
+            loyaltyPills.push({ type: "airline", text: `I have ${bal} ${a.program} miles — what trip should I take?` });
+          }
+        });
+
+        // Rotate starting program each session (hotel-first vs airline-first)
+        const sessionSeed = Math.floor(Date.now() / 3600000) % 2; // changes each hour
+        if (sessionSeed === 1) loyaltyPills.reverse();
+
+        // Build final 5 prompts: up to 2 loyalty pills, then static inspirational
         const allPrompts = [];
+        loyaltyPills.slice(0, 2).forEach(p => allPrompts.push(p.text));
 
-        // 1. Personalized — top loyalty program
-        if (topHotel) allPrompts.push(`I have ${topHotel.balance} ${topHotel.program} points — where should I go?`);
-        else if (topAirline) allPrompts.push(`I have ${topAirline.balance} ${topAirline.program} miles — what trip should I take?`);
-
-        // 2. Inspiration — unknown destination
-        allPrompts.push(`I need a reset. Somewhere warm, late April — surprise me.`);
-
-        // 3. Exploration — vibe-driven
-        allPrompts.push(`Best long weekend from ${airportCity} I haven't thought of yet`);
-
-        // 4. Occasion-driven
-        allPrompts.push("Anniversary trip — somewhere unforgettable, open budget");
-
-        // 5. First-time international
-        allPrompts.push("First time in Japan — 10 days, two adults, where to start?");
+        // Fill remaining slots with inspirational prompts
+        const inspirational = [
+          `Best long weekend from ${airportCity} I haven't thought of yet`,
+          `I need a reset. Somewhere warm, late April — surprise me.`,
+          "Anniversary trip — somewhere unforgettable, open budget",
+          "First time in Japan — 10 days, two adults, where to start?",
+        ];
+        inspirational.forEach(p => { if (allPrompts.length < 5) allPrompts.push(p); });
 
         // Trim to 5
         const finalPrompts = allPrompts.slice(0, 5);
