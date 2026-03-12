@@ -370,7 +370,7 @@ const OnboardingFlow = ({ onComplete }) => {
             <div style={{ fontSize: "36px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.15", marginBottom: "16px", textAlign: "center" }}>Travel the way<br />you were meant to.</div>
             <div style={{ color: "#666", fontSize: "15px", lineHeight: "1.7", marginBottom: "32px", textAlign: "center" }}>Tell us where you want to go — or let us surprise you. Sojourn builds personalized trips around your loyalty programs, credit cards, and travel style, then helps you book them.</div>
             <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginBottom: "36px" }}>
-              {["Discovers options you'd never find on your own", "Puts your points and cards to work on every trip", "Gets sharper with every conversation"].map(t => (
+              {["Discovers options you'd never find on your own", "Puts your points and cards to work on every trip", "Learns your preferences and remembers what you love"].map(t => (
                 <div key={t} style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
                   <span style={{ color: "#C9A84C", fontSize: "12px", marginTop: "3px", flexShrink: 0 }}>▪</span>
                   <span style={{ color: "#7a7468", fontSize: "14px", lineHeight: "1.5" }}>{t}</span>
@@ -529,7 +529,7 @@ const OnboardingFlow = ({ onComplete }) => {
                                 <select value={acct.tier} onChange={e => setTier(program, e.target.value)} style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#b0a898", fontSize: "12px", cursor: "pointer", fontFamily: "'DM Sans',system-ui,sans-serif" }}>
                                   {tiers.map(t => <option key={t} value={t} style={{ background: "#1a1a1a" }}>{t}</option>)}
                                 </select>
-                                <input value={acct.balance} onChange={e => setBalance(program, e.target.value)} placeholder="Balance (e.g. 45,000)" style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#e8e4dc", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
+                                <input value={acct.balance} onChange={e => setBalance(program, e.target.value)} placeholder="Miles/points (e.g. 45,000)" style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#e8e4dc", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
                               </div>
                             )}
                           </div>
@@ -1316,7 +1316,7 @@ const OptimizingForBar = ({ profile, setProfile }) => {
     <div style={{ padding: "0 24px 20px", flexShrink: 0 }}>
       {/* Panel */}
       {activePanel && (
-        <div style={{ background: "#0e0d0c", border: "1px solid rgba(201,168,76,0.15)", borderRadius: "14px 14px 0 0", padding: "16px 18px", marginBottom: "0", maxHeight: "260px", overflowY: "auto" }}>
+        <div style={{ background: "#0e0d0c", border: "1px solid rgba(201,168,76,0.15)", borderRadius: "14px 14px 0 0", padding: "16px 18px", marginBottom: "0", maxHeight: "360px", overflowY: "auto" }}>
           {activePanel === "loyalty" && (
             <div>
               <div style={{ color: "#C9A84C", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Loyalty Programs · Est. Portfolio Value: <span style={{ color: "#e8e4dc" }}>est. ${totalValue.toLocaleString()}</span></div>
@@ -1325,28 +1325,49 @@ const OptimizingForBar = ({ profile, setProfile }) => {
                 const val = Math.round(bal * (cpp[a.program] || 1.0) / 100);
                 const isActive = a.tier && a.tier !== "None";
                 return (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", opacity: isActive ? 1 : 0.4 }}>
-                    <div>
-                      <div style={{ color: "#b0a898", fontSize: "12px" }}>{a.program}</div>
-                      <div style={{ color: "#555", fontSize: "11px" }}>{a.tier}{a.balance ? ` · ${a.balance}` : ""}</div>
+                  <div key={i} style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", opacity: isActive ? 1 : 0.4 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <div style={{ color: "#b0a898", fontSize: "12px" }}>{a.program}</div>
+                        <div style={{ color: "#555", fontSize: "11px" }}>{a.tier}</div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        {isActive && <div style={{ color: "#C9A84C", fontSize: "12px", fontFamily: "serif" }}>est. ${val.toLocaleString()}</div>}
+                        {isActive && <button onClick={() => {
+                          const LOYALTY_TO_BRANDS = {
+                            "Delta SkyMiles": ["Delta"], "Alaska Mileage Plan": ["Alaska"],
+                            "United MileagePlus": ["United"], "American AAdvantage": ["American"],
+                            "Southwest Rapid Rewards": ["Southwest"],
+                          };
+                          const linkedBrands = LOYALTY_TO_BRANDS[a.program] || [];
+                          const updatedBrands = (profile.selectedBrands || profile.preferredBrands || []).filter(b => !linkedBrands.includes(b));
+                          setProfile({ ...profile,
+                            loyaltyAccounts: profile.loyaltyAccounts.map(x => x.program === a.program ? { ...x, tier: "None", balance: "" } : x),
+                            selectedBrands: updatedBrands, preferredBrands: updatedBrands
+                          });
+                        }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", color: "#555", fontSize: "10px", padding: "2px 7px", cursor: "pointer" }}>✕</button>}
+                        {!isActive && <button onClick={() => setProfile({ ...profile, loyaltyAccounts: profile.loyaltyAccounts.map(x => x.program === a.program ? { ...x, tier: "Member", balance: "" } : x) })} style={{ background: "none", border: "1px solid rgba(201,168,76,0.2)", borderRadius: "6px", color: "#C9A84C", fontSize: "10px", padding: "2px 7px", cursor: "pointer" }}>+ add</button>}
+                      </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      {isActive && <div style={{ color: "#C9A84C", fontSize: "12px", fontFamily: "serif" }}>est. ${val.toLocaleString()}</div>}
-                      {isActive && <button onClick={() => {
-                        const LOYALTY_TO_BRANDS = {
-                          "Delta SkyMiles": ["Delta"], "Alaska Mileage Plan": ["Alaska"],
-                          "United MileagePlus": ["United"], "American AAdvantage": ["American"],
-                          "Southwest Rapid Rewards": ["Southwest"],
-                        };
-                        const linkedBrands = LOYALTY_TO_BRANDS[a.program] || [];
-                        const updatedBrands = (profile.selectedBrands || profile.preferredBrands || []).filter(b => !linkedBrands.includes(b));
-                        setProfile({ ...profile,
-                          loyaltyAccounts: profile.loyaltyAccounts.map(x => x.program === a.program ? { ...x, tier: "None", balance: "" } : x),
-                          selectedBrands: updatedBrands, preferredBrands: updatedBrands
-                        });
-                      }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", color: "#555", fontSize: "10px", padding: "2px 7px", cursor: "pointer" }}>✕</button>}
-                      {!isActive && <button onClick={() => setProfile({ ...profile, loyaltyAccounts: profile.loyaltyAccounts.map(x => x.program === a.program ? { ...x, tier: "Member", balance: "" } : x) })} style={{ background: "none", border: "1px solid rgba(201,168,76,0.2)", borderRadius: "6px", color: "#C9A84C", fontSize: "10px", padding: "2px 7px", cursor: "pointer" }}>+ add</button>}
-                    </div>
+                    {isActive && (
+                      <div style={{ marginTop: "6px", display: "flex", alignItems: "center", gap: "8px" }}>
+                        <input
+                          value={a.balance || ""}
+                          onChange={e => setProfile({ ...profile, loyaltyAccounts: profile.loyaltyAccounts.map(x => x.program === a.program ? { ...x, balance: e.target.value } : x) })}
+                          placeholder="Miles/points (e.g. 45,000)"
+                          style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "7px", padding: "5px 9px", color: "#e8e4dc", fontSize: "11px", fontFamily: "'DM Sans',system-ui,sans-serif" }}
+                        />
+                        <select
+                          value={a.tier}
+                          onChange={e => setProfile({ ...profile, loyaltyAccounts: profile.loyaltyAccounts.map(x => x.program === a.program ? { ...x, tier: e.target.value } : x) })}
+                          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "7px", padding: "5px 8px", color: "#b0a898", fontSize: "11px", fontFamily: "'DM Sans',system-ui,sans-serif" }}
+                        >
+                          {(Object.values(LOYALTY_OPTIONS).flat().find(o => o.program === a.program)?.tiers || ["None","Member","Silver","Gold","Platinum"]).map(t => (
+                            <option key={t} value={t} style={{ background: "#1a1a1a" }}>{t}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
                 );
               })}
