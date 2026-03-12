@@ -2326,16 +2326,19 @@ Please respond now.`,
             </div>
           )}
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", marginTop: "4px", paddingTop: "16px" }}>
-            <div style={{ background: "rgba(12,11,10,0.95)", border: "1px solid rgba(201,168,76,0.18)", borderRadius: "16px", padding: "14px 16px 10px" }}>
-              <div style={{ color: "#b0a898", fontSize: "12px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "2px" }}>Make it yours.</div>
-              <div style={{ color: "#4a4540", fontSize: "11px", lineHeight: "1.5", marginBottom: "10px" }}>Ask about dining, drinks, activities, or any details — or adjust the plan entirely.</div>
+            <div style={{ background: "rgba(12,11,10,0.95)", border: "1px solid rgba(201,168,76,0.18)", borderRadius: "16px", padding: "12px 16px 10px" }}>
+              <div style={{ marginBottom: "8px" }}>
+                <span style={{ color: "#b0a898", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif", fontWeight: "600" }}>Make it yours</span>
+                <span style={{ color: "#3a3530", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif", margin: "0 6px" }}>·</span>
+                <span style={{ color: "#4a4540", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }}>dining, drinks, activities, or adjust the plan</span>
+              </div>
               <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: "12px", padding: "4px 4px 4px 14px", display: "flex", alignItems: "center", gap: "8px" }}>
                 <input
                   value={refineInput}
                   onChange={e => setRefineInput(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter") handleRefine(); }}
-                  placeholder="e.g. &quot;any breweries nearby?&quot; or &quot;swap the hotel for something quieter&quot;"
-                  style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "13px", padding: "9px 0", fontFamily: "'DM Sans',system-ui,sans-serif", outline: "none" }}
+                  placeholder="e.g. any breweries nearby? or swap the hotel for something quieter"
+                  style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "12px", padding: "9px 0", fontFamily: "'DM Sans',system-ui,sans-serif", outline: "none" }}
                 />
                 {refineLoading ? (
                   <div style={{ width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center" }}>
