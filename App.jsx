@@ -1654,6 +1654,12 @@ FOR NON-POINTS QUERIES, use the standard bucket definitions:
 - Wild Card can only leave the named destination if: (1) the user said they were open to ideas, OR (2) an alternative destination has genuinely comparable or better direct flights AND is a meaningfully different experience AND you explain exactly why it beats the stated destination
 - Wild Card is about surprising WITHIN the destination (boutique lodge, ski-in/ski-out chalet, lesser-known property) not substituting a different destination
 
+TRIP LENGTH / FLIGHT DURATION MATCHING — HARD RULE:
+- 2-3 night trips (long weekends): domestic or short-haul ONLY. Max ~5 hours flight time. Do NOT suggest international destinations requiring transatlantic or transpacific flights regardless of cpp value. Canada and Mexico qualify as short-haul.
+- 4-5 night trips: North America, Caribbean, or Mexico only. Max ~8 hours.
+- 6+ nights: international permitted.
+- cpp optimization must NEVER override trip length logic. A 3-night trip to Amsterdam is wrong even if the redemption value is exceptional.
+
 INTELLIGENCE RULES:
 - Reference traveler's actual loyalty tier: "Your Marriott Gold gets confirmed late checkout and upgrade eligibility"
 - Reference specific card multipliers: "Chase Sapphire Reserve 3x on hotels = 2,400 UR points worth ~$48"
@@ -1952,12 +1958,19 @@ TRAVELER PROFILE:
 
 ORIGINAL TRIP REQUEST: ${(conversationRef.current&&conversationRef.current[0]&&conversationRef.current[0].content) || "unknown"}
 
+PERSISTENT CONSTRAINTS — these carry through ALL refinements and cannot be overridden by a refinement message unless the user explicitly cancels them:
+- If the original request mentioned a points/miles balance or redemption intent, that remains the PRIMARY organizing lens for all 6 options. Refinements narrow the destination or add preferences — they do not reset the points intent.
+- If the original request specified a trip length (e.g. "3 nights", "long weekend"), maintain that constraint and apply the flight duration matching rule (3 nights = domestic/short-haul only).
+- If a refinement adds a new constraint (e.g. "domestic only", "5 hours max"), ADD it to existing constraints — do not replace the original ones.
+- Always regenerate options that honor ALL accumulated constraints from original query + all refinements combined.
+
 CURRENT OPTIONS SHOWING:
 ${(tripOptions||[]).filter(o => !dismissedIds.includes(o.id)).map(o => "[" + (o.tag||"") + "] " + (o.headline||"") + " ($" + (o.totalCost||0) + ")").join("\n")}${dismissedIds.length > 0 ? "\nDismissed by user (do not regenerate these): " + tripOptions.filter(o => dismissedIds.includes(o.id)).map(o => o.headline).join(", ") : ""}
 
 
 WHEN TO GENERATE NEW CARDS — do this immediately, no confirmation needed:
 - User wants changes: swap, replace, remove, add, update, "yes", "yes please", any budget or preference change
+- TRIP LENGTH / FLIGHT DURATION RULE: apply same as options generation — 3-night trips = domestic/short-haul only (max ~5h flight). Points-led intent from original query persists even after destination refinement.
 - User asks to add restaurants, activities, breweries, or any experiences to an option — add them to experiences[] and regenerate immediately
 - User says "add X to the itinerary", "include X", "put X in", "pencil in", "update the itinerary", "can you update the cards" — regenerate immediately
 - Always output preamble (1-2 sentences summarizing what changed) THEN immediately the complete JSON
