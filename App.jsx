@@ -1589,6 +1589,11 @@ Generate exactly 6 options as raw JSON. Output ONLY JSON — no markdown, no exp
 THE 6 OPTIONS (always in this order):
 CRITICAL RULE BEFORE GENERATING ANY OPTION: If the user named a specific destination, ALL 6 options must be AT that destination. Never substitute a different destination to optimize a bucket — find the best hotel/flight FOR THAT DESTINATION that fits the bucket criteria.
 
+LOYALTY PROGRAM CONSTRAINT: If the user's message mentions a specific loyalty program (e.g. "I have 45k Marriott points", "use my Delta miles", "Hyatt points"), then:
+- BEST POINTS REDEMPTION must use that specific program — it is the anchor option
+- RECOMMENDED should lean toward properties/flights that earn or use that program where natural
+- All 6 options should acknowledge that program where relevant rather than ignoring the stated intent
+
 1. RECOMMENDED (#C9A84C) — Best overall fit for this traveler's profile and stated preferences. Must be at stated destination.
 2. BEST POINTS EARNED (#4C9AC9) — Maximizes loyalty accumulation at the STATED DESTINATION. Name the card and why. Never substitute a different destination for better points.
 3. BEST POINTS REDEMPTION (#4CC97A) — Best use of existing balances at the STATED DESTINATION. redemption field must be non-null.
@@ -2309,31 +2314,32 @@ Please respond now.`,
               ))}
             </div>
           )}
-          {refineLoading && refineLoadingMessage && (
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", marginBottom: "8px", background: "rgba(201,168,76,0.05)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: "12px" }}>
+          {refineLoading && (
+            <div style={{ display: "flex", alignItems: "center", padding: "8px 4px", marginBottom: "4px" }}>
               <TypingIndicator />
-              <span style={{ color: "#C9A84C", fontSize: "12px", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic" }}>{refineLoadingMessage}</span>
             </div>
           )}
-          <div style={{ marginBottom: "10px" }}>
-            <div style={{ color: "#b0a898", fontSize: "13px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "3px" }}>Make it yours.</div>
-            <div style={{ color: "#555", fontSize: "11px", lineHeight: "1.5" }}>Ask about dining, drinks, activities, or any details you want to explore — or adjust the plan entirely.</div>
-          </div>
-          <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: "14px", padding: "4px 4px 4px 16px", display: "flex", alignItems: "center", gap: "8px" }}>
-            <input
-              value={refineInput}
-              onChange={e => setRefineInput(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") handleRefine(); }}
-              placeholder="e.g. &quot;any breweries nearby?&quot; or &quot;swap the hotel for something quieter&quot;"
-              style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "13px", padding: "10px 0", fontFamily: "'DM Sans',system-ui,sans-serif", outline: "none" }}
-            />
-            {refineLoading ? (
-              <div style={{ width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <TypingIndicator />
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", marginTop: "4px", paddingTop: "16px" }}>
+            <div style={{ background: "rgba(12,11,10,0.95)", border: "1px solid rgba(201,168,76,0.18)", borderRadius: "16px", padding: "14px 16px 10px" }}>
+              <div style={{ color: "#b0a898", fontSize: "12px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "2px" }}>Make it yours.</div>
+              <div style={{ color: "#4a4540", fontSize: "11px", lineHeight: "1.5", marginBottom: "10px" }}>Ask about dining, drinks, activities, or any details — or adjust the plan entirely.</div>
+              <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: "12px", padding: "4px 4px 4px 14px", display: "flex", alignItems: "center", gap: "8px" }}>
+                <input
+                  value={refineInput}
+                  onChange={e => setRefineInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") handleRefine(); }}
+                  placeholder="e.g. &quot;any breweries nearby?&quot; or &quot;swap the hotel for something quieter&quot;"
+                  style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "13px", padding: "9px 0", fontFamily: "'DM Sans',system-ui,sans-serif", outline: "none" }}
+                />
+                {refineLoading ? (
+                  <div style={{ width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <TypingIndicator />
+                  </div>
+                ) : (
+                  <button onClick={handleRefine} disabled={!refineInput.trim()} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", cursor: refineInput.trim() ? "pointer" : "default", background: refineInput.trim() ? "#C9A84C" : "rgba(201,168,76,0.1)", color: refineInput.trim() ? "#0a0908" : "#555", fontSize: "14px", fontWeight: "bold", flexShrink: 0 }}>&#8593;</button>
+                )}
               </div>
-            ) : (
-              <button onClick={handleRefine} disabled={!refineInput.trim()} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", cursor: refineInput.trim() ? "pointer" : "default", background: refineInput.trim() ? "#C9A84C" : "rgba(201,168,76,0.1)", color: refineInput.trim() ? "#0a0908" : "#555", fontSize: "14px", fontWeight: "bold", flexShrink: 0 }}>&#8593;</button>
-            )}
+            </div>
           </div>
           
         </div>
