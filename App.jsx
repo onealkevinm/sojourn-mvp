@@ -1589,11 +1589,17 @@ Generate exactly 6 options as raw JSON. Output ONLY JSON — no markdown, no exp
 THE 6 OPTIONS (always in this order):
 CRITICAL RULE BEFORE GENERATING ANY OPTION: If the user named a specific destination, ALL 6 options must be AT that destination. Never substitute a different destination to optimize a bucket — find the best hotel/flight FOR THAT DESTINATION that fits the bucket criteria.
 
-LOYALTY PROGRAM CONSTRAINT: If the user's message mentions a specific loyalty program (e.g. "I have 45k Marriott points", "use my Delta miles", "Hyatt points"), then:
-- BEST POINTS REDEMPTION must use that specific program — it is the anchor option
-- RECOMMENDED should lean toward properties/flights that earn or use that program where natural
-- All 6 options should acknowledge that program where relevant rather than ignoring the stated intent
+POINTS-LED QUERY DETECTION: If the user mentions a specific loyalty program with a balance (e.g. "I have 64k Delta miles", "45k Marriott points", "use my Hyatt points"), treat points usage as the PRIMARY organizing intent for ALL 6 options. Every option must be interpreted through the lens of how it relates to using or earning those specific points. Do NOT generate options that ignore the stated program or substitute a different airline/hotel without explicit justification.
 
+When a points-led query is detected, map the 6 buckets as follows — destination rules still apply, these redefine how each bucket is expressed:
+1. RECOMMENDED (#C9A84C) — Best overall redemption of the stated program. Sweet spot of value, experience, and availability. whyThis must reference the program redemption explicitly.
+2. BEST POINTS EARNED (#4C9AC9) — Trip that maximizes earning MORE of the stated program (or its transfer partners) so the traveler rebuilds their balance. Name card multipliers and earning rate.
+3. BEST POINTS REDEMPTION (#4CC97A) — Maximum cpp value from the stated program. Show the math: X miles/points at Y cpp = $Z value. redemption field must be non-null and program-specific.
+4. BEST VALUE (#C9C94C) — Lowest net cash cost by stacking the stated program with hotel points (Hyatt, Marriott, Hilton) or other balances the traveler holds. Show the combined stack.
+5. QUALITY UPGRADE (#C94C8A) — Use stated miles for premium cabin (business/first) AND layer hotel loyalty points for a luxury property. Stack both programs. Show what each covers.
+6. WILD CARD (#9A4CC9) — Either: (a) a surprisingly high-value redemption destination with the stated program the traveler wouldn't think of, OR (b) if a different program offers dramatically better value for this exact trip, name it explicitly with the math (e.g. "Alaska miles get you here for 15k vs Delta's 30k — worth the transfer"). Never substitute without showing the comparison.
+
+FOR NON-POINTS QUERIES, use the standard bucket definitions:
 1. RECOMMENDED (#C9A84C) — Best overall fit for this traveler's profile and stated preferences. Must be at stated destination.
 2. BEST POINTS EARNED (#4C9AC9) — Maximizes loyalty accumulation at the STATED DESTINATION. Name the card and why. Never substitute a different destination for better points.
 3. BEST POINTS REDEMPTION (#4CC97A) — Best use of existing balances at the STATED DESTINATION. redemption field must be non-null.
