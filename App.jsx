@@ -1694,10 +1694,12 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         const reply = data.content?.[0]?.text?.trim() || "";
 
         if (reply.startsWith("READY:")) {
-          // Enough info — show confirmation and offer to generate
+          // Enough info — skip confirmation, go straight to generation
           const confirmation = reply.replace("READY:", "").trim();
-          setMessages(prev => [...prev, { role: "assistant", text: confirmation, isReadyPrompt: true }]);
+          setMessages(prev => [...prev, { role: "assistant", text: confirmation }]);
           setConciergeMode(false);
+          // Immediately trigger generation without waiting for user click
+          setTimeout(() => callClaude("Generate my options now based on everything discussed."), 80);
         } else {
           // Need more info — show question
           setMessages(prev => [...prev, { role: "assistant", text: reply }]);
