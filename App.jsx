@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 
 // ── Analytics ──────────────────────────────────────────────────────────────────
 const MIXPANEL_TOKEN = "d7e668765a8c";
@@ -953,10 +953,12 @@ const ItineraryOverlay = ({ option, tripSummary, onClose }) => {
     // Inject experiences for this day (restaurants, activities, breweries, etc.)
     const dayExperiences = (option.experiences || []).filter(e => e.day === d);
     dayExperiences.forEach(e => {
+      const expType = (e.type || "").toLowerCase();
+      const expIcon = e.icon || (expType.includes("brew") ? "🍺" : expType.includes("activity") || expType.includes("hike") || expType.includes("excursion") ? "🥾" : "🍽");
       items.push({
-        time: e.time || "Evening",
-        icon: e.icon || "🍽",
-        title: e.title || "",
+        time: e.time || (expType.includes("brunch") ? "Morning" : expType.includes("activity") || expType.includes("hike") ? "Morning" : "Evening"),
+        icon: expIcon,
+        title: e.name || e.title || "",
         detail: e.detail || "",
         value: null, points: null, card: null,
         bookUrl: e.bookUrl || null,
@@ -1736,10 +1738,16 @@ ${(tripOptions||[]).filter(o => !dismissedIds.includes(o.id)).map(o => "[" + (o.
 WHEN TO GENERATE NEW CARDS — do this immediately, no confirmation needed:
 - User wants changes: swap, replace, remove, add, update, "yes", "yes please", any budget or preference change
 - User asks to add restaurants, activities, breweries, or any experiences to an option — add them to experiences[] and regenerate immediately
-- User says "add X to the itinerary", "include X", "put X in", "update the itinerary", "publish the itinerary", "can you update the cards" — regenerate immediately
+- User says "add X to the itinerary", "include X", "put X in", "pencil in", "update the itinerary", "can you update the cards" — regenerate immediately
 - Always output preamble (1-2 sentences summarizing what changed) THEN immediately the complete JSON
 - NEVER claim you updated or added something without outputting new JSON — if you say you added it, the JSON must be in your response
 - NEVER ask "shall I update the cards?" or "just say yes to update" — if the intent is clear, just do it
+
+EXPERIENCES ARRAY — critical rules:
+- When user asks to add specific dining/activities, populate experiences[] on the relevant option with objects: { name, type (dining|activity|brewery|excursion), day, time, detail, bookUrl (opentable/resy if dining) }
+- Assign days intelligently — brunch on Day 2 morning, dinner on Day 2 or 3 evening, hike on Day 1 or 2, brewery on Day 2 afternoon
+- ALL other options that were not mentioned keep their existing experiences[] unchanged
+- The experiences MUST appear in the JSON — do not describe them only in the preamble text
 
 WHEN TO RESPOND CONVERSATIONALLY:
 - Factual questions, comparisons, requests for more information about a specific option
@@ -1843,8 +1851,24 @@ Please respond now.`,
           subhead: o.subhead || o.subtitle || o.description || "",
           totalCost: typeof o.totalCost === "number" ? o.totalCost : parseInt(String(o.totalCost||o.price||"0").replace(/[^0-9]/g,"")) || 0,
           pointsEarned: o.pointsEarned || o.points_earned || "",
-          pointsValue: typeof o.pointsValue === "number" ? o.pointsValue : parseInt(String(o.pointsValue||"0").replace(/[^0-9]/g,"")) || 0,
-          netValue: typeof o.netValue === "number" ? o.netValue : parseInt(String(o.netValue||"0").replace(/[^0-9]/g,"")) || 0,
+          pointsValue: (() => {
+            const raw = typeof o.pointsValue === "number" ? o.pointsValue : parseInt(String(o.pointsValue||"0").replace(/[^0-9]/g,"")) || 0;
+            const tc = typeof o.totalCost === "number" ? o.totalCost : parseInt(String(o.totalCost||"0").replace(/[^0-9]/g,"")) || 0;
+            if (raw === tc && tc > 0) {
+              const pts = parseInt(String(o.pointsEarned||"").replace(/[^0-9]/g,"")) || 0;
+              return pts > 0 ? Math.round(pts * 0.015) : 0;
+            }
+            return raw;
+          })(),
+          netValue: (() => {
+            const tc = typeof o.totalCost === "number" ? o.totalCost : parseInt(String(o.totalCost||"0").replace(/[^0-9]/g,"")) || 0;
+            const rawPV = typeof o.pointsValue === "number" ? o.pointsValue : parseInt(String(o.pointsValue||"0").replace(/[^0-9]/g,"")) || 0;
+            const pv = rawPV === tc && tc > 0 ? Math.round((parseInt(String(o.pointsEarned||"").replace(/[^0-9]/g,""))||0) * 0.015) : rawPV;
+            const rawNV = typeof o.netValue === "number" ? o.netValue : parseInt(String(o.netValue||"0").replace(/[^0-9]/g,"")) || 0;
+            // If netValue is 0 or equals totalCost, recalculate
+            if (rawNV === 0 || rawNV === tc) return Math.max(0, tc - pv);
+            return rawNV;
+          })(),
           redemption: o.redemption || null,
           tags: o.tags || [],
           tradeoff: o.tradeoff || "",
@@ -1887,7 +1911,11 @@ Please respond now.`,
       if (parsed) {
         setTripOptions(parsed.options);
         if (parsed.summary) setTripSummary(parsed.summary);
-        setExpandedId(null);
+        // Stay on the currently expanded card if it still exists in the new options
+        setExpandedId(prev => {
+          if (prev && parsed.options.find(o => o.id === prev)) return prev;
+          return null;
+        });
         setShowCompare(false);
         const summary = parsed.preamble || "";
         const confirmation = summary.length > 10 ? summary : "Updated your options — cards now reflect your latest preferences.";
