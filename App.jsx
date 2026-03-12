@@ -768,7 +768,11 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
           {isFlight && !times && duration && <div style={{ color: "#555", fontSize: "10px", background: "rgba(255,255,255,0.04)", padding: "2px 7px", borderRadius: "6px" }}>{duration}</div>}
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "serif" }}>{value}</div>
+          <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "serif" }}>
+            {value && parseInt(String(value).replace(/[^0-9]/g,"")) > 0
+              ? (typeof value === "number" ? `$${value.toLocaleString()}` : (String(value).startsWith("$") ? value : `$${value}`))
+              : (points ? <span style={{ color: "#4CC97A", fontSize: "13px" }}>via pts</span> : "$0")}
+          </div>
           <div style={{ color: "#4CC97A", fontSize: "11px" }}>{points}</div>
         </div>
       </div>
@@ -1656,6 +1660,8 @@ DESTINATION DIVERSITY RULE:
 - Only converge on a single destination when the user has explicitly narrowed to it or refinement has confirmed it
 - Each of the 6 options should feel like a genuinely different trip, not a variation of the same trip in the same place
 
+COMPONENT VALUE RULE — CRITICAL: component value field is ALWAYS the dollar value of that component — never 0. If paid in cash: value = cash amount. If covered by points: value = dollar equivalent of those points (e.g. 15,000 Delta miles at 1.4cpp = 210, so value = 210). If partially covered: value = cash portion + points value combined. totalCost must equal the sum of all cash-paid component values only (not points value). This allows the user to see what each component is worth even when points cover it.
+
 REQUIRED JSON SCHEMA:
 {"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] must be an EMPTY ARRAY by default. ONLY populate it if the user has explicitly requested specific dining, activities, breweries, distilleries, or excursions in this conversation and asked for them to be included. Never speculatively generate experiences.`;
   };
@@ -1971,6 +1977,8 @@ HARD CONSTRAINTS — these override everything else:
 - If user said 80+ degrees, Massachusetts/Big Sur/San Francisco/Pacific NW are never valid options in April
 - Warm April destinations (80+F): Hawaii, South Florida, Caribbean, Mexico, Turks & Caicos, Bahamas — these always work
 - Borderline April destinations (75-80F): Southern California, Naples FL — only include if user has not set a hard weather minimum
+
+COMPONENT VALUE RULE: component value is ALWAYS the dollar value of that component — never 0. If covered by points: value = dollar equivalent (e.g. 15,000 Delta miles at 1.4cpp = 210). If cash: value = cash amount.
 
 JSON SCHEMA — you MUST use exactly these field names or cards will not display:
 {"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer. (2) experiences[] is EMPTY by default. Only populate it when the user has explicitly requested specific dining or activities and asked for them to be included in their trip. Never generate experiences speculatively.
