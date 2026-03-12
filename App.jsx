@@ -218,7 +218,7 @@ const Chip = ({ label, active, onClick }) => (
 
 const OnboardingFlow = ({ onComplete }) => {
   const [step, setStep] = useState(0);
-  const [selectedCards, setSelectedCards] = useState(["Chase Sapphire Reserve", "Amex Platinum"]);
+  const [selectedCards, setSelectedCards] = useState([]);
   const [customCard, setCustomCard] = useState("");
   const [showCustomCard, setShowCustomCard] = useState(false);
   const [cardSearch, setCardSearch] = useState("");
@@ -228,15 +228,11 @@ const OnboardingFlow = ({ onComplete }) => {
     Object.values(LOYALTY_OPTIONS).flat().forEach(({ program, tiers }) => {
       obj[program] = { selected: false, tier: tiers[0], balance: "" };
     });
-    obj["United MileagePlus"] = { selected: true, tier: "Silver", balance: "24,200" };
-    obj["Marriott Bonvoy"] = { selected: true, tier: "Gold", balance: "68,400" };
-    obj["Hilton Honors"] = { selected: true, tier: "Silver", balance: "32,100" };
-    obj["Uber One"] = { selected: true, tier: "Member", balance: "" };
-    obj["National Emerald Club"] = { selected: true, tier: "Executive", balance: "" };
+
     return obj;
   };
   const [loyaltyAccounts, setLoyaltyAccounts] = useState(defaultLoyalty);
-  const [selectedBrands, setSelectedBrands] = useState(["Four Seasons", "Leading Hotels of the World", "Relais & Châteaux", "Michelin Keys"]);
+  const [selectedBrands, setSelectedBrands] = useState([]);
   const [expandedBrandCat, setExpandedBrandCat] = useState(null);
   const [expandedLoyaltyCat, setExpandedLoyaltyCat] = useState("hotel"); // Open hotel by default
   const [debugMsg, setDebugMsg] = useState("");
@@ -1372,30 +1368,32 @@ const OptimizingForBar = ({ profile, setProfile }) => {
                 );
               })}
               {/* Add new loyalty program not already in list */}
-              <div style={{ marginTop: "12px", display: "flex", gap: "8px" }}>
-                <select id="loyalty-add-select" style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#6a6460", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }}>
-                  <option value="">Add a program not listed...</option>
-                  {["Marriott Bonvoy","World of Hyatt","Hilton Honors","IHG One Rewards","Wyndham Rewards","Choice Privileges","United MileagePlus","Delta SkyMiles","American AAdvantage","Alaska Mileage Plan","Southwest Rapid Rewards","JetBlue TrueBlue","Emirates Skywards","British Airways Avios","Air France Flying Blue","Singapore KrisFlyer","Hertz Gold Plus Rewards","National Emerald Club","Avis Preferred","Enterprise Plus"].filter(p => !loyalty.find(a => a.program === p)).map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
-                <button onClick={() => {
-                  const sel = document.getElementById("loyalty-add-select");
-                  const val = sel?.value;
-                  if (val) {
-                    const updatedLoyalty = [...(profile.loyaltyAccounts||[]), { program: val, tier: "Member", balance: "" }];
-                    // Auto-add linked brands
-                    const LOYALTY_TO_BRANDS = {
-                      "Delta SkyMiles": ["Delta"], "Alaska Mileage Plan": ["Alaska"],
-                      "United MileagePlus": ["United"], "American AAdvantage": ["American"],
-                      "Southwest Rapid Rewards": ["Southwest"],
-                    };
-                    let updatedBrands = [...(profile.selectedBrands || profile.preferredBrands || [])];
-                    if (LOYALTY_TO_BRANDS[val]) {
-                      LOYALTY_TO_BRANDS[val].forEach(b => { if (!updatedBrands.includes(b)) updatedBrands.push(b); });
-                    }
-                    setProfile({ ...profile, loyaltyAccounts: updatedLoyalty, selectedBrands: updatedBrands, preferredBrands: updatedBrands });
-                    sel.value = "";
+              <div style={{ marginTop: "12px" }}>
+                <div style={{ color: "#444", fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "6px" }}>Add a program</div>
+                <div style={{ maxHeight: "120px", overflowY: "scroll", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", background: "rgba(255,255,255,0.02)" }}>
+                  {["Marriott Bonvoy","World of Hyatt","Hilton Honors","IHG One Rewards","Wyndham Rewards","Choice Privileges","United MileagePlus","Delta SkyMiles","American AAdvantage","Alaska Mileage Plan","Southwest Rapid Rewards","JetBlue TrueBlue","Emirates Skywards","British Airways Avios","Air France Flying Blue","Singapore KrisFlyer","Cathay Pacific Asia Miles","Hertz Gold Plus Rewards","National Emerald Club","Avis Preferred","Enterprise Plus","Uber One"]
+                    .filter(p => !loyalty.find(a => a.program === p))
+                    .map(p => (
+                      <div key={p} onClick={() => {
+                        const updatedLoyalty = [...(profile.loyaltyAccounts||[]), { program: p, tier: "Member", balance: "" }];
+                        const LOYALTY_TO_BRANDS = {
+                          "Delta SkyMiles": ["Delta"], "Alaska Mileage Plan": ["Alaska"],
+                          "United MileagePlus": ["United"], "American AAdvantage": ["American"],
+                          "Southwest Rapid Rewards": ["Southwest"],
+                        };
+                        let updatedBrands = [...(profile.selectedBrands || profile.preferredBrands || [])];
+                        if (LOYALTY_TO_BRANDS[p]) {
+                          LOYALTY_TO_BRANDS[p].forEach(b => { if (!updatedBrands.includes(b)) updatedBrands.push(b); });
+                        }
+                        setProfile({ ...profile, loyaltyAccounts: updatedLoyalty, selectedBrands: updatedBrands, preferredBrands: updatedBrands });
+                      }} style={{ padding: "7px 12px", color: "#8a8078", fontSize: "12px", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.04)", transition: "background 0.1s" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "rgba(201,168,76,0.08)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                        {p}
+                      </div>
+                    ))
                   }
-                }} style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: "8px", color: "#C9A84C", fontSize: "11px", padding: "6px 12px", cursor: "pointer" }}>Add</button>
+                </div>
               </div>
             </div>
           )}
@@ -1425,7 +1423,7 @@ const OptimizingForBar = ({ profile, setProfile }) => {
                     const linkedBrands = linked ? (LOYALTY_TO_BRANDS[linked] || []) : [];
                     const updatedBrands = (profile.selectedBrands || profile.preferredBrands || []).filter(b => !linkedBrands.includes(b));
                     let updatedLoyalty = profile.loyaltyAccounts || [];
-                    if (linked) updatedLoyalty = updatedLoyalty.map(x => x.program === linked ? { ...x, tier: "None", balance: "" } : x);
+                    if (linked) updatedLoyalty = updatedLoyalty.filter(x => x.program !== linked);
                     setProfile({ ...profile,
                       cards: profile.cards.filter(x => x.name !== c.name),
                       loyaltyAccounts: updatedLoyalty,
