@@ -2461,24 +2461,39 @@ Please respond now.`,
                 const opts = (tripOptions || []).filter(o => !dismissedIds.includes(o.id));
                 const rec = opts.find(o => o.id === 1);
                 const wildCard = opts.find(o => o.tag === "Wild Card");
-                const bestValue = opts.find(o => o.tag === "Best Value");
                 const upgrade = opts.find(o => o.tag === "Quality Upgrade");
-                const redemption = opts.find(o => o.tag === "Best Points Redemption");
+                const redemptionOpt = opts.find(o => o.tag === "Best Points Redemption" || o.tag === "Redemption Opportunity");
+                const futureValue = opts.find(o => o.tag === "Future Value");
 
-                // Build intent-based pills — one per category: explore, logistics, experience
+                // Detect query intent from original message
+                const originalQuery = (conversationRef.current && conversationRef.current[0] && conversationRef.current[0].content || "").toLowerCase();
+                const isEarningIntent = /business.?trip|work.?trip|maximize.?point|build.?mile|build.?point|earn.?status|rack.?up|maximize.?earn/i.test(originalQuery);
+                const isRedemptionIntent = /i have \d|use my miles|redeem|burn my|best use of my/i.test(originalQuery);
+                const isDestinationUncertain = /surprise me|open to|anywhere|somewhere warm|somewhere|don.t know|not sure|ideas/i.test(originalQuery);
+                const isSpecificDestination = !isDestinationUncertain && originalQuery.length > 10;
+                const isOccasion = /anniversary|birthday|honeymoon|proposal|celebration|bachelor|bachelorette/i.test(originalQuery);
+
                 const pills = [];
 
-                // Explore pill — based on most distinctive option
-                if (wildCard) {
+                // ── Pill 1: Query-intent pill ──
+                if (isEarningIntent) {
+                  pills.push("How do the earning rates compare across these options?");
+                } else if (isRedemptionIntent) {
+                  pills.push("Which option gives me the best value per mile?");
+                } else if (isOccasion) {
+                  pills.push("Which of these feels most special for the occasion?");
+                } else if (isDestinationUncertain) {
+                  pills.push("What else fits this vibe?");
+                } else if (wildCard) {
                   pills.push("What else fits the spirit of the Wild Card option?");
-                } else if (redemption) {
-                  pills.push("Are there other strong redemption destinations like this?");
                 } else {
-                  pills.push("Show me a more unexpected option");
+                  pills.push("What makes each of these options different from each other?");
                 }
 
-                // Logistics pill — casual, comparative
-                if (opts.length > 2) {
+                // ── Pill 2: Logistics ──
+                if (isEarningIntent) {
+                  pills.push("Which option has the best business amenities?");
+                } else if (opts.length > 2) {
                   pills.push("How do the flight times compare across these?");
                 } else if (upgrade) {
                   pills.push("What does the upgrade option actually add over the Recommended?");
@@ -2486,8 +2501,12 @@ Please respond now.`,
                   pills.push("How do the flight times compare across these?");
                 }
 
-                // Experience depth pill — warm, specific
-                if (rec) {
+                // ── Pill 3: Experience ──
+                if (isEarningIntent) {
+                  pills.push("Any good dinner spots near the Recommended option?");
+                } else if (isOccasion) {
+                  pills.push("What would make the Recommended option more memorable?");
+                } else if (rec) {
                   pills.push("Any standout restaurants near the Recommended option?");
                 } else {
                   pills.push("What would make any of these feel more special?");
