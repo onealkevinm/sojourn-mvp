@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 
 // ── Analytics ──────────────────────────────────────────────────────────────────
-const MIXPANEL_TOKEN = "d7e668765a8c";
+const MIXPANEL_TOKEN = "d7e668765a8c3efcb1ab3a077468a069";
 const mp = {
   ready: false,
   queue: [],
