@@ -929,9 +929,12 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss }) => {
             <div style={{ color: "#666", fontSize: "10px", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Trip Components</div>
             {(option.components||[]).map(c => <ComponentRow key={c.label + c.value} {...c} />)}
           </div>
-          <div style={{ marginTop: "12px", padding: "12px 16px", background: option.tagColor + "0e", borderRadius: "12px", border: `1px solid ${option.tagColor}22` }}>
-            <div style={{ color: option.tagColor, fontSize: "12px" }}>✦ {option.loyaltyHighlight}</div>
-          </div>
+          {option.loyaltyHighlight && (
+            <div style={{ marginTop: "12px", padding: "12px 16px", background: option.tagColor + "0e", borderRadius: "12px", border: `1px solid ${option.tagColor}22` }}>
+              <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>Loyalty Highlights</div>
+              <div style={{ color: option.tagColor, fontSize: "12px", lineHeight: "1.6" }}>✦ {option.loyaltyHighlight}</div>
+            </div>
+          )}
           {option.cardStrategy && (
             <div style={{ marginTop: "8px", padding: "10px 16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.07)" }}>
               <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "5px" }}>Card Strategy</div>
@@ -1191,7 +1194,8 @@ const ItineraryOverlay = ({ option, tripSummary, onClose }) => {
 
         {/* Loyalty highlight */}
         <div style={{ padding: "12px 16px", background: `${option.tagColor}0e`, border: `1px solid ${option.tagColor}22`, borderRadius: "10px", marginBottom: "20px" }}>
-          <div style={{ color: option.tagColor, fontSize: "12px" }}>✦ {option.loyaltyHighlight}</div>
+          <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>Loyalty Highlights</div>
+          <div style={{ color: option.tagColor, fontSize: "12px", lineHeight: "1.6" }}>✦ {option.loyaltyHighlight}</div>
         </div>
 
         {/* Book CTA */}
@@ -1742,7 +1746,7 @@ COMPONENT VALUE RULE — CRITICAL:
   - If redeeming: "25,000 Delta miles redeemed" or "30,000 Hyatt points redeemed" — always include the word "redeemed"
   - If earning: "est. 2,400 Delta miles earned" or "est. 4,200 Bonvoy points earned" — always include "est." and "earned"
   - Never mix redemption and earning in the same points field
-- loyaltyHighlight = plain-English summary of the full points stack: e.g. "25k Delta miles cover both flights · 30k Hyatt points cover hotel · $240 cash for ground transport"
+- loyaltyHighlight = a friendly, plain-English reminder of all the status perks and program benefits this specific traveler unlocks on this specific trip — across ALL their programs, not just hotels. Think of it as: "here's what you've earned, don't leave it on the table." Include: airline lounge access if they have status + departure airport has that lounge (e.g. "Delta Sky Club access at SEA"), hotel status perks unlocked at this property (e.g. "Hyatt Discoverist: late checkout + room upgrade eligibility"), any card travel perks relevant to this trip (e.g. "Amex Platinum: $200 hotel credit eligible"), elite lane / priority boarding if applicable. Keep it to 2-4 genuinely relevant perks — don't list every possible benefit, only the ones that meaningfully apply to this option. Do NOT repeat the points math here (that's covered in components and redemptions). Tone: warm, like a knowledgeable friend reminding you of things you might forget to use.
 - cardStrategy = which card to use for each cash-paid component and why, based on the highest earning multiplier for that spend category. Format: "Flights: [card] ([Nx] miles) · Hotel: [card] ([Nx] points) · Dining: [card] ([Nx] points)". Only include components where cash is paid — skip components covered by points redemption. This must reflect the traveler's actual cards and their actual category multipliers. Never invent a multiplier. If two cards tie, pick the one that earns the program with the higher cpp value.
 - whyThis = frame cash figures consistently with what the card shows — if flights are $0 out of pocket, say "flights covered by your miles" not "flights cost $X"
 - pointsEarned (top-level) = earning side ONLY — points this trip generates on cash-paid components. CRITICAL: if a component is covered by a redemption, it earns NO points — do NOT include that program in pointsEarned. Example: if Delta miles cover flights, do NOT include "Delta miles earned" in pointsEarned. Only include programs earned on cash-paid components (e.g. hotel cash spend earns Bonvoy, ground spend earns card points).
@@ -2077,7 +2081,7 @@ HARD CONSTRAINTS — these override everything else:
 - Warm April destinations (80+F): Hawaii, South Florida, Caribbean, Mexico, Turks & Caicos, Bahamas — these always work
 - Borderline April destinations (75-80F): Southern California, Naples FL — only include if user has not set a hard weather minimum
 
-COMPONENT VALUE RULE: component value = cash out of pocket only (0 if covered by points). points field: use "X miles/points redeemed" for redemptions, "est. X points earned" for earning. loyaltyHighlight summarizes the full stack in plain English.
+COMPONENT VALUE RULE: component value = cash out of pocket only (0 if covered by points). points field: use "X miles/points redeemed" for redemptions, "est. X points earned" for earning. loyaltyHighlight = status perks and program benefits across ALL programs relevant to this trip — lounge access, hotel status perks, card travel credits. Not points math (that's in components). cardStrategy = highest-earning card per cash-paid component with multiplier.
 CARD FIELD RULE: component card field must name the specific card AND the earning reason in this format: "[Card Name] · [Nx] [category]" — e.g. "Chase Sapphire Reserve · 3x travel" or "Amex Platinum · 5x hotels". Never just list the card name alone. Pick the card with the highest multiplier for that spend category from the traveler's actual cards.
 
 JSON SCHEMA — you MUST use exactly these field names or cards will not display:
