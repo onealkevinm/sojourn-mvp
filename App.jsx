@@ -1653,6 +1653,14 @@ Generate exactly 6 options as raw JSON. Output ONLY JSON — no markdown, no exp
 THE 6 OPTIONS (always in this order):
 CRITICAL RULE BEFORE GENERATING ANY OPTION: If the user named a specific destination, ALL 6 options must be AT that destination. Never substitute a different destination to optimize a bucket — find the best hotel/flight FOR THAT DESTINATION that fits the bucket criteria.
 
+EARNING-INTENT QUERY DETECTION: Activate this mode when the user's primary goal is accumulating points/miles/status — not spending them. Triggers include: "business trip", "work trip", "maximize points", "build my miles", "earn status", "working trip", "maximize earning", "best cards to use", "rack up points". When earning intent is detected, reorder the 6 buckets so redemption is last — a useful "by the way" not a primary recommendation. Earning-intent bucket order:
+1. RECOMMENDED (#C9A84C) — Best overall option for the trip that also maximizes earning. Lead with the earning story: which card earns what on which component, which hotel program earns best here.
+2. BEST POINTS EARNED (#4C9AC9) — Highest total points/miles accumulation across all programs. Name every multiplier. Show the math: "3x flights via Delta Reserve + 5x hotel via Amex Platinum + base Bonvoy points = est. X total points worth $Y."
+3. BEST VALUE (#C9C94C) — Lowest cash cost while still earning meaningfully. Not a redemption option — cash only, but smart card routing maximizes the earning on that cash spend.
+4. QUALITY UPGRADE (#C94C8A) — Premium tier that also earns elite-qualifying miles/nights toward status. Frame around the status progress angle.
+5. WILD CARD (#9A4CC9) — Surprising property or routing that earns disproportionately well — e.g. a hotel with a current bonus points promotion, or a route with a card spending offer.
+6. BEST POINTS REDEMPTION (#4CC97A) — Included as a strategic alternative: "your earning on this trip could fund this future redemption." Frame it as aspirational context, not the primary recommendation. whyThis should open: "While you're focused on earning this trip, here's what your growing balance could unlock..."
+
 POINTS-LED QUERY DETECTION: Activate this mode when the user's intent is to redeem or use points/miles — even if vaguely stated. Triggers include: explicit balance mention ("I have 64k Delta miles"), redemption intent ("use my miles", "redeem points", "burn my Hyatt points"), or program-specific context established earlier in the conversation. When a single program is clear, anchor all 6 options around it. When multiple programs are mentioned or the user said "open to any", generate options that draw on whichever program offers the best value for each bucket and note why. Do NOT generate options that ignore stated redemption intent.
 
 When a points-led query is detected, map the 6 buckets as follows — destination rules still apply, these redefine how each bucket is expressed:
