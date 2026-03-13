@@ -2240,8 +2240,11 @@ Please respond now.`,
           return null;
         });
         setShowCompare(false);
-        const summary = parsed.preamble || "";
-        const confirmation = summary.length > 10 ? summary : "Updated your options — cards now reflect your latest preferences.";
+        const rawPreamble = parsed.preamble || "";
+        // Strip any JSON that leaked into the preamble
+        const preambleJsonMatch = rawPreamble.search(/(\[\{|\{"[a-zA-Z])/);
+        const cleanPreamble = preambleJsonMatch > -1 ? rawPreamble.slice(0, preambleJsonMatch).trim() : rawPreamble;
+        const confirmation = cleanPreamble.length > 10 ? cleanPreamble : "Updated your options — cards now reflect your latest preferences.";
         setRefineMessages(prev => [...prev, { role: "assistant", text: confirmation }]);
         setRefineLoading(false);
         return;
