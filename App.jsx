@@ -7,44 +7,35 @@ const mp = {
   queue: [],
   init() {
     if (this.ready || typeof window === "undefined") return;
-    // Use current Mixpanel CDN
     const script = document.createElement("script");
     script.type = "text/javascript";
     script.async = true;
     script.src = "https://cdn4.mxpnl.com/libs/mixpanel-2-latest.min.js";
     script.onload = () => {
       try {
-        window.mixpanel.init(MIXPANEL_TOKEN, {
-          persistence: "cookie",
-          debug: false,
-          loaded: () => {
-            this.ready = true;
-            this.queue.forEach(([e, p]) => window.mixpanel.track(e, p));
-            this.queue = [];
-          }
-        });
-      } catch(e) { console.warn("Mixpanel init error:", e); }
+        window.mixpanel.init(MIXPANEL_TOKEN, { persistence: "cookie", debug: true });
+        this.ready = true;
+        console.log("[mp] Mixpanel ready, flushing", this.queue.length, "queued events");
+        this.queue.forEach(([e, p]) => window.mixpanel.track(e, p));
+        this.queue = [];
+        window.mixpanel.track("session_start");
+      } catch(e) { console.warn("[mp] init error:", e); }
     };
-    script.onerror = () => console.warn("Mixpanel script failed to load");
+    script.onerror = () => console.warn("[mp] script failed to load");
     document.head.appendChild(script);
   },
   track(event, props = {}) {
     try {
-      if (this.ready && typeof window !== "undefined" && window.mixpanel?.track) {
+      if (this.ready && window.mixpanel?.track) {
         window.mixpanel.track(event, props);
       } else {
+        console.log("[mp] queuing:", event);
         this.queue.push([event, props]);
-        if (!this._initStarted) {
-          this._initStarted = true;
-          this.init();
-        }
       }
     } catch(e) {}
   }
 };
-if (typeof window !== "undefined") {
-  setTimeout(() => { mp._initStarted = true; mp.init(); }, 0);
-}
+if (typeof window !== "undefined") setTimeout(() => mp.init(), 100);
 
 const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
 
@@ -1761,6 +1752,8 @@ DESTINATION DIVERSITY RULE:
 - Spread options across the geographic possibility space: e.g. for "beach vacation, Florida or Hawaii, open to ideas" use 2 Hawaii, 2 Florida, 1 Caribbean, 1 Wild Card
 - Only converge on a single destination when the user has explicitly narrowed to it or refinement has confirmed it
 - Each of the 6 options should feel like a genuinely different trip, not a variation of the same trip in the same place
+
+SINGLE-DESTINATION TRIPS — when user specifies a destination (e.g. "Carmel, CA"), ALL 6 options must stay within that destination area. NEVER split a single-destination trip across multiple locations within an option (e.g. "3 nights Carmel + 2 nights Napa" when user asked for Carmel). The Quality Upgrade bucket does NOT grant permission to suggest a different or additional destination — it means a premium property or cabin class at the SAME destination. Geographic proximity is not an excuse: Napa is NOT Carmel, Big Sur is adjacent and acceptable, but wine country is a different trip entirely. If the user asked for Carmel, every option stays in Carmel/Big Sur/Monterey Peninsula.
 
 COMPONENT VALUE RULE — CRITICAL:
 - component "value" field = cash out of pocket for that component ONLY. Never the points dollar equivalent.
