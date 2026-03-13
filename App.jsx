@@ -2423,7 +2423,7 @@ Please respond now.`,
               <div style={{ marginBottom: "12px" }}>
                 <span style={{ color: "#b0a898", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif", fontWeight: "600" }}>Make it yours</span>
                 <span style={{ color: "#3a3530", fontSize: "12px", margin: "0 6px" }}>—</span>
-                <span style={{ color: "#4a4540", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }}>explore dining, drinks, and activities; clarify details or adjust the plan</span>
+                <span style={{ color: "#4a4540", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }}>explore dining, drinks, and activities; clarify details or adjust the plan. Your options update as you go.</span>
               </div>
               {/* Context-aware suggestion pills */}
               {(() => {
