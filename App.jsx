@@ -1891,13 +1891,21 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
 
     try {
       const parsed = await tryGenerate();
-      setTripOptions(parsed.options);
+      const isEarningQuery = /business.?trip|work.?trip|maximize.?point|build.?mile|build.?point|earn.?status|rack.?up|maximize.?earn/i.test(input);
+      const filteredOptions = isEarningQuery
+        ? parsed.options.map(o => o.tag === "Future Value" ? { ...o, tag: "Redemption Opportunity", tagColor: "#4CC97A" } : o)
+        : parsed.options;
+      setTripOptions(filteredOptions);
       setTripSummary(parsed.tripSummary);
       setPhase("results");
     } catch(e) {
       try {
         const parsed = await tryGenerate();
-        setTripOptions(parsed.options);
+        const isEarningQuery2 = /business.?trip|work.?trip|maximize.?point|build.?mile|build.?point|earn.?status|rack.?up|maximize.?earn/i.test(input);
+        const filteredOptions2 = isEarningQuery2
+          ? parsed.options.map(o => o.tag === "Future Value" ? { ...o, tag: "Redemption Opportunity", tagColor: "#4CC97A" } : o)
+          : parsed.options;
+        setTripOptions(filteredOptions2);
         setTripSummary(parsed.tripSummary);
         setPhase("results");
         mp.track("cards_generated", { destination: parsed.tripSummary?.destination || "unknown", option_count: parsed.options?.length || 0 });
@@ -2021,8 +2029,10 @@ WHEN TO GENERATE NEW CARDS — do this immediately, no confirmation needed:
 - TRIP LENGTH / FLIGHT DURATION RULE: apply same as options generation — 3-night trips = domestic/short-haul only (max ~5h flight). Points-led intent from original query persists even after destination refinement.
 - User asks to add restaurants, activities, breweries, or any experiences to an option — add them to experiences[] and regenerate immediately
 - User says "add X to the itinerary", "include X", "put X in", "pencil in", "update the itinerary", "can you update the cards" — regenerate immediately
-- Always output preamble (1-2 sentences summarizing what changed) THEN immediately the complete JSON
+- Always output preamble (1-2 sentences summarizing what changed) THEN immediately the complete JSON — preamble FIRST, JSON SECOND, nothing after the JSON
 - NEVER claim you updated or added something without outputting new JSON — if you say you added it, the JSON must be in your response
+- NEVER split the response with text before AND after the JSON — all natural language goes before the opening brace
+- The JSON is machine-readable and will be silently consumed by the app — it will NEVER be shown to the user as text. Do not explain it, annotate it, or add any text after it. The user will only ever see the preamble sentence and the updated cards.
 - NEVER ask "shall I update the cards?" or "just say yes to update" — if the intent is clear, just do it
 
 EXPERIENCES ARRAY — critical rules:
@@ -2181,10 +2191,13 @@ Please respond now.`,
         // Strip markdown fences first
         text = text.replace(/```json/g, "").replace(/```/g, "").trim();
         // Format 1: full {tripSummary, options:[]} wrapper
+        // Look for the LAST valid JSON object to handle preamble text before JSON
         try {
-          const start = text.indexOf("{");
+          // Find the options array marker specifically to avoid preamble JSON snippets
+          const optionsIdx = text.indexOf('"options"');
+          const start = optionsIdx > -1 ? text.lastIndexOf("{", optionsIdx) : text.indexOf("{");
           const end = text.lastIndexOf("}");
-          if (start !== -1 && end !== -1) {
+          if (start !== -1 && end !== -1 && end > start) {
             const parsed = JSON.parse(text.slice(start, end + 1));
             const arr = parsed.options || parsed.cards || parsed.tripOptions || parsed.results;
             if (arr?.length > 0) return { options: normalizeOptions(arr), summary: parsed.tripSummary, preamble: text.slice(0, start).trim() };
@@ -2204,7 +2217,12 @@ Please respond now.`,
 
       const parsed = tryParseRefine(replyText);
       if (parsed) {
-        setTripOptions(parsed.options);
+        const originalQueryText = (conversationRef.current&&conversationRef.current[0]&&conversationRef.current[0].content||"").toLowerCase();
+        const isEarningRefine = /business.?trip|work.?trip|maximize.?point|build.?mile|build.?point|earn.?status|rack.?up|maximize.?earn/i.test(originalQueryText);
+        const refinedOptions = isEarningRefine
+          ? parsed.options.map(o => o.tag === "Future Value" ? { ...o, tag: "Redemption Opportunity", tagColor: "#4CC97A" } : o)
+          : parsed.options;
+        setTripOptions(refinedOptions);
         if (parsed.summary) setTripSummary(parsed.summary);
         // Stay on the currently expanded card if it still exists in the new options
         setExpandedId(prev => {
