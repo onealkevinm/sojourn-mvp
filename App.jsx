@@ -2418,18 +2418,86 @@ Please respond now.`,
             </div>
           )}
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", marginTop: "4px", paddingTop: "16px" }}>
-            <div style={{ background: "rgba(12,11,10,0.95)", border: "1px solid rgba(201,168,76,0.18)", borderRadius: "16px", padding: "12px 16px 10px" }}>
-              <div style={{ marginBottom: "8px" }}>
+            <div style={{ background: "rgba(12,11,10,0.95)", border: "1px solid rgba(201,168,76,0.18)", borderRadius: "16px", padding: "14px 16px 12px" }}>
+              {/* Header */}
+              <div style={{ marginBottom: "12px" }}>
                 <span style={{ color: "#b0a898", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif", fontWeight: "600" }}>Make it yours</span>
-                <span style={{ color: "#3a3530", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif", margin: "0 6px" }}>·</span>
-                <span style={{ color: "#4a4540", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }}>dining, drinks, activities, or adjust the plan</span>
+                <span style={{ color: "#3a3530", fontSize: "12px", margin: "0 6px" }}>—</span>
+                <span style={{ color: "#4a4540", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }}>explore dining, drinks, and activities; clarify details or adjust the plan</span>
               </div>
+              {/* Context-aware suggestion pills */}
+              {(() => {
+                const opts = (tripOptions || []).filter(o => !dismissedIds.includes(o.id));
+                const rec = opts.find(o => o.id === 1);
+                const wildCard = opts.find(o => o.tag === "Wild Card");
+                const bestValue = opts.find(o => o.tag === "Best Value");
+                const upgrade = opts.find(o => o.tag === "Quality Upgrade");
+                const redemption = opts.find(o => o.tag === "Best Points Redemption");
+
+                // Build intent-based pills — one per category: explore, logistics, experience
+                const pills = [];
+
+                // Explore pill — based on most distinctive option
+                if (wildCard) {
+                  pills.push("What else fits the spirit of the Wild Card option?");
+                } else if (redemption) {
+                  pills.push("Are there other strong redemption destinations like this?");
+                } else {
+                  pills.push("Show me a more unexpected option");
+                }
+
+                // Logistics pill — comparison or alternative routing
+                if (bestValue && rec) {
+                  pills.push(`How does the Best Value compare to the top pick on total time?`);
+                } else if (upgrade) {
+                  pills.push("What does upgrading to business class actually add to this trip?");
+                } else {
+                  pills.push("Are there earlier or nonstop flight options for the top pick?");
+                }
+
+                // Experience depth pill — always dining/activity flavored but destination-aware
+                const dest = rec ? rec.headline.split("·")[0]?.trim() : null;
+                if (dest) {
+                  pills.push(`What's the best dinner near the ${rec.tag === "Recommended" ? "top pick" : dest}?`);
+                } else {
+                  pills.push("Add a stand-out dinner to the recommended option");
+                }
+
+                return (
+                  <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
+                    {pills.map((pill, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setRefineInput(pill)}
+                        style={{
+                          background: "rgba(201,168,76,0.07)",
+                          border: "1px solid rgba(201,168,76,0.2)",
+                          borderRadius: "20px",
+                          padding: "5px 12px",
+                          color: "#9a8e7a",
+                          fontSize: "11px",
+                          fontFamily: "'DM Sans',system-ui,sans-serif",
+                          cursor: "pointer",
+                          lineHeight: "1.4",
+                          textAlign: "left",
+                          transition: "all 0.15s",
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = "rgba(201,168,76,0.14)"; e.currentTarget.style.color = "#c9a84c"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "rgba(201,168,76,0.07)"; e.currentTarget.style.color = "#9a8e7a"; }}
+                      >
+                        {pill}
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
+              {/* Input */}
               <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: "12px", padding: "4px 4px 4px 14px", display: "flex", alignItems: "center", gap: "8px" }}>
                 <input
                   value={refineInput}
                   onChange={e => setRefineInput(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter") handleRefine(); }}
-                  placeholder="e.g. any breweries nearby? or swap the hotel for something quieter"
+                  placeholder="Ask anything about these options..."
                   style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "12px", padding: "9px 0", fontFamily: "'DM Sans',system-ui,sans-serif", outline: "none" }}
                 />
                 {refineLoading ? (
