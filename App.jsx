@@ -1653,7 +1653,7 @@ Generate exactly 6 options as raw JSON. Output ONLY JSON — no markdown, no exp
 THE 6 OPTIONS (always in this order):
 CRITICAL RULE BEFORE GENERATING ANY OPTION: If the user named a specific destination, ALL 6 options must be AT that destination. Never substitute a different destination to optimize a bucket — find the best hotel/flight FOR THAT DESTINATION that fits the bucket criteria.
 
-EARNING-INTENT QUERY DETECTION: Activate this mode when the user's primary goal is accumulating points/miles/status — not spending them. Triggers include: "business trip", "work trip", "maximize points", "build my miles", "earn status", "working trip", "maximize earning", "best cards to use", "rack up points". When earning intent is detected, reorder the 6 buckets so redemption is last — a useful "by the way" not a primary recommendation. Earning-intent bucket order:
+EARNING-INTENT QUERY DETECTION: Activate this mode when the user's primary goal is accumulating points/miles/status — not spending them. Triggers include: "business trip", "work trip", "maximize points", "build my miles", "earn status", "working trip", "maximize earning", "best cards to use", "rack up points". When earning intent is detected, reorder the 6 buckets so redemption is last — a useful "by the way" not a primary recommendation. CRITICAL: in earning-intent mode, NEVER generate a "Future Value" card and NEVER use the phrase "Strategic Hold" or "preserve your miles" — the user already said they want to earn, not hold. The 6 slots are fixed as below and no other tag labels are permitted. Earning-intent bucket order:
 1. RECOMMENDED (#C9A84C) — Best overall option for the trip that also maximizes earning. Lead with the earning story: which card earns what on which component, which hotel program earns best here.
 2. BEST POINTS EARNED (#4C9AC9) — Highest total points/miles accumulation across all programs. Name every multiplier. Show the math: "3x flights via Delta Reserve + 5x hotel via Amex Platinum + base Bonvoy points = est. X total points worth $Y."
 3. BEST VALUE (#C9C94C) — Lowest cash cost while still earning meaningfully. Not a redemption option — cash only, but smart card routing maximizes the earning on that cash spend.
@@ -2038,11 +2038,11 @@ WHEN TO RESPOND CONVERSATIONALLY:
 - Reference the traveler's loyalty tier and card benefits by name
 
 EARNING COMPARISON QUESTIONS — when asked to compare earning rates across options:
-- Base your answer on the card and multiplier already assigned to each component in the current options (the "card" field per component) — do not reason independently from the traveler's full card profile
+- Base your answer ONLY on the card and multiplier already assigned to each component in the current options (the "card" field per component) — do not reason independently from the traveler's full card profile
 - Lead with the programs and cards that are actually reflected in the shown options — if all options show Delta flights, anchor the earning story on Delta, not Alaska or other cards
-- Structure the comparison option by option: "The Recommended option earns X via [card on flights] + Y via [card on hotel]. The Best Value earns..."
-- Only mention a card or program if it appears in the current option components or is directly relevant to a shown component's spend category
+- Only mention a card or program if it explicitly appears in the current option's Card Strategy or component card fields
 - Do not surface Alaska miles earning on hotel spend if Alaska is not the card assigned to any component in the shown options
+- ANSWER FORMAT: lead with the single most useful insight first (e.g. "Your Delta Reserve is doing the heavy lifting on flights across all options — the real differentiation is the hotel program"), then support with per-option detail. Keep total response to 3-5 sentences or a short structured list — do not write a paragraph per option
 
 DEEP DIVE MODE${focusedOptionId ? " — ACTIVE" : ""}:
 ${focusedOptionId ? `The traveler has chosen the ${tripOptions.find(o=>o.id===focusedOptionId)?.tag} option: "${tripOptions.find(o=>o.id===focusedOptionId)?.headline}". You are now in guided confirmation mode.
