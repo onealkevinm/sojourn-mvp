@@ -2446,21 +2446,20 @@ Please respond now.`,
                   pills.push("Show me a more unexpected option");
                 }
 
-                // Logistics pill — comparison or alternative routing
-                if (bestValue && rec) {
-                  pills.push(`How does the Best Value compare to the top pick on total time?`);
+                // Logistics pill — casual, comparative
+                if (opts.length > 2) {
+                  pills.push("How do the flight times compare across these?");
                 } else if (upgrade) {
-                  pills.push("What does upgrading to business class actually add to this trip?");
+                  pills.push("What does the upgrade option actually add over the Recommended?");
                 } else {
-                  pills.push("Are there earlier or nonstop flight options for the top pick?");
+                  pills.push("How do the flight times compare across these?");
                 }
 
-                // Experience depth pill — always dining/activity flavored but destination-aware
-                const dest = rec ? rec.headline.split("·")[0]?.trim() : null;
-                if (dest) {
-                  pills.push(`What's the best dinner near the ${rec.tag === "Recommended" ? "top pick" : dest}?`);
+                // Experience depth pill — warm, specific
+                if (rec) {
+                  pills.push("Any standout restaurants near the Recommended option?");
                 } else {
-                  pills.push("Add a stand-out dinner to the recommended option");
+                  pills.push("What would make any of these feel more special?");
                 }
 
                 return (
