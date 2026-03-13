@@ -2006,8 +2006,14 @@ PERSISTENT CONSTRAINTS — these carry through ALL refinements and cannot be ove
 - When the user asks to swap or replace a specific option (e.g. "swap the wild card"), replace ONLY that option. All other options remain unchanged. The replacement option must still honor the bucket's role AND the original points-led intent — a swapped Wild Card in a points-led query must still show a redemption with cpp math, not revert to a cash trip.
 - NEVER regenerate a replacement option that ignores the original points/miles intent just because the refinement message didn't re-state it.
 
-CURRENT OPTIONS SHOWING:
-${(tripOptions||[]).filter(o => !dismissedIds.includes(o.id)).map(o => "[" + (o.tag||"") + "] " + (o.headline||"") + " ($" + (o.totalCost||0) + ")").join("\n")}${dismissedIds.length > 0 ? "\nDismissed by user (do not regenerate these): " + tripOptions.filter(o => dismissedIds.includes(o.id)).map(o => o.headline).join(", ") : ""}
+CURRENT OPTIONS SHOWING — use these exact values when answering any comparison or earning question, do not reason independently:
+${(tripOptions||[]).filter(o => !dismissedIds.includes(o.id)).map(o => {
+  const compSummary = (o.components||[]).map(c => c.label + ": $" + (c.value||0) + (c.card ? " via " + c.card : "") + (c.points ? " (" + c.points + ")" : "")).join(" · ");
+  return "[" + (o.tag||"") + "] " + (o.headline||"") + " ($" + (o.totalCost||0) + ")" +
+    (o.cardStrategy ? "\n  Card Strategy: " + o.cardStrategy : "") +
+    (o.loyaltyHighlight ? "\n  Loyalty: " + o.loyaltyHighlight : "") +
+    (compSummary ? "\n  Components: " + compSummary : "");
+}).join("\n\n")}${dismissedIds.length > 0 ? "\n\nDismissed by user (do not regenerate): " + tripOptions.filter(o => dismissedIds.includes(o.id)).map(o => o.headline).join(", ") : ""}
 
 
 WHEN TO GENERATE NEW CARDS — do this immediately, no confirmation needed:
@@ -2030,6 +2036,13 @@ WHEN TO RESPOND CONVERSATIONALLY:
 - Recommending restaurants/activities is conversational — but as soon as the user says "add those" or "include those", switch to card generation immediately
 - Be specific: name properties, quote prices, give times
 - Reference the traveler's loyalty tier and card benefits by name
+
+EARNING COMPARISON QUESTIONS — when asked to compare earning rates across options:
+- Base your answer on the card and multiplier already assigned to each component in the current options (the "card" field per component) — do not reason independently from the traveler's full card profile
+- Lead with the programs and cards that are actually reflected in the shown options — if all options show Delta flights, anchor the earning story on Delta, not Alaska or other cards
+- Structure the comparison option by option: "The Recommended option earns X via [card on flights] + Y via [card on hotel]. The Best Value earns..."
+- Only mention a card or program if it appears in the current option components or is directly relevant to a shown component's spend category
+- Do not surface Alaska miles earning on hotel spend if Alaska is not the card assigned to any component in the shown options
 
 DEEP DIVE MODE${focusedOptionId ? " — ACTIVE" : ""}:
 ${focusedOptionId ? `The traveler has chosen the ${tripOptions.find(o=>o.id===focusedOptionId)?.tag} option: "${tripOptions.find(o=>o.id===focusedOptionId)?.headline}". You are now in guided confirmation mode.
