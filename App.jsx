@@ -2238,14 +2238,15 @@ Please respond now.`,
       }
 
       // Conversational response — strip any JSON that leaked into the text
-      // Strip any markdown fences from conversational response
       replyText = replyText.replace(/```json/g, "").replace(/```/g, "").trim();
-      const idxArray = replyText.indexOf("[{");
-      const idxObj = replyText.indexOf('{"id"');
-      const jsonStart = Math.min(
-        idxArray > -1 ? idxArray : Infinity,
-        idxObj > -1 ? idxObj : Infinity,
-      );
+      // Strip ALL JSON patterns — {tripSummary, [{, {"id", etc.
+      const jsonPatterns = [
+        replyText.indexOf("[{"),
+        replyText.indexOf('{"id"'),
+        replyText.indexOf('{"tripSummary"'),
+        replyText.indexOf('{"options"'),
+      ].filter(i => i > -1);
+      const jsonStart = jsonPatterns.length > 0 ? Math.min(...jsonPatterns) : Infinity;
       const cleanReply = jsonStart < Infinity ? replyText.slice(0, jsonStart).trim() : replyText;
       setRefineMessages(prev => [...prev, { role: "assistant", text: cleanReply || replyText }]);
     } catch (e) {
