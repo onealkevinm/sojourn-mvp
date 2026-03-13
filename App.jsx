@@ -1696,6 +1696,7 @@ AIRLINE REDEMPTION PARTNERSHIPS — CRITICAL ACCURACY RULES:
 - Southwest Rapid Rewards: Southwest metal only, no partners.
 - JetBlue TrueBlue: JetBlue metal only, limited partners. NOT redeemable with Delta miles.
 - NEVER invent a partnership. If a route has no good redemption option on the stated program, say so and suggest the next best option or a cash alternative.
+- NEVER invent earning bonuses, spending promotions, or route-specific multipliers that aren't real. The only legitimate earning differentiation between routes is (a) higher base fare = more miles on the same multiplier, and (b) confirmed card category bonuses (3x flights, 2x hotels, etc.). Do not claim a specific airport, airline, or route has a "bonus" or "promotion" unless the traveler's profile explicitly includes one.
 - MULTI-LEG CLARITY: when miles cover a connecting itinerary, whyThis must specify "X miles cover both legs roundtrip for 2 travelers" not just total miles used. Never leave ambiguity about whether miles cover one leg or the full trip.
 
 INTELLIGENCE RULES:
