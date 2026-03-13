@@ -833,10 +833,19 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
       ) : (
         <div style={{ color: "#c0b8ae", fontSize: "13px", marginBottom: "6px" }}>{detail}</div>
       )}
-      <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(255,255,255,0.04)", borderRadius: "8px", padding: "3px 8px" }}>
-        <span style={{ color: "#C9A84C", fontSize: "10px" }}>▪</span>
-        <span style={{ color: "#7a7468", fontSize: "11px" }}>{card}</span>
-      </div>
+      {card && (() => {
+        // Extract multiplier from card string if present — e.g. "Chase Sapphire Reserve · 3x travel"
+        const cardParts = card.split(/·|—|-(?=\s*\d)/);
+        const cardName = cardParts[0]?.trim() || card;
+        const cardReason = cardParts[1]?.trim() || null;
+        return (
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(255,255,255,0.04)", borderRadius: "8px", padding: "3px 8px" }}>
+            <span style={{ color: "#C9A84C", fontSize: "10px" }}>▪</span>
+            <span style={{ color: "#7a7468", fontSize: "11px" }}>{cardName}</span>
+            {cardReason && <span style={{ color: "#4a4540", fontSize: "10px" }}>· {cardReason}</span>}
+          </div>
+        );
+      })()}
     </div>
   );
 };
@@ -923,6 +932,12 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss }) => {
           <div style={{ marginTop: "12px", padding: "12px 16px", background: option.tagColor + "0e", borderRadius: "12px", border: `1px solid ${option.tagColor}22` }}>
             <div style={{ color: option.tagColor, fontSize: "12px" }}>✦ {option.loyaltyHighlight}</div>
           </div>
+          {option.cardStrategy && (
+            <div style={{ marginTop: "8px", padding: "10px 16px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.07)" }}>
+              <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "5px" }}>Card Strategy</div>
+              <div style={{ color: "#7a7468", fontSize: "12px", lineHeight: "1.6" }}>▪ {option.cardStrategy}</div>
+            </div>
+          )}
           <div style={{ display: "flex", gap: "10px", marginTop: "18px" }}>
             <button onClick={() => onItinerary && onItinerary(option)} style={{ flex: 1, padding: "14px", background: "rgba(255,255,255,0.04)", color: "#b0a898", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", fontSize: "12px", fontWeight: "600", cursor: "pointer", letterSpacing: "0.06em", fontFamily: "'Playfair Display',Georgia,serif" }}>
               View as Itinerary ↗
@@ -1728,6 +1743,7 @@ COMPONENT VALUE RULE — CRITICAL:
   - If earning: "est. 2,400 Delta miles earned" or "est. 4,200 Bonvoy points earned" — always include "est." and "earned"
   - Never mix redemption and earning in the same points field
 - loyaltyHighlight = plain-English summary of the full points stack: e.g. "25k Delta miles cover both flights · 30k Hyatt points cover hotel · $240 cash for ground transport"
+- cardStrategy = which card to use for each cash-paid component and why, based on the highest earning multiplier for that spend category. Format: "Flights: [card] ([Nx] miles) · Hotel: [card] ([Nx] points) · Dining: [card] ([Nx] points)". Only include components where cash is paid — skip components covered by points redemption. This must reflect the traveler's actual cards and their actual category multipliers. Never invent a multiplier. If two cards tie, pick the one that earns the program with the higher cpp value.
 - whyThis = frame cash figures consistently with what the card shows — if flights are $0 out of pocket, say "flights covered by your miles" not "flights cost $X"
 - pointsEarned (top-level) = earning side ONLY — points this trip generates on cash-paid components. CRITICAL: if a component is covered by a redemption, it earns NO points — do NOT include that program in pointsEarned. Example: if Delta miles cover flights, do NOT include "Delta miles earned" in pointsEarned. Only include programs earned on cash-paid components (e.g. hotel cash spend earns Bonvoy, ground spend earns card points).
 - pointsValue (top-level) = estimated dollar value of points EARNED only (not redeemed). If no cash components earn meaningful points, pointsValue = 0 and pointsEarned = "".
@@ -1735,7 +1751,7 @@ COMPONENT VALUE RULE — CRITICAL:
 - redemptions (top-level array) = list each redemption applied: [{"program": "Delta SkyMiles", "pointsUsed": 50000, "dollarsValue": 700, "centsPerPoint": 1.4, "component": "Flights"}]. One entry per redeemed program. Leave as [] if no redemptions.
 
 REQUIRED JSON SCHEMA:
-{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] must be an EMPTY ARRAY by default. ONLY populate it if the user has explicitly requested specific dining, activities, breweries, distilleries, or excursions in this conversation and asked for them to be included. Never speculatively generate experiences.`;
+{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","cardStrategy":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] must be an EMPTY ARRAY by default. ONLY populate it if the user has explicitly requested specific dining, activities, breweries, distilleries, or excursions in this conversation and asked for them to be included. Never speculatively generate experiences.`;
   };
 
 
@@ -2062,9 +2078,10 @@ HARD CONSTRAINTS — these override everything else:
 - Borderline April destinations (75-80F): Southern California, Naples FL — only include if user has not set a hard weather minimum
 
 COMPONENT VALUE RULE: component value = cash out of pocket only (0 if covered by points). points field: use "X miles/points redeemed" for redemptions, "est. X points earned" for earning. loyaltyHighlight summarizes the full stack in plain English.
+CARD FIELD RULE: component card field must name the specific card AND the earning reason in this format: "[Card Name] · [Nx] [category]" — e.g. "Chase Sapphire Reserve · 3x travel" or "Amex Platinum · 5x hotels". Never just list the card name alone. Pick the card with the highest multiplier for that spend category from the traveler's actual cards.
 
 JSON SCHEMA — you MUST use exactly these field names or cards will not display:
-{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer. (2) experiences[] is EMPTY by default. Only populate it when the user has explicitly requested specific dining or activities and asked for them to be included in their trip. Never generate experiences speculatively.
+{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","cardStrategy":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer. (2) experiences[] is EMPTY by default. Only populate it when the user has explicitly requested specific dining or activities and asked for them to be included in their trip. Never generate experiences speculatively.
 NEVER use: results, cards, tripOptions, color, title, property, priceStructure — these will break the display.
 
 CARD QUALITY RULES (when generating new cards):
@@ -2123,6 +2140,7 @@ Please respond now.`,
           tags: o.tags || [],
           tradeoff: o.tradeoff || "",
           loyaltyHighlight: o.loyaltyHighlight || o.loyaltyBenefit || "",
+          cardStrategy: o.cardStrategy || "",
           whyThis: o.whyThis || o.why || o.reason || "",
           experiences: Array.isArray(o.experiences) ? o.experiences : [],
           components: o.components || [
@@ -2578,6 +2596,7 @@ Please respond now.`,
           `I need a reset. Somewhere warm, late April — surprise me.`,
           "Anniversary trip — somewhere unforgettable, open budget",
           "First time in Japan — 10 days, two adults, where to start?",
+          "Plan a trip that makes the most of my points and credit cards",
         ];
         inspirational.forEach(p => { if (allPrompts.length < 5) allPrompts.push(p); });
 
@@ -2593,7 +2612,7 @@ Please respond now.`,
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 24px 12px", animation: "fadeUp 0.5s ease forwards" }}>
           <div style={{ marginBottom: "24px", textAlign: "center", width: "100%", maxWidth: "860px" }}>
             <div style={{ fontSize: "38px", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic", color: "#e8e4dc", lineHeight: "1.1", marginBottom: "16px", whiteSpace: "nowrap" }}>Every great trip begins with a conversation.</div>
-            <div style={{ color: "#6a6460", fontSize: "15px", lineHeight: "1.7", maxWidth: "580px", margin: "0 auto" }}>Tell me about your trip — or start with an idea. Explore destinations, discover events and dining, build an itinerary, and book your trip — all in one conversation. Every recommendation shaped by your travel style, loyalty status, and credit cards.</div>
+            <div style={{ color: "#6a6460", fontSize: "15px", lineHeight: "1.7", maxWidth: "580px", margin: "0 auto" }}>Tell me about your trip — or start with an idea. Explore destinations, discover events and dining, build an itinerary, and book your trip — all in one conversation. Every recommendation shaped by your loyalty programs, credit cards, and travel style — working together.</div>
           </div>
           <div style={{ width: "100%", maxWidth: "860px" }}>
             <div style={{ background: "rgba(255,255,255,0.04)", border: "2px solid rgba(255,255,255,0.14)", outline: "1px solid rgba(255,255,255,0.05)", outlineOffset: "3px", borderRadius: "20px", padding: "6px 6px 6px 22px", display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "18px" }}>
