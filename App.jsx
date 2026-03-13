@@ -124,7 +124,7 @@ const LOYALTY_OPTIONS = {
 const LOYALTY_BRAND_MAP = {
   "Marriott Bonvoy": ["Marriott", "Westin", "Sheraton", "W Hotels", "St. Regis", "Ritz-Carlton", "EDITION", "Autograph Collection", "Renaissance", "Le Meridien", "The Luxury Collection", "Design Hotels", "Tribute Portfolio", "Delta Hotels", "Courtyard", "Residence Inn", "Springhill Suites", "Fairfield", "AC Hotels", "Aloft", "Element", "Moxy", "Four Points"],
   "Hilton Honors": ["Hilton", "Conrad", "Waldorf Astoria", "Curio Collection", "DoubleTree", "Canopy", "Tapestry Collection", "LXR Hotels", "Embassy Suites", "Hampton Inn", "Homewood Suites", "Home2 Suites", "Tempo", "Motto", "Tru"],
-  "World of Hyatt": ["Park Hyatt", "Grand Hyatt", "Andaz", "Hyatt Regency", "Alila", "Thompson Hotels", "Hyatt Centric", "JdV by Hyatt", "Caption by Hyatt", "tommie", "Unbound Collection", "Joie de Vivre", "Hyatt Place", "Hyatt House"],
+  "World of Hyatt": ["Park Hyatt", "Grand Hyatt", "Andaz", "Hyatt Regency", "Alila", "Thompson Hotels", "Hyatt Centric", "JdV by Hyatt", "Caption by Hyatt", "tommie", "Unbound Collection", "Joie de Vivre", "Hyatt Place", "Hyatt House", "Small Luxury Hotels", "SLH"],
   "IHG One Rewards": ["InterContinental", "Kimpton", "Six Senses", "Regent", "Hotel Indigo", "Vignette Collection", "voco", "Crowne Plaza", "Holiday Inn", "Even Hotels", "Staybridge Suites"],
   "Wyndham Rewards": ["Wyndham Grand", "Registry Collection", "La Quinta", "Trademark Collection", "Dolce Hotels", "Wingate", "Hawthorn Suites", "Microtel", "Days Inn", "Super 8"],
   "Choice Privileges": ["Cambria Hotels", "Ascend Collection", "Comfort Inn", "Quality Inn", "Clarion", "Sleep Inn", "Econo Lodge"],
@@ -133,9 +133,10 @@ const LOYALTY_BRAND_MAP = {
 // Independent hotels — explicitly NOT in any major loyalty program
 const INDEPENDENT_HOTELS = [
   "Peninsula", "Four Seasons", "Rosewood", "Mandarin Oriental", "Aman", "Amanyara", "Amanjiwo",
-  "Belmond", "Montage", "Auberge", "Relais & Chateaux", "Small Luxury Hotels",
+  "Belmond", "Montage", "Auberge", "Relais & Chateaux",
   "1 Hotels", "Ace Hotels", "Surf Hotel", "Blackberry Farm", "Brush Creek Ranch",
-  "Sandy Lane", "Eden Rock", "Round Hill", "Jade Mountain"
+  "Sandy Lane", "Eden Rock", "Round Hill", "Jade Mountain",
+  "Fairmont", "Raffles", "Swissotel"
 ];
 
 const BRAND_CATEGORIES = [
@@ -925,8 +926,8 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss }) => {
             </div>
           )}
           {/* Trip Components */}
-          <div style={{ marginBottom: "6px" }}>
-            <div style={{ color: "#666", fontSize: "10px", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Trip Components</div>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", marginTop: "4px", paddingTop: "14px", marginBottom: "6px" }}>
+            <div style={{ color: "#666", fontSize: "10px", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>Trip Components</div>
             {(option.components||[]).map(c => <ComponentRow key={c.label + c.value} {...c} />)}
           </div>
           {option.loyaltyHighlight && (
@@ -1642,7 +1643,7 @@ TRAVELER PROFILE:
 - Travel types: ${(tp.travelTypes||[]).join(", ")}
 - Credit cards: ${cardList}
 - Hotel loyalty: ${hotelLoyalty||"none"}
-- Brand-to-program mapping: Marriott Bonvoy covers ${(LOYALTY_BRAND_MAP["Marriott Bonvoy"]||[]).slice(0,8).join(", ")} and more. Hyatt covers ${(LOYALTY_BRAND_MAP["World of Hyatt"]||[]).slice(0,8).join(", ")} and more. Hilton covers ${(LOYALTY_BRAND_MAP["Hilton Honors"]||[]).slice(0,6).join(", ")} and more.
+- Brand-to-program mapping: Marriott Bonvoy covers ${(LOYALTY_BRAND_MAP["Marriott Bonvoy"]||[]).join(", ")}. World of Hyatt covers ${(LOYALTY_BRAND_MAP["World of Hyatt"]||[]).join(", ")} — including Small Luxury Hotels (SLH) since 2023. Hilton Honors covers ${(LOYALTY_BRAND_MAP["Hilton Honors"]||[]).join(", ")}. IHG One Rewards covers ${(LOYALTY_BRAND_MAP["IHG One Rewards"]||[]).join(", ")}. Fairmont, Raffles, Rosewood, Four Seasons, Peninsula, Mandarin Oriental, Aman, Belmond, Montage are independent — no major loyalty program points.
 - Airline miles: ${airlineLoyalty||"none"}${learnedList ? `
 - LEARNED FROM PAST TRIPS: ${learnedList}` : ""}
 - Preferred hotel brands: ${brandList}
