@@ -1735,6 +1735,31 @@ DESTINATION DIVERSITY RULE:
 
 SINGLE-DESTINATION TRIPS — when user specifies a destination (e.g. "Carmel, CA"), ALL 6 options must stay within that destination area. NEVER split a single-destination trip across multiple locations within an option (e.g. "3 nights Carmel + 2 nights Napa" when user asked for Carmel). The Quality Upgrade bucket does NOT grant permission to suggest a different or additional destination — it means a premium property or cabin class at the SAME destination. Geographic proximity is not an excuse: Napa is NOT Carmel, Big Sur is adjacent and acceptable, but wine country is a different trip entirely. If the user asked for Carmel, every option stays in Carmel/Big Sur/Monterey Peninsula.
 
+CARMEL / MONTEREY PENINSULA HOTEL INVENTORY — use these real properties, never reach toward Napa or Wine Country:
+INDEPENDENT / RELAIS & CHÂTEAUX (no chain loyalty):
+- L'Auberge Carmel — boutique luxury in the heart of Carmel village, Relais & Châteaux, Michelin-starred restaurant (Aubergine), no AC (ocean-cooled)
+- Bernardus Lodge & Spa — Carmel Valley, Relais & Châteaux, wine country feel but IS in Carmel Valley (not Napa), excellent restaurant
+- Post Ranch Inn — Big Sur, ultra-luxury, adults only, dramatic cliffside setting, 3 Michelin Keys, independent
+- Ventana Big Sur — Big Sur, Alila brand (World of Hyatt), 3 Michelin Keys, adults only, stunning coastal setting — EARNS HYATT POINTS
+- Tickle Pink Inn — Carmel Highlands, boutique, ocean views, independent
+
+WORLD OF HYATT:
+- Ventana Big Sur (Alila) — 3 Michelin Keys, top-tier Hyatt redemption
+- Hyatt Carmel Highlands — dramatic ocean views, Point Lobos area, solid Hyatt property
+- Carmel Valley Ranch — Hyatt, sprawling ranch resort, golf, spa, family-friendly
+
+MARRIOTT BONVOY:
+- Monterey Plaza Hotel & Spa — on Cannery Row, full-service, good Bonvoy earn/redeem
+- Portola Hotel & Spa — downtown Monterey, Autograph Collection, Bonvoy
+- InterContinental The Clement Monterey — IHG, waterfront Cannery Row
+
+HILTON:
+- Carmel Mission Inn — modest but well-located, Hilton, good value
+- Hyatt Place Monterey — reliable points earn, walking distance to downtown Monterey
+
+AIRPORT: Fly into MRY (Monterey Regional) — short hop, 10 min to Carmel. Alternative: SFO/SJC then 2hr scenic drive down Hwy 1 or 101.
+NEVER suggest Auberge du Soleil (that is Napa Valley). Bernardus Lodge is Carmel Valley — acceptable. Post Ranch and Ventana are Big Sur — acceptable and adjacent.
+
 COMPONENT VALUE RULE — CRITICAL:
 - component "value" field = cash out of pocket for that component ONLY. Never the points dollar equivalent.
 - If fully covered by points: value = 0
