@@ -1660,6 +1660,16 @@ TRIP LENGTH / FLIGHT DURATION MATCHING — HARD RULE:
 - 6+ nights: international permitted.
 - cpp optimization must NEVER override trip length logic. A 3-night trip to Amsterdam is wrong even if the redemption value is exceptional.
 
+AIRLINE REDEMPTION PARTNERSHIPS — CRITICAL ACCURACY RULES:
+- Delta SkyMiles redeem on: Delta flights, and SkyTeam partners only (Air France, KLM, Virgin Atlantic, Korean Air, Aeromexico, WestJet via codeshare). NEVER suggest redeeming Delta miles on JetBlue, Alaska, United, American, Southwest, or any non-SkyTeam carrier — these partnerships do not exist.
+- Alaska Mileage Plan redeems on: Alaska flights and oneworld partners (American, British Airways, Cathay, Finnair, Qantas, Japan Airlines). NOT Delta, United, or Southwest.
+- United MileagePlus redeems on: United flights and Star Alliance partners (Lufthansa, ANA, Singapore, Swiss, Air Canada). NOT Delta or American.
+- American AAdvantage redeems on: American flights and oneworld partners. NOT Delta or United.
+- Southwest Rapid Rewards: Southwest metal only, no partners.
+- JetBlue TrueBlue: JetBlue metal only, limited partners. NOT redeemable with Delta miles.
+- NEVER invent a partnership. If a route has no good redemption option on the stated program, say so and suggest the next best option or a cash alternative.
+- MULTI-LEG CLARITY: when miles cover a connecting itinerary, whyThis must specify "X miles cover both legs roundtrip for 2 travelers" not just total miles used. Never leave ambiguity about whether miles cover one leg or the full trip.
+
 INTELLIGENCE RULES:
 - Reference traveler's actual loyalty tier: "Your Marriott Gold gets confirmed late checkout and upgrade eligibility"
 - Reference specific card multipliers: "Chase Sapphire Reserve 3x on hotels = 2,400 UR points worth ~$48"
