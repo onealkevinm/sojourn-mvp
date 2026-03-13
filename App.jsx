@@ -2256,15 +2256,10 @@ Please respond now.`,
 
       // Conversational response — strip any JSON that leaked into the text
       replyText = replyText.replace(/```json/g, "").replace(/```/g, "").trim();
-      // Strip ALL JSON patterns — {tripSummary, [{, {"id", etc.
-      const jsonPatterns = [
-        replyText.indexOf("[{"),
-        replyText.indexOf('{"id"'),
-        replyText.indexOf('{"tripSummary"'),
-        replyText.indexOf('{"options"'),
-      ].filter(i => i > -1);
-      const jsonStart = jsonPatterns.length > 0 ? Math.min(...jsonPatterns) : Infinity;
-      const cleanReply = jsonStart < Infinity ? replyText.slice(0, jsonStart).trim() : replyText;
+      // Strip everything from first JSON-like structure onward
+      // Matches: [{ or any { followed shortly by a quoted key
+      const jsonMatch = replyText.search(/(\[\{|\{"[a-zA-Z])/);
+      const cleanReply = jsonMatch > -1 ? replyText.slice(0, jsonMatch).trim() : replyText;
       setRefineMessages(prev => [...prev, { role: "assistant", text: cleanReply || replyText }]);
     } catch (e) {
       console.error("Refine error:", e);
