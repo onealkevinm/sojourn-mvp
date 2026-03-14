@@ -2464,7 +2464,7 @@ Please respond now.`,
                     fontSize: "13px", lineHeight: "1.5",
                     fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit",
                     fontStyle: msg.role === "assistant" ? "italic" : "normal",
-                  }}>{msg.text}</div>
+                  }}>{msg.role === "assistant" ? (msg.text || "").split(/\s*[\[{](?=\s*"[a-zA-Z])/)[0].trim() || msg.text : msg.text}</div>
                   {msg.text?.includes("Your trip is set") && focusedOptionId && (() => {
                     const opt = tripOptions.find(o => o.id === focusedOptionId);
                     return (
