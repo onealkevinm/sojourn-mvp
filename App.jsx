@@ -2147,7 +2147,13 @@ CARD QUALITY RULES (when generating new cards):
 
 Please respond now.`,
           messages: [
-            ...(refineMessages||[]).filter(m=>m&&m.text).map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text || "" })),
+            ...(refineMessages||[]).filter(m=>m&&m.text).map(m => ({
+              role: m.role === "assistant" ? "assistant" : "user",
+              // Strip any JSON from assistant messages in history to keep context clean
+              content: m.role === "assistant"
+                ? (m.text || "").replace(/\s*[\[{][\s\S]*$/, "").trim() || "Updated your options."
+                : (m.text || "")
+            })),
             { role: "user", content: isDeepDiveTrigger
                 ? `Please walk me through this trip now. Cover all components — transportation, lodging, and anything else — in one message with the key details for each. Then ask one single question: does everything look good, or is there anything to adjust? Keep it concise.`
                 : msg }
