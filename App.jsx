@@ -2100,6 +2100,7 @@ const PointsDashboardDrawer = ({ profile }) => {
   const [activeTab, setActiveTab] = useState("points");
   const [optimizeRecs, setOptimizeRecs] = useState(null);
   const [optimizeLoading, setOptimizeLoading] = useState(false);
+  const [showOptimizeModal, setShowOptimizeModal] = useState(false);
 
   const fetchOptimizeRecs = async () => {
     if (optimizeRecs || optimizeLoading) return;
@@ -2686,6 +2687,7 @@ INTELLIGENCE RULES:
 - Flight details format: "AA 123 · SEA→MIA · Departs 7:45am → Arrives 4:02pm · 5h 17m nonstop" — duration MUST always be the last segment so it displays prominently next to flight times
 - Hotel: ALWAYS use a real, specific named property (e.g. "Mokara Hotel & Spa" not "boutique hotel" or "historic inn"). Never invent placeholder names. If you cannot name a real property in the destination, use a nearby city with real inventory.
 - Hotel detail: property name · exact room config matching party size (e.g. "Two adjoining Kings" or "3BR villa sleeps 6") · nights · neighborhood. Never just "suite" — always specify beds and how the party fits.
+- Flight detail: always specify number of tickets and whether price is per-person or total. Format: "[Airline] · [route] · [X tickets] · $[Y] total ($[Z]/person)" e.g. "Alaska Airlines · SEA-LIH nonstop · 2 tickets · $680 total ($340/person)". Never show a flight price without clarifying if it is per ticket or total.
 - Small/rural destinations: if the destination has fewer than 6 real bookable hotel options at the requested quality level, expand to the nearest metro area (e.g. Boerne TX → include San Antonio options 30 min away, label them clearly as "San Antonio · 30 min from Boerne"). Never fabricate hotel names.
 - headline: ALWAYS follow this format: "[Location] · [Brand] · [Distinctive Element]" — e.g. "Maui · Andaz · Overwater Suite" or "Key Biscayne · Ritz-Carlton · Family Suites" or "Turks & Caicos · Amanyara · Direct JetBlue". Location first, brand second, what makes this option unique third. Never lead with the brand alone.
 - subhead: one sentence describing the experience character — e.g. "Boutique adults-contemporary resort steps from Wailea Beach"
@@ -3089,9 +3091,13 @@ CONCIERGE TONE RULES — critical:
 - Always maintain the posture of a knowledgeable advisor who is being appropriately careful, not an AI exposing its constraints
 
 FLIGHT ROUTE KNOWLEDGE — Seattle (SEA) to common beach destinations:
-- SEA-HNL (Honolulu): Alaska and Hawaiian direct, ~5h45m
-- SEA-OGG (Maui): Alaska direct seasonal, ~6h15m  
-- SEA-KOA (Kona): Alaska direct seasonal, ~6h
+- SEA-HNL (Honolulu): Alaska and Hawaiian Airlines direct, ~5h45m. NOT Delta — Delta does not fly SEA-HNL nonstop.
+- SEA-OGG (Maui Kahului): Alaska direct seasonal, Hawaiian direct, ~6h15m. NOT Delta nonstop.
+- SEA-KOA (Kona/Big Island): Alaska direct seasonal, Hawaiian direct, ~6h. NOT Delta nonstop.
+- SEA-LIH (Kauai Lihue): Alaska direct seasonal, Hawaiian direct via HNL (short hop ~30min), ~6h30m total. NOT Delta nonstop.
+- SEA-ITO (Hilo/Big Island): typically 1 stop via HNL on Hawaiian or Alaska. ~7h total.
+- HAWAII ROUTING RULE: For any Hawaii island destination from Seattle, ALWAYS use Alaska or Hawaiian Airlines — Delta does not fly nonstop Seattle to Hawaii. If Delta miles are being redeemed, note they must be used on a SkyTeam partner or Delta metal, which requires connecting through a Delta hub (LAX, SFO, ATL) — this adds significant time vs. Alaska/Hawaiian direct. Be explicit about this tradeoff.
+- INTER-ISLAND: Hawaiian Airlines dominates inter-island flying (OGG, KOA, LIH, ITO all connect through HNL on Hawaiian). Alaska also flies some inter-island routes. Budget ~$80-150 per person per inter-island hop.
 - SEA-MIA (Miami): Alaska seasonal direct (spring/summer), otherwise 1 stop via LAX/PHX
 - SEA-FLL (Fort Lauderdale): Alaska seasonal, typically 1 stop
 - SEA-TPA (Tampa): Usually 1 stop via Denver or Phoenix
@@ -3350,6 +3356,57 @@ Please respond now.`,
   if (phase === "results") {
     return (<>
       {itineraryOption && <ItineraryOverlay option={itineraryOption} tripSummary={tripSummary} userProfile={userProfile} onClose={() => setItineraryOption(null)} />}
+
+      {/* Optimize Modal */}
+      {showOptimizeModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }} onClick={() => setShowOptimizeModal(false)}>
+          <div style={{ background: "#0e0c0a", border: "1px solid rgba(201,168,76,0.2)", borderRadius: "20px", width: "100%", maxWidth: "520px", padding: "32px", position: "relative" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
+              <div>
+                <div style={{ fontSize: "10px", letterSpacing: "0.3em", color: "#C9A84C", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>Sojourn · Optimize</div>
+                <div style={{ fontSize: "20px", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic", color: "#e8e4dc" }}>Your Setup</div>
+                <div style={{ color: "#555", fontSize: "11px", marginTop: "4px" }}>Honest recommendations based on how you actually travel</div>
+              </div>
+              <button onClick={() => setShowOptimizeModal(false)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#666", width: "32px", height: "32px", borderRadius: "8px", cursor: "pointer", fontSize: "16px", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+            </div>
+
+            {optimizeLoading && (
+              <div style={{ display: "flex", gap: "5px", alignItems: "center", padding: "16px 0" }}>
+                {[0,1,2].map(i => <div key={i} style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#C9A84C", animation: `bounce 1.2s ease ${i*0.2}s infinite` }} />)}
+                <span style={{ color: "#555", fontSize: "12px", marginLeft: "8px" }}>Analyzing your setup...</span>
+              </div>
+            )}
+
+            {!optimizeLoading && optimizeRecs && optimizeRecs.length === 0 && (
+              <div style={{ color: "#666", fontSize: "13px", fontStyle: "italic", padding: "12px 0" }}>Your setup looks well optimized for your travel style.</div>
+            )}
+
+            {!optimizeLoading && optimizeRecs && optimizeRecs.map((rec, i) => (
+              <div key={i} style={{ padding: "14px 0", borderBottom: i < optimizeRecs.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                  <span style={{
+                    fontSize: "9px", padding: "3px 8px", borderRadius: "10px", fontFamily: "serif", letterSpacing: "0.08em",
+                    background: rec.type === "remove" ? "rgba(201,76,76,0.12)" : rec.type === "add" ? "rgba(76,154,201,0.12)" : "rgba(201,168,76,0.12)",
+                    color: rec.type === "remove" ? "#c94c4c" : rec.type === "add" ? "#4C9AC9" : "#C9A84C",
+                    border: `1px solid ${rec.type === "remove" ? "rgba(201,76,76,0.25)" : rec.type === "add" ? "rgba(76,154,201,0.25)" : "rgba(201,168,76,0.25)"}`,
+                  }}>
+                    {rec.type === "remove" ? "Reconsider" : rec.type === "add" ? "Consider Adding" : "Swap"}
+                  </span>
+                  <span style={{ color: "#e8e4dc", fontSize: "13px", fontFamily: "'Playfair Display',Georgia,serif" }}>{rec.title}</span>
+                </div>
+                <div style={{ color: "#7a7060", fontSize: "12px", lineHeight: "1.6", marginBottom: "6px" }}>{rec.detail}</div>
+                {rec.saving_or_value && (
+                  <div style={{ color: "#C9A84C", fontSize: "11px", fontFamily: "serif" }}>✦ {rec.saving_or_value}</div>
+                )}
+              </div>
+            ))}
+
+            {!optimizeLoading && !optimizeRecs && (
+              <div style={{ color: "#555", fontSize: "12px", padding: "8px 0" }}>Loading recommendations...</div>
+            )}
+          </div>
+        </div>
+      )}
       <div style={{ minHeight: "100vh", background: "#080706", fontFamily: "'DM Sans',system-ui,sans-serif", color: "#e8e4dc" }}>
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
@@ -3364,7 +3421,10 @@ Please respond now.`,
             <div style={{ fontSize: "11px", letterSpacing: "0.25em", color: "#C9A84C", textTransform: "uppercase", marginBottom: "3px", fontFamily: "serif" }}>Sojourn · AI</div>
             <div style={{ fontSize: "12px", color: "#555" }}>Your travel, optimized.</div>
           </div>
-          <button onClick={() => { mp.track("new_trip_started"); resetApp(); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "#666", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px" }}>New Trip</button>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <button onClick={() => { setShowOptimizeModal(true); fetchOptimizeRecs(); }} title="Optimize your setup" style={{ background: "none", border: "1px solid rgba(201,168,76,0.2)", color: "#C9A84C", padding: "7px 12px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", fontFamily: "serif", letterSpacing: "0.05em" }}>✦ Optimize</button>
+            <button onClick={() => { mp.track("new_trip_started"); resetApp(); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "#666", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px" }}>New Trip</button>
+          </div>
         </div>
 
         {tripSummary && (
