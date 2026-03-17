@@ -244,6 +244,7 @@ const CARD_BENEFITS_DB = {
       noForeignTransactionFee: true,
     },
     itineraryReminder: [
+      "Delta Sky Club access at your departure airport when flying Delta — worth a visit before your flight",
       "Worth checking on your annual companion certificate for domestic first class or Comfort+",
       "Global Entry/TSA PreCheck credit available if not yet used",
     ]
@@ -833,21 +834,82 @@ const buildTravelerBenefitsSummary = (profile) => {
 
 // Build itinerary reminders for a given traveler — annual/metered benefits
 // Surfaced as soft suggestions ("worth checking on...") not guarantees
-const buildItineraryReminders = (profile) => {
+const buildItineraryReminders = (profile, option) => {
   try {
-    if (!profile) return [];
+    if (!profile || !option) return [];
     const reminders = [];
 
+    // Detect what's actually in this option
+    const components = option.components || [];
+    const cardFields = components.map(c => (c.card || "").toLowerCase()).join(" ");
+    const componentDetails = components.map(c => (c.detail || "").toLowerCase()).join(" ");
+    const isInternational = /international|transpacific|transatlantic|overseas|europe|asia|africa|latin america|middle east/i.test(
+      (option.headline || "") + (option.whyThis || "") + componentDetails
+    );
+    const isDomestic = !isInternational;
+
+    // Detect which airline is actually being used in this option
+    const airlinePrograms = ["Delta SkyMiles", "Alaska Mileage Plan", "United MileagePlus", "American AAdvantage", "Southwest Rapid Rewards"];
+    const activeAirlinePrograms = new Set();
+    components.forEach(c => {
+      const card = (c.card || "").toLowerCase();
+      const detail = (c.detail || "").toLowerCase();
+      if (card.includes("delta") || detail.includes("delta") || detail.includes("dca") || detail.includes("sea-d")) activeAirlinePrograms.add("Delta SkyMiles");
+      if (card.includes("alaska") || detail.includes("alaska") || detail.includes("alaska air")) activeAirlinePrograms.add("Alaska Mileage Plan");
+      if (card.includes("united") || detail.includes("united")) activeAirlinePrograms.add("United MileagePlus");
+      if (card.includes("american") || detail.includes("american airlines")) activeAirlinePrograms.add("American AAdvantage");
+      if (card.includes("southwest") || detail.includes("southwest")) activeAirlinePrograms.add("Southwest Rapid Rewards");
+    });
+
+    // Detect which hotel program is in this option
+    const activeHotelPrograms = new Set();
+    components.forEach(c => {
+      const detail = (c.detail || "").toLowerCase();
+      const card = (c.card || "").toLowerCase();
+      if (detail.includes("hyatt") || detail.includes("park hyatt") || detail.includes("grand hyatt") || detail.includes("andaz") || detail.includes("thompson") || detail.includes("alila")) activeHotelPrograms.add("World of Hyatt");
+      if (detail.includes("marriott") || detail.includes("westin") || detail.includes("sheraton") || detail.includes("st. regis") || detail.includes("ritz") || detail.includes("courtyard") || detail.includes("bonvoy")) activeHotelPrograms.add("Marriott Bonvoy");
+      if (detail.includes("hilton") || detail.includes("doubletree") || detail.includes("hampton") || detail.includes("waldorf") || detail.includes("conrad")) activeHotelPrograms.add("Hilton Honors");
+      if (detail.includes("ihg") || detail.includes("intercontinental") || detail.includes("kimpton") || detail.includes("holiday inn")) activeHotelPrograms.add("IHG One Rewards");
+    });
+
+    // Detect which cards are actually used in this option
+    const activeCards = new Set();
+    components.forEach(c => {
+      if (c.card) {
+        (profile.cards || []).forEach(card => {
+          if ((c.card || "").toLowerCase().includes(card.name.toLowerCase().split(" ").slice(0,2).join(" ").toLowerCase())) {
+            activeCards.add(card.name);
+          }
+        });
+      }
+    });
+
+    // Card reminders — only for cards actually used in this option, skip domestic-irrelevant ones
     (profile.cards || []).forEach(card => {
       try {
         const b = getCardBenefits(card.name);
-        if (b?.itineraryReminder?.length) {
-          b.itineraryReminder.forEach(r => reminders.push(`${card.name}: ${r}`));
-        }
+        if (!b?.itineraryReminder?.length) return;
+        b.itineraryReminder.forEach(r => {
+          const rl = r.toLowerCase();
+          // Skip Global Entry reminder for domestic trips
+          if (isDomestic && (rl.includes("global entry") || rl.includes("tsa precheck"))) return;
+          // Skip companion fare/certificate if this airline isn't in the option
+          if (rl.includes("companion") && card.name.includes("Alaska") && !activeAirlinePrograms.has("Alaska Mileage Plan")) return;
+          if (rl.includes("companion") && card.name.includes("Delta") && !activeAirlinePrograms.has("Delta SkyMiles")) return;
+          if (rl.includes("companion") && card.name.includes("Southwest") && !activeAirlinePrograms.has("Southwest Rapid Rewards")) return;
+          // Skip airline-specific credits if that airline isn't in the option
+          if (rl.includes("airline") && card.name.includes("Alaska") && !activeAirlinePrograms.has("Alaska Mileage Plan")) return;
+          // Only include card if it's used in this option OR has a broadly relevant benefit
+          const isCardUsed = activeCards.has(card.name);
+          const isBroadBenefit = rl.includes("travel credit") || rl.includes("hotel credit");
+          if (!isCardUsed && !isBroadBenefit) return;
+          reminders.push(`${card.name}: ${r}`);
+        });
       } catch(e) {}
     });
 
-    (profile.loyaltyAccounts || []).filter(a => a && HOTEL_BENEFITS_DB[a.program]).forEach(acct => {
+    // Hotel reminders — only for the hotel program in this option
+    (profile.loyaltyAccounts || []).filter(a => a && HOTEL_BENEFITS_DB[a.program] && activeHotelPrograms.has(a.program)).forEach(acct => {
       try {
         const b = getHotelTierBenefits(acct.program, acct.tier);
         if (b?.itineraryReminder?.length) {
@@ -856,16 +918,22 @@ const buildItineraryReminders = (profile) => {
       } catch(e) {}
     });
 
-    (profile.loyaltyAccounts || []).filter(a => a && AIRLINE_BENEFITS_DB[a.program]).forEach(acct => {
+    // Airline reminders — only for the airline actually in this option
+    (profile.loyaltyAccounts || []).filter(a => a && AIRLINE_BENEFITS_DB[a.program] && activeAirlinePrograms.has(a.program)).forEach(acct => {
       try {
         const b = getAirlineTierBenefits(acct.program, acct.tier);
         if (b?.itineraryReminder?.length) {
-          b.itineraryReminder.forEach(r => reminders.push(`${acct.program}: ${r}`));
+          b.itineraryReminder.forEach(r => {
+            const rl = r.toLowerCase();
+            // Skip Global Entry for domestic
+            if (isDomestic && (rl.includes("global entry") || rl.includes("tsa"))) return;
+            reminders.push(`${acct.program}: ${r}`);
+          });
         }
       } catch(e) {}
     });
 
-    return reminders;
+    return reminders.slice(0, 4); // Max 4 reminders
   } catch(e) {
     return [];
   }
@@ -1935,7 +2003,7 @@ const ItineraryOverlay = ({ option, tripSummary, userProfile, onClose }) => {
         {/* Benefits reminders — annual/metered benefits worth checking before travel */}
         {(() => {
           try {
-            const reminders = userProfile ? buildItineraryReminders(userProfile) : [];
+            const reminders = userProfile ? buildItineraryReminders(userProfile, option) : [];
             if (!reminders.length) return null;
             return (
               <div style={{ padding: "12px 16px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", marginBottom: "20px" }}>
