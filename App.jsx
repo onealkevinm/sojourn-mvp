@@ -2094,6 +2094,67 @@ const TypingIndicator = () => (
 const PointsDashboardDrawer = ({ profile }) => {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("points");
+  const [optimizeRecs, setOptimizeRecs] = useState(null);
+  const [optimizeLoading, setOptimizeLoading] = useState(false);
+
+  const fetchOptimizeRecs = async () => {
+    if (optimizeRecs || optimizeLoading) return;
+    setOptimizeLoading(true);
+    try {
+      const p = userProfile;
+      const cardList = (p.cards||[]).map(c => c.name).join(", ");
+      const loyaltyList = (p.loyaltyAccounts||[]).map(a => `${a.program} (${a.tier}, ${a.balance})`).join(", ");
+      const benefitsSummary = buildTravelerBenefitsSummary(p);
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: `You are Sojourn's travel optimization advisor. Analyze a traveler's current card and loyalty setup and provide 2-3 specific, honest recommendations to improve their travel economics.
+
+SCOPE — only recommend within these bounds:
+- Credit card additions, removals, or swaps that improve value given how they already travel
+- Loyalty program tier optimization (e.g. close to next tier, worth one more stay)
+- Card/program mismatches (e.g. has Hyatt Globalist but no card earning Hyatt points)
+- Redundant cards where annual fee isn't justified given their status or other cards
+- Annual fee vs. benefit value questions
+
+OUT OF SCOPE — never recommend:
+- Switching airlines or hotel chains — too personal, not a setup question
+- Joining new loyalty programs just to diversify — optimize around existing travel patterns
+- Changing how they travel to realize the value of a recommendation
+- Any card not relevant to their actual travel style and home airport
+
+RULES:
+- Be genuinely honest — include both "you might not need X" AND "you're missing Y" recommendations
+- Show the specific math for each recommendation based on their actual profile
+- Optimize around how they already travel, not how they should travel differently
+- Keep each recommendation to 2-3 sentences maximum
+- Format as JSON array: [{"type": "add"|"remove"|"swap", "title": "short title", "detail": "specific recommendation with math", "saving_or_value": "e.g. saves $300/yr or worth ~$X/yr"}]
+- Return ONLY the JSON array, no preamble, no markdown`,
+          messages: [{
+            role: "user",
+            content: `Traveler profile:
+Cards: ${cardList}
+Loyalty programs: ${loyaltyList}
+Structured benefits: ${benefitsSummary}
+
+Provide 2-3 honest card/loyalty optimization recommendations specific to this traveler's actual setup.`
+          }]
+        })
+      });
+      const data = await res.json();
+      const text = data.content?.[0]?.text?.trim() || "[]";
+      const clean = text.replace(/```json|```/g, "").trim();
+      const recs = JSON.parse(clean);
+      setOptimizeRecs(recs);
+    } catch(e) {
+      setOptimizeRecs([]);
+    } finally {
+      setOptimizeLoading(false);
+    }
+  };
 
   const cards = profile?.cards || [];
   const loyalty = profile?.loyaltyAccounts || [];
@@ -2129,9 +2190,9 @@ const PointsDashboardDrawer = ({ profile }) => {
         <div style={{ position: "absolute", bottom: "100%", left: 0, right: 0, background: "#0e0d0c", border: "1px solid rgba(255,255,255,0.07)", borderBottom: "none", borderRadius: "12px 12px 0 0", zIndex: 10, maxHeight: "320px", overflowY: "auto" }}>
           {/* Tabs */}
           <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "0 14px" }}>
-            {["points", "cards"].map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: "10px 14px", background: "none", border: "none", borderBottom: activeTab === tab ? "2px solid #C9A84C" : "2px solid transparent", color: activeTab === tab ? "#C9A84C" : "#444", fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif", cursor: "pointer" }}>
-                {tab === "points" ? "Loyalty Points" : "Credit Cards"}
+            {["points", "cards", "optimize"].map(tab => (
+              <button key={tab} onClick={() => { setActiveTab(tab); if (tab === "optimize") fetchOptimizeRecs(); }} style={{ padding: "10px 14px", background: "none", border: "none", borderBottom: activeTab === tab ? "2px solid #C9A84C" : "2px solid transparent", color: activeTab === tab ? "#C9A84C" : "#444", fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif", cursor: "pointer" }}>
+                {tab === "points" ? "Loyalty Points" : tab === "cards" ? "Credit Cards" : "Optimize ✦"}
               </button>
             ))}
           </div>
@@ -2168,6 +2229,44 @@ const PointsDashboardDrawer = ({ profile }) => {
                     <div style={{ color: "#555", fontSize: "11px" }}>{c.multipliers || "Rewards card"}</div>
                   </div>
                 ))}
+              </div>
+            )}
+            {activeTab === "optimize" && (
+              <div>
+                <div style={{ color: "#555", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>
+                  Based on your current setup
+                </div>
+                {optimizeLoading && (
+                  <div style={{ display: "flex", gap: "5px", alignItems: "center", padding: "12px 0" }}>
+                    {[0,1,2].map(i => <div key={i} style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#C9A84C", animation: `bounce 1.2s ease ${i*0.2}s infinite` }} />)}
+                    <span style={{ color: "#444", fontSize: "11px", marginLeft: "6px" }}>Analyzing your setup...</span>
+                  </div>
+                )}
+                {!optimizeLoading && optimizeRecs && optimizeRecs.length === 0 && (
+                  <div style={{ color: "#555", fontSize: "12px" }}>Your setup looks well optimized for your travel style.</div>
+                )}
+                {!optimizeLoading && optimizeRecs && optimizeRecs.map((rec, i) => (
+                  <div key={i} style={{ padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                      <span style={{
+                        fontSize: "9px", padding: "2px 7px", borderRadius: "8px", fontFamily: "serif", letterSpacing: "0.08em",
+                        background: rec.type === "remove" ? "rgba(201,76,76,0.12)" : rec.type === "add" ? "rgba(76,154,201,0.12)" : "rgba(201,168,76,0.12)",
+                        color: rec.type === "remove" ? "#c94c4c" : rec.type === "add" ? "#4C9AC9" : "#C9A84C",
+                        border: `1px solid ${rec.type === "remove" ? "rgba(201,76,76,0.2)" : rec.type === "add" ? "rgba(76,154,201,0.2)" : "rgba(201,168,76,0.2)"}`,
+                      }}>
+                        {rec.type === "remove" ? "Reconsider" : rec.type === "add" ? "Consider Adding" : "Swap"}
+                      </span>
+                      <span style={{ color: "#b0a898", fontSize: "12px", fontFamily: "serif" }}>{rec.title}</span>
+                    </div>
+                    <div style={{ color: "#7a7060", fontSize: "11px", lineHeight: "1.5", marginBottom: "4px" }}>{rec.detail}</div>
+                    {rec.saving_or_value && (
+                      <div style={{ color: "#C9A84C", fontSize: "10px", fontFamily: "serif" }}>✦ {rec.saving_or_value}</div>
+                    )}
+                  </div>
+                ))}
+                {!optimizeLoading && !optimizeRecs && (
+                  <div style={{ color: "#555", fontSize: "11px" }}>Click Optimize to analyze your setup.</div>
+                )}
               </div>
             )}
           </div>
