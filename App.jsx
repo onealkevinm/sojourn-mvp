@@ -895,17 +895,21 @@ const buildItineraryReminders = (profile, option) => {
     const isDomestic = !isInternational;
 
     // Detect which airline is actually being used in this option
-    const airlinePrograms = ["Delta SkyMiles", "Alaska Mileage Plan", "United MileagePlus", "American AAdvantage", "Southwest Rapid Rewards"];
+    // Check components, cardStrategy, whyThis, and headline for airline mentions
+    const fullOptionText = [
+      ...components.map(c => (c.card || "") + " " + (c.detail || "")),
+      option.cardStrategy || "",
+      option.whyThis || "",
+      option.headline || "",
+      option.loyaltyHighlight || "",
+    ].join(" ").toLowerCase();
+
     const activeAirlinePrograms = new Set();
-    components.forEach(c => {
-      const card = (c.card || "").toLowerCase();
-      const detail = (c.detail || "").toLowerCase();
-      if (card.includes("delta") || detail.includes("delta") || detail.includes("dca") || detail.includes("sea-d")) activeAirlinePrograms.add("Delta SkyMiles");
-      if (card.includes("alaska") || detail.includes("alaska") || detail.includes("alaska air")) activeAirlinePrograms.add("Alaska Mileage Plan");
-      if (card.includes("united") || detail.includes("united")) activeAirlinePrograms.add("United MileagePlus");
-      if (card.includes("american") || detail.includes("american airlines")) activeAirlinePrograms.add("American AAdvantage");
-      if (card.includes("southwest") || detail.includes("southwest")) activeAirlinePrograms.add("Southwest Rapid Rewards");
-    });
+    if (fullOptionText.includes("delta")) activeAirlinePrograms.add("Delta SkyMiles");
+    if (fullOptionText.includes("alaska") || fullOptionText.includes("sea-anc") || fullOptionText.includes("sea-pdx")) activeAirlinePrograms.add("Alaska Mileage Plan");
+    if (fullOptionText.includes("united")) activeAirlinePrograms.add("United MileagePlus");
+    if (fullOptionText.includes("american airlines") || fullOptionText.includes("aa flight")) activeAirlinePrograms.add("American AAdvantage");
+    if (fullOptionText.includes("southwest")) activeAirlinePrograms.add("Southwest Rapid Rewards");
 
     // Detect which hotel program is in this option
     const activeHotelPrograms = new Set();
