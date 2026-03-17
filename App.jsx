@@ -3478,7 +3478,7 @@ Please respond now.`,
             ))}
 
             {!optimizeLoading && !optimizeRecs && (
-              <div style={{ color: "#555", fontSize: "12px", padding: "8px 0" }}>Loading recommendations...</div
+              <div style={{ color: "#555", fontSize: "12px", padding: "8px 0" }}>Loading recommendations...</div>
             )}
           </div>
         </div>
