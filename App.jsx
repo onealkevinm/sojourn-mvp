@@ -989,6 +989,50 @@ const buildItineraryReminders = (profile, option) => {
   }
 };
 
+
+// ─── SIGNUP / LEARN MORE LINKS ───────────────────────────────────────────────
+// Affiliate or direct links for Consider Adding recommendations
+// Update with actual affiliate links when programs are set up
+const SIGNUP_LINKS = {
+  // Credit cards
+  "World of Hyatt Credit Card": "https://creditcards.chase.com/travel-credit-cards/hyatt",
+  "Hyatt Credit Card": "https://creditcards.chase.com/travel-credit-cards/hyatt",
+  "Marriott Bonvoy Boundless": "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/boundless",
+  "Delta SkyMiles Reserve": "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-reserve-american-express-card/",
+  "Delta SkyMiles Platinum": "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-platinum-american-express-card/",
+  "Amex Platinum": "https://www.americanexpress.com/us/credit-cards/card/platinum/",
+  "Amex Gold": "https://www.americanexpress.com/us/credit-cards/card/gold-card/",
+  "Chase Sapphire Reserve": "https://creditcards.chase.com/travel-credit-cards/sapphire/reserve",
+  "Chase Sapphire Preferred": "https://creditcards.chase.com/travel-credit-cards/sapphire/preferred",
+  "Capital One Venture X": "https://capital.one/venture-x",
+  "BofA Alaska Airlines Visa": "https://www.bankofamerica.com/credit-cards/products/alaska-airlines-visa-credit-card/",
+  "United Explorer Card": "https://creditcards.chase.com/travel-credit-cards/united/explorer",
+  "Hilton Honors Amex Surpass": "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-american-express-surpass-card/",
+  // Loyalty programs (free to join)
+  "World of Hyatt": "https://www.hyatt.com/world-of-hyatt/enroll",
+  "Marriott Bonvoy": "https://www.marriott.com/loyalty/createAccount/createAccountPage1.mi",
+  "Hilton Honors": "https://www.hilton.com/en/hilton-honors/join/",
+  "Delta SkyMiles": "https://www.delta.com/us/en/skymiles/overview",
+  "Alaska Mileage Plan": "https://www.alaskaair.com/account/create-account",
+  "IHG One Rewards": "https://www.ihg.com/rewardsclub/us/en/enrollment/main",
+  // Car rental (free to join)
+  "National Emerald Club": "https://www.nationalcar.com/en/emerald-club/join.html",
+  "Hertz Gold Plus Rewards": "https://www.hertz.com/rentacar/member/index.jsp",
+  "Avis Preferred": "https://www.avis.com/en/avispreferred",
+};
+
+const getSignupLink = (title) => {
+  if (!title) return null;
+  // Try exact match first
+  if (SIGNUP_LINKS[title]) return SIGNUP_LINKS[title];
+  // Try partial match
+  const key = Object.keys(SIGNUP_LINKS).find(k =>
+    title.toLowerCase().includes(k.toLowerCase()) ||
+    k.toLowerCase().includes(title.toLowerCase().split(" ").slice(0,2).join(" "))
+  );
+  return key ? SIGNUP_LINKS[key] : null;
+};
+
 const BRAND_CATEGORIES = [
   {
     key: "loyalty_brands",
@@ -2492,10 +2536,15 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
                   </div>
                   <div style={{ color: "#7a7060", fontSize: "11px", lineHeight: "1.5", marginBottom: "2px" }}>{rec.detail}</div>
                   {rec.saving_or_value && <div style={{ color: "#C9A84C", fontSize: "10px", fontFamily: "serif" }}>✦ {rec.saving_or_value}</div>}
+                  {rec.type !== "remove" && getSignupLink(rec.title) && (
+                    <a href={getSignupLink(rec.title)} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", marginTop: "4px", fontSize: "10px", color: "#4C9AC9", textDecoration: "none", fontFamily: "serif", letterSpacing: "0.05em" }}>
+                      Learn more →
+                    </a>
+                  )}
                 </div>
               ))}
               {!optimizeLoading && !optimizeRecs && (
-                <div style={{ color: "#555", fontSize: "11px", padding: "4px 0 8px" }}>Click to analyze your setup.</div>
+                <div style={{ color: "#555", fontSize: "11px", padding: "4px 0 8px" }}>Click to analyze your setup.</div
               )}
             </div>
           )}
@@ -3418,11 +3467,16 @@ Please respond now.`,
                 {rec.saving_or_value && (
                   <div style={{ color: "#C9A84C", fontSize: "11px", fontFamily: "serif" }}>✦ {rec.saving_or_value}</div>
                 )}
+                {rec.type !== "remove" && getSignupLink(rec.title) && (
+                  <a href={getSignupLink(rec.title)} target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", marginTop: "6px", fontSize: "11px", color: "#4C9AC9", textDecoration: "none", fontFamily: "serif", letterSpacing: "0.05em" }}>
+                    Learn more →
+                  </a>
+                )}
               </div>
             ))}
 
             {!optimizeLoading && !optimizeRecs && (
-              <div style={{ color: "#555", fontSize: "12px", padding: "8px 0" }}>Loading recommendations...</div>
+              <div style={{ color: "#555", fontSize: "12px", padding: "8px 0" }}>Loading recommendations...</div
             )}
           </div>
         </div>
