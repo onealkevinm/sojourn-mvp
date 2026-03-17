@@ -762,6 +762,8 @@ const getCardBenefits = (cardName) => CARD_BENEFITS_DB[cardName] || null;
 // Build decision-logic benefits summary for AI prompt injection
 // Only includes marginal, trip-applicable benefits — no annual/metered items
 const buildTravelerBenefitsSummary = (profile) => {
+  try {
+  if (!profile) return "";
   const lines = [];
 
   // Card decision-logic benefits (multipliers, lounge access, free bags, transfer partners)
@@ -826,35 +828,47 @@ const buildTravelerBenefitsSummary = (profile) => {
   });
 
   return lines.join('\n');
+  } catch(e) { return ""; }
 };
 
 // Build itinerary reminders for a given traveler — annual/metered benefits
 // Surfaced as soft suggestions ("worth checking on...") not guarantees
 const buildItineraryReminders = (profile) => {
-  const reminders = [];
+  try {
+    if (!profile) return [];
+    const reminders = [];
 
-  (profile.cards || []).forEach(card => {
-    const b = getCardBenefits(card.name);
-    if (b?.itineraryReminder?.length) {
-      b.itineraryReminder.forEach(r => reminders.push(`${card.name}: ${r}`));
-    }
-  });
+    (profile.cards || []).forEach(card => {
+      try {
+        const b = getCardBenefits(card.name);
+        if (b?.itineraryReminder?.length) {
+          b.itineraryReminder.forEach(r => reminders.push(`${card.name}: ${r}`));
+        }
+      } catch(e) {}
+    });
 
-  (profile.loyaltyAccounts || []).filter(a => HOTEL_BENEFITS_DB[a.program]).forEach(acct => {
-    const b = getHotelTierBenefits(acct.program, acct.tier);
-    if (b?.itineraryReminder?.length) {
-      b.itineraryReminder.forEach(r => reminders.push(`${acct.program}: ${r}`));
-    }
-  });
+    (profile.loyaltyAccounts || []).filter(a => a && HOTEL_BENEFITS_DB[a.program]).forEach(acct => {
+      try {
+        const b = getHotelTierBenefits(acct.program, acct.tier);
+        if (b?.itineraryReminder?.length) {
+          b.itineraryReminder.forEach(r => reminders.push(`${acct.program}: ${r}`));
+        }
+      } catch(e) {}
+    });
 
-  (profile.loyaltyAccounts || []).filter(a => AIRLINE_BENEFITS_DB[a.program]).forEach(acct => {
-    const b = getAirlineTierBenefits(acct.program, acct.tier);
-    if (b?.itineraryReminder?.length) {
-      b.itineraryReminder.forEach(r => reminders.push(`${acct.program}: ${r}`));
-    }
-  });
+    (profile.loyaltyAccounts || []).filter(a => a && AIRLINE_BENEFITS_DB[a.program]).forEach(acct => {
+      try {
+        const b = getAirlineTierBenefits(acct.program, acct.tier);
+        if (b?.itineraryReminder?.length) {
+          b.itineraryReminder.forEach(r => reminders.push(`${acct.program}: ${r}`));
+        }
+      } catch(e) {}
+    });
 
-  return reminders;
+    return reminders;
+  } catch(e) {
+    return [];
+  }
 };
 
 const BRAND_CATEGORIES = [
@@ -1677,6 +1691,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss }) => {
 
 const ItineraryOverlay = ({ option, tripSummary, userProfile, onClose }) => {
   if (!option) return null;
+  try {
 
   const origin = tripSummary?.origin || "Origin";
   const destination = tripSummary?.destination || "Destination";
@@ -1919,18 +1934,20 @@ const ItineraryOverlay = ({ option, tripSummary, userProfile, onClose }) => {
 
         {/* Benefits reminders — annual/metered benefits worth checking before travel */}
         {(() => {
-          const reminders = buildItineraryReminders(userProfile);
-          if (!reminders.length) return null;
-          return (
-            <div style={{ padding: "12px 16px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", marginBottom: "20px" }}>
-              <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "8px" }}>Before You Travel</div>
-              {reminders.slice(0, 5).map((r, i) => (
-                <div key={i} style={{ color: "#7a7060", fontSize: "11px", lineHeight: "1.6", paddingLeft: "10px", borderLeft: "2px solid rgba(201,168,76,0.15)", marginBottom: "4px" }}>
-                  {r}
-                </div>
-              ))}
-            </div>
-          );
+          try {
+            const reminders = userProfile ? buildItineraryReminders(userProfile) : [];
+            if (!reminders.length) return null;
+            return (
+              <div style={{ padding: "12px 16px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", marginBottom: "20px" }}>
+                <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "8px" }}>Before You Travel</div>
+                {reminders.slice(0, 5).map((r, i) => (
+                  <div key={i} style={{ color: "#7a7060", fontSize: "11px", lineHeight: "1.6", paddingLeft: "10px", borderLeft: "2px solid rgba(201,168,76,0.15)", marginBottom: "4px" }}>
+                    {r}
+                  </div>
+                ))}
+              </div>
+            );
+          } catch(e) { return null; }
         })()}
 
         {/* Book CTA */}
@@ -1940,6 +1957,16 @@ const ItineraryOverlay = ({ option, tripSummary, userProfile, onClose }) => {
       </div>
     </div>
   );
+  } catch(e) {
+    return (
+      <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
+        <div style={{ background: "#0e0c0a", border: "1px solid rgba(201,168,76,0.2)", borderRadius: "20px", padding: "36px", textAlign: "center", color: "#9a8e7a" }}>
+          <div style={{ fontSize: "18px", marginBottom: "12px" }}>Unable to load itinerary</div>
+          <button onClick={onClose} style={{ padding: "10px 24px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "10px", cursor: "pointer", fontWeight: "700" }}>Close</button>
+        </div>
+      </div>
+    );
+  }
 };
 
 const TypingIndicator = () => (
