@@ -2544,7 +2544,7 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
                 </div>
               ))}
               {!optimizeLoading && !optimizeRecs && (
-                <div style={{ color: "#555", fontSize: "11px", padding: "4px 0 8px" }}>Click to analyze your setup.</div
+                <div style={{ color: "#555", fontSize: "11px", padding: "4px 0 8px" }}>Click to analyze your setup.</div>
               )}
             </div>
           )}
@@ -2756,7 +2756,9 @@ INTELLIGENCE RULES:
 - Flight details format: "AA 123 · SEA→MIA · Departs 7:45am → Arrives 4:02pm · 5h 17m nonstop" — duration MUST always be the last segment so it displays prominently next to flight times
 - Hotel: ALWAYS use a real, specific named property (e.g. "Mokara Hotel & Spa" not "boutique hotel" or "historic inn"). Never invent placeholder names. If you cannot name a real property in the destination, use a nearby city with real inventory.
 - Hotel detail: property name · exact room config matching party size (e.g. "Two adjoining Kings" or "3BR villa sleeps 6") · nights · neighborhood. Never just "suite" — always specify beds and how the party fits.
-- Flight detail: always specify number of tickets and whether price is per-person or total. Format: "[Airline] · [route] · [X tickets] · $[Y] total ($[Z]/person)" e.g. "Alaska Airlines · SEA-LIH nonstop · 2 tickets · $680 total ($340/person)". Never show a flight price without clarifying if it is per ticket or total.
+- Flight detail field MUST use this EXACT format with · separators and spaces: "[Airline] · [ORIGIN-DEST] [nonstop/1-stop] · [departure time range] · [~Xh duration]" e.g. "Alaska Airlines · SEA-LIH nonstop · morning ~8-10am · ~6h30m" or "Delta · SEA-HNL nonstop · afternoon ~1-3pm · ~5h45m". CRITICAL: always put spaces around the · separator. Never concatenate airline and route without a separator (never "DeltaSEA-HNL"). Departure time should be a realistic range, not a specific invented flight number. The value field (not detail) should be the total cash cost for all tickets: if 2 people × $480/person = $960 total, value = 960. The points field should note ticket count: "2 tickets · est. X miles earned".
+- Rental car pricing: use realistic market rates. A full-size SUV in Hawaii runs $150-250/day in peak season, $80-150/day off-peak. A standard sedan runs $60-100/day. Never show rental car costs below $40/day — these are not realistic. Total rental cost = daily rate × number of days. Always show both daily rate and total: "$175/day · 5 days · $875 total".
+- Rental car cashback: USAA 1.5% cashback on a $875 rental = $13 — never show cashback exceeding 1.5% of the rental cost. Do not inflate cashback estimates.
 - Small/rural destinations: if the destination has fewer than 6 real bookable hotel options at the requested quality level, expand to the nearest metro area (e.g. Boerne TX → include San Antonio options 30 min away, label them clearly as "San Antonio · 30 min from Boerne"). Never fabricate hotel names.
 - headline: ALWAYS follow this format: "[Location] · [Brand] · [Distinctive Element]" — e.g. "Maui · Andaz · Overwater Suite" or "Key Biscayne · Ritz-Carlton · Family Suites" or "Turks & Caicos · Amanyara · Direct JetBlue". Location first, brand second, what makes this option unique third. Never lead with the brand alone.
 - subhead: one sentence describing the experience character — e.g. "Boutique adults-contemporary resort steps from Wailea Beach"
