@@ -2468,6 +2468,37 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
               </div>
             </div>
           )}
+          {activePanel === "optimize" && (
+            <div style={{ padding: "14px 20px 6px" }}>
+              <div style={{ color: "#C9A84C", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Optimize Your Setup</div>
+              {optimizeLoading && (
+                <div style={{ display: "flex", gap: "5px", alignItems: "center", padding: "8px 0" }}>
+                  {[0,1,2].map(i => <div key={i} style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#C9A84C", animation: `bounce 1.2s ease ${i*0.2}s infinite` }} />)}
+                  <span style={{ color: "#555", fontSize: "11px", marginLeft: "6px" }}>Analyzing your setup...</span>
+                </div>
+              )}
+              {!optimizeLoading && optimizeRecs && optimizeRecs.length === 0 && (
+                <div style={{ color: "#555", fontSize: "12px", padding: "4px 0 8px" }}>Your setup looks well optimized.</div>
+              )}
+              {!optimizeLoading && optimizeRecs && optimizeRecs.map((rec, i) => (
+                <div key={i} style={{ padding: "8px 0", borderBottom: i < optimizeRecs.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
+                    <span style={{ fontSize: "9px", padding: "2px 7px", borderRadius: "8px", fontFamily: "serif",
+                      background: rec.type === "remove" ? "rgba(201,76,76,0.12)" : rec.type === "add" ? "rgba(76,154,201,0.12)" : "rgba(201,168,76,0.12)",
+                      color: rec.type === "remove" ? "#c94c4c" : rec.type === "add" ? "#4C9AC9" : "#C9A84C",
+                      border: "1px solid " + (rec.type === "remove" ? "rgba(201,76,76,0.2)" : rec.type === "add" ? "rgba(76,154,201,0.2)" : "rgba(201,168,76,0.2)"),
+                    }}>{rec.type === "remove" ? "Reconsider" : rec.type === "add" ? "Consider Adding" : "Swap"}</span>
+                    <span style={{ color: "#b0a898", fontSize: "12px" }}>{rec.title}</span>
+                  </div>
+                  <div style={{ color: "#7a7060", fontSize: "11px", lineHeight: "1.5", marginBottom: "2px" }}>{rec.detail}</div>
+                  {rec.saving_or_value && <div style={{ color: "#C9A84C", fontSize: "10px", fontFamily: "serif" }}>✦ {rec.saving_or_value}</div>}
+                </div>
+              ))}
+              {!optimizeLoading && !optimizeRecs && (
+                <div style={{ color: "#555", fontSize: "11px", padding: "4px 0 8px" }}>Click to analyze your setup.</div>
+              )}
+            </div>
+          )}
         </div>
       )}
       {/* Bar */}
@@ -2982,39 +3013,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
     const refineInterval = setInterval(() => {
       refineStepIdx = (refineStepIdx + 1) % refineSteps.length;
       setRefineLoadingMessage(refineSteps[refineStepIdx]);
-    }
-          {activePanel === "optimize" && (
-            <div style={{ padding: "14px 20px 6px" }}>
-              <div style={{ color: "#C9A84C", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Optimize Your Setup</div>
-              {optimizeLoading && (
-                <div style={{ display: "flex", gap: "5px", alignItems: "center", padding: "8px 0" }}>
-                  {[0,1,2].map(i => <div key={i} style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#C9A84C", animation: `bounce 1.2s ease ${i*0.2}s infinite` }} />)}
-                  <span style={{ color: "#555", fontSize: "11px", marginLeft: "6px" }}>Analyzing your setup...</span>
-                </div>
-              )}
-              {!optimizeLoading && optimizeRecs && optimizeRecs.length === 0 && (
-                <div style={{ color: "#555", fontSize: "12px", padding: "4px 0 8px" }}>Your setup looks well optimized.</div>
-              )}
-              {!optimizeLoading && optimizeRecs && optimizeRecs.map((rec, i) => (
-                <div key={i} style={{ padding: "8px 0", borderBottom: i < optimizeRecs.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
-                    <span style={{ fontSize: "9px", padding: "2px 7px", borderRadius: "8px", fontFamily: "serif",
-                      background: rec.type === "remove" ? "rgba(201,76,76,0.12)" : rec.type === "add" ? "rgba(76,154,201,0.12)" : "rgba(201,168,76,0.12)",
-                      color: rec.type === "remove" ? "#c94c4c" : rec.type === "add" ? "#4C9AC9" : "#C9A84C",
-                      border: `1px solid ${rec.type === "remove" ? "rgba(201,76,76,0.2)" : rec.type === "add" ? "rgba(76,154,201,0.2)" : "rgba(201,168,76,0.2)"}`,
-                    }}>{rec.type === "remove" ? "Reconsider" : rec.type === "add" ? "Consider Adding" : "Swap"}</span>
-                    <span style={{ color: "#b0a898", fontSize: "12px" }}>{rec.title}</span>
-                  </div>
-                  <div style={{ color: "#7a7060", fontSize: "11px", lineHeight: "1.5", marginBottom: "2px" }}>{rec.detail}</div>
-                  {rec.saving_or_value && <div style={{ color: "#C9A84C", fontSize: "10px", fontFamily: "serif" }}>✦ {rec.saving_or_value}</div>}
-                </div>
-              ))}
-              {!optimizeLoading && !optimizeRecs && (
-                <div style={{ color: "#555", fontSize: "11px", padding: "4px 0 8px" }}>Loading recommendations...</div>
-              )}
-            </div>
-          )}
-, 2000);
+    }, 2000);
     try {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
