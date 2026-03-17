@@ -81,6 +81,7 @@ const LOYALTY_OPTIONS = {
     { program: "Delta SkyMiles", tiers: ["None", "Silver Medallion", "Gold Medallion", "Platinum Medallion", "Diamond Medallion"] },
     { program: "American AAdvantage", tiers: ["None", "Gold", "Platinum", "Platinum Pro", "Executive Platinum"] },
     { program: "Alaska Mileage Plan", tiers: ["None", "MVP", "MVP Gold", "MVP Gold 75K"] },
+    { program: "Hawaiian Miles", tiers: ["None", "Pualani Silver", "Pualani Gold"] },
     { program: "Southwest Rapid Rewards", tiers: ["None", "A-List", "A-List Preferred", "Companion Pass"] },
     { program: "JetBlue TrueBlue", tiers: ["None", "Mosaic 1", "Mosaic 2", "Mosaic 3", "Mosaic 4"] },
     { program: "Emirates Skywards", tiers: ["None", "Blue", "Silver", "Gold", "Platinum"] },
@@ -367,6 +368,28 @@ const CARD_BENEFITS_DB = {
     },
     itineraryReminder: []
   },
+  "USAA Preferred Cash Rewards Visa": {
+    network: "Visa",
+    annualFee: 0,
+    transferPartners: [],
+    multipliers: { default: 1.5 },
+    decisionLogic: {
+      cashback: { rate: 1.5, notes: "Flat 1.5% cash back on all purchases, no bonus categories" },
+      noForeignTransactionFee: true,
+    },
+    itineraryReminder: []
+  },
+  "USAA Rewards Visa": {
+    network: "Visa",
+    annualFee: 0,
+    transferPartners: [],
+    multipliers: { default: 1 },
+    decisionLogic: {
+      cashback: { rate: 1, notes: "Flat 1% cash back on all purchases" },
+      noForeignTransactionFee: true,
+    },
+    itineraryReminder: []
+  },
   "Wells Fargo Autograph": {
     network: "Visa",
     annualFee: 0,
@@ -633,6 +656,29 @@ const AIRLINE_BENEFITS_DB = {
         decisionLogic: { bonusMiles: "120%", firstCheckedBagFree: true, loungeAccess: "Admirals Club unlimited + oneworld lounges", upgradeWaitlist: "top priority domestic guaranteed" },
         loyaltyHighlight: ["Unlimited Admirals Club + oneworld lounge access", "Guaranteed domestic upgrades", "Free first checked bag"],
         itineraryReminder: ["Worth checking on your Systemwide Upgrade certificate balance"]
+      }
+    }
+  },
+  "Hawaiian Miles": {
+    cpp_estimate: 1.1,
+    alliance: null,
+    partners: ["Alaska Mileage Plan"],
+    notes: "Hawaiian acquired by Alaska Airlines 2024. HawaiianMiles merging into Alaska Mileage Plan. Existing HawaiianMiles still redeemable on Hawaiian metal and select partners.",
+    tiers: {
+      "None": {
+        decisionLogic: {},
+        loyaltyHighlight: [],
+        itineraryReminder: []
+      },
+      "Pualani Silver": {
+        decisionLogic: { bonusMiles: "25%", firstCheckedBagFree: true },
+        loyaltyHighlight: ["Free first checked bag", "Priority check-in"],
+        itineraryReminder: []
+      },
+      "Pualani Gold": {
+        decisionLogic: { bonusMiles: "50%", firstCheckedBagFree: true, loungeAccess: "Premier Club lounge access" },
+        loyaltyHighlight: ["Premier Club lounge access", "Free first checked bag", "Priority boarding"],
+        itineraryReminder: ["Note: HawaiianMiles is merging into Alaska Mileage Plan — worth checking current program status"]
       }
     }
   },
@@ -2521,7 +2567,7 @@ TRIP LENGTH / FLIGHT DURATION MATCHING — HARD RULE:
 
 AIRLINE REDEMPTION PARTNERSHIPS — CRITICAL ACCURACY RULES:
 - Delta SkyMiles redeem on: Delta flights, and SkyTeam partners only (Air France, KLM, Virgin Atlantic, Korean Air, Aeromexico, WestJet via codeshare). NEVER suggest redeeming Delta miles on JetBlue, Alaska, United, American, Southwest, or any non-SkyTeam carrier — these partnerships do not exist.
-- Alaska Mileage Plan redeems on: Alaska flights and oneworld partners (American, British Airways, Cathay, Finnair, Qantas, Japan Airlines). NOT Delta, United, or Southwest.
+- Alaska Mileage Plan redeems on: Alaska flights, Hawaiian Airlines flights (post-2024 acquisition), and oneworld partners (American, British Airways, Cathay, Finnair, Qantas, Japan Airlines). NOT Delta, United, or Southwest. Note: HawaiianMiles is being merged into Alaska Mileage Plan — existing HawaiianMiles members are transitioning to Alaska Mileage Plan.
 - United MileagePlus redeems on: United flights and Star Alliance partners (Lufthansa, ANA, Singapore, Swiss, Air Canada). NOT Delta or American.
 - American AAdvantage redeems on: American flights and oneworld partners. NOT Delta or United.
 - Southwest Rapid Rewards: Southwest metal only, no partners.
@@ -2533,7 +2579,7 @@ AIRLINE REDEMPTION PARTNERSHIPS — CRITICAL ACCURACY RULES:
 INTELLIGENCE RULES:
 - Reference traveler's actual loyalty tier: "Your Marriott Gold gets confirmed late checkout and upgrade eligibility"
 - Reference specific card multipliers: "Chase Sapphire Reserve 3x on hotels = 2,400 UR points worth ~$48"
-- Room configs must match party size — be specific: "Two adjoining king rooms" not "hotel room"
+- Room configs must use fewest rooms for party size (2 travelers = 1 king room, not adjoining rooms) using the FEWEST rooms possible: 2 people = 1 king room (never "two adjoining rooms" for a couple). Only suggest multiple rooms if party size genuinely requires it (3+ people who need separate sleeping). Never split a couple or 2-person party into adjoining rooms.
 - Flight details format: "AA 123 · SEA→MIA · Departs 7:45am → Arrives 4:02pm · 5h 17m nonstop" — duration MUST always be the last segment so it displays prominently next to flight times
 - Hotel: ALWAYS use a real, specific named property (e.g. "Mokara Hotel & Spa" not "boutique hotel" or "historic inn"). Never invent placeholder names. If you cannot name a real property in the destination, use a nearby city with real inventory.
 - Hotel detail: property name · exact room config matching party size (e.g. "Two adjoining Kings" or "3BR villa sleeps 6") · nights · neighborhood. Never just "suite" — always specify beds and how the party fits.
@@ -2615,7 +2661,7 @@ COMPONENT VALUE RULE — CRITICAL:
   - If earning: "est. 2,400 Delta miles earned" or "est. 4,200 Bonvoy points earned" — always include "est." and "earned"
   - Never mix redemption and earning in the same points field
 - loyaltyHighlight = a friendly, plain-English reminder of the marginal status perks this traveler unlocks on THIS specific trip. Use the STRUCTURED BENEFITS data injected above — specifically the loyaltyHighlight arrays for each program/tier. Only include benefits that apply every time they use this program at this tier (free breakfast, lounge access tied to status, guaranteed late checkout, upgrade eligibility, free checked bags). Do NOT include annual credits, metered benefits, or anything requiring residual balance knowledge — those go in itinerary reminders, not here. Do NOT repeat points math (covered in components). Keep to 2-4 genuinely relevant perks. Tone: warm, like a knowledgeable friend reminding you of things you might forget to use.
-- cardStrategy = which card to use for each cash-paid component and why, based on the highest earning multiplier for that spend category. Format: "Flights: [card] ([Nx] miles) · Hotel: [card] ([Nx] points) · Dining: [card] ([Nx] points)". Only include components where cash is paid — skip components covered by points redemption. This must reflect the traveler's actual cards and their actual category multipliers. Never invent a multiplier. If two cards tie, pick the one that earns the program with the higher cpp value.
+- cardStrategy = which card to use for each cash-paid component and why, based on the highest earning multiplier for that spend category. Format: "Flights: [card] ([Nx] miles) · Hotel: [card] ([Nx] points) · Dining: [card] ([Nx] points)". Only include components where cash is paid — skip components covered by points redemption. This must reflect the traveler's actual cards and their actual category multipliers. Never invent a multiplier. If two cards tie, pick the one that earns the program with the higher cpp value. CASHBACK CARDS: cash back is certain and immediate; points/miles have future redemption risk. For spend categories where no card has a NATIVE bonus multiplier (i.e. a hotel that doesn't match any card's bonus category), prefer the cashback card over a 1x points card — 1.5% certain cash beats 1x miles at an estimated future cpp. Only route to a points card over cashback if the points card has a genuine category bonus (2x or higher) on that spend type.
 - whyThis = frame cash figures consistently with what the card shows — if flights are $0 out of pocket, say "flights covered by your miles" not "flights cost $X"
 - pointsEarned (top-level) = earning side ONLY — points this trip generates on cash-paid components. CRITICAL: if a component is covered by a redemption, it earns NO points — do NOT include that program in pointsEarned. Example: if Delta miles cover flights, do NOT include "Delta miles earned" in pointsEarned. Only include programs earned on cash-paid components (e.g. hotel cash spend earns Bonvoy, ground spend earns card points).
 - pointsValue (top-level) = estimated dollar value of points EARNED only (not redeemed). If no cash components earn meaningful points, pointsValue = 0 and pointsEarned = "".
@@ -2654,8 +2700,8 @@ Traveler profile: home airport=${tp.homeAirport||"unknown"}, travel types=${(tp.
 
 Default to READY. Generate options unless a truly critical piece is missing.
 
-Go READY immediately if you have: any destination or travel theme, any timeframe (even vague like "spring" or "summer"), any party size OR if traveling solo is a reasonable assumption.
-Party size can be assumed as 2 if not stated. Timeframe like "mid-May" or "this summer" is sufficient. Vague destinations like "somewhere warm" or "best long weekend I haven't thought of" are sufficient.
+Go READY immediately if you have: any destination or travel theme, any timeframe (even vague like "spring" or "summer"), AND a party size (stated or clearly implied).
+Party size MUST be stated or clearly implied — do NOT assume 2. If the user says "we", "my partner", "my wife/husband", "the two of us", "family" — infer appropriately. If no party size is mentioned at all, ask: "How many people are traveling?" as your one clarifying question. Timeframe like "mid-May" or "this summer" is sufficient. Vague destinations like "somewhere warm" are sufficient.
 
 POINTS CLARIFICATION: Only ask a clarifying question if the user's intent is clearly to REDEEM points (e.g. "use my miles", "redeem points", "burn my points", "use airline miles for this") AND no specific program is named. Do NOT ask this question if the user says "build points", "earn points", "maximize points", "rack up miles", "want points" — these are earning intent, not redemption intent, and should go straight to READY. When clarification is needed, ask: "Which program are you thinking of — [list only their actual LOYALTY PROGRAMS from profile, never credit card issuers] — or are you open to whichever offers the best value?" Only list programs like Delta SkyMiles, Marriott Bonvoy, World of Hyatt — never card names like Chase, Amex, USAA, BofA.
 
@@ -2986,7 +3032,7 @@ CARD QUALITY RULES (when generating new cards):
 - Each option must be genuinely distinct with a clear optimization angle
 - whyThis: 2-3 sentences, specific to THIS traveler's loyalty status and THIS trip. For earning-intent queries: show points earned per component (e.g. "3x flights via Delta Reserve = 2,670 miles · Bonvoy Silver earns 4,240 points at St. Regis"), then ONE total estimated value line at the end ("Total est. earning: ~10,000 points worth ~$150"). Do NOT show $ value per individual component — only a single total at the end. Keep the closing sentence focused on the qualitative experience/location fit, not more math.
 - tradeoff: one crisp specific sentence — never generic
-- Room configs must match party size
+- Room configs must use fewest rooms for party size (2 travelers = 1 king room, not adjoining rooms)
 - Reference actual card multipliers and loyalty tier benefits
 - Tags: Recommended/#C9A84C, Best Points Earned/#4C9AC9, Best Points Redemption/#4CC97A, Best Value/#C9C94C, Quality Upgrade/#C94C8A, Wild Card/#9A4CC9
 - totalCost/pointsValue/netValue: plain integers only
