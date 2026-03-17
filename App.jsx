@@ -2095,72 +2095,9 @@ const TypingIndicator = () => (
   </div>
 );
 
-const PointsDashboardDrawer = ({ profile }) => {
+const PointsDashboardDrawer = ({ profile, optimizeRecs, optimizeLoading, onOptimizeClick }) => {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("points");
-  const [optimizeRecs, setOptimizeRecs] = useState(null);
-  const [optimizeLoading, setOptimizeLoading] = useState(false);
-  const [showOptimizeModal, setShowOptimizeModal] = useState(false);
-
-  const fetchOptimizeRecs = async () => {
-    if (optimizeRecs || optimizeLoading) return;
-    setOptimizeLoading(true);
-    try {
-      const p = userProfile;
-      const cardList = (p.cards||[]).map(c => c.name).join(", ");
-      const loyaltyList = (p.loyaltyAccounts||[]).map(a => `${a.program} (${a.tier}, ${a.balance})`).join(", ");
-      const benefitsSummary = buildTravelerBenefitsSummary(p);
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: `You are Sojourn's travel optimization advisor. Analyze a traveler's current card and loyalty setup and provide 2-3 specific, honest recommendations to improve their travel economics.
-
-SCOPE — only recommend within these bounds:
-- Credit card additions, removals, or swaps that improve value given how they already travel
-- Loyalty program tier optimization (e.g. close to next tier, worth one more stay)
-- Card/program mismatches (e.g. has Hyatt Globalist but no card earning Hyatt points)
-- Redundant cards where annual fee isn't justified given their status or other cards
-- Annual fee vs. benefit value questions
-
-OUT OF SCOPE — never recommend:
-- Switching airlines or hotel chains — too personal, not a setup question
-- Joining new loyalty programs just to diversify — optimize around existing travel patterns
-- Changing how they travel to realize the value of a recommendation
-- Any card not relevant to their actual travel style and home airport
-
-RULES:
-- Be genuinely honest — include both "you might not need X" AND "you're missing Y" recommendations
-- Show the specific math for each recommendation based on their actual profile
-- Optimize around how they already travel, not how they should travel differently
-- Keep each recommendation to 2-3 sentences maximum
-- Format as JSON array: [{"type": "add"|"remove"|"swap", "title": "short title", "detail": "specific recommendation with math", "saving_or_value": "e.g. saves $300/yr or worth ~$X/yr"}]
-- Return ONLY the JSON array, no preamble, no markdown`,
-          messages: [{
-            role: "user",
-            content: `Traveler profile:
-Cards: ${cardList}
-Loyalty programs: ${loyaltyList}
-Structured benefits: ${benefitsSummary}
-
-Provide 2-3 honest card/loyalty optimization recommendations specific to this traveler's actual setup.`
-          }]
-        })
-      });
-      const data = await res.json();
-      const text = data.content?.[0]?.text?.trim() || "[]";
-      const clean = text.replace(/```json|```/g, "").trim();
-      const recs = JSON.parse(clean);
-      setOptimizeRecs(recs);
-    } catch(e) {
-      setOptimizeRecs([]);
-    } finally {
-      setOptimizeLoading(false);
-    }
-  };
-
   const cards = profile?.cards || [];
   const loyalty = profile?.loyaltyAccounts || [];
 
@@ -2196,7 +2133,7 @@ Provide 2-3 honest card/loyalty optimization recommendations specific to this tr
           {/* Tabs */}
           <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "0 14px" }}>
             {["points", "cards", "optimize"].map(tab => (
-              <button key={tab} onClick={() => { setActiveTab(tab); if (tab === "optimize") fetchOptimizeRecs(); }} style={{ padding: "10px 14px", background: "none", border: "none", borderBottom: activeTab === tab ? "2px solid #C9A84C" : "2px solid transparent", color: activeTab === tab ? "#C9A84C" : "#444", fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif", cursor: "pointer" }}>
+              <button key={tab} onClick={() => { setActiveTab(tab); if (tab === "optimize" && onOptimizeClick) onOptimizeClick(); }} style={{ padding: "10px 14px", background: "none", border: "none", borderBottom: activeTab === tab ? "2px solid #C9A84C" : "2px solid transparent", color: activeTab === tab ? "#C9A84C" : "#444", fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif", cursor: "pointer" }}>
                 {tab === "points" ? "Loyalty Points" : tab === "cards" ? "Credit Cards" : "Optimize ✦"}
               </button>
             ))}
@@ -2327,8 +2264,8 @@ const BottomDrawer = ({ label, count, items }) => {
 // ─── Unified Optimizing For Bar ───────────────────────────────────────────────
 const CARD_OPTIONS_LIST = ["Chase Sapphire Reserve","Chase Sapphire Preferred","Chase Freedom Unlimited","Chase Ink Business Preferred","Amex Platinum","Amex Gold","Amex Green","Amex Business Platinum","Capital One Venture X","Capital One Venture","Citi AAdvantage Executive","BofA Alaska Airlines Visa","United Explorer Card","Delta SkyMiles Reserve","Delta SkyMiles Platinum","Marriott Bonvoy Boundless","World of Hyatt Card","Southwest Rapid Rewards Priority","Hilton Honors Amex Surpass","Wells Fargo Autograph"];
 
-const OptimizingForBar = ({ profile, setProfile }) => {
-  const [activePanel, setActivePanel] = useState(null); // "loyalty" | "cards" | "brands"
+const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, onOptimizeClick }) => {
+  const [activePanel, setActivePanel] = useState(null); // "loyalty" | "cards" | "brands" | "optimize"
   const [addCardInput, setAddCardInput] = useState("");
   const loyalty = profile?.loyaltyAccounts || [];
   const cards = profile?.cards || [];
@@ -2549,6 +2486,10 @@ const OptimizingForBar = ({ profile, setProfile }) => {
           Brands {brands.length > 0 ? `· ${brands.length}` : ""}
           <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "brands" ? "▴" : "▾"}</span>
         </button>
+        <button onClick={() => { toggle("optimize"); if (activePanel !== "optimize" && onOptimizeClick) onOptimizeClick(); }} style={{ ...pillStyle(activePanel === "optimize"), borderColor: activePanel === "optimize" ? "rgba(201,168,76,0.5)" : "rgba(201,168,76,0.15)", color: activePanel === "optimize" ? "#C9A84C" : "#8a7a5a" }}>
+          ✦ Optimize
+          <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "optimize" ? "▴" : "▾"}</span>
+        </button>
       </div>
     </div>
   );
@@ -2578,6 +2519,50 @@ export default function SojournApp() {
   const [refineMessages, setRefineMessages] = useState([]);
   const [refineLoadingMessage, setRefineLoadingMessage] = useState("");
   const [itineraryOption, setItineraryOption] = useState(null);
+  const [optimizeRecs, setOptimizeRecs] = useState(null);
+  const [optimizeLoading, setOptimizeLoading] = useState(false);
+  const [showOptimizeModal, setShowOptimizeModal] = useState(false);
+
+  const fetchOptimizeRecs = async () => {
+    if (optimizeRecs || optimizeLoading) return;
+    setOptimizeLoading(true);
+    try {
+      const p = userProfile;
+      const cardList = (p.cards||[]).map(c => c.name).join(", ");
+      const loyaltyList = (p.loyaltyAccounts||[]).map(a => `${a.program} (${a.tier}, ${a.balance})`).join(", ");
+      const benefitsSummary = buildTravelerBenefitsSummary(p);
+      const optimizeSystem = [
+        "You are Sojourn's travel optimization advisor.",
+        "Analyze the traveler's card and loyalty setup and provide 2-3 specific honest recommendations.",
+        "SCOPE: card additions/removals/swaps, tier optimization, card-program mismatches, annual fee vs value.",
+        "OUT OF SCOPE: switching airlines or hotel chains, joining new programs to diversify, changing travel behavior.",
+        "RULES: genuinely honest — include both 'reconsider X' AND 'consider adding Y' where relevant. Show math. 2-3 sentences max per rec.",
+        "Format: JSON array only, no markdown, no preamble.",
+        '[{"type":"add"|"remove"|"swap","title":"short title","detail":"specific rec with math","saving_or_value":"saves $X/yr or worth ~$X/yr"}]'
+      ].join(" ");
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 800,
+          system: optimizeSystem,
+          messages: [{ role: "user", content: `Cards: ${cardList}. Loyalty: ${loyaltyList}. Benefits summary: ${benefitsSummary.slice(0,500)}. Provide 2-3 honest optimization recommendations.` }],
+        })
+      });
+      const data = await res.json();
+      const text = (data.content?.[0]?.text || "[]").trim();
+      const clean = text.replace(/```json|```/g, "").trim();
+      const startIdx = clean.indexOf("[");
+      const endIdx = clean.lastIndexOf("]");
+      const recs = startIdx > -1 ? JSON.parse(clean.slice(startIdx, endIdx + 1)) : [];
+      setOptimizeRecs(recs);
+    } catch(e) {
+      setOptimizeRecs([]);
+    } finally {
+      setOptimizeLoading(false);
+    }
+  };
   const [loadingMessage, setLoadingMessage] = useState("");
   const getSavedProfile = () => {
     try { const s = localStorage.getItem("sojourn_profile"); return s ? JSON.parse(s) : null; } catch(e) { return null; }
@@ -2997,7 +2982,39 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
     const refineInterval = setInterval(() => {
       refineStepIdx = (refineStepIdx + 1) % refineSteps.length;
       setRefineLoadingMessage(refineSteps[refineStepIdx]);
-    }, 2000);
+    }
+          {activePanel === "optimize" && (
+            <div style={{ padding: "14px 20px 6px" }}>
+              <div style={{ color: "#C9A84C", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Optimize Your Setup</div>
+              {optimizeLoading && (
+                <div style={{ display: "flex", gap: "5px", alignItems: "center", padding: "8px 0" }}>
+                  {[0,1,2].map(i => <div key={i} style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#C9A84C", animation: `bounce 1.2s ease ${i*0.2}s infinite` }} />)}
+                  <span style={{ color: "#555", fontSize: "11px", marginLeft: "6px" }}>Analyzing your setup...</span>
+                </div>
+              )}
+              {!optimizeLoading && optimizeRecs && optimizeRecs.length === 0 && (
+                <div style={{ color: "#555", fontSize: "12px", padding: "4px 0 8px" }}>Your setup looks well optimized.</div>
+              )}
+              {!optimizeLoading && optimizeRecs && optimizeRecs.map((rec, i) => (
+                <div key={i} style={{ padding: "8px 0", borderBottom: i < optimizeRecs.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}>
+                    <span style={{ fontSize: "9px", padding: "2px 7px", borderRadius: "8px", fontFamily: "serif",
+                      background: rec.type === "remove" ? "rgba(201,76,76,0.12)" : rec.type === "add" ? "rgba(76,154,201,0.12)" : "rgba(201,168,76,0.12)",
+                      color: rec.type === "remove" ? "#c94c4c" : rec.type === "add" ? "#4C9AC9" : "#C9A84C",
+                      border: `1px solid ${rec.type === "remove" ? "rgba(201,76,76,0.2)" : rec.type === "add" ? "rgba(76,154,201,0.2)" : "rgba(201,168,76,0.2)"}`,
+                    }}>{rec.type === "remove" ? "Reconsider" : rec.type === "add" ? "Consider Adding" : "Swap"}</span>
+                    <span style={{ color: "#b0a898", fontSize: "12px" }}>{rec.title}</span>
+                  </div>
+                  <div style={{ color: "#7a7060", fontSize: "11px", lineHeight: "1.5", marginBottom: "2px" }}>{rec.detail}</div>
+                  {rec.saving_or_value && <div style={{ color: "#C9A84C", fontSize: "10px", fontFamily: "serif" }}>✦ {rec.saving_or_value}</div>}
+                </div>
+              ))}
+              {!optimizeLoading && !optimizeRecs && (
+                <div style={{ color: "#555", fontSize: "11px", padding: "4px 0 8px" }}>Loading recommendations...</div>
+              )}
+            </div>
+          )}
+, 2000);
     try {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
@@ -3820,7 +3837,7 @@ Please respond now.`,
       )}
 
       {/* Unified Optimizing For Bar */}
-      <OptimizingForBar profile={userProfile} setProfile={(updated) => {
+      <OptimizingForBar profile={userProfile} optimizeRecs={optimizeRecs} optimizeLoading={optimizeLoading} onOptimizeClick={fetchOptimizeRecs} setProfile={(updated) => {
         setUserProfile(updated);
         try { localStorage.setItem("sojourn_profile", JSON.stringify(updated)); } catch(e) {}
       }} />
