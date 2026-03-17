@@ -2565,8 +2565,8 @@ export default function SojournApp() {
       const optimizeSystem = [
         "You are Sojourn's travel optimization advisor.",
         "Analyze the traveler's card and loyalty setup and provide 2-3 specific honest recommendations.",
-        "SCOPE: card additions/removals/swaps, tier optimization, card-program mismatches, annual fee vs value.",
-        "OUT OF SCOPE: switching airlines or hotel chains, joining new programs to diversify, changing travel behavior, generic non-travel cashback cards (Chase Freedom, Citi Double Cash etc) — only recommend travel-specific cards tied to airline or hotel programs the traveler already uses.",
+        "SCOPE: (1) card additions/removals/swaps, tier optimization, card-program mismatches, annual fee vs value. (2) Loyalty program gaps — if the traveler has preferred brands (e.g. Andaz, Thompson) that belong to a program they haven't joined, suggest joining that program. (3) Car rental — if they travel frequently, suggest one free-to-join car rental program (National Emerald Club is the strongest for skip-counter + choose-your-own-car). (4) Status tier gaps — if they are close to a meaningful next tier, call it out with the math.",
+        "OUT OF SCOPE: switching airlines or hotel chains, joining new programs to diversify purely for diversification, changing travel behavior, generic non-travel cashback cards — only recommend travel-specific programs tied to how they actually travel.",
         "RULES: genuinely honest — include both 'reconsider X' AND 'consider adding Y' where relevant. Show math. 2-3 sentences max per rec.",
         "Format: JSON array only, no markdown, no preamble.",
         '[{"type":"add"|"remove"|"swap","title":"short title","detail":"specific rec with math","saving_or_value":"saves $X/yr or worth ~$X/yr"}]'
@@ -2578,7 +2578,7 @@ export default function SojournApp() {
           model: "claude-sonnet-4-20250514",
           max_tokens: 800,
           system: optimizeSystem,
-          messages: [{ role: "user", content: `Cards: ${cardList}. Loyalty: ${loyaltyList}. Benefits summary: ${benefitsSummary.slice(0,500)}. Provide 2-3 honest optimization recommendations.` }],
+          messages: [{ role: "user", content: `Cards: ${cardList}. Loyalty: ${loyaltyList}. Preferred hotel/airline brands: ${(p.preferredBrands||p.selectedBrands||[]).slice(0,15).join(", ")||"none set"}. Car rental programs: ${(p.loyaltyAccounts||[]).filter(a=>["National Emerald Club","Hertz Gold Plus Rewards","Avis Preferred","Enterprise Plus"].includes(a.program)).map(a=>a.program).join(", ")||"none"}. Benefits summary: ${benefitsSummary.slice(0,500)}. Provide 2-3 honest optimization recommendations covering cards, loyalty program gaps from preferred brands, and car rental if not already set up.` }],
         })
       });
       const data = await res.json();
@@ -3671,7 +3671,7 @@ Please respond now.`,
                 <input
                   value={refineInput}
                   onChange={e => setRefineInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter") handleRefine(); }}
+                  onKeyDown={e => { if (e.key === "Enter") { e.stopPropagation(); handleRefine(); } }}
                   placeholder="Ask anything about these options..."
                   style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "12px", padding: "9px 0", fontFamily: "'DM Sans',system-ui,sans-serif", outline: "none" }}
                 />
@@ -3680,7 +3680,7 @@ Please respond now.`,
                     <TypingIndicator />
                   </div>
                 ) : (
-                  <button onClick={handleRefine} disabled={!refineInput.trim()} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", cursor: refineInput.trim() ? "pointer" : "default", background: refineInput.trim() ? "#C9A84C" : "rgba(201,168,76,0.1)", color: refineInput.trim() ? "#0a0908" : "#555", fontSize: "14px", fontWeight: "bold", flexShrink: 0 }}>&#8593;</button>
+                  <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleRefine(); }} disabled={!refineInput.trim()} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", cursor: refineInput.trim() ? "pointer" : "default", background: refineInput.trim() ? "#C9A84C" : "rgba(201,168,76,0.1)", color: refineInput.trim() ? "#0a0908" : "#555", fontSize: "14px", fontWeight: "bold", flexShrink: 0 }}>&#8593;</button>
                 )}
               </div>
             </div>
