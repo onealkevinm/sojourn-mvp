@@ -126,6 +126,737 @@ const INDEPENDENT_HOTELS = [
   "Fairmont", "Raffles", "Swissotel"
 ];
 
+
+// ─── STRUCTURED TRAVEL BENEFITS DATABASE ────────────────────────────────────
+// Three buckets per benefit:
+//   decisionLogic: marginal benefits that apply to THIS trip — no annual meter,
+//                  no residual balance required. Affects recommendation reasoning.
+//   loyaltyHighlight: same as decisionLogic but surfaces on the option card as
+//                     a friendly reminder of what the traveler unlocks this trip.
+//   itineraryReminder: annual/metered benefits worth checking before travel.
+//                      Surfaced as soft reminders ("worth checking on...") NOT
+//                      as guaranteed amounts — we don't have visibility into
+//                      residual balances until API integration.
+// Update cadence: 2-4x per year. Last updated: March 2026.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CARD_BENEFITS_DB = {
+  "Chase Sapphire Reserve": {
+    network: "Visa",
+    annualFee: 550,
+    transferPartners: ["United MileagePlus", "Air France Flying Blue", "British Airways Avios", "Singapore KrisFlyer", "Southwest Rapid Rewards", "World of Hyatt", "Marriott Bonvoy"],
+    multipliers: { flights: 3, hotels: 3, dining: 3, default: 1 },
+    decisionLogic: {
+      loungeAccess: ["Priority Pass Select"],
+      primaryCarRentalInsurance: true,
+      noForeignTransactionFee: true,
+      tripCancellationInsurance: true,
+    },
+    itineraryReminder: [
+      "Worth checking on your $300 annual travel credit — applies broadly to travel purchases",
+      "Global Entry/TSA PreCheck credit available if not yet used",
+    ]
+  },
+  "Chase Sapphire Preferred": {
+    network: "Visa",
+    annualFee: 95,
+    transferPartners: ["United MileagePlus", "Air France Flying Blue", "British Airways Avios", "Singapore KrisFlyer", "Southwest Rapid Rewards", "World of Hyatt", "Marriott Bonvoy"],
+    multipliers: { flights: 2, hotels: 2, dining: 3, default: 1 },
+    decisionLogic: {
+      primaryCarRentalInsurance: true,
+      noForeignTransactionFee: true,
+      tripCancellationInsurance: true,
+    },
+    itineraryReminder: [
+      "Worth checking on your $50 annual hotel credit via Chase Travel",
+    ]
+  },
+  "Amex Platinum": {
+    network: "Amex",
+    annualFee: 695,
+    transferPartners: ["Delta SkyMiles", "Air France Flying Blue", "British Airways Avios", "Singapore KrisFlyer", "ANA Mileage Club", "Emirates Skywards", "Aeroplan"],
+    multipliers: { flights_direct: 5, hotels_amex_travel: 5, default: 1 },
+    decisionLogic: {
+      loungeAccess: ["Centurion Lounge", "Escape Lounges", "Lufthansa Lounges"],
+      fineHotelsResorts: { benefit: "Room upgrade, early checkin 12pm, late checkout 4pm, daily breakfast for 2, $100 property credit", notes: "Must book via Amex Travel — applies to this stay" },
+      noForeignTransactionFee: true,
+    },
+    itineraryReminder: [
+      "Worth checking on your $200 annual airline fee credit — select your airline in Amex account if not done",
+      "Worth checking on your $200 annual hotel credit via Fine Hotels & Resorts or Hotel Collection",
+      "Delta Sky Club access when flying Delta — check current visit allowance in your Amex account",
+      "Global Entry/TSA PreCheck credit available if not yet used",
+    ]
+  },
+  "Amex Gold": {
+    network: "Amex",
+    annualFee: 250,
+    transferPartners: ["Delta SkyMiles", "Air France Flying Blue", "British Airways Avios", "Singapore KrisFlyer", "ANA Mileage Club", "Emirates Skywards"],
+    multipliers: { flights_direct: 3, restaurants: 4, us_supermarkets: 4, default: 1 },
+    decisionLogic: {
+      noForeignTransactionFee: true,
+    },
+    itineraryReminder: [
+      "Worth checking on your $120 annual dining credit at select partners",
+      "Worth checking on your $120 annual Uber Cash credit",
+    ]
+  },
+  "Amex Business Platinum": {
+    network: "Amex",
+    annualFee: 695,
+    transferPartners: ["Delta SkyMiles", "Air France Flying Blue", "British Airways Avios", "Singapore KrisFlyer", "ANA Mileage Club", "Emirates Skywards"],
+    multipliers: { flights_direct: 5, hotels_amex_travel: 5, default: 1 },
+    decisionLogic: {
+      loungeAccess: ["Centurion Lounge", "Escape Lounges", "Lufthansa Lounges"],
+      fineHotelsResorts: true,
+      noForeignTransactionFee: true,
+      pointsRebate35pct: { notes: "35% points back when using Pay with Points for first/business class on selected airline" },
+    },
+    itineraryReminder: [
+      "Worth checking on your $200 annual airline fee credit",
+      "Delta Sky Club access when flying Delta — check current visit allowance",
+    ]
+  },
+  "Capital One Venture X": {
+    network: "Visa",
+    annualFee: 395,
+    transferPartners: ["Air France Flying Blue", "British Airways Avios", "Singapore KrisFlyer", "Turkish Miles&Smiles", "Avianca LifeMiles", "Wyndham Rewards"],
+    multipliers: { flights_via_capital_one_travel: 5, hotels_via_capital_one_travel: 10, default: 2 },
+    decisionLogic: {
+      loungeAccess: ["Capital One Lounges", "Priority Pass Select"],
+      primaryCarRentalInsurance: true,
+      noForeignTransactionFee: true,
+    },
+    itineraryReminder: [
+      "Worth checking on your $300 annual travel credit via Capital One Travel portal",
+      "Global Entry/TSA PreCheck credit available if not yet used",
+    ]
+  },
+  "Delta SkyMiles Reserve": {
+    network: "Amex",
+    annualFee: 650,
+    transferPartners: ["Delta SkyMiles"],
+    multipliers: { delta_purchases: 3, default: 1 },
+    decisionLogic: {
+      loungeAccess: ["Delta Sky Club (when flying Delta same day)"],
+      firstCheckedBagFree: true,
+      upgradePriority: { notes: "Complimentary upgrade priority boost on Delta flights" },
+      noForeignTransactionFee: true,
+    },
+    itineraryReminder: [
+      "Worth checking on your annual companion certificate for domestic first class or Comfort+",
+      "Global Entry/TSA PreCheck credit available if not yet used",
+    ]
+  },
+  "Delta SkyMiles Platinum": {
+    network: "Amex",
+    annualFee: 350,
+    transferPartners: ["Delta SkyMiles"],
+    multipliers: { delta_purchases: 3, default: 1 },
+    decisionLogic: {
+      firstCheckedBagFree: true,
+      noForeignTransactionFee: true,
+    },
+    itineraryReminder: [
+      "Worth checking on your annual companion certificate for domestic main cabin",
+      "Global Entry/TSA PreCheck credit available if not yet used",
+    ]
+  },
+  "BofA Alaska Airlines Visa": {
+    network: "Visa",
+    annualFee: 75,
+    transferPartners: ["Alaska Mileage Plan"],
+    multipliers: { alaska_purchases: 3, default: 1 },
+    decisionLogic: {
+      firstCheckedBagFree: { travelers: 6, notes: "Cardholder and up to 5 companions on same reservation" },
+    },
+    itineraryReminder: [
+      "Worth checking on your annual companion fare from $122 ($99 + taxes/fees)",
+    ]
+  },
+  "United Explorer Card": {
+    network: "Visa",
+    annualFee: 95,
+    transferPartners: ["United MileagePlus"],
+    multipliers: { united_purchases: 2, hotels: 2, dining: 2, default: 1 },
+    decisionLogic: {
+      firstCheckedBagFree: { travelers: 2, notes: "Cardholder and one companion" },
+      primaryCarRentalInsurance: true,
+      noForeignTransactionFee: true,
+    },
+    itineraryReminder: [
+      "Worth checking on your 2 annual United Club one-time passes",
+      "Global Entry/TSA PreCheck credit available if not yet used",
+    ]
+  },
+  "Citi AAdvantage Executive": {
+    network: "Mastercard",
+    annualFee: 595,
+    transferPartners: ["American AAdvantage"],
+    multipliers: { aa_purchases: 4, default: 1 },
+    decisionLogic: {
+      loungeAccess: ["Admirals Club (full membership — cardholder + guests)"],
+      firstCheckedBagFree: { travelers: 8, notes: "Cardholder and up to 8 companions" },
+      upgradePriority: true,
+      noForeignTransactionFee: true,
+    },
+    itineraryReminder: [
+      "Global Entry/TSA PreCheck credit available if not yet used",
+    ]
+  },
+  "World of Hyatt Card": {
+    network: "Visa",
+    annualFee: 95,
+    transferPartners: ["World of Hyatt"],
+    multipliers: { hyatt_hotels: 4, dining: 2, airline_tickets: 2, default: 1 },
+    decisionLogic: {
+      discoveristStatus: { notes: "Automatic Discoverist status" },
+      noForeignTransactionFee: true,
+    },
+    itineraryReminder: [
+      "Worth checking on your annual free night certificate (Category 1-4 property)",
+    ]
+  },
+  "Marriott Bonvoy Boundless": {
+    network: "Visa",
+    annualFee: 95,
+    transferPartners: ["Marriott Bonvoy"],
+    multipliers: { marriott_hotels: 6, default: 2 },
+    decisionLogic: {
+      silverStatus: { notes: "Automatic Silver Elite status" },
+      noForeignTransactionFee: true,
+    },
+    itineraryReminder: [
+      "Worth checking on your annual free night certificate (up to 35,000 points)",
+    ]
+  },
+  "Hilton Honors Amex Surpass": {
+    network: "Amex",
+    annualFee: 150,
+    transferPartners: ["Hilton Honors"],
+    multipliers: { hilton_hotels: 12, us_restaurants: 6, us_supermarkets: 6, us_gas: 3, default: 3 },
+    decisionLogic: {
+      goldStatus: { notes: "Automatic Hilton Gold — free breakfast at most full-service properties" },
+      noForeignTransactionFee: true,
+    },
+    itineraryReminder: [
+      "Worth checking on free weekend night reward if you have reached $15k spend",
+    ]
+  },
+  "Southwest Rapid Rewards Priority": {
+    network: "Visa",
+    annualFee: 149,
+    transferPartners: ["Southwest Rapid Rewards"],
+    multipliers: { southwest_purchases: 3, hotel_and_car: 2, default: 1 },
+    decisionLogic: {
+      noForeignTransactionFee: true,
+    },
+    itineraryReminder: [
+      "Worth checking on your $75 annual Southwest travel credit",
+      "4 upgraded boardings per year when available — request at gate",
+    ]
+  },
+  "Chase Freedom Unlimited": {
+    network: "Visa",
+    annualFee: 0,
+    transferPartners: ["Chase Ultimate Rewards (when paired with Sapphire)"],
+    multipliers: { travel_via_chase: 5, dining: 3, drugstores: 3, default: 1.5 },
+    decisionLogic: {
+      tripCancellationInsurance: true,
+    },
+    itineraryReminder: []
+  },
+  "Wells Fargo Autograph": {
+    network: "Visa",
+    annualFee: 0,
+    transferPartners: [],
+    multipliers: { travel: 3, dining: 3, gas: 3, transit: 3, streaming: 3, phone_plans: 3, default: 1 },
+    decisionLogic: {
+      noForeignTransactionFee: true,
+      cellPhoneProtection: { amount: 600 },
+    },
+    itineraryReminder: []
+  },
+};
+
+// ─── HOTEL LOYALTY BENEFITS DATABASE ────────────────────────────────────────
+
+const HOTEL_BENEFITS_DB = {
+  "Marriott Bonvoy": {
+    cpp_estimate: 0.8,
+    tiers: {
+      "None": {
+        decisionLogic: { pointsEarnRate: 10 },
+        loyaltyHighlight: [],
+        itineraryReminder: []
+      },
+      "Silver": {
+        decisionLogic: { pointsEarnRate: 11, bonusPoints: "10%" },
+        loyaltyHighlight: ["10% bonus points on stays"],
+        itineraryReminder: ["Worth asking about late checkout at checkin (2pm, based on availability)"]
+      },
+      "Gold": {
+        decisionLogic: { pointsEarnRate: 12.5, bonusPoints: "25%", enhancedRoomUpgrade: true, lateCheckout: "2pm guaranteed most properties" },
+        loyaltyHighlight: ["Enhanced room upgrade at checkin", "2pm late checkout at most properties"],
+        itineraryReminder: ["Worth asking about welcome gift at checkin"]
+      },
+      "Platinum": {
+        decisionLogic: { pointsEarnRate: 15, bonusPoints: "50%", suiteUpgrade: true, lateCheckout: "4pm guaranteed", loungeAccess: "where available" },
+        loyaltyHighlight: ["Suite upgrade based on availability", "4pm late checkout guaranteed", "Club lounge access where available"],
+        itineraryReminder: ["Worth asking about welcome amenity choice at checkin"]
+      },
+      "Titanium": {
+        decisionLogic: { pointsEarnRate: 17.5, bonusPoints: "75%", suiteUpgrade: "48hr advance", lateCheckout: "4pm guaranteed", loungeAccess: "guaranteed" },
+        loyaltyHighlight: ["Suite upgrade 48hr in advance", "Club lounge guaranteed", "4pm checkout guaranteed"],
+        itineraryReminder: []
+      },
+      "Ambassador": {
+        decisionLogic: { pointsEarnRate: 20, bonusPoints: "100%", suiteUpgrade: "guaranteed", lateCheckout: "4pm guaranteed", loungeAccess: "guaranteed" },
+        loyaltyHighlight: ["Guaranteed suite upgrade", "Club lounge guaranteed", "4pm checkout guaranteed", "Personal Ambassador service"],
+        itineraryReminder: ["Worth checking on your annual Your24 benefit for flexible checkin/checkout"]
+      }
+    }
+  },
+  "World of Hyatt": {
+    cpp_estimate: 1.7,
+    tiers: {
+      "None": {
+        decisionLogic: { pointsEarnRate: 5 },
+        loyaltyHighlight: [],
+        itineraryReminder: []
+      },
+      "Discoverist": {
+        decisionLogic: { pointsEarnRate: 6.5, bonusPoints: "10%", roomUpgrade: "standard room at checkin", lateCheckout: "2pm request" },
+        loyaltyHighlight: ["Standard room upgrade at checkin", "2pm late checkout (request at checkin)"],
+        itineraryReminder: []
+      },
+      "Explorist": {
+        decisionLogic: { pointsEarnRate: 6.5, bonusPoints: "20%", roomUpgrade: "best available at checkin", lateCheckout: "2pm guaranteed", clubLounge: "where available" },
+        loyaltyHighlight: ["Best available room upgrade at checkin", "2pm late checkout guaranteed", "Club lounge access where available"],
+        itineraryReminder: []
+      },
+      "Globalist": {
+        decisionLogic: {
+          pointsEarnRate: 6.5,
+          bonusPoints: "30%",
+          freeBreakfast: true,
+          freeBreakfastGuests: 2,
+          lateCheckout: "4pm guaranteed",
+          suiteUpgrade: "at checkin based on availability",
+          clubLounge: "guaranteed",
+          resortFeeWaiver: true,
+          parkingWaiver: "complimentary at many properties",
+        },
+        loyaltyHighlight: ["Free breakfast for 2 daily", "4pm late checkout guaranteed", "Club lounge access guaranteed", "Resort/destination fee waiver at many properties", "Suite upgrade at checkin based on availability"],
+        itineraryReminder: ["Worth checking on complimentary parking eligibility at this property", "4 Suite Upgrade Awards annually for confirmed advance upgrades — worth checking your balance"]
+      }
+    }
+  },
+  "Hilton Honors": {
+    cpp_estimate: 0.5,
+    tiers: {
+      "None": {
+        decisionLogic: { pointsEarnRate: 10 },
+        loyaltyHighlight: [],
+        itineraryReminder: []
+      },
+      "Silver": {
+        decisionLogic: { pointsEarnRate: 12, bonusPoints: "20%" },
+        loyaltyHighlight: ["20% bonus points on stays"],
+        itineraryReminder: []
+      },
+      "Gold": {
+        decisionLogic: { pointsEarnRate: 18, bonusPoints: "80%", freeBreakfast: true, freeBreakfastGuests: 2, roomUpgrade: "standard at checkin", lateCheckout: "2pm request" },
+        loyaltyHighlight: ["Free breakfast for 2 at most full-service properties", "Standard room upgrade at checkin"],
+        itineraryReminder: ["Worth asking about late checkout at checkin (2pm, space available)"]
+      },
+      "Diamond": {
+        decisionLogic: { pointsEarnRate: 20, bonusPoints: "100%", freeBreakfast: true, freeBreakfastGuests: 2, executiveLounge: "where available", lateCheckout: "2pm guaranteed", suiteUpgrade: "space available" },
+        loyaltyHighlight: ["Free breakfast for 2 guaranteed", "Executive lounge access where available", "2pm late checkout guaranteed", "Suite upgrade space available"],
+        itineraryReminder: []
+      }
+    }
+  },
+  "IHG One Rewards": {
+    cpp_estimate: 0.6,
+    tiers: {
+      "None": {
+        decisionLogic: { pointsEarnRate: 10 },
+        loyaltyHighlight: [],
+        itineraryReminder: []
+      },
+      "Silver": {
+        decisionLogic: { pointsEarnRate: 12, bonusPoints: "20%" },
+        loyaltyHighlight: [],
+        itineraryReminder: []
+      },
+      "Gold": {
+        decisionLogic: { pointsEarnRate: 15, bonusPoints: "40%", roomUpgrade: "standard at checkin", lateCheckout: "2pm request" },
+        loyaltyHighlight: ["Standard room upgrade at checkin"],
+        itineraryReminder: ["Worth asking about late checkout at checkin (2pm, space available)"]
+      },
+      "Platinum": {
+        decisionLogic: { pointsEarnRate: 17, bonusPoints: "60%", roomUpgrade: "best available", lateCheckout: "2pm guaranteed", loungeAccess: "where available" },
+        loyaltyHighlight: ["Best available room upgrade", "2pm late checkout guaranteed", "Lounge access where available"],
+        itineraryReminder: []
+      },
+      "Diamond": {
+        decisionLogic: { pointsEarnRate: 20, bonusPoints: "100%", suiteUpgrade: "space available", lateCheckout: "4pm request", loungeAccess: "where available" },
+        loyaltyHighlight: ["Suite upgrade space available", "Lounge access where available"],
+        itineraryReminder: ["Worth asking about 4pm late checkout at checkin (space available)"]
+      }
+    }
+  },
+};
+
+// ─── AIRLINE LOYALTY BENEFITS DATABASE ──────────────────────────────────────
+
+const AIRLINE_BENEFITS_DB = {
+  "Delta SkyMiles": {
+    cpp_estimate: 1.2,
+    alliance: "SkyTeam",
+    partners: ["Air France", "KLM", "Virgin Atlantic", "Korean Air", "Aeromexico", "WestJet"],
+    tiers: {
+      "None": {
+        decisionLogic: {},
+        loyaltyHighlight: [],
+        itineraryReminder: []
+      },
+      "Silver Medallion": {
+        decisionLogic: { bonusMiles: "40%", firstCheckedBagFree: true, upgradeWaitlist: true },
+        loyaltyHighlight: ["Free first checked bag", "Complimentary Comfort+ upgrade waitlist"],
+        itineraryReminder: []
+      },
+      "Gold Medallion": {
+        decisionLogic: { bonusMiles: "80%", firstCheckedBagFree: true, comfort_plus_confirmed: true },
+        loyaltyHighlight: ["Free first checked bag", "Comfort+ confirmed at booking"],
+        itineraryReminder: []
+      },
+      "Platinum Medallion": {
+        decisionLogic: { bonusMiles: "120%", firstCheckedBagFree: true, loungeAccess: "Delta Sky Club on day of Delta flight", upgradeWaitlist: "high priority first class" },
+        loyaltyHighlight: ["Delta Sky Club access", "High priority first class upgrade waitlist", "Free first checked bag"],
+        itineraryReminder: ["Worth checking on your 4 Global Upgrade Certificates balance"]
+      },
+      "Diamond Medallion": {
+        decisionLogic: { bonusMiles: "150%", firstCheckedBagFree: true, loungeAccess: "Delta Sky Club unlimited", upgradeWaitlist: "top priority all routes" },
+        loyaltyHighlight: ["Unlimited Delta Sky Club access", "Top priority upgrades on all routes", "Free first checked bag"],
+        itineraryReminder: ["Worth checking on your 8 Global Upgrade Certificate balance", "Choice Status Rewards selection if applicable"]
+      }
+    }
+  },
+  "United MileagePlus": {
+    cpp_estimate: 1.4,
+    alliance: "Star Alliance",
+    partners: ["Lufthansa", "ANA", "Singapore Airlines", "Swiss", "Air Canada", "Austrian"],
+    tiers: {
+      "None": {
+        decisionLogic: {},
+        loyaltyHighlight: [],
+        itineraryReminder: []
+      },
+      "Silver": {
+        decisionLogic: { bonusMiles: "25%", firstCheckedBagFree: true, upgradeWaitlist: true },
+        loyaltyHighlight: ["Free first checked bag", "Upgrade waitlist priority"],
+        itineraryReminder: []
+      },
+      "Gold": {
+        decisionLogic: { bonusMiles: "50%", firstCheckedBagFree: true, economyPlusConfirmed: true },
+        loyaltyHighlight: ["Free first checked bag", "Economy Plus at booking"],
+        itineraryReminder: []
+      },
+      "Platinum": {
+        decisionLogic: { bonusMiles: "75%", firstCheckedBagFree: true, upgradeWaitlist: "high priority domestic and international" },
+        loyaltyHighlight: ["Free first checked bag", "High priority upgrades domestic and international"],
+        itineraryReminder: ["Worth checking on your 2 annual United Club passes"]
+      },
+      "1K": {
+        decisionLogic: { bonusMiles: "100%", firstCheckedBagFree: true, loungeAccess: "United Club unlimited + Star Alliance lounges", upgradeWaitlist: "top priority all routes" },
+        loyaltyHighlight: ["Unlimited United Club + Star Alliance lounge access", "Top priority upgrades all routes", "Free first checked bag"],
+        itineraryReminder: ["Worth checking on your Global Premier Upgrade certificate balance"]
+      }
+    }
+  },
+  "Alaska Mileage Plan": {
+    cpp_estimate: 1.5,
+    alliance: "oneworld",
+    partners: ["American", "British Airways", "Cathay Pacific", "Finnair", "Qantas", "Japan Airlines", "Emirates", "Condor"],
+    tiers: {
+      "None": {
+        decisionLogic: {},
+        loyaltyHighlight: [],
+        itineraryReminder: []
+      },
+      "MVP": {
+        decisionLogic: { bonusMiles: "50%", firstCheckedBagFree: true, upgradeWaitlist: true },
+        loyaltyHighlight: ["Free first checked bag", "Upgrade waitlist priority"],
+        itineraryReminder: []
+      },
+      "MVP Gold": {
+        decisionLogic: { bonusMiles: "100%", firstCheckedBagFree: true, upgradeWaitlist: "priority" },
+        loyaltyHighlight: ["Free first checked bag", "Priority upgrade waitlist"],
+        itineraryReminder: ["Worth checking on your annual companion upgrade certificate"]
+      },
+      "MVP Gold 75K": {
+        decisionLogic: { bonusMiles: "125%", firstCheckedBagFree: true, loungeAccess: "Alaska Lounge access on day of travel", upgradeWaitlist: "top priority" },
+        loyaltyHighlight: ["Alaska Lounge access", "Top priority upgrades", "Free first checked bag"],
+        itineraryReminder: ["Worth checking on your Global Upgrade Certificate balance"]
+      }
+    }
+  },
+  "American AAdvantage": {
+    cpp_estimate: 1.3,
+    alliance: "oneworld",
+    partners: ["British Airways", "Cathay Pacific", "Finnair", "Iberia", "Japan Airlines", "Qantas", "Qatar Airways", "Alaska"],
+    tiers: {
+      "None": {
+        decisionLogic: {},
+        loyaltyHighlight: [],
+        itineraryReminder: []
+      },
+      "Gold": {
+        decisionLogic: { bonusMiles: "40%", firstCheckedBagFree: true, upgradeWaitlist: true },
+        loyaltyHighlight: ["Free first checked bag", "Domestic upgrade waitlist"],
+        itineraryReminder: []
+      },
+      "Platinum": {
+        decisionLogic: { bonusMiles: "60%", firstCheckedBagFree: true, upgradeWaitlist: "domestic priority + international waitlist" },
+        loyaltyHighlight: ["Free first checked bag", "Domestic upgrade priority"],
+        itineraryReminder: ["Worth checking on your 500-mile upgrade certificate balance"]
+      },
+      "Platinum Pro": {
+        decisionLogic: { bonusMiles: "80%", firstCheckedBagFree: true, loungeAccess: "Admirals Club day of travel", upgradeWaitlist: "high priority" },
+        loyaltyHighlight: ["Admirals Club access day of travel", "High priority upgrades", "Free first checked bag"],
+        itineraryReminder: []
+      },
+      "Executive Platinum": {
+        decisionLogic: { bonusMiles: "120%", firstCheckedBagFree: true, loungeAccess: "Admirals Club unlimited + oneworld lounges", upgradeWaitlist: "top priority domestic guaranteed" },
+        loyaltyHighlight: ["Unlimited Admirals Club + oneworld lounge access", "Guaranteed domestic upgrades", "Free first checked bag"],
+        itineraryReminder: ["Worth checking on your Systemwide Upgrade certificate balance"]
+      }
+    }
+  },
+  "Southwest Rapid Rewards": {
+    cpp_estimate: 1.5,
+    alliance: null,
+    partners: [],
+    tiers: {
+      "None": {
+        decisionLogic: { bagsFree: 2 },
+        loyaltyHighlight: ["2 free checked bags for all Southwest passengers"],
+        itineraryReminder: []
+      },
+      "A-List": {
+        decisionLogic: { bonusPoints: "25%", bagsFree: 2, boardingPriority: true },
+        loyaltyHighlight: ["Priority boarding", "2 free checked bags"],
+        itineraryReminder: []
+      },
+      "A-List Preferred": {
+        decisionLogic: { bonusPoints: "100%", bagsFree: 2, boardingPriority: true, freeWifi: true },
+        loyaltyHighlight: ["Priority boarding", "Free inflight wifi", "2 free checked bags"],
+        itineraryReminder: []
+      },
+      "Companion Pass": {
+        decisionLogic: { companionFliesFree: true },
+        loyaltyHighlight: ["Companion flies free on this flight"],
+        itineraryReminder: []
+      }
+    }
+  },
+};
+
+// ─── RENTAL CAR BENEFITS DATABASE ───────────────────────────────────────────
+
+const CAR_BENEFITS_DB = {
+  "National Emerald Club": {
+    tiers: {
+      "Emerald Club": {
+        decisionLogic: { skipCounter: true, chooseOwnCar: true },
+        loyaltyHighlight: ["Skip counter — go straight to Emerald Aisle", "Choose your own car"],
+        itineraryReminder: []
+      },
+      "Executive": {
+        decisionLogic: { skipCounter: true, guaranteedUpgrade: "one class above reserved", eliteLane: true },
+        loyaltyHighlight: ["Guaranteed one-class upgrade", "Executive Area selection", "Skip counter"],
+        itineraryReminder: []
+      },
+      "Executive Elite": {
+        decisionLogic: { skipCounter: true, guaranteedUpgrade: "two classes above reserved", eliteLane: true },
+        loyaltyHighlight: ["Guaranteed two-class upgrade", "Executive Elite counter", "Skip counter"],
+        itineraryReminder: []
+      }
+    }
+  },
+  "Hertz Gold Plus Rewards": {
+    tiers: {
+      "Gold": {
+        decisionLogic: { skipCounter: true },
+        loyaltyHighlight: ["Skip counter at most locations"],
+        itineraryReminder: []
+      },
+      "Five Star": {
+        decisionLogic: { skipCounter: true, eliteLane: true },
+        loyaltyHighlight: ["Skip counter", "Five Star lane at major locations"],
+        itineraryReminder: []
+      },
+      "Presidents Circle": {
+        decisionLogic: { skipCounter: true, guaranteedUpgrade: "one class", vehicleReadyGuarantee: true },
+        loyaltyHighlight: ["Guaranteed one-class upgrade", "Vehicle ready guarantee", "Top Tier lane"],
+        itineraryReminder: []
+      }
+    }
+  },
+  "Avis Preferred": {
+    tiers: {
+      "Preferred": {
+        decisionLogic: { skipCounter: true },
+        loyaltyHighlight: ["Skip counter at most locations"],
+        itineraryReminder: []
+      },
+      "Select": {
+        decisionLogic: { skipCounter: true, eliteLane: true },
+        loyaltyHighlight: ["Skip counter", "Select lane access"],
+        itineraryReminder: []
+      },
+      "Chairman": {
+        decisionLogic: { skipCounter: true, guaranteedUpgrade: "one class" },
+        loyaltyHighlight: ["Guaranteed upgrade", "Chairman lane"],
+        itineraryReminder: []
+      }
+    }
+  },
+  "Enterprise Plus": {
+    tiers: {
+      "Silver": {
+        decisionLogic: {},
+        loyaltyHighlight: [],
+        itineraryReminder: []
+      },
+      "Gold": {
+        decisionLogic: { skipCounter: "select locations" },
+        loyaltyHighlight: ["Skip counter at select locations"],
+        itineraryReminder: []
+      },
+      "Platinum": {
+        decisionLogic: { skipCounter: true, guaranteedUpgrade: "one class" },
+        loyaltyHighlight: ["Guaranteed one-class upgrade", "Skip counter"],
+        itineraryReminder: []
+      }
+    }
+  },
+};
+
+// ─── BENEFITS LOOKUP UTILITIES ───────────────────────────────────────────────
+// Helper functions to extract decision-relevant benefits for a given traveler
+// ─────────────────────────────────────────────────────────────────────────────
+
+const getTierBenefits = (program, tier, db) => {
+  if (!db[program] || !db[program].tiers) return null;
+  return db[program].tiers[tier] || db[program].tiers["None"] || null;
+};
+
+const getHotelTierBenefits = (program, tier) => getTierBenefits(program, tier, HOTEL_BENEFITS_DB);
+const getAirlineTierBenefits = (program, tier) => getTierBenefits(program, tier, AIRLINE_BENEFITS_DB);
+const getCarTierBenefits = (program, tier) => getTierBenefits(program, tier, CAR_BENEFITS_DB);
+const getCardBenefits = (cardName) => CARD_BENEFITS_DB[cardName] || null;
+
+// Build decision-logic benefits summary for AI prompt injection
+// Only includes marginal, trip-applicable benefits — no annual/metered items
+const buildTravelerBenefitsSummary = (profile) => {
+  const lines = [];
+
+  // Card decision-logic benefits (multipliers, lounge access, free bags, transfer partners)
+  (profile.cards || []).forEach(card => {
+    const b = getCardBenefits(card.name);
+    if (!b) return;
+    const dl = b.decisionLogic || {};
+    const parts = [];
+    if (b.multipliers) {
+      const mults = Object.entries(b.multipliers).map(([k,v]) => `${v}x ${k.replace(/_/g,' ')}`).join(', ');
+      parts.push(`Earns: ${mults}`);
+    }
+    if (dl.loungeAccess) parts.push(`Lounge: ${Array.isArray(dl.loungeAccess) ? dl.loungeAccess.join(', ') : dl.loungeAccess}`);
+    if (dl.firstCheckedBagFree) parts.push('Free checked bag on this carrier');
+    if (dl.fineHotelsResorts) parts.push('Fine Hotels & Resorts benefits when booked via Amex Travel');
+    if (dl.noForeignTransactionFee) parts.push('No foreign transaction fee');
+    if (dl.primaryCarRentalInsurance) parts.push('Primary car rental insurance');
+    if (b.transferPartners?.length) parts.push(`Transfer partners: ${b.transferPartners.slice(0,5).join(', ')}${b.transferPartners.length > 5 ? ' +more' : ''}`);
+    if (parts.length) lines.push(`CARD ${card.name}: ${parts.join(' | ')}`);
+  });
+
+  // Hotel tier decision-logic benefits (free breakfast, upgrades, late checkout, fee waivers)
+  (profile.loyaltyAccounts || []).filter(a => HOTEL_BENEFITS_DB[a.program]).forEach(acct => {
+    const b = getHotelTierBenefits(acct.program, acct.tier);
+    if (!b) return;
+    const dl = b.decisionLogic || {};
+    const parts = [];
+    if (dl.freeBreakfast) parts.push(`Free breakfast for ${dl.freeBreakfastGuests || 2} daily (guaranteed this stay)`);
+    if (dl.suiteUpgrade) parts.push(`Suite upgrade: ${typeof dl.suiteUpgrade === 'string' ? dl.suiteUpgrade : 'based on availability'}`);
+    if (dl.roomUpgrade) parts.push(`Room upgrade: ${typeof dl.roomUpgrade === 'string' ? dl.roomUpgrade : 'at checkin'}`);
+    if (dl.lateCheckout) parts.push(`Late checkout: ${dl.lateCheckout}`);
+    if (dl.loungeAccess || dl.clubLounge || dl.executiveLounge) parts.push('Club/executive lounge access');
+    if (dl.resortFeeWaiver) parts.push('Resort/destination fee waiver at many properties');
+    if (dl.parkingWaiver) parts.push('Complimentary parking at many properties');
+    if (parts.length) lines.push(`HOTEL ${acct.program} ${acct.tier}: ${parts.join(' | ')}`);
+  });
+
+  // Airline tier decision-logic benefits (lounge, bag, upgrade eligibility, bonus miles)
+  (profile.loyaltyAccounts || []).filter(a => AIRLINE_BENEFITS_DB[a.program]).forEach(acct => {
+    const b = getAirlineTierBenefits(acct.program, acct.tier);
+    if (!b) return;
+    const dl = b.decisionLogic || {};
+    const parts = [];
+    if (dl.loungeAccess) parts.push(`Lounge: ${typeof dl.loungeAccess === 'string' ? dl.loungeAccess : 'access on day of travel'}`);
+    if (dl.upgradeWaitlist) parts.push(`Upgrades: ${typeof dl.upgradeWaitlist === 'string' ? dl.upgradeWaitlist : 'complimentary waitlist'}`);
+    if (dl.firstCheckedBagFree) parts.push('Free first checked bag');
+    if (dl.bonusMiles) parts.push(`${dl.bonusMiles} bonus miles earned on flights`);
+    if (dl.companionFliesFree) parts.push('Companion flies free on this trip');
+    if (parts.length) lines.push(`AIRLINE ${acct.program} ${acct.tier}: ${parts.join(' | ')}`);
+  });
+
+  // Car rental tier decision-logic benefits
+  (profile.loyaltyAccounts || []).filter(a => CAR_BENEFITS_DB[a.program]).forEach(acct => {
+    const b = getCarTierBenefits(acct.program, acct.tier);
+    if (!b) return;
+    const dl = b.decisionLogic || {};
+    const parts = [];
+    if (dl.skipCounter) parts.push('Skip counter');
+    if (dl.guaranteedUpgrade) parts.push(`Guaranteed upgrade: ${dl.guaranteedUpgrade}`);
+    if (dl.chooseOwnCar) parts.push('Choose own car from aisle');
+    if (parts.length) lines.push(`CAR ${acct.program} ${acct.tier}: ${parts.join(' | ')}`);
+  });
+
+  return lines.join('\n');
+};
+
+// Build itinerary reminders for a given traveler — annual/metered benefits
+// Surfaced as soft suggestions ("worth checking on...") not guarantees
+const buildItineraryReminders = (profile) => {
+  const reminders = [];
+
+  (profile.cards || []).forEach(card => {
+    const b = getCardBenefits(card.name);
+    if (b?.itineraryReminder?.length) {
+      b.itineraryReminder.forEach(r => reminders.push(`${card.name}: ${r}`));
+    }
+  });
+
+  (profile.loyaltyAccounts || []).filter(a => HOTEL_BENEFITS_DB[a.program]).forEach(acct => {
+    const b = getHotelTierBenefits(acct.program, acct.tier);
+    if (b?.itineraryReminder?.length) {
+      b.itineraryReminder.forEach(r => reminders.push(`${acct.program}: ${r}`));
+    }
+  });
+
+  (profile.loyaltyAccounts || []).filter(a => AIRLINE_BENEFITS_DB[a.program]).forEach(acct => {
+    const b = getAirlineTierBenefits(acct.program, acct.tier);
+    if (b?.itineraryReminder?.length) {
+      b.itineraryReminder.forEach(r => reminders.push(`${acct.program}: ${r}`));
+    }
+  });
+
+  return reminders;
+};
+
 const BRAND_CATEGORIES = [
   {
     key: "loyalty_brands",
@@ -1181,10 +1912,26 @@ const ItineraryOverlay = ({ option, tripSummary, onClose }) => {
         </div>
 
         {/* Loyalty highlight */}
-        <div style={{ padding: "12px 16px", background: `${option.tagColor}0e`, border: `1px solid ${option.tagColor}22`, borderRadius: "10px", marginBottom: "20px" }}>
+        <div style={{ padding: "12px 16px", background: `${option.tagColor}0e`, border: `1px solid ${option.tagColor}22`, borderRadius: "10px", marginBottom: "16px" }}>
           <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>Loyalty Highlights</div>
           <div style={{ color: option.tagColor, fontSize: "12px", lineHeight: "1.6" }}>✦ {option.loyaltyHighlight}</div>
         </div>
+
+        {/* Benefits reminders — annual/metered benefits worth checking before travel */}
+        {(() => {
+          const reminders = buildItineraryReminders(userProfile);
+          if (!reminders.length) return null;
+          return (
+            <div style={{ padding: "12px 16px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "10px", marginBottom: "20px" }}>
+              <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "8px" }}>Before You Travel</div>
+              {reminders.slice(0, 5).map((r, i) => (
+                <div key={i} style={{ color: "#7a7060", fontSize: "11px", lineHeight: "1.6", paddingLeft: "10px", borderLeft: "2px solid rgba(201,168,76,0.15)", marginBottom: "4px" }}>
+                  {r}
+                </div>
+              ))}
+            </div>
+          );
+        })()}
 
         {/* Book CTA */}
         <button onClick={() => { mp.track("book_intent", { tag: option.tag, headline: option.headline, total_cost: option.totalCost, destination: option.subhead }); alert("Booking coming soon! We logged your interest in: " + option.headline); }} style={{ width: "100%", padding: "16px", background: option.tagColor, color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "14px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>
@@ -1630,6 +2377,8 @@ TRAVELER PROFILE:
 - Travel types: ${(tp.travelTypes||[]).join(", ")}
 - Credit cards: ${cardList}
 - Hotel loyalty: ${hotelLoyalty||"none"}
+STRUCTURED BENEFITS — use these exact values for multipliers, lounge access, tier benefits, free breakfast eligibility, and transfer partners. Do not rely on training knowledge when this data is present:
+${buildTravelerBenefitsSummary(p)}
 - Brand-to-program mapping: Marriott Bonvoy covers ${(LOYALTY_BRAND_MAP["Marriott Bonvoy"]||[]).join(", ")}. World of Hyatt covers ${(LOYALTY_BRAND_MAP["World of Hyatt"]||[]).join(", ")} — including Small Luxury Hotels (SLH) since 2023. Hilton Honors covers ${(LOYALTY_BRAND_MAP["Hilton Honors"]||[]).join(", ")}. IHG One Rewards covers ${(LOYALTY_BRAND_MAP["IHG One Rewards"]||[]).join(", ")}. Fairmont, Raffles, Rosewood, Four Seasons, Peninsula, Mandarin Oriental, Aman, Belmond, Montage are independent — no major loyalty program points.
 - Airline miles: ${airlineLoyalty||"none"}${learnedList ? `
 - LEARNED FROM PAST TRIPS: ${learnedList}` : ""}
@@ -1770,7 +2519,7 @@ COMPONENT VALUE RULE — CRITICAL:
   - If redeeming: "25,000 Delta miles redeemed" or "30,000 Hyatt points redeemed" — always include the word "redeemed"
   - If earning: "est. 2,400 Delta miles earned" or "est. 4,200 Bonvoy points earned" — always include "est." and "earned"
   - Never mix redemption and earning in the same points field
-- loyaltyHighlight = a friendly, plain-English reminder of all the status perks and program benefits this specific traveler unlocks on this specific trip — across ALL their programs, not just hotels. Think of it as: "here's what you've earned, don't leave it on the table." Include: airline lounge access if they have status + departure airport has that lounge (e.g. "Delta Sky Club access at SEA"), hotel status perks unlocked at this property (e.g. "Hyatt Discoverist: late checkout + room upgrade eligibility"), any card travel perks relevant to this trip (e.g. "Amex Platinum: $200 hotel credit eligible"), elite lane / priority boarding if applicable. Keep it to 2-4 genuinely relevant perks — don't list every possible benefit, only the ones that meaningfully apply to this option. Do NOT repeat the points math here (that's covered in components and redemptions). Tone: warm, like a knowledgeable friend reminding you of things you might forget to use.
+- loyaltyHighlight = a friendly, plain-English reminder of the marginal status perks this traveler unlocks on THIS specific trip. Use the STRUCTURED BENEFITS data injected above — specifically the loyaltyHighlight arrays for each program/tier. Only include benefits that apply every time they use this program at this tier (free breakfast, lounge access tied to status, guaranteed late checkout, upgrade eligibility, free checked bags). Do NOT include annual credits, metered benefits, or anything requiring residual balance knowledge — those go in itinerary reminders, not here. Do NOT repeat points math (covered in components). Keep to 2-4 genuinely relevant perks. Tone: warm, like a knowledgeable friend reminding you of things you might forget to use.
 - cardStrategy = which card to use for each cash-paid component and why, based on the highest earning multiplier for that spend category. Format: "Flights: [card] ([Nx] miles) · Hotel: [card] ([Nx] points) · Dining: [card] ([Nx] points)". Only include components where cash is paid — skip components covered by points redemption. This must reflect the traveler's actual cards and their actual category multipliers. Never invent a multiplier. If two cards tie, pick the one that earns the program with the higher cpp value.
 - whyThis = frame cash figures consistently with what the card shows — if flights are $0 out of pocket, say "flights covered by your miles" not "flights cost $X"
 - pointsEarned (top-level) = earning side ONLY — points this trip generates on cash-paid components. CRITICAL: if a component is covered by a redemption, it earns NO points — do NOT include that program in pointsEarned. Example: if Delta miles cover flights, do NOT include "Delta miles earned" in pointsEarned. Only include programs earned on cash-paid components (e.g. hotel cash spend earns Bonvoy, ground spend earns card points).
@@ -2018,6 +2767,9 @@ TRAVELER PROFILE:
 - Hotel loyalty: ${(userProfile.loyaltyAccounts||[]).filter(a=>!["United MileagePlus","Delta SkyMiles","American AAdvantage","Alaska Mileage Plan","Southwest Rapid Rewards","JetBlue TrueBlue"].includes(a.program)).map(a=>`${a.program} (${a.tier}, ${a.balance})`).join(", ")}
 - Airline miles: ${(userProfile.loyaltyAccounts||[]).filter(a=>["United MileagePlus","Delta SkyMiles","American AAdvantage","Alaska Mileage Plan","Southwest Rapid Rewards","JetBlue TrueBlue"].includes(a.program)).map(a=>`${a.program} (${a.tier}, ${a.balance})`).join(", ")}
 - Preferred brands: ${(userProfile.preferredBrands||[]).slice(0,15).join(", ")}
+
+STRUCTURED BENEFITS — use these exact values for card multipliers, lounge access, tier benefits, and free breakfast eligibility. Do not rely on training knowledge when this data is available:
+${buildTravelerBenefitsSummary(userProfile)}
 
 ORIGINAL TRIP REQUEST: ${(conversationRef.current&&conversationRef.current[0]&&conversationRef.current[0].content) || "unknown"}
 
