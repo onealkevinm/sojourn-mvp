@@ -2518,7 +2518,7 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
           <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "brands" ? "▴" : "▾"}</span>
         </button>
         <button onClick={() => { toggle("optimize"); if (activePanel !== "optimize" && onOptimizeClick) onOptimizeClick(); }} style={{ ...pillStyle(activePanel === "optimize"), borderColor: activePanel === "optimize" ? "rgba(201,168,76,0.5)" : "rgba(201,168,76,0.15)", color: activePanel === "optimize" ? "#C9A84C" : "#8a7a5a" }}>
-          ✦ Optimize
+          ✦ Optimize Your Setup
           <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "optimize" ? "▴" : "▾"}</span>
         </button>
       </div>
@@ -2566,7 +2566,7 @@ export default function SojournApp() {
         "You are Sojourn's travel optimization advisor.",
         "Analyze the traveler's card and loyalty setup and provide 2-3 specific honest recommendations.",
         "SCOPE: card additions/removals/swaps, tier optimization, card-program mismatches, annual fee vs value.",
-        "OUT OF SCOPE: switching airlines or hotel chains, joining new programs to diversify, changing travel behavior.",
+        "OUT OF SCOPE: switching airlines or hotel chains, joining new programs to diversify, changing travel behavior, generic non-travel cashback cards (Chase Freedom, Citi Double Cash etc) — only recommend travel-specific cards tied to airline or hotel programs the traveler already uses.",
         "RULES: genuinely honest — include both 'reconsider X' AND 'consider adding Y' where relevant. Show math. 2-3 sentences max per rec.",
         "Format: JSON array only, no markdown, no preamble.",
         '[{"type":"add"|"remove"|"swap","title":"short title","detail":"specific rec with math","saving_or_value":"saves $X/yr or worth ~$X/yr"}]'
@@ -2638,10 +2638,12 @@ TRAVELER PROFILE:
 - Travel types: ${(tp.travelTypes||[]).join(", ")}
 - Credit cards: ${cardList}
 - Hotel loyalty: ${hotelLoyalty||"none"}
+- Airline miles: ${airlineLoyalty||"none"}
+EXACT POINTS BALANCES — these are the traveler's actual balances. NEVER suggest a redemption requiring more points than shown here. If insufficient balance exists for a meaningful redemption, say so and use a cash option instead:
+${(p.loyaltyAccounts||[]).map(a => `  ${a.program}: ${a.balance} (tier: ${a.tier})`).join("\n")}
 STRUCTURED BENEFITS — use these exact values for multipliers, lounge access, tier benefits, free breakfast eligibility, and transfer partners. Do not rely on training knowledge when this data is present:
 ${buildTravelerBenefitsSummary(p)}
-- Brand-to-program mapping: Marriott Bonvoy covers ${(LOYALTY_BRAND_MAP["Marriott Bonvoy"]||[]).join(", ")}. World of Hyatt covers ${(LOYALTY_BRAND_MAP["World of Hyatt"]||[]).join(", ")} — including Small Luxury Hotels (SLH) since 2023. Hilton Honors covers ${(LOYALTY_BRAND_MAP["Hilton Honors"]||[]).join(", ")}. IHG One Rewards covers ${(LOYALTY_BRAND_MAP["IHG One Rewards"]||[]).join(", ")}. Fairmont, Raffles, Rosewood, Four Seasons, Peninsula, Mandarin Oriental, Aman, Belmond, Montage are independent — no major loyalty program points.
-- Airline miles: ${airlineLoyalty||"none"}${learnedList ? `
+- Brand-to-program mapping: Marriott Bonvoy covers ${(LOYALTY_BRAND_MAP["Marriott Bonvoy"]||[]).join(", ")}. World of Hyatt covers ${(LOYALTY_BRAND_MAP["World of Hyatt"]||[]).join(", ")} — including Small Luxury Hotels (SLH) since 2023. Hilton Honors covers ${(LOYALTY_BRAND_MAP["Hilton Honors"]||[]).join(", ")}. IHG One Rewards covers ${(LOYALTY_BRAND_MAP["IHG One Rewards"]||[]).join(", ")}. Fairmont, Raffles, Rosewood, Four Seasons, Peninsula, Mandarin Oriental, Aman, Belmond, Montage are independent — no major loyalty program points.${learnedList ? `
 - LEARNED FROM PAST TRIPS: ${learnedList}` : ""}
 - Preferred hotel brands: ${brandList}
 
@@ -2693,7 +2695,8 @@ AIRLINE REDEMPTION PARTNERSHIPS — CRITICAL ACCURACY RULES:
 - Southwest Rapid Rewards: Southwest metal only, no partners.
 - JetBlue TrueBlue: JetBlue metal only, limited partners. NOT redeemable with Delta miles.
 - NEVER invent a partnership. If a route has no good redemption option on the stated program, say so and suggest the next best option or a cash alternative.
-- NEVER invent earning bonuses, spending promotions, or route-specific multipliers that aren't real. The only legitimate earning differentiation between routes is (a) higher base fare = more miles on the same multiplier, and (b) confirmed card category bonuses (3x flights, 2x hotels, etc.). Do not claim a specific airport, airline, or route has a "bonus" or "promotion" unless the traveler's profile explicitly includes one.
+- NEVER invent earning bonuses, spending promotions, or route-specific multipliers that aren't real.
+- NEVER suggest a redemption that requires more points than the traveler's stated balance. The traveler's exact balances are in their profile — use them. If their Hyatt balance is 9,800 points, do not suggest a redemption requiring 130,000 points. If the balance is insufficient for a meaningful redemption, say so and suggest a cash option or a different program with sufficient balance instead. This is a hard rule — fabricating a usable balance destroys trust. The only legitimate earning differentiation between routes is (a) higher base fare = more miles on the same multiplier, and (b) confirmed card category bonuses (3x flights, 2x hotels, etc.). Do not claim a specific airport, airline, or route has a "bonus" or "promotion" unless the traveler's profile explicitly includes one.
 - MULTI-LEG CLARITY: when miles cover a connecting itinerary, whyThis must specify "X miles cover both legs roundtrip for 2 travelers" not just total miles used. Never leave ambiguity about whether miles cover one leg or the full trip.
 
 INTELLIGENCE RULES:
@@ -3438,7 +3441,7 @@ Please respond now.`,
             <div style={{ fontSize: "12px", color: "#555" }}>Your travel, optimized.</div>
           </div>
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <button onClick={() => { setShowOptimizeModal(true); fetchOptimizeRecs(); }} title="Optimize your setup" style={{ background: "none", border: "1px solid rgba(201,168,76,0.2)", color: "#C9A84C", padding: "7px 12px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", fontFamily: "serif", letterSpacing: "0.05em" }}>✦ Optimize</button>
+            <button onClick={() => { setShowOptimizeModal(true); fetchOptimizeRecs(); }} title="Optimize your setup" style={{ background: "none", border: "1px solid rgba(201,168,76,0.2)", color: "#C9A84C", padding: "7px 12px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", fontFamily: "serif", letterSpacing: "0.05em" }}>✦ Optimize Your Setup</button>
             <button onClick={() => { mp.track("new_trip_started"); resetApp(); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "#666", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px" }}>New Trip</button>
           </div>
         </div>
