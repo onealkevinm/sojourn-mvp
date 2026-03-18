@@ -1672,6 +1672,12 @@ const CompareView = ({ options, onBack, onSelectOption }) => (
   <GridView options={options} onSelectOption={onSelectOption} />
 );
 
+// Format numbers with commas in AI-generated text strings
+const fmtNums = (str) => {
+  if (!str) return str;
+  return String(str).replace(/(\d{4,})/g, n => parseInt(n).toLocaleString());
+};
+
 const ComponentRow = ({ label, value, detail, points, card }) => {
   const isFlight = label === "Flight" || label === "Return Flight";
   const parts = isFlight ? detail.split(" · ") : [];
@@ -1683,7 +1689,8 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
   // Determine if points field is a redemption or an earning
   const pointsStr = String(points || "");
   const isRedemption = /redeem|redeemed|redemption/i.test(pointsStr);
-  const isEarning = /earn|earning|est\./i.test(pointsStr) && !isRedemption;
+  const isCashback = /cashback|cash back|%\)|1\.5%/i.test(pointsStr);
+  const isEarning = (/earn|earning|est\./.test(pointsStr) || isCashback) && !isRedemption;
 
   // Cash value display
   const cashNum = typeof value === "number" ? value : parseInt(String(value || "0").replace(/[^0-9]/g,"")) || 0;
@@ -1704,7 +1711,7 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
             <div style={{ color: "#4CC97A", fontSize: "11px", marginTop: "2px" }}>{pointsStr}</div>
           )}
           {isEarning && pointsStr && (
-            <div style={{ color: "#7a9e9a", fontSize: "11px", marginTop: "2px" }}>{pointsStr}</div>
+            <div style={{ color: "#7a9e9a", fontSize: "11px", marginTop: "2px" }}>{fmtNums(pointsStr)}</div>
           )}
           {!isRedemption && !isEarning && pointsStr && (
             <div style={{ color: "#4CC97A", fontSize: "11px", marginTop: "2px" }}>{pointsStr}</div>
@@ -1726,7 +1733,7 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
           )}
         </div>
       ) : (
-        <div style={{ color: "#c0b8ae", fontSize: "13px", marginBottom: "6px" }}>{detail}</div>
+        <div style={{ color: "#c0b8ae", fontSize: "13px", marginBottom: "6px" }}>{fmtNums(detail)}</div>
       )}
       {card && (() => {
         // Extract multiplier from card string if present — e.g. "Chase Sapphire Reserve · 3x travel"
@@ -1787,7 +1794,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss }) => {
           {option.whyThis && (
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "20px", marginBottom: "16px" }}>
               <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "8px" }}>Why This Option</div>
-              <div style={{ color: "#b0a898", fontSize: "13px", lineHeight: "1.7" }}>{option.whyThis}</div>
+              <div style={{ color: "#b0a898", fontSize: "13px", lineHeight: "1.7" }}>{fmtNums(option.whyThis)}</div>
             </div>
           )}
           {/* Experiences — dining, activities surfaced in conversation */}
@@ -2756,7 +2763,9 @@ INTELLIGENCE RULES:
 - Flight details format: "AA 123 · SEA→MIA · Departs 7:45am → Arrives 4:02pm · 5h 17m nonstop" — duration MUST always be the last segment so it displays prominently next to flight times
 - Hotel: ALWAYS use a real, specific named property (e.g. "Mokara Hotel & Spa" not "boutique hotel" or "historic inn"). Never invent placeholder names. If you cannot name a real property in the destination, use a nearby city with real inventory.
 - Hotel detail: property name · exact room config matching party size (e.g. "Two adjoining Kings" or "3BR villa sleeps 6") · nights · neighborhood. Never just "suite" — always specify beds and how the party fits.
-- Flight detail field MUST use this EXACT format with · separators and spaces: "[Airline] · [ORIGIN-DEST] [nonstop/1-stop] · [departure time range] · [~Xh duration]" e.g. "Alaska Airlines · SEA-LIH nonstop · morning ~8-10am · ~6h30m" or "Delta · SEA-HNL nonstop · afternoon ~1-3pm · ~5h45m". CRITICAL: always put spaces around the · separator. Never concatenate airline and route without a separator (never "DeltaSEA-HNL"). Departure time should be a realistic range, not a specific invented flight number. The value field (not detail) should be the total cash cost for all tickets: if 2 people × $480/person = $960 total, value = 960. The points field should note ticket count: "2 tickets · est. X miles earned".
+- Flight detail field MUST use this EXACT format with · separators and spaces: "[Airline] · [ORIGIN-DEST] [nonstop/1-stop] · [departure time range] · [~Xh duration]" e.g. "Alaska Airlines · SEA-LIH nonstop · morning ~8-10am · ~6h30m" or "Delta · SEA-HNL nonstop · afternoon ~1-3pm · ~5h45m". CRITICAL: always put spaces around the · separator. Never concatenate airline and route without a separator (never "DeltaSEA-HNL"). Departure time should be a realistic range, not a specific invented flight number.
+- FLIGHT COST RULE: NEVER put $0 on a return flight by claiming the cost is "included in roundtrip." Each leg (Flight and Return Flight) must show its own cash value. For a roundtrip fare of $800 total for 2 people, show Flight value = 400 and Return Flight value = 400 (split evenly). The totalCost must equal the sum of all component values. Never leave Return Flight at $0 unless it is genuinely a free redemption ticket.
+- The points field should note ticket count: "2 tickets · est. X miles earned".
 - Rental car pricing: use realistic market rates. A full-size SUV in Hawaii runs $150-250/day in peak season, $80-150/day off-peak. A standard sedan runs $60-100/day. Never show rental car costs below $40/day — these are not realistic. Total rental cost = daily rate × number of days. Always show both daily rate and total: "$175/day · 5 days · $875 total".
 - Rental car cashback: USAA 1.5% cashback on a $875 rental = $13 — never show cashback exceeding 1.5% of the rental cost. Do not inflate cashback estimates.
 - Small/rural destinations: if the destination has fewer than 6 real bookable hotel options at the requested quality level, expand to the nearest metro area (e.g. Boerne TX → include San Antonio options 30 min away, label them clearly as "San Antonio · 30 min from Boerne"). Never fabricate hotel names.
@@ -2865,7 +2874,9 @@ COMPONENT VALUE RULE — CRITICAL:
 - loyaltyHighlight = a friendly, plain-English reminder of the marginal status perks this traveler unlocks on THIS specific trip. Use the STRUCTURED BENEFITS data injected above — specifically the loyaltyHighlight arrays for each program/tier. Only include benefits that apply every time they use this program at this tier (free breakfast, lounge access tied to status, guaranteed late checkout, upgrade eligibility, free checked bags). Do NOT include annual credits, metered benefits, or anything requiring residual balance knowledge — those go in itinerary reminders, not here. Do NOT repeat points math (covered in components). Keep to 2-4 genuinely relevant perks. Tone: warm, like a knowledgeable friend reminding you of things you might forget to use.
 - cardStrategy = which card to use for each cash-paid component and why, based on the highest earning multiplier for that spend category. Format: "Flights: [card] ([Nx] miles) · Hotel: [card] ([Nx] points) · Dining: [card] ([Nx] points)". Only include components where cash is paid — skip components covered by points redemption. This must reflect the traveler's actual cards and their actual category multipliers. Never invent a multiplier. If two cards tie, pick the one that earns the program with the higher cpp value. CASHBACK CARDS: cash back is certain and immediate; points/miles have future redemption risk. For spend categories where no card has a NATIVE bonus multiplier (i.e. a hotel that doesn't match any card's bonus category), prefer the cashback card over a 1x points card — 1.5% certain cash beats 1x miles at an estimated future cpp. Only route to a points card over cashback if the points card has a genuine category bonus (2x or higher) on that spend type.
 - whyThis = frame cash figures consistently with what the card shows — if flights are $0 out of pocket, say "flights covered by your miles" not "flights cost $X"
-- pointsEarned (top-level) = earning side ONLY — points this trip generates on cash-paid components. CRITICAL: if a component is covered by a redemption, it earns NO points — do NOT include that program in pointsEarned. Example: if Delta miles cover flights, do NOT include "Delta miles earned" in pointsEarned. Only include programs earned on cash-paid components (e.g. hotel cash spend earns Bonvoy, ground spend earns card points).
+- pointsEarned (top-level) = earning side ONLY — points/miles/cashback this trip generates on cash-paid components. CRITICAL: if a component is covered by a redemption, it earns NO points — do NOT include that program in pointsEarned. Example: if Delta miles cover flights, do NOT include "Delta miles earned" in pointsEarned. Only include programs earned on cash-paid components.
+- CASHBACK vs POINTS FORMATTING: USAA Preferred Cash Rewards earns CASH BACK, not points. Always format as "$X cashback" never as "X points" or "X USAA points". In pointsEarned field: "est. 3,200 Delta miles + $48 cashback" — the cashback is a dollar amount with $ sign, not a point count. In component points field: "est. $18 cashback (1.5%)" — always include % rate and $ sign.
+- SUMMARY CONSISTENCY: the top-level pointsEarned string must exactly match the sum of all component earning fields. If components show "est. 2,670 Delta miles" on flights and "est. $27 cashback" on hotel, pointsEarned must show "est. 2,670 Delta miles + $27 cashback" — not just "via USAA" or a different number. Never attribute flight mile earning to USAA — Delta miles come from the Delta Reserve card, cashback comes from USAA, and these are distinct programs that must be listed separately.
 - pointsValue (top-level) = estimated dollar value of points EARNED only (not redeemed). If no cash components earn meaningful points, pointsValue = 0 and pointsEarned = "".
 - netValue = totalCost - pointsValue
 - redemptions (top-level array) = list each redemption applied: [{"program": "Delta SkyMiles", "pointsUsed": 50000, "dollarsValue": 700, "centsPerPoint": 1.4, "component": "Flights"}]. One entry per redeemed program. Leave as [] if no redemptions.
@@ -3237,6 +3248,7 @@ JSON SCHEMA — you MUST use exactly these field names or cards will not display
 NEVER use: results, cards, tripOptions, color, title, property, priceStructure — these will break the display.
 
 CARD QUALITY RULES (when generating new cards):
+- NUMBER FORMATTING: all numbers of 1,000 or more must use comma separators in ALL text fields — pointsEarned, whyThis, detail, tradeoff, loyaltyHighlight, cardStrategy. Examples: "3,200 Delta miles" not "3200 Delta miles", "$1,315" not "$1315", "26,000 Hyatt points" not "26000 Hyatt points", "$2,890" not "$2890". This applies to every number in every field without exception.
 - Go deeper, not wider. For any given destination or region, surface the most interesting and fitting properties within that geography before reaching to neighboring regions. A lesser-known gem within the stated area is always preferable to a well-known property just outside it. The Idaho Rocky Mountain Ranch in the Sawtooths is a better Idaho answer than Jackson Hole — even if Jackson Hole is more famous. Depth of knowledge within the query's geography signals intelligence. Breadth across neighboring geographies signals laziness.
 - Each option must be genuinely distinct with a clear optimization angle
 - whyThis: 2-3 sentences, specific to THIS traveler's loyalty status and THIS trip. For earning-intent queries: show points earned per component (e.g. "3x flights via Delta Reserve = 2,670 miles · Bonvoy Silver earns 4,240 points at St. Regis"), then ONE total estimated value line at the end ("Total est. earning: ~10,000 points worth ~$150"). Do NOT show $ value per individual component — only a single total at the end. Keep the closing sentence focused on the qualitative experience/location fit, not more math.
