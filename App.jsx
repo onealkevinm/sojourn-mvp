@@ -3851,14 +3851,28 @@ Please respond now.`,
         const allPrompts = [];
         loyaltyPills.slice(0, 2).forEach(p => allPrompts.push(p.text));
 
-        // Fill remaining slots with inspirational prompts
-        const inspirational = [
+        // Fill remaining slots with inspirational prompts — mix trip planning and on-trip discovery
+        // Rotate between trip planning and on-trip pills each session
+        const onTripPills = [
+          "I'm on my business trip in Austin — any must-try BBQ while I'm here?",
+          "I'm in NYC for the weekend — what neighborhoods should I explore today?",
+          "Just landed in Tokyo — what should I do on my first evening?",
+          "I'm in New Orleans — where do locals actually eat?",
+          "On a layover in London — what can I do in 4 hours near Heathrow?",
+          "I'm in Miami for a conference — any great Cuban food nearby?",
+          "In San Francisco this week — best spots for a casual dinner alone?",
+        ];
+        const tripPills = [
           `Best long weekend from ${airportCity} I haven't thought of yet`,
           `I need a reset. Somewhere warm, late April — surprise me.`,
           "Anniversary trip — somewhere unforgettable, open budget",
           "First time in Japan — 10 days, two adults, where to start?",
           "Plan a trip that makes the most of my points and credit cards",
         ];
+        // Alternate: every other hour show an on-trip pill as the last inspirational slot
+        const hourSeed = Math.floor(Date.now() / 3600000) % 3;
+        const inspirational = [...tripPills];
+        if (hourSeed === 0) inspirational[4] = onTripPills[Math.floor(Date.now() / 86400000) % onTripPills.length];
         inspirational.forEach(p => { if (allPrompts.length < 5) allPrompts.push(p); });
 
         // Trim to 5
