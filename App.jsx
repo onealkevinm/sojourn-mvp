@@ -3873,40 +3873,47 @@ Please respond now.`,
                 const focusingOnOption = refineMessages.length > 2 && /i like|leaning toward|going with|prefer the|love the/i.test(conversationText);
                 const hasConversation = refineMessages.length > 0;
 
-                // ── Dynamic pill pool — exclude already-asked topics ──
+                // ── Closing-oriented pills — resolve concerns, confirm preferences, move toward yes ──
+                // Each pill answers a likely remaining question rather than opening new topics
+                const recName = rec ? rec.headline?.split(" · ")[1] || "Recommended" : "Recommended";
+                const upgradeName = upgrade ? upgrade.headline?.split(" · ")[1] || "Quality Upgrade" : null;
+
                 const pill1Candidates = [
-                  !askedAboutEarning && isEarningIntent ? "How do the earning rates compare across these options?" : null,
-                  !askedAboutValue && isRedemptionIntent ? "Which option gives me the best value per mile?" : null,
-                  isOccasion ? "Which of these feels most special for the occasion?" : null,
-                  !askedAboutVibe && isDestinationUncertain ? "What else fits this vibe?" : null,
-                  !askedAboutVibe && wildCard ? "What else fits the spirit of the Wild Card option?" : null,
-                  focusingOnOption ? "Walk me through booking this — what do I need to know?" : null,
-                  hasConversation && !askedAboutVibe ? "What makes each of these options distinct from each other?" : null,
-                  "What would you most recommend for someone with my travel style?",
+                  // Resolve the primary decision concern based on query type
+                  focusingOnOption ? "Is there anything about this option I should know before booking?" : null,
+                  !askedAboutEarning && isEarningIntent ? "Which option actually builds the most points for this trip?" : null,
+                  !askedAboutValue && isRedemptionIntent ? "Which redemption gives me the most value for my miles?" : null,
+                  isOccasion ? `What makes the ${recName} the right choice for this occasion?` : null,
+                  !askedAboutVibe && isDestinationUncertain ? "Which of these would I actually regret not choosing?" : null,
+                  hasConversation ? `What's the strongest case for the ${recName} option?` : null,
+                  wildCard ? "What makes the Wild Card worth considering over the Recommended?" : null,
+                  "Which of these would you book if it were your trip?",
                 ].filter(Boolean);
 
                 const pill2Candidates = [
-                  isEarningIntent && !askedAboutFlights ? "Which option has the best business amenities?" : null,
-                  !askedAboutFlights ? "How do the flight times compare across these?" : null,
-                  !askedAboutUpgrade && upgrade ? "What does the Quality Upgrade option actually add?" : null,
-                  focusingOnOption ? "What's the neighborhood like — is location a tradeoff?" : null,
-                  askedAboutFlights ? "Any tips on getting an upgrade or better seat on these flights?" : null,
-                  "What's the easiest option to book with my points?",
+                  // Resolve a likely logistical concern
+                  focusingOnOption ? "What's the one tradeoff I should accept going in?" : null,
+                  !askedAboutUpgrade && upgrade ? `Is the ${upgradeName || "Quality Upgrade"} worth the price difference?` : null,
+                  isEarningIntent && !askedAboutFlights ? "Which option has the best setup for back-to-back meetings?" : null,
+                  !askedAboutFlights ? "Are the flight times reasonable or is there a better routing?" : null,
+                  askedAboutFlights ? "Is the hotel location actually convenient for what I need?" : null,
+                  "What's the easiest of these to book with my programs?",
                 ].filter(Boolean);
 
                 const pill3Candidates = [
-                  !askedAboutDining && isEarningIntent ? "Any good dinner spots near the Recommended option?" : null,
-                  !askedAboutDining && isOccasion ? "What would make the Recommended option more memorable?" : null,
-                  !askedAboutDining && rec ? "Any standout restaurants near the Recommended option?" : null,
-                  askedAboutDining ? "Any activities or day trips worth adding?" : null,
+                  // Move toward commitment — add an experience or confirm readiness
                   focusingOnOption ? "Add a dinner recommendation to my itinerary" : null,
-                  "What do most people get wrong about this destination?",
+                  !askedAboutDining && rec ? `Any restaurants near the ${recName} worth adding?` : null,
+                  !askedAboutDining && isOccasion ? "What experience would make this trip truly memorable?" : null,
+                  askedAboutDining ? "I'm ready — walk me through this option" : null,
+                  hasConversation ? "I think I've got what I need — let's go with this one" : null,
+                  "Add a must-try local experience to my itinerary",
                 ].filter(Boolean);
 
                 const pills = [
-                  pill1Candidates[0] || "What would you most recommend for someone with my travel style?",
-                  pill2Candidates[0] || "What's the easiest option to book with my points?",
-                  pill3Candidates[0] || "Any activities or day trips worth adding?",
+                  pill1Candidates[0] || "Which of these would you book if it were your trip?",
+                  pill2Candidates[0] || "What's the easiest of these to book with my programs?",
+                  pill3Candidates[0] || "I'm ready — walk me through this option",
                 ];
 
                 return (
