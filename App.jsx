@@ -3848,61 +3848,66 @@ Please respond now.`,
                 <span style={{ color: "#3a3530", fontSize: "12px", margin: "0 6px" }}>—</span>
                 <span style={{ color: "#4a4540", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }}>explore dining, drinks, and activities; clarify details or adjust the plan. Your options update as you go.</span>
               </div>
-              {/* Context-aware suggestion pills */}
+              {/* Context-aware suggestion pills — regenerate based on conversation state */}
               {(() => {
                 const opts = (tripOptions || []).filter(o => !dismissedIds.includes(o.id));
                 const rec = opts.find(o => o.id === 1);
                 const wildCard = opts.find(o => o.tag === "Wild Card");
                 const upgrade = opts.find(o => o.tag === "Quality Upgrade");
-                const redemptionOpt = opts.find(o => o.tag === "Best Points Redemption" || o.tag === "Redemption Opportunity");
-                const futureValue = opts.find(o => o.tag === "Future Value");
 
                 // Detect query intent from original message
                 const originalQuery = (conversationRef.current && conversationRef.current[0] && conversationRef.current[0].content || "").toLowerCase();
                 const isEarningIntent = /business.?trip|work.?trip|maximize.?point|build.?mile|build.?point|earn.?status|rack.?up|maximize.?earn/i.test(originalQuery);
                 const isRedemptionIntent = /i have \d|use my miles|redeem|burn my|best use of my/i.test(originalQuery);
                 const isDestinationUncertain = /surprise me|open to|anywhere|somewhere warm|somewhere|don.t know|not sure|ideas/i.test(originalQuery);
-                const isSpecificDestination = !isDestinationUncertain && originalQuery.length > 10;
                 const isOccasion = /anniversary|birthday|honeymoon|proposal|celebration|bachelor|bachelorette/i.test(originalQuery);
 
-                const pills = [];
+                // Build conversation history string to detect what's already been covered
+                const conversationText = refineMessages.map(m => m.text || "").join(" ").toLowerCase();
+                const askedAboutEarning = /earning rate|earn.*compare|how.*earn|miles.*compare/i.test(conversationText);
+                const askedAboutFlights = /flight time|depart|arrival|nonstop|connection/i.test(conversationText);
+                const askedAboutDining = /restaurant|dinner|lunch|eat|food|bbq|bar/i.test(conversationText);
+                const askedAboutUpgrade = /upgrade.*add|quality upgrade|suite|premium/i.test(conversationText);
+                const askedAboutValue = /value per mile|best.*mile|cpp|cents per/i.test(conversationText);
+                const askedAboutVibe = /vibe|spirit|feel|character|different from each/i.test(conversationText);
+                const focusingOnOption = refineMessages.length > 2 && /i like|leaning toward|going with|prefer the|love the/i.test(conversationText);
+                const hasConversation = refineMessages.length > 0;
 
-                // ── Pill 1: Query-intent pill ──
-                if (isEarningIntent) {
-                  pills.push("How do the earning rates compare across these options?");
-                } else if (isRedemptionIntent) {
-                  pills.push("Which option gives me the best value per mile?");
-                } else if (isOccasion) {
-                  pills.push("Which of these feels most special for the occasion?");
-                } else if (isDestinationUncertain) {
-                  pills.push("What else fits this vibe?");
-                } else if (wildCard) {
-                  pills.push("What else fits the spirit of the Wild Card option?");
-                } else {
-                  pills.push("What makes each of these options different from each other?");
-                }
+                // ── Dynamic pill pool — exclude already-asked topics ──
+                const pill1Candidates = [
+                  !askedAboutEarning && isEarningIntent ? "How do the earning rates compare across these options?" : null,
+                  !askedAboutValue && isRedemptionIntent ? "Which option gives me the best value per mile?" : null,
+                  isOccasion ? "Which of these feels most special for the occasion?" : null,
+                  !askedAboutVibe && isDestinationUncertain ? "What else fits this vibe?" : null,
+                  !askedAboutVibe && wildCard ? "What else fits the spirit of the Wild Card option?" : null,
+                  focusingOnOption ? "Walk me through booking this — what do I need to know?" : null,
+                  hasConversation && !askedAboutVibe ? "What makes each of these options distinct from each other?" : null,
+                  "What would you most recommend for someone with my travel style?",
+                ].filter(Boolean);
 
-                // ── Pill 2: Logistics ──
-                if (isEarningIntent) {
-                  pills.push("Which option has the best business amenities?");
-                } else if (opts.length > 2) {
-                  pills.push("How do the flight times compare across these?");
-                } else if (upgrade) {
-                  pills.push("What does the upgrade option actually add over the Recommended?");
-                } else {
-                  pills.push("How do the flight times compare across these?");
-                }
+                const pill2Candidates = [
+                  isEarningIntent && !askedAboutFlights ? "Which option has the best business amenities?" : null,
+                  !askedAboutFlights ? "How do the flight times compare across these?" : null,
+                  !askedAboutUpgrade && upgrade ? "What does the Quality Upgrade option actually add?" : null,
+                  focusingOnOption ? "What's the neighborhood like — is location a tradeoff?" : null,
+                  askedAboutFlights ? "Any tips on getting an upgrade or better seat on these flights?" : null,
+                  "What's the easiest option to book with my points?",
+                ].filter(Boolean);
 
-                // ── Pill 3: Experience ──
-                if (isEarningIntent) {
-                  pills.push("Any good dinner spots near the Recommended option?");
-                } else if (isOccasion) {
-                  pills.push("What would make the Recommended option more memorable?");
-                } else if (rec) {
-                  pills.push("Any standout restaurants near the Recommended option?");
-                } else {
-                  pills.push("What would make any of these feel more special?");
-                }
+                const pill3Candidates = [
+                  !askedAboutDining && isEarningIntent ? "Any good dinner spots near the Recommended option?" : null,
+                  !askedAboutDining && isOccasion ? "What would make the Recommended option more memorable?" : null,
+                  !askedAboutDining && rec ? "Any standout restaurants near the Recommended option?" : null,
+                  askedAboutDining ? "Any activities or day trips worth adding?" : null,
+                  focusingOnOption ? "Add a dinner recommendation to my itinerary" : null,
+                  "What do most people get wrong about this destination?",
+                ].filter(Boolean);
+
+                const pills = [
+                  pill1Candidates[0] || "What would you most recommend for someone with my travel style?",
+                  pill2Candidates[0] || "What's the easiest option to book with my points?",
+                  pill3Candidates[0] || "Any activities or day trips worth adding?",
+                ];
 
                 return (
                   <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
@@ -4007,16 +4012,28 @@ Please respond now.`,
         });
 
         // Rotate starting program each session (hotel-first vs airline-first)
-        const sessionSeed = Math.floor(Date.now() / 3600000) % 2; // changes each hour
-        if (sessionSeed === 1) loyaltyPills.reverse();
-
-        // Build final 5 prompts: up to 2 loyalty pills, then static inspirational
-        const allPrompts = [];
-        loyaltyPills.slice(0, 2).forEach(p => allPrompts.push(p.text));
-
-        // Fill remaining slots with inspirational prompts — mix trip planning and on-trip discovery
-        // Rotate between trip planning and on-trip pills each session
-        const onTripPills = [
+        // ── Queue-rotation pill system ──────────────────────────────────────────
+        // Full pool of inspirational pills — mix of trip planning and on-trip discovery
+        // Rotates by 1 each session using a persisted index in localStorage
+        // so the user never sees the same set twice in a row
+        const PILL_POOL = [
+          // Trip planning
+          `Best long weekend from ${airportCity} I haven't thought of yet`,
+          `I need a reset. Somewhere warm, late April — surprise me.`,
+          "Anniversary trip — somewhere unforgettable, open budget",
+          "First time in Japan — 10 days, two adults, where to start?",
+          "Plan a trip that makes the most of my points and credit cards",
+          "A week in Italy — where beyond Rome and Florence?",
+          "Best beach within 6 hours of Seattle for early June",
+          "Safari trip — where to start and how to use points well",
+          "Long weekend ski trip — best mountains for spring snow",
+          "Family trip with kids under 10 — somewhere that works for everyone",
+          "Solo trip — somewhere I can explore freely and meet people",
+          "Road trip through the American West — 10 days, two people",
+          "Where would my Hyatt points go furthest right now?",
+          "A city I've never been to that would genuinely surprise me",
+          "Best use of my Alaska miles for a long weekend",
+          // On-trip discovery
           "I'm on my business trip in Austin — any must-try BBQ while I'm here?",
           "I'm in NYC for the weekend — what neighborhoods should I explore today?",
           "Just landed in Tokyo — what should I do on my first evening?",
@@ -4024,19 +4041,28 @@ Please respond now.`,
           "On a layover in London — what can I do in 4 hours near Heathrow?",
           "I'm in Miami for a conference — any great Cuban food nearby?",
           "In San Francisco this week — best spots for a casual dinner alone?",
+          "Visiting Portland OR — what's worth doing beyond Powell's and Voodoo Doughnut?",
+          "I'm in Chicago — best deep dish and jazz in the same neighborhood?",
+          "In Nashville for work — where do locals go for live music?",
         ];
-        const tripPills = [
-          `Best long weekend from ${airportCity} I haven't thought of yet`,
-          `I need a reset. Somewhere warm, late April — surprise me.`,
-          "Anniversary trip — somewhere unforgettable, open budget",
-          "First time in Japan — 10 days, two adults, where to start?",
-          "Plan a trip that makes the most of my points and credit cards",
-        ];
-        // Alternate: every other hour show an on-trip pill as the last inspirational slot
-        const hourSeed = Math.floor(Date.now() / 3600000) % 3;
-        const inspirational = [...tripPills];
-        if (hourSeed === 0) inspirational[4] = onTripPills[Math.floor(Date.now() / 86400000) % onTripPills.length];
-        inspirational.forEach(p => { if (allPrompts.length < 5) allPrompts.push(p); });
+
+        // Get rotation index from localStorage — increments each homepage visit
+        let pillIdx = 0;
+        try {
+          pillIdx = parseInt(localStorage.getItem("sojourn_pill_idx") || "0");
+          localStorage.setItem("sojourn_pill_idx", String((pillIdx + 1) % PILL_POOL.length));
+        } catch(e) {}
+
+        // Build final 5 prompts: up to 2 loyalty pills + 3 from rotating pool
+        const allPrompts = [];
+        // Alternate loyalty pill order each session
+        if (pillIdx % 2 === 1) loyaltyPills.reverse();
+        loyaltyPills.slice(0, 2).forEach(p => allPrompts.push(p.text));
+
+        // Pull 3 consecutive pills from the pool starting at current index
+        for (let i = 0; i < 3; i++) {
+          allPrompts.push(PILL_POOL[(pillIdx + i) % PILL_POOL.length]);
+        }
 
         // Trim to 5
         const finalPrompts = allPrompts.slice(0, 5);
