@@ -1193,10 +1193,12 @@ const RESTAURANT_SIGNALS_DB = {
 
     // ── Seafood ──
     seafood: [
-      { name: "The Walrus and the Carpenter", signals: ["eater_38", "james_beard"], axis: ["local_authority", "culinary_prestige"], notes: "Renee Erickson's Ballard oyster bar, the definitive Seattle seafood experience, always packed" },
-      { name: "Local Tide", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Creative seafood, Capitol Hill, inventive preparations beyond the standard fish house" },
+      { name: "The Walrus and the Carpenter", signals: ["eater_38", "james_beard"], axis: ["local_authority", "culinary_prestige"], notes: "Renee Erickson's Ballard oyster bar, the definitive Seattle seafood experience, always packed — no water view but the best seafood in the city" },
+      { name: "Ray's Boathouse", signals: ["local_knowledge"], axis: ["local_authority", "trusted_authority"], notes: "Ballard, Puget Sound views and ship canal, one of Seattle's most beloved seafood restaurants for decades — upstairs cafe is casual with same views at lower price, downstairs is more formal. Best Seattle combination of quality seafood and genuine water views." },
+      { name: "Local Tide", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Creative seafood, Capitol Hill, inventive preparations beyond the standard fish house — no view, neighborhood spot" },
       { name: "The Boat", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Korean-inflected seafood, SoDo, underrated and excellent" },
       { name: "Good Voyage", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Southeast Asian seafood influences, one of Seattle's most creative new spots" },
+      { name: "Ivar's Salmon House", signals: ["local_knowledge"], axis: ["local_authority", "populist"], notes: "Lake Union waterfront, genuine views, alder-smoked salmon, Native American longhouse architecture — more authentic and locally beloved than the tourist-facing Ivar's on the waterfront. Good casual option with a real sense of place." },
     ],
 
     // ── Asian / Pacific Rim ──
@@ -3704,6 +3706,7 @@ YOU HAVE TWO MODES:
 MODE 1 — LOCAL DISCOVERY (respond conversationally, no cards needed):
 Use this when the user is already on a trip or asking about a specific place without trip planning intent. Triggers: "I'm in [city]", "I'm visiting", "already here", "what should I do in", "recommend a restaurant", "good bbq in", "things to do in [city]", "where should I eat". Respond like a knowledgeable local friend — specific recommendations with brief context, warm tone. No READY needed, no cards generated. Just answer helpfully and directly.
 PRICE TRANSPARENCY: when recommending a fine dining or special occasion restaurant ($100+/person), always briefly signal this — e.g. "splurge-worthy", "special occasion territory", "$150+/person" — so the traveler isn't surprised. Don't lead with high-end options unless the traveler has signaled they want that. Mix price points naturally unless asked for a specific tier.
+AVOID TOURIST TRAPS: never default to obvious tourist-facing restaurants simply because they are well-known or have a view. In Seattle: avoid Ivar's Acres of Clams (waterfront tourist trap), The Crab Pot (gimmick over quality), Elliot's Oyster House (tourist-facing). In San Francisco: avoid Fisherman's Wharf restaurants. In New Orleans: avoid Bourbon Street restaurants. Prefer locally-beloved spots that happen to have views over tourist-facing spots that lead with their view. If the traveler asks specifically for a view, note which options have views AND are genuinely good — don't sacrifice quality for scenery.
 
 LOCAL DISCOVERY DATA — use this verified restaurant and experience data when available, prioritizing it over training knowledge:
 ${(() => { try {
