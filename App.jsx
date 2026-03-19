@@ -798,7 +798,9 @@ const CAR_BENEFITS_DB = {
 
 const getTierBenefits = (program, tier, db) => {
   if (!db[program] || !db[program].tiers) return null;
-  return db[program].tiers[tier] || db[program].tiers["None"] || null;
+  // "Member" is a default placeholder — treat as "None" for benefits lookup
+  const lookupTier = (tier === "Member" || !tier) ? "None" : tier;
+  return db[program].tiers[lookupTier] || db[program].tiers["None"] || null;
 };
 
 const getHotelTierBenefits = (program, tier) => getTierBenefits(program, tier, HOTEL_BENEFITS_DB);
@@ -1033,6 +1035,139 @@ const getSignupLink = (title) => {
   return key ? SIGNUP_LINKS[key] : null;
 };
 
+
+// ─── QUALITY SIGNALS DATABASE ─────────────────────────────────────────────────
+// Structured quality tier data for properties frequently surfaced in Sojourn queries
+// Branches: tier (ultra_luxury/luxury/premium/upper_midscale/select)
+//           quality markers: michelin_keys, michelin_stars (restaurant), forbes_stars,
+//                            relais_chateaux, tl_gold, cn_hot_list, design_hotels
+// Update cadence: annually, aligned with T&L Gold List and Condé Nast Hot List publications
+// Last updated: March 2026
+// ─────────────────────────────────────────────────────────────────────────────
+
+const QUALITY_SIGNALS_DB = {
+
+  // ── ULTRA LUXURY ─────────────────────────────────────────────────────────────
+  "Post Ranch Inn": { tier: "ultra_luxury", michelin_keys: 3, tl_gold: true, cn_hot_list: true, notes: "Big Sur cliffside, adults only, independent" },
+  "Ventana Big Sur": { tier: "ultra_luxury", michelin_keys: 3, alila: true, tl_gold: true, notes: "Alila/Hyatt, adults only, Big Sur" },
+  "Amanyara": { tier: "ultra_luxury", aman: true, tl_gold: true, notes: "Turks & Caicos, independent" },
+  "Amanjiwo": { tier: "ultra_luxury", aman: true, tl_gold: true, notes: "Borobudur Indonesia, independent" },
+  "Amangiri": { tier: "ultra_luxury", aman: true, tl_gold: true, cn_hot_list: true, notes: "Utah desert, independent" },
+  "Aman Tokyo": { tier: "ultra_luxury", aman: true, tl_gold: true, notes: "Tokyo, independent" },
+  "Four Seasons Hualalai": { tier: "ultra_luxury", forbes_stars: 5, tl_gold: true, notes: "Big Island Hawaii, independent" },
+  "Four Seasons Bora Bora": { tier: "ultra_luxury", forbes_stars: 5, tl_gold: true, notes: "French Polynesia, independent" },
+  "Four Seasons George V": { tier: "ultra_luxury", forbes_stars: 5, michelin_stars: 2, tl_gold: true, notes: "Paris, independent" },
+  "Rosewood Mayakoba": { tier: "ultra_luxury", forbes_stars: 5, tl_gold: true, notes: "Riviera Maya, independent" },
+  "Rosewood Turtle Creek": { tier: "ultra_luxury", forbes_stars: 5, notes: "Dallas, independent" },
+  "Belmond Hotel Cipriani": { tier: "ultra_luxury", tl_gold: true, notes: "Venice, Belmond" },
+  "Belmond La Residencia": { tier: "ultra_luxury", tl_gold: true, notes: "Mallorca, Belmond" },
+  "Sandy Lane": { tier: "ultra_luxury", forbes_stars: 5, tl_gold: true, notes: "Barbados, independent" },
+  "Eden Rock St Barths": { tier: "ultra_luxury", tl_gold: true, notes: "St. Barths, independent" },
+  "Jade Mountain": { tier: "ultra_luxury", tl_gold: true, notes: "St. Lucia, independent" },
+  "Blackberry Farm": { tier: "ultra_luxury", relais_chateaux: true, forbes_stars: 5, tl_gold: true, notes: "Tennessee, independent" },
+  "Brush Creek Ranch": { tier: "ultra_luxury", relais_chateaux: true, notes: "Wyoming, independent" },
+
+  // ── LUXURY ───────────────────────────────────────────────────────────────────
+  "L'Auberge Carmel": { tier: "luxury", relais_chateaux: true, michelin_stars: 1, notes: "Carmel village, no AC, Aubergine restaurant" },
+  "Bernardus Lodge": { tier: "luxury", relais_chateaux: true, notes: "Carmel Valley, wine country feel" },
+  "Inn at Little Washington": { tier: "luxury", relais_chateaux: true, michelin_keys: 3, michelin_stars: 3, notes: "Washington VA, Patrick O'Connell" },
+  "Blackberry Mountain": { tier: "luxury", relais_chateaux: true, tl_gold: true, notes: "Tennessee, adults only, sister to Blackberry Farm" },
+  "Idaho Rocky Mountain Ranch": { tier: "luxury", relais_chateaux: true, notes: "Sawtooth Valley Idaho, historic guest ranch" },
+  "Dunton Hot Springs": { tier: "luxury", relais_chateaux: true, notes: "Colorado ghost town resort" },
+  "Brush Creek Ranch": { tier: "luxury", relais_chateaux: true, notes: "Saratoga Wyoming" },
+  "Auberge du Soleil": { tier: "luxury", cn_hot_list: true, tl_gold: true, notes: "Napa Valley — NOT Carmel, Auberge Resorts" },
+  "Calistoga Ranch": { tier: "luxury", auberge: true, notes: "Napa Valley, Auberge Resorts/Hyatt" },
+  "Chileno Bay Resort": { tier: "luxury", auberge: true, notes: "Los Cabos, Auberge Resorts" },
+  "Hotel Jerome": { tier: "luxury", auberge: true, tl_gold: true, notes: "Aspen, Auberge Resorts" },
+  "Esperanza": { tier: "luxury", auberge: true, notes: "Los Cabos, Auberge Resorts" },
+  "Meadowood Napa": { tier: "luxury", relais_chateaux: true, notes: "Napa Valley, Relais & Châteaux" },
+  "Trout Point Lodge": { tier: "luxury", relais_chateaux: true, notes: "Nova Scotia, wilderness luxury" },
+  "Cheval Blanc St-Barth": { tier: "luxury", tl_gold: true, notes: "St. Barths, LVMH" },
+  "Montage Deer Valley": { tier: "luxury", forbes_stars: 5, notes: "Park City Utah, Montage Hotels" },
+  "Montage Laguna Beach": { tier: "luxury", forbes_stars: 5, tl_gold: true, notes: "Laguna Beach CA, Montage Hotels" },
+  "Montage Healdsburg": { tier: "luxury", tl_gold: true, cn_hot_list: true, notes: "Sonoma wine country, Montage Hotels" },
+  "Carmel Valley Ranch": { tier: "luxury", notes: "Hyatt, Carmel Valley CA" },
+  "Travaasa Hana": { tier: "luxury", tl_gold: true, notes: "Maui Road to Hana, independent" },
+  "Mauna Kea Beach Hotel": { tier: "luxury", tl_gold: true, notes: "Big Island Hawaii, classic 1965, independent" },
+  "Four Seasons Maui at Wailea": { tier: "luxury", forbes_stars: 5, tl_gold: true, notes: "Maui Wailea, independent" },
+  "Grand Hyatt Kauai": { tier: "luxury", notes: "Poipu Kauai, World of Hyatt" },
+  "Park Hyatt Maldives": { tier: "luxury", tl_gold: true, notes: "Maldives, World of Hyatt" },
+  "Park Hyatt Sydney": { tier: "luxury", forbes_stars: 5, notes: "Sydney Harbour, World of Hyatt" },
+  "Park Hyatt Tokyo": { tier: "luxury", tl_gold: true, notes: "Shinjuku Tokyo, World of Hyatt" },
+  "Park Hyatt Paris Vendome": { tier: "luxury", forbes_stars: 5, notes: "Paris 1st, World of Hyatt" },
+  "Andaz Maui at Wailea": { tier: "luxury", cn_hot_list: true, notes: "Maui Wailea, World of Hyatt" },
+  "Andaz Mayakoba": { tier: "luxury", notes: "Riviera Maya, World of Hyatt" },
+  "Thompson Nashville": { tier: "luxury", cn_hot_list: true, notes: "Nashville, World of Hyatt" },
+  "Thompson Washington DC": { tier: "luxury", notes: "Navy Yard DC, World of Hyatt" },
+  "Alila Ventana Big Sur": { tier: "ultra_luxury", michelin_keys: 3, notes: "See Ventana Big Sur" },
+  "Alila Marea Beach": { tier: "luxury", cn_hot_list: true, notes: "Encinitas CA, World of Hyatt" },
+  "Hotel Jackson": { tier: "luxury", notes: "Jackson WY, Autograph Collection/Marriott" },
+  "Hotel 43": { tier: "luxury", notes: "Boise ID, Autograph Collection/Marriott" },
+  "Shore Lodge": { tier: "luxury", tl_gold: true, notes: "McCall ID, independent, Payette Lake" },
+  "Coeur d'Alene Resort": { tier: "luxury", notes: "Lake CDA Idaho, independent, floating golf green" },
+  "Kahala Hotel": { tier: "luxury", tl_gold: true, notes: "Honolulu southeast shore, independent, dolphin lagoon" },
+  "Turtle Bay Resort": { tier: "premium", notes: "North Shore Oahu, independent surf culture" },
+  "Lodge at Whitefish Lake": { tier: "luxury", notes: "Whitefish MT, independent, lakefront" },
+  "St. Regis Aspen": { tier: "luxury", forbes_stars: 5, notes: "Aspen CO, Marriott Bonvoy" },
+  "St. Regis San Francisco": { tier: "luxury", forbes_stars: 5, notes: "SF Union Square, Marriott Bonvoy" },
+  "St. Regis Washington DC": { tier: "luxury", forbes_stars: 5, notes: "K Street DC, Marriott Bonvoy" },
+  "St. Regis New York": { tier: "luxury", forbes_stars: 5, notes: "Midtown NYC, Marriott Bonvoy" },
+  "Ritz-Carlton Georgetown": { tier: "luxury", notes: "Washington DC, Marriott Bonvoy" },
+  "Ritz-Carlton Half Moon Bay": { tier: "luxury", notes: "CA coast, Marriott Bonvoy" },
+  "Ritz-Carlton Kapalua": { tier: "luxury", notes: "Maui, Marriott Bonvoy" },
+  "Waldorf Astoria Beverly Hills": { tier: "luxury", forbes_stars: 5, notes: "Beverly Hills, Hilton Honors" },
+  "Waldorf Astoria Chicago": { tier: "luxury", notes: "Gold Coast Chicago, Hilton Honors" },
+  "Conrad New York Downtown": { tier: "luxury", notes: "Battery Park NYC, Hilton Honors" },
+  "Intercontinental Mark Hopkins": { tier: "luxury", notes: "Nob Hill SF, IHG" },
+  "Intercontinental Chicago": { tier: "luxury", notes: "Magnificent Mile, IHG" },
+  "Kimpton Cottonwood": { tier: "premium", cn_hot_list: true, notes: "Boise ID, IHG/Kimpton" },
+
+  // ── PREMIUM BRANDED ───────────────────────────────────────────────────────────
+  "Grand Hyatt Washington": { tier: "premium", notes: "Downtown DC, World of Hyatt" },
+  "Hyatt Regency Maui": { tier: "premium", notes: "Ka'anapali Maui, World of Hyatt" },
+  "Hyatt Regency Kauai": { tier: "premium", notes: "Poipu Kauai, World of Hyatt" },
+  "Hyatt Regency Jeju": { tier: "premium", notes: "Jeju Island Korea, World of Hyatt" },
+  "Park Hyatt Washington": { tier: "luxury", notes: "West End DC, Blue Duck Tavern, World of Hyatt" },
+  "Marriott Marquis San Francisco": { tier: "premium", notes: "Union Square SF, Marriott Bonvoy" },
+  "Marriott Waterfront Seattle": { tier: "premium", notes: "Pike Place area, Marriott Bonvoy" },
+  "JW Marriott Austin": { tier: "premium", notes: "Downtown Austin, Marriott Bonvoy" },
+  "Omni Barton Creek": { tier: "premium", notes: "Austin TX, independent, Hill Country" },
+  "Omni Amelia Island": { tier: "premium", notes: "Amelia Island FL, independent" },
+
+};
+
+// Get quality tier for a property — try exact match then partial
+const getQualitySignal = (propertyName) => {
+  if (!propertyName) return null;
+  const name = propertyName.trim();
+  if (QUALITY_SIGNALS_DB[name]) return QUALITY_SIGNALS_DB[name];
+  // Partial match
+  const key = Object.keys(QUALITY_SIGNALS_DB).find(k =>
+    name.toLowerCase().includes(k.toLowerCase()) ||
+    k.toLowerCase().includes(name.toLowerCase().split(' ').slice(0,2).join(' ').toLowerCase())
+  );
+  return key ? QUALITY_SIGNALS_DB[key] : null;
+};
+
+// Build quality context string for AI prompt injection
+const buildQualityContext = (propertyNames) => {
+  if (!propertyNames || !propertyNames.length) return "";
+  const signals = propertyNames.map(name => {
+    const q = getQualitySignal(name);
+    if (!q) return null;
+    const markers = [
+      q.michelin_keys ? `${q.michelin_keys} Michelin Key${q.michelin_keys > 1 ? 's' : ''}` : null,
+      q.michelin_stars ? `${q.michelin_stars} Michelin Star${q.michelin_stars > 1 ? 's' : ''} (restaurant)` : null,
+      q.forbes_stars ? `Forbes ${q.forbes_stars}-Star` : null,
+      q.relais_chateaux ? "Relais & Châteaux" : null,
+      q.tl_gold ? "T&L Gold List" : null,
+      q.cn_hot_list ? "Condé Nast Hot List" : null,
+    ].filter(Boolean).join(', ');
+    return `${name}: ${q.tier.replace('_', ' ')}${markers ? ` (${markers})` : ''}`;
+  }).filter(Boolean);
+  return signals.join('; ');
+};
+
 const BRAND_CATEGORIES = [
   {
     key: "loyalty_brands",
@@ -1208,7 +1343,20 @@ const OnboardingFlow = ({ onComplete }) => {
 
     const profile = {
       travelProfile: travelProfile || {},
-      cards: (selectedCards || []).map(name => ({ name, network: "Visa", multipliers: "varies", perksNote: "" })),
+      cards: (selectedCards || []).map(name => {
+        const b = CARD_BENEFITS_DB[name];
+        if (b) {
+          const mults = b.multipliers ? Object.entries(b.multipliers).map(([k,v]) => `${v}x ${k.replace(/_/g,' ')}`).join(', ') : "varies";
+          const perks = b.decisionLogic ? [
+            b.decisionLogic.loungeAccess ? `Lounge: ${Array.isArray(b.decisionLogic.loungeAccess) ? b.decisionLogic.loungeAccess[0] : b.decisionLogic.loungeAccess}` : null,
+            b.decisionLogic.firstCheckedBagFree ? "Free checked bag" : null,
+            b.decisionLogic.noForeignTransactionFee ? "No foreign transaction fee" : null,
+            b.decisionLogic.fineHotelsResorts ? "Fine Hotels & Resorts" : null,
+          ].filter(Boolean).join(', ') : "";
+          return { name, network: b.network || "Visa", multipliers: mults, perksNote: perks, annualFee: b.annualFee || 0, transferPartners: b.transferPartners || [] };
+        }
+        return { name, network: "Visa", multipliers: "varies", perksNote: "" };
+      }),
       loyaltyAccounts: loyaltyList,
       preferredBrands: [...(selectedBrands || []), ...loyaltyBrands],
     };
@@ -2313,7 +2461,7 @@ const BottomDrawer = ({ label, count, items }) => {
 };
 
 // ─── Unified Optimizing For Bar ───────────────────────────────────────────────
-const CARD_OPTIONS_LIST = ["Chase Sapphire Reserve","Chase Sapphire Preferred","Chase Freedom Unlimited","Chase Ink Business Preferred","Amex Platinum","Amex Gold","Amex Green","Amex Business Platinum","Capital One Venture X","Capital One Venture","Citi AAdvantage Executive","BofA Alaska Airlines Visa","United Explorer Card","Delta SkyMiles Reserve","Delta SkyMiles Platinum","Marriott Bonvoy Boundless","World of Hyatt Card","Southwest Rapid Rewards Priority","Hilton Honors Amex Surpass","Wells Fargo Autograph"];
+const CARD_OPTIONS_LIST = ["Chase Sapphire Reserve","Chase Sapphire Preferred","Chase Freedom Unlimited","Chase Ink Business Preferred","Amex Platinum","Amex Gold","Amex Green","Amex Business Platinum","Capital One Venture X","Capital One Venture","Citi AAdvantage Executive","BofA Alaska Airlines Visa","United Explorer Card","Delta SkyMiles Reserve","Delta SkyMiles Platinum","Marriott Bonvoy Boundless","World of Hyatt Card","Southwest Rapid Rewards Priority","Hilton Honors Amex Surpass","Wells Fargo Autograph", "USAA Preferred Cash Rewards Visa", "USAA Rewards Visa"];
 
 const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, onOptimizeClick }) => {
   const [activePanel, setActivePanel] = useState(null); // "loyalty" | "cards" | "brands" | "optimize"
@@ -2468,7 +2616,20 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
                 <datalist id="card-suggestions">{CARD_OPTIONS_LIST.map(c => <option key={c} value={c} />)}</datalist>
                 <button onClick={() => {
                   if (addCardInput.trim()) {
-                    const newCard = { name: addCardInput.trim(), multipliers: "" };
+                    const cardName = addCardInput.trim();
+                    const cardData = CARD_BENEFITS_DB[cardName];
+                    const newCard = cardData ? {
+                      name: cardName,
+                      network: cardData.network || "Visa",
+                      multipliers: cardData.multipliers ? Object.entries(cardData.multipliers).map(([k,v]) => `${v}x ${k.replace(/_/g,' ')}`).join(', ') : "varies",
+                      perksNote: [
+                        cardData.decisionLogic?.loungeAccess ? `Lounge: ${Array.isArray(cardData.decisionLogic.loungeAccess) ? cardData.decisionLogic.loungeAccess[0] : cardData.decisionLogic.loungeAccess}` : null,
+                        cardData.decisionLogic?.firstCheckedBagFree ? "Free checked bag" : null,
+                        cardData.decisionLogic?.noForeignTransactionFee ? "No foreign transaction fee" : null,
+                      ].filter(Boolean).join(', '),
+                      annualFee: cardData.annualFee || 0,
+                      transferPartners: cardData.transferPartners || [],
+                    } : { name: cardName, multipliers: "" };
                     const updatedCards = [...(profile.cards||[]), newCard];
                     // Auto-add linked loyalty program
                     const PILL_CARD_TO_LOYALTY = {
@@ -2700,6 +2861,8 @@ EXACT POINTS BALANCES — these are the traveler's actual balances. NEVER sugges
 ${(p.loyaltyAccounts||[]).map(a => `  ${a.program}: ${a.balance} (tier: ${a.tier})`).join("\n")}
 STRUCTURED BENEFITS — use these exact values for multipliers, lounge access, tier benefits, free breakfast eligibility, and transfer partners. Do not rely on training knowledge when this data is present:
 ${buildTravelerBenefitsSummary(p)}
+QUALITY SIGNALS — verified tiers and quality markers for known properties. Use these when surfacing or evaluating any of these properties:
+${buildQualityContext(Object.keys(QUALITY_SIGNALS_DB).slice(0, 60))}
 - Brand-to-program mapping: Marriott Bonvoy covers ${(LOYALTY_BRAND_MAP["Marriott Bonvoy"]||[]).join(", ")}. World of Hyatt covers ${(LOYALTY_BRAND_MAP["World of Hyatt"]||[]).join(", ")} — including Small Luxury Hotels (SLH) since 2023. Hilton Honors covers ${(LOYALTY_BRAND_MAP["Hilton Honors"]||[]).join(", ")}. IHG One Rewards covers ${(LOYALTY_BRAND_MAP["IHG One Rewards"]||[]).join(", ")}. Fairmont, Raffles, Rosewood, Four Seasons, Peninsula, Mandarin Oriental, Aman, Belmond, Montage are independent — no major loyalty program points.${learnedList ? `
 - LEARNED FROM PAST TRIPS: ${learnedList}` : ""}
 - Preferred hotel brands: ${brandList}
