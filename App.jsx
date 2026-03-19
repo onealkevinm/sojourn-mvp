@@ -1168,6 +1168,631 @@ const buildQualityContext = (propertyNames) => {
   return signals.join('; ');
 };
 
+
+// ─── RESTAURANT SIGNALS DATABASE ──────────────────────────────────────────────
+// Separate from hotel quality signals — used for local discovery queries
+// ("I'm in Seattle, where should I eat?") and refinement conversations
+// Structure: city → cuisine category → array of restaurant objects
+// Axes: trusted_authority | local_authority | freshness | authenticity_value |
+//        hospitality | populist | culinary_prestige | value_quality
+// Sources: Eater Essential/38, Eater Best New, James Beard, Michelin, Bib Gourmand
+// Last updated: March 2026
+// ─────────────────────────────────────────────────────────────────────────────
+
+const RESTAURANT_SIGNALS_DB = {
+
+  "Seattle": {
+    // ── Fine dining / special occasion ──
+    fine_dining: [
+      { name: "Canlis", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "hospitality"], notes: "Seattle institution since 1950, mid-century modern dining room above Lake Union, impeccable service, special occasion standard" },
+      { name: "Atoma", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Intimate tasting menu, former Canlis team, one of Seattle's most exciting fine dining rooms" },
+      { name: "Surrell", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "New American tasting menu, Capitol Hill, intimate and ambitious" },
+      { name: "Marjorie", signals: ["eater_38"], axis: ["local_authority", "hospitality"], notes: "Belltown stalwart, creative Pacific Northwest, warm room, beloved by locals" },
+      { name: "Corson Building", signals: ["eater_38"], axis: ["hospitality", "local_authority"], notes: "Georgetown, communal farm-to-table dinners in a historic building, unique Seattle experience" },
+    ],
+
+    // ── Seafood ──
+    seafood: [
+      { name: "The Walrus and the Carpenter", signals: ["eater_38", "james_beard"], axis: ["local_authority", "culinary_prestige"], notes: "Renee Erickson's Ballard oyster bar, the definitive Seattle seafood experience, always packed" },
+      { name: "Local Tide", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Creative seafood, Capitol Hill, inventive preparations beyond the standard fish house" },
+      { name: "The Boat", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Korean-inflected seafood, SoDo, underrated and excellent" },
+      { name: "Good Voyage", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Southeast Asian seafood influences, one of Seattle's most creative new spots" },
+    ],
+
+    // ── Asian / Pacific Rim ──
+    asian: [
+      { name: "Kamonegi", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Handmade soba and Japanese small plates, Fremont, James Beard nominated, one of Seattle's best" },
+      { name: "Joule", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Rachel Yang and Seif Chirchi's Korean-French fusion, Wallingford, James Beard nominated" },
+      { name: "Ltd Edition Sushi", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Omakase sushi, intimate, reservation-only, serious sushi in Seattle" },
+      { name: "Paju", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Modern Korean, Capitol Hill, creative and vibrant" },
+      { name: "Sophon", signals: ["eater_38"], axis: ["freshness", "culinary_prestige"], notes: "Thai with serious technique, one of Seattle's most exciting newer openings" },
+      { name: "Taurus Ox", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Southeast Asian, Columbia City, neighborhood gem with serious cooking" },
+      { name: "TOMO", signals: ["eater_38"], axis: ["freshness", "culinary_prestige"], notes: "Japanese-influenced, newer entry, generating real buzz" },
+      { name: "Hamdi", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Somali-influenced, Capitol Hill, deeply flavorful and underexplored cuisine" },
+      { name: "Ramie", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Korean comfort food elevated, one of the neighborhood's most loved spots" },
+    ],
+
+    // ── Italian / Mediterranean ──
+    italian: [
+      { name: "Cafe Juanita", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "culinary_prestige"], notes: "Holly Smith's Northern Italian in Kirkland, James Beard winner, one of the best Italian restaurants in the Pacific Northwest" },
+      { name: "Spinasse", signals: ["eater_38"], axis: ["local_authority", "culinary_prestige"], notes: "Northern Italian pasta, Capitol Hill, handmade and deeply satisfying, long-running local favorite" },
+      { name: "Cafe Lago", signals: ["eater_38"], axis: ["local_authority", "hospitality"], notes: "Roman-style thin-crust pizza and pasta, Montlake, neighborhood institution, warm and unfussy" },
+    ],
+
+    // ── Global / Neighborhood gems ──
+    global: [
+      { name: "Musang", signals: ["eater_38", "james_beard"], axis: ["local_authority", "authenticity_value"], notes: "Filipino cooking by Melissa Miranda, Beacon Hill, James Beard nominated, community-rooted and delicious" },
+      { name: "COMMUNION Restaurant & Bar", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Southern and soul food with Black cultural heritage, Capitol Hill, unique and important Seattle restaurant" },
+      { name: "Archipelago", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Filipino tasting menu, Hillman City, James Beard nominated, one of Seattle's most ambitious restaurants" },
+      { name: "Café Suliman", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Somali cuisine, excellent value, neighborhood institution" },
+      { name: "Delish Ethiopian Cuisine", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Ethiopian, Central District, outstanding injera and wats, beloved by locals" },
+      { name: "Oriental Mart", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "Filipino grocery and prepared foods, Pike Place Market area, cheap and delicious" },
+      { name: "Homer", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Greek-influenced, Capitol Hill, one of the city's most talked-about recent openings" },
+      { name: "Familyfriend", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Eclectic neighborhood restaurant, West Seattle, warm and inventive" },
+      { name: "Lenox", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Neighborhood bistro feel, serious cooking, Capitol Hill" },
+    ],
+
+    // ── Casual / Takeout / Value ──
+    casual: [
+      { name: "Un Bien", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Caribbean rotisserie chicken, Fremont, legendary in Seattle, long lines worth it" },
+      { name: "Spice Waala", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "Indian street food, Capitol Hill and Fremont, fast-casual, outstanding value and flavor" },
+      { name: "Ono Authentic Hawaiian Poke", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "Poke done right, straightforward and fresh, one of Seattle's most-loved casual spots" },
+      { name: "Lil Red Takeout & Catering", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Soul food and Southern, takeout-focused, exceptional" },
+      { name: "El Cabrito", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Mexican, Beacon Hill, no-frills but serious cooking, local favorite" },
+      { name: "Off Alley", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Natural wine bar and small plates, Hillman City, unpretentious and excellent" },
+    ],
+
+    // ── Neighborhood / Unique experience ──
+    experience: [
+      { name: "The Wayland Mill", signals: ["eater_38"], axis: ["hospitality", "freshness"], notes: "Historic mill setting, thoughtful cooking, unique atmosphere" },
+      { name: "Tivoli", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Nordic-influenced, newer entry, one of Seattle's most interesting dining rooms" },
+      { name: "The Little Beast Ballard", signals: ["eater_38"], axis: ["local_authority", "hospitality"], notes: "Neighborhood bistro, Ballard, warm and reliable, great for a relaxed dinner" },
+    ],
+
+    // ── Filipino spotlight (Seattle has exceptional Filipino food) ──
+    filipino: [
+      { name: "Musang", signals: ["eater_38", "james_beard"], axis: ["local_authority", "authenticity_value"], notes: "See global listing — Beacon Hill, James Beard nominated" },
+      { name: "Archipelago", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige"], notes: "See global listing — tasting menu, Hillman City" },
+      { name: "Oriental Mart", signals: ["eater_38"], axis: ["authenticity_value"], notes: "See casual listing — Pike Place, casual Filipino" },
+    ],
+  },
+
+  "Portland": {
+    // ── Fine dining / special occasion ──
+    fine_dining: [
+      { name: "Le Pigeon", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Gabriel Rucker's James Beard-winning bistro, East Burnside, inventive French-influenced, one of Portland's most iconic restaurants" },
+      { name: "Langbaan", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Hidden Thai tasting menu behind PaaDee, James Beard nominated, one of the most extraordinary Thai restaurants in the US" },
+      { name: "Kann", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "freshness"], notes: "Haitian cuisine by Gregory Gourdet, James Beard winner, stunning wood-fired cooking, genuinely important restaurant" },
+      { name: "Arden Restaurant Portland", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Intimate tasting menu, seasonal Pacific Northwest ingredients, one of Portland's most ambitious new rooms" },
+      { name: "Maurice", signals: ["eater_38"], axis: ["hospitality", "local_authority"], notes: "Lunch counter and pastry shop, downtown, Kristen Murray's vision, beautiful and unique" },
+      { name: "Alma", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Intimate, ambitious cooking, one of Portland's most exciting newer tasting menu restaurants" },
+      { name: "Astera", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Pacific Northwest fine dining, thoughtful and seasonal, generating strong word of mouth" },
+      { name: "Norah", signals: ["eater_38"], axis: ["freshness", "culinary_prestige"], notes: "Creative contemporary, newer entry making waves in Portland's dining scene" },
+    ],
+
+    // ── Italian / Mediterranean ──
+    italian: [
+      { name: "Mucca Osteria", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Roman-style pasta and pizza, Northeast Portland, casual and delicious, neighborhood staple" },
+      { name: "Luce", signals: ["eater_38"], axis: ["local_authority", "hospitality"], notes: "Italian wine bar and small plates, Southeast Portland, warm neighborhood room, excellent pasta" },
+      { name: "Café Olli", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Italian-influenced all-day café, wood-fired cooking, Sabin neighborhood, one of Portland's most beloved" },
+      { name: "L'Orange", signals: ["eater_38"], axis: ["freshness", "culinary_prestige"], notes: "French bistro sensibility, natural wine focus, one of Portland's most stylish newer rooms" },
+      { name: "Urdaneta", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Basque pintxos and wine, Northeast Portland, convivial and fun, great for groups" },
+    ],
+
+    // ── Asian ──
+    asian: [
+      { name: "Nong's Khao Man Gai", signals: ["eater_38", "james_beard"], axis: ["authenticity_value", "local_authority"], notes: "Nong Poonsukwattana's famous Thai poached chicken and rice, James Beard nominated, Portland icon" },
+      { name: "Xiao Ye", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Han Ly Hwang's Chinese-American cooking, creative and personal, one of Portland's most talked-about restaurants" },
+      { name: "Pasar", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Southeast Asian hawker-style cooking, vibrant and affordable, one of Portland's most exciting newer spots" },
+      { name: "Kau Kau", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Hawaiian plate lunch and local-style food, genuine and satisfying" },
+      { name: "Sichuan Taste Chinese Restaurant", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Legit Sichuan cooking, not dumbed down, one of Portland's best Chinese restaurants" },
+      { name: "Excellent Cuisine Chinese Food Restaurant", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Cantonese and Hong Kong style, serious Chinese cooking beloved by Portland's Chinese community" },
+      { name: "Rangoon Bistro", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Burmese cuisine, one of the few good Burmese options in the Pacific Northwest" },
+      { name: "Nimblefish", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Japanese-influenced, omakase sensibility, serious fish sourcing" },
+      { name: "Kachka", signals: ["eater_38", "james_beard"], axis: ["local_authority", "culinary_prestige"], notes: "Russian cuisine by Bonnie Morales, James Beard nominated, one of Portland's most distinctive restaurants, excellent vodka program" },
+    ],
+
+    // ── Mexican / Latin ──
+    mexican: [
+      { name: "Mole Mole Mexican Cuisine", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Serious mole and regional Mexican cooking, not Tex-Mex, genuinely authentic" },
+      { name: "Javelina", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Tex-Mex and Southwest influenced, fun and casual, great margaritas" },
+      { name: "Casa Zoraya", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Peruvian cuisine, Northeast Portland, one of the best Latin American restaurants in the city" },
+      { name: "Merendero Estela", signals: ["eater_38"], axis: ["authenticity_value", "freshness"], notes: "Mexican regional cooking, newer entry, generating strong buzz for authentic preparations" },
+    ],
+
+    // ── African / Global ──
+    global: [
+      { name: "Akadi", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "West African cuisine by Fatou Ouattara, James Beard nominated, one of Portland's most important and delicious restaurants" },
+      { name: "Mirisata", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Sri Lankan cuisine, one of very few good Sri Lankan restaurants in the Pacific Northwest" },
+      { name: "Magna Kusina", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Filipino cooking, creative and community-rooted, part of Portland's strong Filipino food scene" },
+      { name: "Oma's Hideaway", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Indonesian home cooking, small and intimate, one of Portland's hidden gems" },
+    ],
+
+    // ── Vietnamese / Southeast Asian ──
+    vietnamese: [
+      { name: "Memoire Ca Phe", signals: ["eater_38"], axis: ["authenticity_value", "freshness"], notes: "Vietnamese café, beautiful space, excellent coffee and light food, one of Portland's loveliest spots" },
+      { name: "Bình Minh Sandwiches", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "Banh mi done right, simple and excellent, local institution" },
+      { name: "Rose VL Deli", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Vietnamese deli and comfort food, Southeast Portland, community institution" },
+      { name: "Bun Bo Hue Restaurant", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Specializes in bun bo hue (spicy beef noodle soup), the real thing" },
+    ],
+
+    // ── Casual / Bakery / Takeout ──
+    casual: [
+      { name: "Lovely's Fifty Fifty", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Wood-fired pizza and ice cream, Mississippi Ave, Sarah Minnick's cult following, seasonal and creative" },
+      { name: "OK Omens", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: ["Natural wine bar and snacks, Northeast Portland, one of Portland's best casual wine spots"] },
+      { name: "Jacqueline", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Wine bar with excellent food, Southeast Portland, convivial and well-curated" },
+      { name: "Bake on the Run - Authentic Guyanese Masterful Cuisines", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Guyanese baked goods and food, one of Portland's most unique and underexplored spots" },
+    ],
+  },
+
+  "Vancouver": {
+    // ── Fine dining / special occasion ──
+    fine_dining: [
+      { name: "Kissa Tanto", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "hospitality"], notes: "Italian-Japanese fusion, Chinatown, intimate basement room, one of Canada's best restaurants, perpetually booked" },
+      { name: "Published on Main", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "freshness"], notes: "Clement Chan's tasting menu, Main Street, James Beard nominated, one of Vancouver's most ambitious kitchens" },
+      { name: "Burdock & Co", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Andrea Carlson's seasonal Pacific Northwest tasting menu, Main Street, James Beard nominated, ingredient-obsessed" },
+      { name: "Pidgin", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Asian-European fusion, Gastown, inventive and ambitious, excellent cocktail program" },
+      { name: "Published on Main", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "See fine dining — Main Street, tasting menu" },
+      { name: "Ophelia", signals: ["eater_38"], axis: ["freshness", "culinary_prestige"], notes: "Creative contemporary, one of Vancouver's most stylish newer rooms, strong cocktail and wine focus" },
+      { name: "Lila", signals: ["eater_38"], axis: ["freshness", "culinary_prestige"], notes: "Modern Middle Eastern influences, beautifully designed space, one of Vancouver's most exciting recent openings" },
+      { name: "Bar Tartare", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "French-inspired raw bar and tartare focus, intimate and serious, one of Vancouver's best wine bars" },
+    ],
+
+    // ── Japanese ──
+    japanese: [
+      { name: "Kissa Tanto", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige"], notes: "See fine dining — Italian-Japanese, Canada's best" },
+      { name: "Sashimiya", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Serious omakase sushi, intimate counter, some of Vancouver's finest Japanese fish work" },
+      { name: "Dosanko", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Hokkaido-style ramen, butter corn, miso broth, authentic regional Japanese style rarely found outside Japan" },
+      { name: "Maruhachi Ra-men", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Vancouver ramen institution, rich tonkotsu, consistently excellent" },
+      { name: "Japadog", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "Japanese-style hot dogs, Vancouver original, street food icon — teriyaki and oroshi dogs, fun and delicious" },
+      { name: "Dachi", signals: ["eater_38"], axis: ["authenticity_value", "freshness"], notes: "Japanese comfort food, creative izakaya dishes, Main Street, casual and excellent" },
+    ],
+
+    // ── Seafood ──
+    seafood: [
+      { name: "Blue Water Café", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Yaletown, Vancouver's premier seafood restaurant, exceptional raw bar, wild seafood focus, special occasion standard" },
+      { name: "Coast", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Downtown, upscale seafood, broad menu, reliable for business dining, excellent oyster selection" },
+      { name: "Golden Paramount Seafood Restaurant", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Cantonese seafood, Richmond, whole fish and live seafood tanks, what the Chinese community eats for celebrations" },
+      { name: "Dynasty Seafood Restaurant", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Dim sum and Cantonese seafood, downtown, one of Vancouver's best for traditional Chinese seafood banquet style" },
+    ],
+
+    // ── Asian / Pacific Rim ──
+    asian: [
+      { name: "Maenam", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Angus An's refined Thai, Kitsilano, James Beard nominated, one of the best Thai restaurants in North America" },
+      { name: "Baan Lao Fine Thai Cuisine", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Lao and Thai fine dining, Richmond, exceptional Southeast Asian cooking in an elegant room" },
+      { name: "Phnom Penh", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Cambodian-Vietnamese, Chinatown, Vancouver institution since 1985, butter beef and chicken wings are legendary" },
+      { name: "Anh and Chi", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Vietnamese, Main Street, family-run, elevated pho and Vietnamese classics, one of Vancouver's most beloved" },
+      { name: "Zabu Chicken", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "Korean fried chicken, crispy and excellent, casual and fun" },
+      { name: "Miso Taco", signals: ["eater_38"], axis: ["freshness", "authenticity_value"], notes: "Japanese-Mexican fusion done right, creative and delicious, one of Vancouver's more playful spots" },
+    ],
+
+    // ── Italian / Mediterranean ──
+    italian: [
+      { name: "Caffé La Tana", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Italian café and deli, Commercial Drive, genuine Italian products and simple food done beautifully" },
+      { name: "Dante Italian Sandwich", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "Italian sandwiches, straightforward and excellent, one of Vancouver's best casual lunch spots" },
+      { name: "Straight Brooklyn Pizza", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "NY-style pizza, no-frills, genuinely good slice" },
+      { name: "La Fabrique St-George", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "French bakery and café, East Vancouver, beautiful pastries and bread, neighborhood gem" },
+    ],
+
+    // ── Global / Neighborhood ──
+    global: [
+      { name: "Vij's", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Vikram Vij's upscale Indian, no reservations, always a wait, one of Canada's most famous restaurants — worth it" },
+      { name: "The Acorn", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Vegetarian fine dining, Main Street, one of North America's best vegetarian restaurants, creative and satisfying" },
+      { name: "Bao Bei", signals: ["eater_38"], axis: ["local_authority", "culinary_prestige"], notes: "Chinese brasserie, Chinatown, Tannis Ling's creative take on Chinese comfort food, excellent cocktails, cool room" },
+      { name: "Cómo Taperia", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Spanish tapas and wine, one of Vancouver's best for a convivial group dinner" },
+      { name: "Noah's Café", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Ethiopian cuisine, neighborhood institution, excellent injera and wats" },
+    ],
+
+    // ── Bars / Wine / Casual ──
+    casual: [
+      { name: "The 515 Bar", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Natural wine bar, Main Street, excellent by-the-glass selection, good snacks" },
+      { name: "Breeze Bar", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Wine and cocktail bar, neighborhood feel, one of Vancouver's more relaxed spots for a drink with good food" },
+      { name: "It's Okay", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Natural wine bar and small plates, Chinatown, understated and very good" },
+      { name: "Wicked Café", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Neighborhood café, reliable and welcoming, good for a casual meal or coffee" },
+      { name: "Pho In Love", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "Vietnamese pho, simple and excellent, the kind of pho locals eat on a cold day" },
+      { name: "Cafe Medina", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Weekend brunch institution, Belgian waffles and Mediterranean-inspired breakfast, always a line but worth it" },
+      { name: "Granville Island Public Market", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Public market under Granville Bridge, fresh BC seafood, produce, artisan food stalls — a genuine Vancouver experience, not just a tourist stop" },
+    ],
+  },
+
+
+  "San Francisco": {
+    // ── Fine dining / special occasion ──
+    fine_dining: [
+      { name: "Quince", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "culinary_prestige"], notes: "Michael Tusk's Michelin 3-star Italian-Californian, Jackson Square, one of the best restaurants in America, exceptional wine cellar" },
+      { name: "Californios", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "trusted_authority"], notes: "Val Cantu's Michelin 2-star Mexican tasting menu, Mission, James Beard winner, redefines what Mexican fine dining can be" },
+      { name: "Lazy Bear", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "hospitality"], notes: "David Barzelay's Michelin 2-star communal dinner party concept, Mission, James Beard winner, inventive and fun" },
+      { name: "The Progress", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Stuart Brioza and Nicole Krasinski's sibling to State Bird Provisions, Divisadero, James Beard winners, outstanding" },
+      { name: "Kiln", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Brandon Rice's wood-fired tasting menu, one of SF's most exciting recent openings, serious and ambitious" },
+      { name: "The Morris", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Paul Einbund's wine-focused restaurant, Mission, extraordinary wine list, excellent food to match" },
+      { name: "Dalida", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Mediterranean and Middle Eastern influences, Presidio, beautiful room, one of SF's most talked-about newer restaurants" },
+    ],
+
+    // ── Neighborhood institutions ──
+    institutions: [
+      { name: "Zuni Café", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "local_authority"], notes: "Judy Rodgers' legendary SF institution, Market Street, roast chicken for two is a city ritual, always reliable" },
+      { name: "House of Prime Rib", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Nob Hill, English-style prime rib carved tableside since 1949, SF institution, reservations weeks out" },
+      { name: "Delfina Restaurant", signals: ["eater_38", "james_beard"], axis: ["local_authority", "trusted_authority"], notes: "Mission Italian, Craig Stoll's James Beard-winning neighborhood restaurant, consistently excellent for 25+ years" },
+      { name: "Anchor Oyster Bar", signals: ["eater_38"], axis: ["local_authority", "trusted_authority"], notes: "Castro, tiny seafood institution, clam chowder and oysters, cash only, beloved" },
+    ],
+
+    // ── Asian ──
+    asian: [
+      { name: "Rintaro", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Sylvan Mishima Brackett's Japanese izakaya, Mission, James Beard nominated, handmade soba and robata grilling, one of SF's best" },
+      { name: "Kin Khao", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Pim Techamuanvivit's Thai, Union Square, James Beard winner, refined yet bold, outstanding" },
+      { name: "Turtle Tower", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Vietnamese pho, Tenderloin, Northern Vietnamese style, SF's most beloved pho institution, cash only" },
+      { name: "La Soleil", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Vietnamese, Outer Richmond, family-run, exceptional banh cuon and Vietnamese comfort food" },
+      { name: "Thanh Long", signals: ["eater_38"], axis: ["local_authority", "trusted_authority"], notes: "Outer Sunset, Vietnamese seafood since 1971, famous for cracked Dungeness crab and garlic noodles" },
+      { name: "Mandalay Restaurant", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Burmese cuisine, Inner Richmond, one of SF's best and most authentic Burmese restaurants" },
+      { name: "Old Mandarin Islamic Restaurant", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Northern Chinese Muslim cuisine, Outer Sunset, hand-pulled noodles and dumplings, deeply authentic" },
+      { name: "Abaca", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Filipino fine dining by Francis Ang, Fisherman's Wharf, one of SF's most important newer restaurants" },
+      { name: "Prubechu", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Chamorro cuisine from Guam, Mission, one of the only Chamorro restaurants in the US, genuinely unique" },
+    ],
+
+    // ── Mexican / Latin ──
+    mexican: [
+      { name: "Taqueria Cancun", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "Mission District taqueria, super burrito institution, the SF burrito experience, cash only" },
+      { name: "Besharam", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Heena Patel's bold Indian cooking, Dogpatch, James Beard nominated, vivid and unapologetic flavors" },
+      { name: "Beit Rima", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Lebanese, Castro, family recipes, warm and delicious, one of SF's best Middle Eastern spots" },
+    ],
+
+    // ── Pizza / Casual ──
+    casual: [
+      { name: "Golden Boy Pizza", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "North Beach, thick Sicilian-style slices since 1978, SF institution, eat standing on the street" },
+      { name: "Outta Sight Pizza", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Creative Californian-style pizza, natural wine, one of SF's most interesting newer pizza spots" },
+      { name: "Jules", signals: ["eater_38"], axis: ["local_authority", "hospitality"], notes: "French bistro, Nob Hill, classic execution, one of SF's most reliably good neighborhood restaurants" },
+      { name: "Outerlands", signals: ["eater_38"], axis: ["local_authority", "hospitality"], notes: "Outer Sunset, beach neighborhood restaurant, excellent brunch, cozy and warm, local institution" },
+      { name: "Four Kings", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Bar and small plates, Mission, one of SF's most buzzed-about recent openings for late-night eating" },
+      { name: "3rd Cousin", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Natural wine and creative small plates, one of SF's most interesting newer wine bars" },
+      { name: "Gumbo Social", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Louisiana comfort food, Bayview, outstanding gumbo and po'boys, Creole cooking done right" },
+      { name: "Piglet & Co", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Southeast Asian street food and natural wine, one of SF's more playful newer spots" },
+    ],
+
+    // ── Bakeries / Cafés ──
+    bakery: [
+      { name: "Breadbelly", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Asian-influenced bakery, Inner Richmond, excellent pastries and sandwiches, always a line" },
+      { name: "Butter & Crumble", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Cake and pastry shop, one of SF's most beloved newer bakeries" },
+      { name: "Cinderella Bakery & Café", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Russian bakery, Inner Richmond, pirozhki and borscht since 1953, SF institution" },
+    ],
+
+    // ── Bars ──
+    bars: [
+      { name: "True Laurel", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "David Barzelay's (Lazy Bear) cocktail bar, Mission, one of the best cocktail bars in the US, food is excellent too" },
+      { name: "Trick Dog", signals: ["eater_38"], axis: ["local_authority", "culinary_prestige"], notes: "Mission, James Beard nominated cocktail bar, creative seasonal menus, SF institution" },
+      { name: "Lunette", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Natural wine bar, one of SF's most interesting newer wine programs" },
+      { name: "Prelude", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Wine bar and small plates, creative and thoughtful, newer entry making waves" },
+    ],
+  },
+
+
+  "Sonoma County": {
+    // ── Fine dining / special occasion ──
+    fine_dining: [
+      { name: "Cyrus", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "culinary_prestige"], notes: "Douglas Keane's Michelin 2-star comeback, Geyserville, one of the great Wine Country restaurants, exceptional tasting menu and wine pairings from Dry Creek Valley" },
+      { name: "Farmhouse Inn Restaurant", signals: ["eater_38"], axis: ["culinary_prestige", "hospitality"], notes: "Forestville, on-site inn and restaurant, Michelin-starred, rabbit rabbit rabbit dish is legendary, surrounded by redwoods and vineyards" },
+      { name: "The Matheson", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Healdsburg, Dustin Valette's flagship, rooftop bar and main dining room, one of Healdsburg's most ambitious and complete restaurants" },
+      { name: "Glen Ellen Star", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Ari Weiswasser's wood-fired Mediterranean in a tiny Glen Ellen storefront, one of Sonoma's most beloved and least pretentious fine dining experiences" },
+      { name: "Hazel Restaurant", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Healdsburg, seasonal and produce-driven, thoughtful wine list from surrounding appellations, one of the valley's most exciting newer rooms" },
+    ],
+
+    // ── Wine country casual / neighborhood ──
+    wine_country: [
+      { name: "Valley Bar and Bottle", signals: ["eater_38"], axis: ["local_authority", "culinary_prestige"], notes: "Glen Ellen, natural wine shop and intimate restaurant, one of the best low-key Wine Country dining experiences — locals and wine industry regulars" },
+      { name: "Wit and Wisdom", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Healdsburg, wine-focused bar and restaurant, excellent by-the-glass program from Dry Creek and Alexander Valley producers" },
+      { name: "Boon Eat + Drink", signals: ["eater_38"], axis: ["local_authority", "hospitality"], notes: "Guerneville, Russian River Valley institution, farm-to-table in a relaxed setting, gateway to the redwoods and river" },
+      { name: "The Spinster Sisters", signals: ["eater_38"], axis: ["local_authority", "hospitality"], notes: "Santa Rosa, neighborhood restaurant done right, excellent brunch and dinner, local ingredients, warm room" },
+      { name: "Campanella", signals: ["eater_38"], axis: ["freshness", "culinary_prestige"], notes: "Healdsburg, Italian-influenced, wood-fired cooking, one of the newer additions to Healdsburg's excellent dining scene" },
+    ],
+
+    // ── Mexican / Latin ──
+    mexican: [
+      { name: "El Molino Central", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Boyes Hot Springs, Karen Waikiki's legendary tacos and traditional Mexican cooking, local cult following, cash only, do not miss" },
+      { name: "Mitote Food Park", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Santa Rosa, Mexican street food park, multiple vendors, vibrant and authentic, where locals go for tacos" },
+    ],
+
+    // ── Asian ──
+    asian: [
+      { name: "Khom Loi", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Healdsburg, Thai cooking with serious technique and Wine Country ingredient sourcing, one of the most interesting restaurants in the county" },
+    ],
+
+    // ── Casual / Pizza / Bakery ──
+    casual: [
+      { name: "Bijou", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Petaluma, one of the most exciting newer restaurants in the county, seasonal California cooking, excellent natural wine list" },
+      { name: "Pizzaleah", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Healdsburg, Leah Scurto's pizza, creative and ingredient-focused, one of Wine Country's best casual meals" },
+    ],
+  },
+
+
+  "Napa Valley": {
+    // ── Fine dining / special occasion ──
+    fine_dining: [
+      { name: "Auro", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Four Seasons Napa, Rogelio Garcia's contemporary Mexican fine dining, one of Napa's most ambitious and exciting newer restaurants, exceptional wine program" },
+      { name: "Press Restaurant", signals: ["eater_38"], axis: ["trusted_authority", "culinary_prestige"], notes: "St. Helena, wine-country steakhouse at its best, extraordinary Napa Cabernet list curated over decades, wood-fired meats, special occasion standard" },
+      { name: "The Restaurant at North Block", signals: ["eater_38"], axis: ["culinary_prestige", "hospitality"], notes: "Yountville, Italian-inspired, beautiful room in the North Block hotel, thoughtful Napa-focused wine list, excellent for a long lunch or dinner" },
+      { name: "Bear", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "One of Napa's most talked-about recent openings, farm-to-table with serious technique, generating strong early buzz" },
+      { name: "Entrecot Restaurant Napa", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "French bistro sensibility, focused on steak and wine pairings, one of Napa's more refined casual fine dining rooms" },
+    ],
+
+    // ── Wine bar / casual fine dining ──
+    wine_bar: [
+      { name: "Compline", signals: ["eater_38"], axis: ["local_authority", "culinary_prestige"], notes: "Napa, wine bar run by Master Sommeliers, extraordinary and accessible wine program, excellent food — where the wine industry drinks on nights off" },
+      { name: "Zuzu", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Napa, Spanish tapas and Latin small plates, downtown institution, warm and lively, excellent sherry selection, one of Napa's most reliably fun restaurants" },
+      { name: "Violetto", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Wine bar and small plates, Napa, natural wine focus, one of the valley's most interesting newer wine programs" },
+      { name: "The Fink", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Downtown Napa, neighborhood bar and kitchen, unpretentious and excellent, locals' refuge from the tasting room circuit" },
+    ],
+
+    // ── Casual / Pizza / Tacos ──
+    casual: [
+      { name: "Croccante Pizza", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Napa, Neapolitan-style pizza done properly, one of the valley's best casual meals, excellent with a glass of local wine" },
+      { name: "Mother's Tacos", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Napa, fresh and authentic Mexican tacos, local institution for a quick and excellent lunch" },
+      { name: "Charlie's", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Calistoga, neighborhood diner and bar, unpretentious, where locals eat when they're not doing the wine country thing" },
+      { name: "Stateline Road Smokehouse", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "American BBQ in Napa Valley — unusual and excellent, proper smoked meats, a welcome change from the tasting menu circuit" },
+    ],
+
+    // ── Asian ──
+    asian: [
+      { name: "Slanted Door", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Charles Phan's Vietnamese, relaunched in Napa after closing its SF Ferry Building location, James Beard winner, refined and excellent" },
+    ],
+  },
+
+
+  "Monterey and Carmel": {
+    // ── Fine dining / special occasion ──
+    fine_dining: [
+      { name: "Chez Noir", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Carmel-by-the-Sea, Jonny Black's intimate fine dining, James Beard nominated, one of the most exciting restaurants on the Central Coast, seasonal and precise" },
+      { name: "Foray", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Carmel, creative contemporary, one of the most ambitious newer restaurants in the area, strong local sourcing" },
+      { name: "Maligne", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Monterey, one of the most talked-about recent openings on the Peninsula, inventive and serious" },
+      { name: "Passionfish", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Pacific Grove, sustainable seafood institution, Ted Walter's commitment to local and sustainable sourcing, one of the Peninsula's most reliable and beloved restaurants" },
+      { name: "Edwin's Kaona Carmel", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Carmel, Hawaiian-influenced fine dining, one of the newer entries generating real buzz on the Peninsula" },
+    ],
+
+    // ── Wine bar / casual fine dining ──
+    wine_bar: [
+      { name: "Pearl Hour", signals: ["eater_38"], axis: ["local_authority", "culinary_prestige"], notes: "Monterey, intimate wine bar and small plates, excellent by-the-glass program focused on Santa Lucia Highlands and Central Coast producers, where locals drink" },
+      { name: "Stationæry", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Monterey, wine bar and café, natural wine focus, one of the Peninsula's most interesting newer spots for a relaxed meal" },
+      { name: "Captain and Stoker", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Coffee and cocktails, one of Monterey's most beloved neighborhood spots, excellent all-day" },
+    ],
+
+    // ── Asian ──
+    asian: [
+      { name: "Züm Sushi", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Carmel, serious omakase sushi, one of the better sushi options on the Central Coast, fresh local fish" },
+      { name: "Jeju Kitchen", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Korean-influenced, one of the Peninsula's more interesting newer Asian restaurants" },
+      { name: "Tommy's Wok", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Carmel, Chinese-American institution, locals' go-to for a casual and satisfying meal, longtime neighborhood staple" },
+    ],
+
+    // ── Mexican / Latin ──
+    mexican: [
+      { name: "El Cantaro", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Monterey, authentic Mexican, excellent tacos and regional dishes, local institution, great value" },
+      { name: "Cafe Guarani", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "South American influenced, one of the Peninsula's more distinctive casual options" },
+    ],
+
+    // ── Casual / Pizza / Bakery ──
+    casual: [
+      { name: "Gianni's Pizza", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Carmel, pizza institution, straightforward and excellent, beloved by locals for decades" },
+      { name: "Alta Bakery and Café", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Monterey, excellent pastries and coffee, one of the Peninsula's best morning stops" },
+      { name: "Paprika Café", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Monterey, Middle Eastern and Mediterranean café, excellent hummus and kebabs, casual and reliable" },
+      { name: "Alvarado Street Brewery", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Monterey, craft brewery and pub, excellent local beer program, good casual food, lively atmosphere" },
+    ],
+  },
+
+
+  "Los Angeles": {
+    // ── Fine dining / special occasion ──
+    fine_dining: [
+      { name: "Pasjoli", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Dave Beran's French bistro, Santa Monica, James Beard nominated, one of LA's most technically precise and satisfying restaurants, duck press is the signature" },
+      { name: "Bavel", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Ori Menashe and Genevieve Gergis's Middle Eastern, Arts District, James Beard nominated, stunning space and food, one of LA's great restaurants" },
+      { name: "Chi Spacca", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Nancy Silverton's salumi and meat-focused Italian, Melrose, James Beard nominated, Florentine steak and charcuterie are extraordinary" },
+      { name: "Somerville", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "One of LA's most exciting newer tasting menu restaurants, serious and ambitious, generating strong critical attention" },
+      { name: "Firstborn", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Creative contemporary, one of LA's most talked-about recent openings, inventive and technically accomplished" },
+      { name: "Toranj", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Persian-influenced fine dining, one of LA's more distinctive and exciting newer restaurants, beautiful flavors" },
+      { name: "Restaurant Ki", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Japanese-influenced tasting menu, intimate and precise, one of LA's strongest newer omakase-style experiences" },
+      { name: "Loreto", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Mexican fine dining, one of LA's most important newer restaurants elevating regional Mexican cuisine with serious technique" },
+    ],
+
+    // ── Asian ──
+    asian: [
+      { name: "Anajak Thai Cuisine", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Sherman Oaks, Justin Pichetrungsi's Thai, James Beard winner, Sunday omakase is legendary, one of the best Thai restaurants in the US" },
+      { name: "Holbox", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Mercado La Paloma, Gilberto Cetina's Yucatecan seafood, James Beard nominated, extraordinary ceviches and seafood tostadas, one of LA's best" },
+      { name: "Bistro Na's", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "San Gabriel Valley, imperial Chinese cuisine, Peking duck and elaborate banquet dishes, one of the best Chinese restaurants in North America" },
+      { name: "Mori Nozomi", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Japanese, one of LA's most serious and refined Japanese restaurants, exceptional fish sourcing" },
+      { name: "Hakata Izakaya HERO", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Authentic Hakata-style Japanese izakaya, Torrance, tonkotsu ramen and yakitori, where the Japanese community eats" },
+      { name: "Roasted Duck by Pa Ord", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Thai roasted duck, Hollywood, beloved institution, incredibly rich and satisfying, long lines worth it" },
+      { name: "Seong Buk Dong", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Korean homestyle cooking, Koreatown, the kind of Korean food Korean families make at home, deeply comforting" },
+      { name: "K-Team BBQ", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Korean BBQ, Koreatown, excellent quality meat and banchan, one of the better options in LA's extraordinary K-Town BBQ scene" },
+      { name: "Pho Ngoon", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Vietnamese pho, San Gabriel Valley, outstanding broth, one of LA's best Vietnamese restaurants" },
+      { name: "A&J Seafood Shack", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Cantonese seafood, San Gabriel Valley, whole fish and live tank seafood, exceptional quality" },
+    ],
+
+    // ── Mexican / Latin ──
+    mexican: [
+      { name: "Taquería Frontera", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "East LA, exceptional tacos, James Beard-adjacent, the real deal for traditional Mexican street food in LA" },
+      { name: "Tacos La Carreta", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "Taco truck institution, beloved by locals, one of LA's most authentic late-night taco experiences" },
+      { name: "Komal Molino", signals: ["eater_38"], axis: ["culinary_prestige", "authenticity_value"], notes: "Masa-focused Mexican, tortillas and tamales made with serious craft, one of LA's most important newer Mexican restaurants" },
+      { name: "Carlitos Gardel Argentine Steakhouse", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Melrose, Argentine steakhouse institution, empanadas and asado, warm and convivial, beloved for decades" },
+      { name: "Santa Canela", signals: ["eater_38"], axis: ["authenticity_value", "freshness"], notes: "Mexican, thoughtful and ingredient-focused, one of LA's more interesting newer takes on regional Mexican cuisine" },
+      { name: "Si! Mon", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Venezuelan cuisine, West Hollywood, arepas and cachapas done right, one of the few genuinely excellent Venezuelan restaurants in the US" },
+    ],
+
+    // ── Italian / Pizza ──
+    italian: [
+      { name: "Apollonia's Pizzeria", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Sicilian-style pizza, one of LA's best slices, busy and casual, neighborhood institution" },
+      { name: "Pijja Palace", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Indian-inflected Italian, Silverlake, one of LA's most creative and talked-about restaurants, pasta with Indian spice profiles" },
+    ],
+
+    // ── American / Burgers / BBQ ──
+    american: [
+      { name: "Langer's Delicatessen", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "local_authority"], notes: "MacArthur Park, pastrami on rye is considered the best in the world by serious sandwich people, James Beard America's Classics award, cash only, weekdays best" },
+      { name: "Howlin' Ray's Hot Chicken", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "Chinatown, Nashville hot chicken done right, long lines, genuinely spicy, one of LA's most beloved casual restaurants" },
+      { name: "Ray's Texas BBQ", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Texas-style BBQ in LA, brisket and ribs smoked properly, one of LA's best BBQ options" },
+      { name: "Goldburger Los Feliz", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "Smash burger institution, Los Feliz, one of LA's most beloved burger spots, simple and excellent" },
+      { name: "Pann's Restaurant", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Inglewood, 1950s Googie architecture, American diner classics, James Beard America's Classics nominated, a living piece of LA history" },
+    ],
+
+    // ── Wine / Cocktail bars ──
+    bars: [
+      { name: "Vin Folk", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Natural wine bar, one of LA's most interesting wine programs, excellent small plates to accompany" },
+      { name: "Oy Bar", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Wine bar and small plates, Silver Lake, one of LA's most beloved neighborhood wine spots" },
+      { name: "Jones Hollywood", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "West Hollywood, long-running bar and Italian-American food, industry crowd, reliably fun and unpretentious" },
+      { name: "Two Hommés", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "One of LA's newer neighborhood bar concepts generating buzz, excellent cocktails and food" },
+    ],
+
+    // ── Vegetarian / Crossover ──
+    vegetarian: [
+      { name: "Crossroads Los Angeles", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Tal Ronnen's upscale plant-based, West Hollywood, the best argument for vegetarian fine dining in LA, excellent even for non-vegetarians" },
+      { name: "Les Sisters'", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Chatsworth, soul food and Southern cooking, James Beard America's Classics, beloved institution in the Valley" },
+      { name: "Betsy", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "One of LA's newer neighborhood restaurants generating strong word of mouth, warm and ingredient-focused" },
+    ],
+  },
+
+};
+
+// ─── EXPERIENCE SIGNALS DATABASE ──────────────────────────────────────────────
+// Activities, neighborhoods, and experiences for local discovery queries
+// ─────────────────────────────────────────────────────────────────────────────
+
+const EXPERIENCE_SIGNALS_DB = {
+
+  "Seattle": [
+    { name: "Pike Place Market", type: "market", axis: ["local_authority", "populist"], notes: "Essential Seattle, go early morning before crowds, fish throw is touristy but the produce and food stalls are genuinely excellent" },
+    { name: "Capitol Hill", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "Seattle's most vibrant neighborhood — restaurants, bars, music, independent shops, walkable" },
+    { name: "Ballard", type: "neighborhood", axis: ["local_authority"], notes: "Scandinavian heritage, excellent restaurant row on NW Market St, Sunday farmers market April-December" },
+    { name: "Fremont", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "Self-proclaimed 'Center of the Universe', Sunday market, quirky public art, Un Bien and Kamonegi" },
+    { name: "Columbia City", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "Southeast Seattle, genuinely diverse neighborhood, underrated dining scene" },
+    { name: "Chihuly Garden and Glass", type: "museum", axis: ["trusted_authority"], notes: "Dale Chihuly's studio glass works, Seattle Center, genuinely impressive even for non-art people" },
+    { name: "Olympic Sculpture Park", type: "outdoors", axis: ["local_authority"], notes: "Free SAM outdoor sculpture park on the waterfront, great views of the Olympics on clear days" },
+    { name: "Kerry Park", type: "outdoors", axis: ["populist", "local_authority"], notes: "Best view of Seattle skyline with Mt. Rainier behind it, Queen Anne, go at golden hour" },
+    { name: "Burke-Gilman Trail", type: "outdoors", axis: ["local_authority"], notes: "Paved trail along Lake Union and Lake Washington, biking or walking, very Seattle" },
+    { name: "Ferry to Bainbridge Island", type: "day_trip", axis: ["local_authority"], notes: "35 min ferry, charming small town, great views of Seattle skyline from the water, easy half day" },
+    { name: "Hiram M. Chittenden Locks", type: "attraction", axis: ["local_authority"], notes: "Ballard Locks — watch boats and salmon migrate, free, surprisingly fascinating" },
+  ],
+
+  "Portland": [
+    { name: "Powell's City of Books", type: "attraction", axis: ["local_authority", "populist"], notes: "World's largest independent bookstore, Pearl District, a genuine Portland institution — not just a tourist stop" },
+    { name: "Mississippi Avenue", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "North Portland, independent shops, bars, restaurants, one of Portland's most vibrant streets" },
+    { name: "Division Street", type: "neighborhood", axis: ["local_authority"], notes: "Southeast Portland's restaurant row, incredible density of great dining, walkable" },
+    { name: "Alberta Arts District", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "Northeast Portland, galleries, independent restaurants and bars, Last Thursday art walk" },
+    { name: "Forest Park", type: "outdoors", axis: ["local_authority"], notes: "5,200 acres of urban forest, Wildwood Trail, one of the largest urban forests in the US — genuinely impressive" },
+    { name: "Lan Su Chinese Garden", type: "attraction", axis: ["trusted_authority"], notes: "Authentic Ming Dynasty-style garden, Old Town, peaceful and beautiful, underrated" },
+    { name: "Portland Waterfront", type: "outdoors", axis: ["local_authority"], notes: "Tom McCall Waterfront Park, walk or bike, great views and people-watching" },
+    { name: "Portland Saturday Market", type: "market", axis: ["local_authority", "authenticity_value"], notes: "Largest continuously operating outdoor arts and crafts market in the US, under Burnside Bridge, March-December" },
+    { name: "Multnomah Falls", type: "day_trip", axis: ["populist", "trusted_authority"], notes: "620-foot waterfall, 30 min east of Portland, Columbia River Gorge — go early to avoid crowds" },
+    { name: "Pearl District", type: "neighborhood", axis: ["local_authority"], notes: "Galleries, Powell's, upscale restaurants, walkable, good base for exploring" },
+  ],
+
+  "Vancouver": [
+    { name: "Granville Island", type: "market", axis: ["local_authority", "populist"], notes: "Public market, artisan studios, False Creek waterfront — best visited on weekday mornings to avoid weekend crowds" },
+    { name: "Stanley Park", type: "outdoors", axis: ["trusted_authority", "local_authority"], notes: "1,000-acre old-growth forest peninsula, seawall walk with views of mountains and city, totem poles, one of the world's great urban parks" },
+    { name: "Gastown", type: "neighborhood", axis: ["local_authority"], notes: "Historic cobblestone district, steam clock, excellent restaurants and cocktail bars, good starting point for exploring" },
+    { name: "Chinatown", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "One of North America's most authentic Chinatowns, Dr. Sun Yat-Sen Garden, Phnom Penh, emerging arts scene" },
+    { name: "Commercial Drive", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "The Drive — Italian heritage meets bohemian culture, independent cafés, Caffé La Tana, neighborhood feel" },
+    { name: "Main Street", type: "neighborhood", axis: ["local_authority", "freshness"], notes: "Vancouver's most vibrant dining and bar corridor, Burdock & Co, Anh and Chi, The Acorn, walkable" },
+    { name: "Kitsilano Beach", type: "outdoors", axis: ["local_authority"], notes: "West side beach with mountain views, outdoor pool, Kits neighborhood has excellent cafés and restaurants" },
+    { name: "Capilano Suspension Bridge", type: "attraction", axis: ["populist"], notes: "Touristy but genuinely impressive — 450-foot suspension bridge through old-growth rainforest, 30 min from downtown" },
+    { name: "Seawall Walk", type: "outdoors", axis: ["local_authority", "trusted_authority"], notes: "22km waterfront path around Stanley Park and False Creek, walk or rent a bike, best views of mountains and city" },
+    { name: "North Shore Mountains", type: "day_trip", axis: ["local_authority"], notes: "Grouse Mountain, Cypress, Mount Seymour — skiing in winter, hiking in summer, 30 min from downtown via SeaBus" },
+    { name: "Richmond Night Market", type: "market", axis: ["authenticity_value", "local_authority"], notes: "Seasonal (May-Oct), largest night market in North America, exceptional Asian street food, 30 min from downtown" },
+    { name: "Ferry to Victoria", type: "day_trip", axis: ["local_authority"], notes: "BC Ferries to Victoria, 90 min, charming British Columbia capital, Butchart Gardens, great day or overnight trip" },
+  ],
+
+  "San Francisco": [
+    { name: "Mission District", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "SF's most vibrant neighborhood — taquerias, Californios, Lazy Bear, Valencia Street shops, Latin culture and arts, walkable" },
+    { name: "North Beach", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "Italian-American heritage, City Lights Bookstore, Vesuvio bar, Golden Boy Pizza, Beat Generation history" },
+    { name: "Outer Sunset", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "Foggy beach neighborhood, Irving Street restaurants, Outerlands, Old Mandarin Islamic, local surfer culture, not tourist" },
+    { name: "Inner Richmond", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "Clement Street — SF's other Chinatown, Mandalay, Breadbelly, excellent Asian food, very local" },
+    { name: "Ferry Building Marketplace", type: "market", axis: ["local_authority", "trusted_authority"], notes: "Saturday farmers market is essential, artisan food producers, Embarcadero waterfront, outstanding Saturday mornings" },
+    { name: "Golden Gate Park", type: "outdoors", axis: ["trusted_authority", "local_authority"], notes: "1,000+ acres, de Young Museum, California Academy of Sciences, Japanese Tea Garden, bison paddock — explore by bike" },
+    { name: "Dolores Park", type: "outdoors", axis: ["local_authority", "populist"], notes: "Mission, SF's living room, sunny days bring out the whole city, great views of downtown skyline" },
+    { name: "Divisadero Street", type: "neighborhood", axis: ["local_authority", "freshness"], notes: "NoPa corridor, The Progress, excellent bars and restaurants, walkable, less touristy than many SF neighborhoods" },
+    { name: "Alcatraz", type: "attraction", axis: ["trusted_authority", "populist"], notes: "Book weeks in advance, night tours are best, genuinely fascinating history — not just a tourist trap" },
+    { name: "Marin Headlands", type: "day_trip", axis: ["local_authority"], notes: "30 min across Golden Gate Bridge, dramatic Pacific views, hiking, Point Bonita Lighthouse, best views of the bridge" },
+    { name: "Muir Woods", type: "day_trip", axis: ["trusted_authority", "populist"], notes: "Old-growth coastal redwoods, 30 min from SF, shuttle required on weekends, genuinely awe-inspiring" },
+    { name: "Tartine Manufactory", type: "bakery", axis: ["local_authority", "trusted_authority"], notes: "Chad Robertson's bread institution, Mission, morning pastries are legendary — arrive early or queue" },
+  ],
+
+  "Sonoma County": [
+    { name: "Healdsburg", type: "neighborhood", axis: ["trusted_authority", "local_authority"], notes: "The epicenter of Wine Country dining — single square town plaza surrounded by excellent restaurants, tasting rooms, and boutique hotels. Dry Creek Valley and Alexander Valley within minutes." },
+    { name: "Dry Creek Valley", type: "wine", axis: ["trusted_authority", "local_authority"], notes: "Zinfandel and Cabernet Sauvignon country, old vine Zin is the signature, Quivira and Ridge Monte Bello nearby, intimate tasting rooms without Napa crowds" },
+    { name: "Russian River Valley", type: "wine", axis: ["trusted_authority", "local_authority"], notes: "Pinot Noir and Chardonnay, morning fog, Williams Selyem and Rochioli are the benchmarks, Guerneville as base for redwoods access" },
+    { name: "Guerneville and Armstrong Redwoods", type: "outdoors", axis: ["local_authority"], notes: "Russian River resort town, Armstrong Redwoods State Natural Reserve (old-growth), river swimming in summer, very different vibe from Healdsburg" },
+    { name: "Bodega Bay", type: "outdoors", axis: ["local_authority"], notes: "Pacific Coast fishing village, 45 min from Healdsburg, Hitchcock's The Birds filming location, excellent Dungeness crab in season, dramatic coast" },
+    { name: "Glen Ellen and Sonoma Valley", type: "neighborhood", axis: ["local_authority"], notes: "Jack London State Historic Park, Valley Bar and Bottle, Glen Ellen Star, quieter than Healdsburg, beautiful valley floor" },
+    { name: "Sonoma Plaza", type: "neighborhood", axis: ["local_authority", "populist"], notes: "Historic town square, Bear Flag Republic history, excellent tasting rooms around the plaza, more accessible and less expensive than Healdsburg" },
+    { name: "Petaluma", type: "neighborhood", axis: ["local_authority", "freshness"], notes: "South Sonoma County, emerging food scene, Bijou, easy access from SF, historic riverfront district" },
+    { name: "West Sonoma Coast AVA", type: "wine", axis: ["trusted_authority", "local_authority"], notes: "Cool climate Pinot Noir from Fort Ross-Seaview, extreme terroir, producers like Hirsch and Fort Ross Vineyard, worth seeking out" },
+  ],
+
+  "Napa Valley": [
+    { name: "Yountville", type: "neighborhood", axis: ["trusted_authority", "culinary_prestige"], notes: "Thomas Keller's domain — French Laundry, Bouchon, Ad Hoc all here. Small town, walkable, highest restaurant density per capita in the US. North Block Hotel is excellent base." },
+    { name: "St. Helena", type: "neighborhood", axis: ["trusted_authority", "local_authority"], notes: "Mid-valley, Press Restaurant, charming Main Street, Meadowood nearby, quieter than Yountville, excellent for a slower pace" },
+    { name: "Calistoga", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "Northern end of valley, geothermal activity, mud baths and spa culture, more laid-back than southern Napa, Indian Springs Resort" },
+    { name: "Downtown Napa", type: "neighborhood", axis: ["local_authority", "freshness"], notes: "Oxbow Public Market, Compline, Zuzu, riverside walkway, most walkable part of the valley, good base without paying Yountville prices" },
+    { name: "Oxbow Public Market", type: "market", axis: ["local_authority", "populist"], notes: "Downtown Napa, artisan food vendors, Fatted Calf charcuterie, Model Bakery English muffins, Three Twins ice cream, excellent for lunch" },
+    { name: "Stags Leap District", type: "wine", axis: ["trusted_authority"], notes: "Famous for the 1976 Paris Tasting Cabernet that beat Bordeaux, Stag's Leap Wine Cellars and Clos Du Val, structured and elegant Cabs" },
+    { name: "Rutherford", type: "wine", axis: ["trusted_authority"], notes: "Rutherford Dust — distinctive mid-valley terroir, Inglenook (Coppola), Beaulieu Vineyard, Rubicon is the benchmark" },
+    { name: "Oakville", type: "wine", axis: ["trusted_authority"], notes: "Opus One, Far Niente, Robert Mondavi — the heart of Napa Cabernet, Oakville Grocery is a classic pit stop" },
+    { name: "Howell Mountain", type: "wine", axis: ["trusted_authority", "local_authority"], notes: "High elevation AVA, volcanic soils, tannic and structured Cabs that need time, Dunn Vineyards is the benchmark" },
+    { name: "Meadowood", type: "experience", axis: ["trusted_authority", "culinary_prestige"], notes: "St. Helena resort, former Michelin 3-star (pre-fire), The Restaurant is rebuilt and worth knowing about for serious Wine Country visitors" },
+    { name: "French Laundry", type: "experience", axis: ["trusted_authority", "culinary_prestige"], notes: "Thomas Keller's Yountville landmark, one of the world's great restaurants, book exactly 2 months ahead online at midnight — it's that competitive" },
+  ],
+
+  "Monterey and Carmel": [
+    { name: "Carmel-by-the-Sea", type: "neighborhood", axis: ["trusted_authority", "local_authority"], notes: "Fairy-tale village, no street addresses, art galleries, L'Auberge Carmel and Chez Noir, Ocean Avenue shopping, walk to Carmel Beach — one of California's most distinctive small towns" },
+    { name: "Carmel Beach", type: "outdoors", axis: ["trusted_authority", "local_authority"], notes: "White sand, cypress trees, dogs welcome off-leash, one of the most beautiful beaches in California — sunset here is not to be missed" },
+    { name: "17-Mile Drive", type: "outdoors", axis: ["trusted_authority", "populist"], notes: "Scenic toll road through Pebble Beach, Ghost Tree, Lone Cypress, Seal Rock — worth the $11.50 toll, allow 2-3 hours to stop properly" },
+    { name: "Point Lobos State Reserve", type: "outdoors", axis: ["trusted_authority", "local_authority"], notes: "Called the greatest meeting of land and sea by Ansel Adams, tidepools, sea otters, dramatic rocky coast, reserve parking in advance on weekends" },
+    { name: "Monterey Bay Aquarium", type: "attraction", axis: ["trusted_authority", "populist"], notes: "World-class aquarium, open ocean exhibit and kelp forest are stunning, allow half day minimum, buy tickets in advance" },
+    { name: "Cannery Row", type: "neighborhood", axis: ["populist"], notes: "Steinbeck's Cannery Row, touristy but the waterfront walk is pleasant, good for a casual stroll and seafood lunch" },
+    { name: "Pacific Grove", type: "neighborhood", axis: ["local_authority"], notes: "Butterfly town, Victorian architecture, Passionfish, quieter and more residential than Carmel, excellent coastal walking" },
+    { name: "Big Sur", type: "day_trip", axis: ["trusted_authority", "local_authority"], notes: "45 min south, one of the world's great coastal drives, Bixby Bridge, McWay Falls, Post Ranch Inn — allow a full day, check road conditions" },
+    { name: "Pebble Beach Golf Links", type: "experience", axis: ["trusted_authority", "culinary_prestige"], notes: "One of the world's great golf courses, public play available but expensive, 18th hole ocean view is iconic — book months ahead" },
+    { name: "Carmel Valley", type: "wine", axis: ["local_authority"], notes: "Inland from Carmel, sunny microclimate, Pinot Noir and Chardonnay, Bernardus Lodge and Winery, far fewer crowds than Napa" },
+    { name: "Santa Lucia Highlands", type: "wine", axis: ["trusted_authority", "local_authority"], notes: "High elevation AVA above Salinas Valley, cool climate Pinot Noir and Chardonnay, Pisoni and Roar are benchmarks, underrated relative to quality" },
+  ],
+
+  "Los Angeles": [
+    { name: "Silver Lake", type: "neighborhood", axis: ["local_authority", "freshness"], notes: "East side hipster heartland, Reservoir, independent coffee shops, Oy Bar, great for walking and people-watching, very LA creative class" },
+    { name: "Los Feliz", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "Old LA neighborhood, Vermont Avenue restaurants, Goldburger, Hillhurst Ave, Griffith Observatory above, one of LA's most walkable areas" },
+    { name: "Arts District", type: "neighborhood", axis: ["local_authority", "freshness"], notes: "Downtown LA, Bavel, galleries, converted industrial spaces, excellent cocktail bars, one of LA's most dynamic neighborhoods" },
+    { name: "Koreatown", type: "neighborhood", axis: ["authenticity_value", "local_authority"], notes: "24-hour city within a city, best Korean BBQ in the US outside Korea, norebang (karaoke), late night food culture, genuinely vibrant" },
+    { name: "San Gabriel Valley", type: "neighborhood", axis: ["authenticity_value", "local_authority"], notes: "Best Chinese food in North America outside Hong Kong and Vancouver, Bistro Na's, Din Tai Fung original US location, SGV is a food pilgrimage" },
+    { name: "East LA / Boyle Heights", type: "neighborhood", axis: ["authenticity_value", "local_authority"], notes: "Historic Mexican-American community, Taquería Frontera, authentic taquerias and panaderías, the real LA Mexican food experience" },
+    { name: "Venice Beach", type: "outdoors", axis: ["populist", "local_authority"], notes: "Boardwalk, Muscle Beach, Abbot Kinney Boulevard (excellent restaurants and shops), Rose Avenue food scene, sunset walk is essential" },
+    { name: "Griffith Observatory", type: "attraction", axis: ["trusted_authority", "populist"], notes: "Free admission to grounds, views of LA and Hollywood Sign, planetarium shows require tickets, go at sunset or after dark for city lights" },
+    { name: "Getty Center", type: "attraction", axis: ["trusted_authority"], notes: "Free admission (parking fee), Richard Meier architecture, Impressionist collection, garden is remarkable, views of LA on clear days" },
+    { name: "Grand Central Market", type: "market", axis: ["local_authority", "populist"], notes: "Downtown LA, historic food hall since 1917, Holbox, Eggslut, DTLA Cheese, excellent diversity of options, lunch destination" },
+    { name: "Abbot Kinney Boulevard", type: "neighborhood", axis: ["local_authority", "freshness"], notes: "Venice, the mile, boutique shopping and excellent restaurants, Sunday farmers market, one of LA's most pleasant walking streets" },
+    { name: "Malibu", type: "day_trip", axis: ["trusted_authority", "local_authority"], notes: "30-40 min from Santa Monica, Zuma Beach, Nobu Malibu, Point Dume, Malibu Lagoon, celebrity ranches — drive PCH for the experience" },
+    { name: "Chinatown", type: "neighborhood", axis: ["local_authority", "freshness"], notes: "Howlin' Ray's, galleries, Philippe the Original (French dip since 1908), interesting for food and a quick wander" },
+  ],
+
+};
+
+// ── Query utilities ───────────────────────────────────────────────────────────
+
+// Get restaurants for a city filtered by axis preference
+const getRestaurantSignals = (city, axisPreference = null, cuisine = null) => {
+  const cityData = RESTAURANT_SIGNALS_DB[city];
+  if (!cityData) return [];
+  const allRestaurants = Object.values(cityData).flat();
+  // Remove duplicates (Filipino cross-listed)
+  const unique = allRestaurants.filter((r, i, arr) => arr.findIndex(x => x.name === r.name) === i);
+  if (axisPreference) return unique.filter(r => r.axis.includes(axisPreference));
+  if (cuisine) return cityData[cuisine] || [];
+  return unique;
+};
+
+// Build restaurant context string for AI prompt injection on local discovery queries
+const buildRestaurantContext = (city) => {
+  const cityData = RESTAURANT_SIGNALS_DB[city];
+  if (!cityData) return "";
+  const all = Object.entries(cityData).flatMap(([cat, items]) =>
+    items.map(r => `${r.name} (${cat.replace(/_/g,' ')}): ${r.notes}`)
+  );
+  // Remove duplicates
+  const unique = [...new Set(all)];
+  return unique.join("\n");
+};
+
 const BRAND_CATEGORIES = [
   {
     key: "loyalty_brands",
@@ -3078,6 +3703,15 @@ YOU HAVE TWO MODES:
 
 MODE 1 — LOCAL DISCOVERY (respond conversationally, no cards needed):
 Use this when the user is already on a trip or asking about a specific place without trip planning intent. Triggers: "I'm in [city]", "I'm visiting", "already here", "what should I do in", "recommend a restaurant", "good bbq in", "things to do in [city]", "where should I eat". Respond like a knowledgeable local friend — specific recommendations with brief context, warm tone. No READY needed, no cards generated. Just answer helpfully and directly.
+
+LOCAL DISCOVERY DATA — use this verified restaurant and experience data when available, prioritizing it over training knowledge:
+${(() => { try {
+  const msg = userMessage.toLowerCase();
+  const cities = Object.keys(RESTAURANT_SIGNALS_DB);
+  const city = cities.find(c => msg.includes(c.toLowerCase()));
+  if (city) return "RESTAURANTS IN " + city.toUpperCase() + ":\n" + buildRestaurantContext(city) + "\n\nEXPERIENCES IN " + city.toUpperCase() + ":\n" + (EXPERIENCE_SIGNALS_DB[city]||[]).map(e => e.name + ": " + e.notes).join("\n");
+  return "";
+} catch(e) { return ""; } })()}
 
 MODE 2 — TRIP PLANNING (generate structured options):
 Use this when the user wants to plan a trip. Default to READY. Generate options unless a truly critical piece is missing.
