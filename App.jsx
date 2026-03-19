@@ -1184,7 +1184,7 @@ const RESTAURANT_SIGNALS_DB = {
   "Seattle": {
     // ── Fine dining / special occasion ──
     fine_dining: [
-      { name: "Canlis", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "hospitality"], notes: "Seattle institution since 1950, mid-century modern dining room above Lake Union, impeccable service, special occasion standard" },
+      { name: "Canlis", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "hospitality"], notes: "Seattle institution since 1950, mid-century modern dining room above Lake Union, impeccable service — special occasion and splurge territory ($150-200+/person), not an everyday dinner" },
       { name: "Atoma", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Intimate tasting menu, former Canlis team, one of Seattle's most exciting fine dining rooms" },
       { name: "Surrell", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "New American tasting menu, Capitol Hill, intimate and ambitious" },
       { name: "Marjorie", signals: ["eater_38"], axis: ["local_authority", "hospitality"], notes: "Belltown stalwart, creative Pacific Northwest, warm room, beloved by locals" },
@@ -1399,9 +1399,9 @@ const RESTAURANT_SIGNALS_DB = {
   "San Francisco": {
     // ── Fine dining / special occasion ──
     fine_dining: [
-      { name: "Quince", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "culinary_prestige"], notes: "Michael Tusk's Michelin 3-star Italian-Californian, Jackson Square, one of the best restaurants in America, exceptional wine cellar" },
+      { name: "Quince", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "culinary_prestige"], notes: "Michael Tusk's Michelin 3-star Italian-Californian, Jackson Square, one of the best restaurants in America, exceptional wine cellar — tasting menu only, $250-350+/person, serious special occasion" },
       { name: "Californios", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "trusted_authority"], notes: "Val Cantu's Michelin 2-star Mexican tasting menu, Mission, James Beard winner, redefines what Mexican fine dining can be" },
-      { name: "Lazy Bear", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "hospitality"], notes: "David Barzelay's Michelin 2-star communal dinner party concept, Mission, James Beard winner, inventive and fun" },
+      { name: "Lazy Bear", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "hospitality"], notes: "David Barzelay's Michelin 2-star communal dinner party concept, Mission, James Beard winner, inventive and fun — tasting menu $250+/person, special occasion" },
       { name: "The Progress", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Stuart Brioza and Nicole Krasinski's sibling to State Bird Provisions, Divisadero, James Beard winners, outstanding" },
       { name: "Kiln", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Brandon Rice's wood-fired tasting menu, one of SF's most exciting recent openings, serious and ambitious" },
       { name: "The Morris", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Paul Einbund's wine-focused restaurant, Mission, extraordinary wine list, excellent food to match" },
@@ -1468,7 +1468,7 @@ const RESTAURANT_SIGNALS_DB = {
   "Sonoma County": {
     // ── Fine dining / special occasion ──
     fine_dining: [
-      { name: "Cyrus", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "culinary_prestige"], notes: "Douglas Keane's Michelin 2-star comeback, Geyserville, one of the great Wine Country restaurants, exceptional tasting menu and wine pairings from Dry Creek Valley" },
+      { name: "Cyrus", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "culinary_prestige"], notes: "Douglas Keane's Michelin 2-star comeback, Geyserville, one of the great Wine Country restaurants, exceptional tasting menu and wine pairings from Dry Creek Valley — $250-350+/person, serious special occasion" },
       { name: "Farmhouse Inn Restaurant", signals: ["eater_38"], axis: ["culinary_prestige", "hospitality"], notes: "Forestville, on-site inn and restaurant, Michelin-starred, rabbit rabbit rabbit dish is legendary, surrounded by redwoods and vineyards" },
       { name: "The Matheson", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Healdsburg, Dustin Valette's flagship, rooftop bar and main dining room, one of Healdsburg's most ambitious and complete restaurants" },
       { name: "Glen Ellen Star", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Ari Weiswasser's wood-fired Mediterranean in a tiny Glen Ellen storefront, one of Sonoma's most beloved and least pretentious fine dining experiences" },
@@ -3703,6 +3703,7 @@ YOU HAVE TWO MODES:
 
 MODE 1 — LOCAL DISCOVERY (respond conversationally, no cards needed):
 Use this when the user is already on a trip or asking about a specific place without trip planning intent. Triggers: "I'm in [city]", "I'm visiting", "already here", "what should I do in", "recommend a restaurant", "good bbq in", "things to do in [city]", "where should I eat". Respond like a knowledgeable local friend — specific recommendations with brief context, warm tone. No READY needed, no cards generated. Just answer helpfully and directly.
+PRICE TRANSPARENCY: when recommending a fine dining or special occasion restaurant ($100+/person), always briefly signal this — e.g. "splurge-worthy", "special occasion territory", "$150+/person" — so the traveler isn't surprised. Don't lead with high-end options unless the traveler has signaled they want that. Mix price points naturally unless asked for a specific tier.
 
 LOCAL DISCOVERY DATA — use this verified restaurant and experience data when available, prioritizing it over training knowledge:
 ${(() => { try {
