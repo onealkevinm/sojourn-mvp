@@ -1784,6 +1784,145 @@ const RESTAURANT_SIGNALS_DB = {
     ],
   },
 
+
+  "Palm Springs": {
+    fine_dining: [
+      { name: "Mister Parker's", signals: ["eater_38"], axis: ["culinary_prestige", "hospitality"], notes: "The Parker Palm Springs hotel restaurant, romantic and intimate, classic Palm Springs glamour, excellent cocktail program — special occasion in a mid-century setting" },
+      { name: "Norma's", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "The Parker Palm Springs, legendary brunch, over-the-top breakfast dishes, one of the great American hotel brunches — plan to splurge" },
+      { name: "Mr. Lyons", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Historic 1956 steakhouse, downtown Palm Springs, Rat Pack era atmosphere preserved, classic American steakhouse done well" },
+    ],
+    casual: [
+      { name: "Cheeky's", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Weekend brunch institution, rotating weekly menu, long lines, the definitive Palm Springs breakfast — go early or wait" },
+      { name: "Rooster and the Pig", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Vietnamese-influenced, downtown, one of Palm Springs' most beloved and creative casual restaurants" },
+      { name: "Sherman's Deli and Bakery", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Jewish deli institution since 1963, pastrami and matzo ball soup, Palm Springs classic, beloved for decades" },
+      { name: "Elmer's Restaurant", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Casual American diner, longtime local institution, unpretentious and satisfying" },
+      { name: "Delicias Mexican Cuisine", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Traditional Mexican, local institution, one of Palm Springs' most authentic Mexican options" },
+      { name: "Babe's Smokehouse and Tavern", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "BBQ and bar, casual and fun, solid smoked meats in a relaxed desert setting" },
+      { name: "Blackbook", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Wine bar and small plates, one of Palm Springs' more interesting newer spots for an evening drink and snack" },
+      { name: "Paul Bar/Food", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Bar with serious food, one of Palm Springs' most talked-about newer casual spots" },
+      { name: "Gabino's Creperie East", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Crepes and casual French-inspired, neighborhood spot beloved by locals" },
+      { name: "Liv's Palm Springs", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "One of Palm Springs' newer neighborhood restaurants generating strong local buzz" },
+      { name: "The Heyday", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Mid-century vibes and creative food, captures the retro Palm Springs aesthetic with good cooking" },
+      { name: "Boozehounds", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Bar and casual food, dog-friendly patio, very Palm Springs in its laid-back social energy" },
+    ],
+    bakery: [
+      { name: "Cartel Roasting Co.", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Excellent coffee roaster, one of the best morning stops in Palm Springs" },
+      { name: "Peninsula Pastries Palm Springs", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "French pastries and café, one of Palm Springs' best bakeries" },
+      { name: "Townie Bagels", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Hand-rolled bagels, one of Palm Springs' best casual breakfast spots" },
+    ],
+  },
+
+  "Santa Barbara": {
+    fine_dining: [
+      { name: "The Lark", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Funk Zone, Jason Paluska's California cuisine, James Beard nominated, anchor restaurant of Santa Barbara's food scene, excellent wine list from Santa Barbara County" },
+      { name: "Loquita", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Spanish cuisine, State Street, one of Santa Barbara's most vibrant and accomplished restaurants, outstanding paella and sherry program" },
+      { name: "Sama Sama Kitchen", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Indonesian-influenced, one of Santa Barbara's most creative and distinctive restaurants" },
+      { name: "Bibi Ji", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Indian cuisine, Funk Zone, creative and bold, one of Santa Barbara's most exciting newer restaurants" },
+      { name: "Dusk", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Wine bar and small plates, Funk Zone, excellent Santa Barbara County wine program, one of the better evening spots" },
+      { name: "Bar Lou Montecito", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Montecito, upscale neighborhood bar and restaurant, where Montecito locals actually eat — Oprah-adjacent territory" },
+      { name: "AMA Sushi", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Omakase sushi, one of Santa Barbara's most serious Japanese restaurants" },
+    ],
+    mexican: [
+      { name: "La Super-Rica Taqueria", signals: ["eater_38", "james_beard"], axis: ["authenticity_value", "trusted_authority"], notes: "Julia Child's favorite taco stand, James Beard America's Classics, cash only, line out the door, soft tacos and fresh masa — a genuine Santa Barbara pilgrimage" },
+      { name: "Taqueria El Bajio", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Authentic Mexican, beloved by locals, one of the more honest taquerias in town" },
+      { name: "East Beach Tacos", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "Casual beach tacos, exactly what it sounds like, good for a quick beachside meal" },
+      { name: "Flor De Maiz", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Traditional Mexican with masa focus, one of Santa Barbara's more authentic Mexican options" },
+      { name: "Lito's", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Mexican institution, longtime local favorite, reliable and unpretentious" },
+    ],
+    casual: [
+      { name: "Bettina", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Montecito, creative Californian pizza and small plates, one of Santa Barbara's most beloved neighborhood restaurants, excellent natural wine list" },
+      { name: "Lucky Penny", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Funk Zone, pizza and wine bar, casual and fun, one of the most popular spots in the Funk Zone" },
+      { name: "Buena Onda", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Tacos and natural wine, Funk Zone, José Andrés-connected, one of SB's more creative casual spots" },
+      { name: "The Daisy", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "All-day café and wine bar, one of Santa Barbara's most pleasant neighborhood spots" },
+      { name: "Jonesy's Fried Chicken", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Fried chicken done right, casual and beloved, one of SB's best for a no-fuss satisfying meal" },
+      { name: "Cold Spring Tavern", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Historic 1880s stagecoach stop in the Santa Ynez mountains, weekend tri-tip sandwiches, biker and hiker crowd, one of California's most atmospheric casual dining spots — worth the mountain drive" },
+      { name: "Secret Bao", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Taiwanese bao and small plates, one of Santa Barbara's more distinctive Asian casual spots" },
+      { name: "Lokum", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Turkish-Mediterranean influences, one of Santa Barbara's more interesting newer casual spots" },
+      { name: "Chad's Café", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Neighborhood café, locals' breakfast and lunch, unpretentious and reliable" },
+    ],
+    bakery: [
+      { name: "Alessia Patisserie and Café", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "French pastries, one of Santa Barbara's finest bakeries, beautiful croissants and tarts" },
+      { name: "Kin Bakeshop", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Asian-influenced bakery, creative pastries, one of Santa Barbara's most interesting newer bakers" },
+      { name: "IV Bagel Café", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Isla Vista (near UCSB), beloved bagel institution, worth the trip" },
+      { name: "Santa Barbara Public Market", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Downtown food hall, multiple vendors, good for a casual lunch or quick bite, local producers" },
+    ],
+  },
+
+  "Yosemite and Lake Tahoe": {
+    // Note: 2023 list — may have some turnover
+    lake_tahoe: [
+      { name: "Edgewood Restaurant", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Stateline, Edgewood Tahoe Resort, lake views and mountain setting, one of Lake Tahoe's best fine dining experiences — splurge-worthy for the setting alone" },
+      { name: "Boathouse on the Pier", signals: ["eater_38"], axis: ["local_authority", "trusted_authority"], notes: "Tahoe City, lakefront dining on the pier, one of the best combinations of setting and food quality on the North Shore" },
+      { name: "Riva Grill on the Lake", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "South Lake Tahoe, waterfront, casual and fun, good for lunch on the water" },
+      { name: "Artemis Lakefront Café", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Tahoe City, Greek-influenced, one of the more distinctive casual options on the North Shore" },
+      { name: "Base Camp Pizza Co.", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "South Lake Tahoe, après-ski pizza institution, casual and satisfying after a day on the mountain" },
+      { name: "Freshies Ohana Restaurant & Bar", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "South Lake Tahoe, Hawaiian-influenced, casual and fun, one of Tahoe's more distinctive casual spots" },
+      { name: "Zephyr Cove Resort", signals: ["eater_38"], axis: ["populist", "local_authority"], notes: "South Shore, historic resort, lakefront setting, casual dining and beach access" },
+    ],
+    tahoe_casual: [
+      { name: "The Divided Sky", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "One of Tahoe's more interesting newer restaurants, creative and seasonal" },
+      { name: "The Hangar – Taproom & Bottle Shop", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Craft beer and casual food, good selection of local and regional beers" },
+      { name: "Coldwater Brewery and Grill", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "Brewery and casual food, reliable après-ski or post-hike stop" },
+      { name: "Taqueria Jalisco", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Authentic Mexican, beloved by locals, one of Tahoe's better casual Mexican options" },
+      { name: "Sprouts Café", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "South Lake Tahoe, healthy and casual, longtime local favorite for breakfast and lunch" },
+      { name: "Bert's Café", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Diner-style breakfast, local institution" },
+      { name: "Burger Lounge", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "Quality burgers, casual, reliable stop" },
+      { name: "My Thai Cuisine", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Thai, one of Tahoe's better casual Asian options" },
+    ],
+  },
+
+  "Oakland and East Bay": {
+    fine_dining: [
+      { name: "Commis", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "trusted_authority"], notes: "James Syhabout's Michelin 2-star, Piedmont Avenue Oakland, one of the best restaurants in Northern California, intimate tasting menu, James Beard winner — $200+/person, serious special occasion" },
+      { name: "Burdell", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Tanya Holland-connected, Oakland, one of the most important newer restaurants in the East Bay, celebrating Black American culinary heritage" },
+      { name: "Juanita & Maude", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Albany, intimate and accomplished, one of the East Bay's most reliably excellent neighborhood fine dining rooms" },
+      { name: "Top Hatters Kitchen and Bar", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Jack London Square, creative and seasonal, one of Oakland's better upscale neighborhood restaurants" },
+    ],
+    asian: [
+      { name: "Ramen Shop", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Rockridge Oakland, exceptional ramen from Chez Panisse alumni, James Beard nominated, one of the best ramen in Northern California" },
+      { name: "Great China", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Berkeley, Peking duck and exceptional Cantonese cooking, James Beard nominated, one of the best Chinese restaurants in the Bay Area" },
+      { name: "Soba Ichi", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "West Oakland, handmade buckwheat soba, one of the most serious and accomplished Japanese restaurants in the East Bay" },
+      { name: "Joodooboo", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Korean, one of the East Bay's most exciting newer Korean restaurants, creative and precise" },
+      { name: "Good to Eat Dumplings & Modern Taiwanese Cuisine", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Berkeley, handmade Taiwanese dumplings and noodles, one of the best Taiwanese casual restaurants in the Bay Area" },
+      { name: "Gangnam Tofu Korean Cuisine", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Soon dubu jjigae and Korean comfort food, one of the East Bay's most authentic Korean spots" },
+      { name: "Tashi Delek Cuisine", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Tibetan cuisine, Berkeley, one of the few genuinely good Tibetan restaurants in the Bay Area" },
+      { name: "Funky Elephant", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Thai, Berkeley, one of the most authentic and beloved Thai restaurants in the East Bay" },
+      { name: "Vientian Café", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Laotian cuisine, Oakland, one of the few genuinely good Laotian restaurants in Northern California" },
+      { name: "Banh Mi Ba Le", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Vietnamese banh mi institution, Oakland, one of the best banh mi in the Bay Area" },
+    ],
+    global: [
+      { name: "Wahpepah's Kitchen", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Crystal Wahpepah's Indigenous American cuisine, Fruitvale Oakland, James Beard winner, one of the only Indigenous fine dining restaurants in the country — important and delicious" },
+      { name: "Café Colucci", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Ethiopian, Oakland, one of the best Ethiopian restaurants in the Bay Area, injera and wats done beautifully" },
+      { name: "Kendejah Restaurant", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Liberian cuisine, Oakland, one of the only Liberian restaurants in the US, deeply flavored and community-rooted" },
+      { name: "De Afghanistan Cuisine", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Afghan cuisine, Fremont, one of the best Afghan restaurants in Northern California" },
+      { name: "CocoBreeze Caribbean Restaurant and Bakery", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Caribbean comfort food and baked goods, one of Oakland's most beloved community restaurants" },
+      { name: "Mama", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Ethiopian, Oakland, family-run, excellent injera and community-rooted cooking" },
+    ],
+    mexican: [
+      { name: "La Selva Taqueria", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Authentic Mexican taqueria, one of the East Bay's most reliable and beloved taco spots" },
+      { name: "Tamaleria Azteca", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Tamale specialists, Oakland, handmade tamales, one of the best for traditional Mexican corn cooking" },
+      { name: "Tacos Oscar", signals: ["eater_38"], axis: ["authenticity_value", "freshness"], notes: "Creative tacos, one of Oakland's most talked-about taco spots, inventive and delicious" },
+      { name: "Taqueria El Paisa", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Fruitvale, authentic Mexican, one of the neighborhood institutions in Oakland's most vibrant Latino district" },
+    ],
+    casual: [
+      { name: "Snail Bar", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Natural wine bar, Oakland, one of the East Bay's best wine programs, excellent snacks" },
+      { name: "Standard Fare", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Berkeley, exceptional lunch counter, seasonal and ingredient-focused, one of the East Bay's most beloved daytime spots" },
+      { name: "Ok's Deli", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Korean-influenced deli, one of Oakland's most creative and talked-about newer casual spots" },
+      { name: "Range Life", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Wine bar and casual food, one of Oakland's most pleasant neighborhood spots" },
+      { name: "Lulu", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Neighborhood restaurant, one of Oakland's most beloved casual dining rooms" },
+      { name: "Rose Pizzeria", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Oakland, excellent pizza, neighborhood institution" },
+      { name: "Bull Valley Roadhouse", signals: ["eater_38"], axis: ["local_authority", "hospitality"], notes: "Point Richmond, roadhouse-style bar and restaurant, one of the East Bay's most atmospheric casual spots" },
+      { name: "Sailing Goat Restaurant", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Point Richmond waterfront, casual dining with bay views, one of the more scenic casual spots in the East Bay" },
+    ],
+    bakery: [
+      { name: "Bake Sum", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Asian-American bakery, Oakland, one of the most exciting bakeries in the Bay Area, creative and exceptional" },
+      { name: "Lovely's", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Pastries and café, one of Oakland's most beloved bakeries" },
+      { name: "Saul's Restaurant and Delicatessan", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Berkeley, Jewish deli institution, pastrami and matzo ball soup, one of the Bay Area's best delis" },
+      { name: "Babushka Market, Deli & Café", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Russian deli and café, one of the East Bay's most distinctive casual spots" },
+      { name: "Sfizio", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Italian café, one of Oakland's better casual Italian spots" },
+    ],
+  },
+
 };
 
 // ─── EXPERIENCE SIGNALS DATABASE ──────────────────────────────────────────────
@@ -1929,6 +2068,54 @@ const EXPERIENCE_SIGNALS_DB = {
     { name: "Gaslamp Quarter", type: "neighborhood", axis: ["populist"], notes: "Downtown entertainment district, Victorian architecture, bars and restaurants — more nightlife than food destination, but good for a walking tour of historic downtown" },
     { name: "Encinitas", type: "neighborhood", axis: ["local_authority"], notes: "North County beach town, surf culture, Self-Realization Fellowship gardens, excellent café scene, Swami's surf break, 30 min from downtown" },
     { name: "Point Loma", type: "outdoors", axis: ["local_authority", "trusted_authority"], notes: "Cabrillo National Monument, whale watching December-March, tide pools, panoramic views of the harbor and downtown skyline" },
+  ],
+
+  "Palm Springs": [
+    { name: "Palm Canyon Drive", type: "neighborhood", axis: ["local_authority", "populist"], notes: "Main street, mid-century modern architecture, galleries, restaurants, the Rat Pack era well-preserved — walk north to south for the full picture" },
+    { name: "Palm Springs Art Museum", type: "attraction", axis: ["trusted_authority"], notes: "Excellent modern and contemporary collection, free Thursday evenings, beautiful building, underrated" },
+    { name: "Modernism Week", type: "event", axis: ["trusted_authority", "local_authority"], notes: "February, massive celebration of mid-century modern architecture, home tours, lectures, parties — book 6+ months ahead, the best time to visit" },
+    { name: "Indian Canyons", type: "outdoors", axis: ["local_authority", "trusted_authority"], notes: "Agua Caliente Band of Cahuilla Indians tribal land, palm oases and canyon hikes 15 min from downtown, genuinely beautiful and culturally significant" },
+    { name: "Aerial Tramway", type: "attraction", axis: ["populist", "local_authority"], notes: "Rotates as it climbs 8,516 feet in 10 minutes from desert floor to San Jacinto mountains, 30-40 degree temperature difference, hiking at the top" },
+    { name: "Joshua Tree National Park", type: "day_trip", axis: ["trusted_authority", "local_authority"], notes: "45 min from Palm Springs, otherworldly boulder formations and Joshua trees, star gazing is extraordinary, go early morning or late afternoon to avoid heat" },
+    { name: "Coachella Valley", type: "experience", axis: ["populist"], notes: "April music festivals (Coachella, Stagecoach) bring massive crowds and prices — avoid unless attending. Otherwise Palm Springs is a different, quieter experience." },
+    { name: "Sunnylands", type: "attraction", axis: ["trusted_authority", "local_authority"], notes: "Annenberg estate, winter White House for presidents, beautiful gardens, free timed entry tickets required, genuinely fascinating history" },
+  ],
+
+  "Santa Barbara": [
+    { name: "Funk Zone", type: "neighborhood", axis: ["local_authority", "freshness"], notes: "Former industrial district near the train station, best urban wine tasting corridor in California, The Lark, Lucky Penny, Bibi Ji, Dusk — walkable and excellent" },
+    { name: "State Street", type: "neighborhood", axis: ["local_authority", "populist"], notes: "Main street running from mountains to ocean, Spanish Colonial Revival architecture, La Arcada courtyard, Santa Barbara Museum of Art" },
+    { name: "Santa Barbara Courthouse", type: "attraction", axis: ["trusted_authority", "local_authority"], notes: "1929 Spanish Colonial Revival masterpiece, free to visit, climb the Sunken Gardens clock tower for the best view of the city and the Channel Islands — essential" },
+    { name: "Mission Santa Barbara", type: "attraction", axis: ["trusted_authority", "local_authority"], notes: "1786, most beautiful of the California missions, still active parish, rose garden, museum, the Queen of the Missions — genuinely moving" },
+    { name: "Stearns Wharf", type: "outdoors", axis: ["populist", "local_authority"], notes: "Historic pier, harbor views, casual seafood, Santa Barbara Channel Company wine tasting with Channel Islands backdrop" },
+    { name: "Santa Ynez Valley", type: "day_trip", axis: ["trusted_authority", "local_authority"], notes: "45 min over the mountains, Sideways country, Los Olivos tasting rooms, Solvang Danish village, Foxen and Zaca Mesa wineries, completely different landscape from coastal SB" },
+    { name: "Montecito", type: "neighborhood", axis: ["trusted_authority", "local_authority"], notes: "Adjacent to Santa Barbara, one of California's wealthiest enclaves, Oprah and celebrities, Butterfly Beach, San Ysidro Ranch, Bar Lou — the velvet rope version of SB" },
+    { name: "Butterfly Beach", type: "outdoors", axis: ["local_authority"], notes: "Montecito, faces west for sunset views, less crowded than State Beach, one of the best sunset spots on the Central Coast — bring a bottle of wine" },
+    { name: "Channel Islands National Park", type: "day_trip", axis: ["trusted_authority", "local_authority"], notes: "Boat from Sea Landing, Santa Cruz Island most accessible, kayaking through sea caves, endemic wildlife, one of California's most undervisited national parks" },
+    { name: "Cold Spring Tavern", type: "experience", axis: ["trusted_authority", "local_authority"], notes: "1880s stagecoach stop in the mountains, 20 min from downtown, weekend tri-tip and wild boar chili, bikers and hikers, live music weekends — one of California's most atmospheric roadhouses" },
+  ],
+
+  "Yosemite and Lake Tahoe": [
+    { name: "Yosemite Valley", type: "outdoors", axis: ["trusted_authority", "populist"], notes: "El Capitan, Half Dome, Bridalveil Fall — book accommodations 6 months ahead, arrive before 7am to avoid crowds, free shuttle within the valley" },
+    { name: "The Ahwahnee", type: "experience", axis: ["trusted_authority", "culinary_prestige"], notes: "Historic 1927 hotel inside Yosemite Valley, National Historic Landmark, dining room is spectacular even for non-guests — dinner reservations recommended" },
+    { name: "Glacier Point", type: "outdoors", axis: ["trusted_authority", "local_authority"], notes: "Best panoramic view in Yosemite, Half Dome and the high country visible, drive or hike — sunset here is extraordinary" },
+    { name: "Tuolumne Meadows", type: "outdoors", axis: ["local_authority"], notes: "High Sierra, 8,600 feet, subalpine meadows, far fewer crowds than the Valley, serious hiking terrain, Tioga Road closes in winter" },
+    { name: "North Lake Tahoe", type: "outdoors", axis: ["trusted_authority", "local_authority"], notes: "Clearer water, more upscale, Tahoe City and Kings Beach, better hiking, Squaw Valley (Palisades Tahoe) for skiing — more scenic than South Shore" },
+    { name: "South Lake Tahoe", type: "outdoors", axis: ["populist", "local_authority"], notes: "Heavenly ski resort, casinos just across Nevada border, busier and more commercial than North Shore, Emerald Bay is the must-see" },
+    { name: "Emerald Bay", type: "outdoors", axis: ["trusted_authority", "populist"], notes: "Most photographed spot in Tahoe, Vikingsholm castle on the shore, brilliant turquoise water, boat tours available — go early to avoid parking nightmare" },
+    { name: "D.L. Bliss State Park", type: "outdoors", axis: ["local_authority"], notes: "West Shore, beautiful pine forest and lake access, one of Tahoe's best campgrounds, excellent swimming beaches" },
+    { name: "Palisades Tahoe", type: "experience", axis: ["trusted_authority", "populist"], notes: "Formerly Squaw Valley, 1960 Winter Olympics site, best skiing on the North Shore, Village has good après-ski" },
+  ],
+
+  "Oakland and East Bay": [
+    { name: "Temescal", type: "neighborhood", axis: ["local_authority", "freshness"], notes: "Oakland's most vibrant food neighborhood, Telegraph Avenue corridor, Bake Sum, Snail Bar, independent coffee shops, one of the Bay Area's best casual dining strips" },
+    { name: "Fruitvale", type: "neighborhood", axis: ["authenticity_value", "local_authority"], notes: "Oakland's Latino cultural heart, Day of the Dead celebrations, excellent taquerias and tamalarias, Fruitvale BART station murals, genuinely vibrant community" },
+    { name: "Rockridge", type: "neighborhood", axis: ["local_authority"], notes: "College Avenue, Ramen Shop, wine shops, independent bookstores, one of Oakland's most pleasant and walkable neighborhoods, Piedmont Avenue adjacent" },
+    { name: "Jack London Square", type: "neighborhood", axis: ["local_authority", "populist"], notes: "Waterfront, ferry to SF, farmers market Sunday, Top Hatters, Sunday market, historic First and Last Chance Saloon that Jack London actually drank in" },
+    { name: "Oakland Museum of California", type: "attraction", axis: ["trusted_authority"], notes: "Art, history, and natural science of California, Friday evenings have food trucks and live music — genuinely excellent and undervisited by non-locals" },
+    { name: "Lake Merritt", type: "outdoors", axis: ["local_authority"], notes: "Urban saltwater lake, 3.4 mile walk around, Saturday farmers market, gondola rides, beautiful at sunset — the heart of Oakland" },
+    { name: "Berkeley", type: "neighborhood", axis: ["local_authority", "trusted_authority"], notes: "UC Berkeley campus (Sather Tower views), Telegraph Avenue, Gourmet Ghetto (Chez Panisse's neighborhood), Great China, Standard Fare, more laid-back than SF" },
+    { name: "Chez Panisse", type: "experience", axis: ["trusted_authority", "culinary_prestige"], notes: "Alice Waters' legendary Berkeley restaurant, mother of California cuisine, prix fixe downstairs ($125+) or à la carte café upstairs — book weeks ahead, historically important" },
+    { name: "Point Richmond", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "Historic refinery town on the bay, Bull Valley Roadhouse, Sailing Goat, quiet and atmospheric, very few tourists" },
   ],
 
 };
