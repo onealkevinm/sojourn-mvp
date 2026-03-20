@@ -1646,6 +1646,144 @@ const RESTAURANT_SIGNALS_DB = {
     ],
   },
 
+
+  "Orange County": {
+    // ── Fine dining / special occasion ──
+    fine_dining: [
+      { name: "Knife Pleat", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "trusted_authority"], notes: "Tony Esnault's French fine dining, South Coast Plaza, Michelin-starred, one of the best restaurants in Southern California, exceptional wine list — special occasion, $150+/person" },
+      { name: "Marche Moderne", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Florent and Amelia Marneau's French bistro, South Coast Plaza, James Beard nominated, one of OC's most reliable and accomplished restaurants" },
+      { name: "Vaca", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Amar Santana's Spanish cuisine, Costa Mesa, James Beard nominated, excellent paella and charcuterie, one of OC's most vibrant dining rooms" },
+      { name: "A Restaurant", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Newport Beach institution, classic American fine dining, longtime special occasion standard for OC locals" },
+      { name: "Selanne Steak Tavern", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Laguna Beach, Teemu Selanne's steakhouse with serious wine program, ocean-adjacent, one of OC's better upscale dining experiences" },
+      { name: "Farmhouse at Roger's Gardens", signals: ["eater_38"], axis: ["culinary_prestige", "hospitality"], notes: "Corona del Mar, Richard Blais's farm-to-table in a stunning garden nursery setting, one of OC's most unique dining environments" },
+      { name: "Mayfield", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Corona del Mar, intimate and ambitious, one of OC's most exciting newer fine dining rooms" },
+      { name: "Fable & Spirit", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Laguna Beach, creative contemporary with ocean views, one of OC's more interesting newer restaurants" },
+    ],
+
+    // ── Asian ──
+    asian: [
+      { name: "Hana re", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Omakase sushi, Irvine, one of Southern California's finest omakase experiences, exceptional fish sourcing" },
+      { name: "Omakase by Gino", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Intimate omakase, one of OC's most serious and exciting newer sushi experiences" },
+      { name: "Ohshima", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Japanese, Garden Grove, exceptional ramen and izakaya dishes, where the Japanese community eats" },
+      { name: "Mo Ran Gak", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Korean tofu house, Garden Grove, soon dubu jjigae done right, deeply authentic, beloved by the Korean community" },
+      { name: "Garlic and Chives", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Vietnamese, Garden Grove, upscale Vietnamese with creative preparations, one of Little Saigon's most accomplished restaurants" },
+      { name: "Brodard Restaurant", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Little Saigon institution, nemesis rolls are legendary, one of the original and best Vietnamese restaurants in OC" },
+      { name: "Banh Cuon Luu Luyen", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Vietnamese steamed rice rolls, Westminster, deeply authentic, a Little Saigon staple for decades" },
+      { name: "Pho 79", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Garden Grove, one of the original and best pho restaurants in Little Saigon, James Beard America's Classics nominated" },
+      { name: "A&J Restaurant", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Taiwanese breakfast and noodles, Irvine, one of the best Taiwanese casual restaurants in Southern California" },
+      { name: "Nep Café", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Vietnamese café and modern Vietnamese food, Fountain Valley, one of OC's most creative Vietnamese restaurants" },
+      { name: "Nok's Kitchen", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Thai home cooking, one of OC's most authentic and beloved Thai spots" },
+      { name: "Chaak", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Yucatecan-inspired Mexican, one of OC's most interesting newer Mexican restaurants with serious technique" },
+    ],
+
+    // ── Middle Eastern / South Asian ──
+    middle_eastern: [
+      { name: "Khan Saab Desi Craft Kitchen", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Pakistani and South Asian, Anaheim, one of the most exciting South Asian restaurants in Southern California, creative and bold" },
+      { name: "Adya", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Indian street food elevated, Anaheim, one of OC's best Indian restaurants, excellent chaat" },
+      { name: "Al Baraka Restaurant", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Halal Middle Eastern, Anaheim, deeply authentic, beloved by the local Middle Eastern community" },
+      { name: "Kareem's Falafel", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "Lebanese falafel institution, Anaheim, one of the best falafel in Southern California, cash only" },
+      { name: "Yigah", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Israeli-influenced, one of OC's more interesting newer Mediterranean restaurants" },
+    ],
+
+    // ── Mexican ──
+    mexican: [
+      { name: "Taco Mesita", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Creative tacos, one of OC's most interesting newer taco concepts, quality ingredients and inventive combinations" },
+      { name: "Mariscos El Yaqui", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Baja-style seafood, Anaheim, exceptional aguachile and ceviche, one of OC's best casual Mexican seafood spots" },
+      { name: "Alta Baja Market", signals: ["eater_38"], axis: ["authenticity_value", "freshness"], notes: "Baja California and Alta California food cultures, Santa Ana, one of OC's most distinctive and creative casual spots" },
+      { name: "Anepalco", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Mexican-influenced breakfast and brunch, Orange, creative and fresh, one of OC's most beloved daytime restaurants" },
+    ],
+
+    // ── BBQ / American ──
+    bbq: [
+      { name: "Heritage Barbecue", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "San Juan Capistrano, wood-smoked Texas-style BBQ, one of the best BBQ restaurants in Southern California, long lines on weekends" },
+      { name: "Smoke Queen Barbecue", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Korean-influenced BBQ, one of OC's more creative takes on smoked meats" },
+      { name: "Fat of the Land", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Whole animal butchery and cooking, one of OC's most ingredient-focused and serious restaurants" },
+    ],
+
+    // ── Pizza / Italian / Casual ──
+    casual: [
+      { name: "Fuoco Pizzeria Napoletana", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Neapolitan pizza, one of OC's best pizzerias, wood-fired and properly made" },
+      { name: "Truly Pizza", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Creative California-style pizza, one of OC's most interesting newer pizza concepts" },
+      { name: "Mario's Butcher Shop", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Italian deli and sandwiches, one of OC's best casual Italian spots, excellent charcuterie" },
+      { name: "Katella Bakery, Deli & Restaurant", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Los Alamitos, Jewish-style deli institution, pastrami and matzo ball soup, beloved OC institution for decades" },
+      { name: "Hook and Anchor", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Seafood-focused casual, one of OC's better options for straightforward good fish" },
+      { name: "The Parlor", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Bar and kitchen, one of OC's more interesting neighborhood spots" },
+    ],
+  },
+
+
+  "San Diego": {
+    // ── Fine dining / special occasion ──
+    fine_dining: [
+      { name: "Addison Restaurant", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "culinary_prestige"], notes: "William Bradley's Michelin 2-star, Del Mar, one of the best restaurants in California, French-California tasting menu, exceptional wine cellar — $300+/person, serious special occasion" },
+      { name: "Callie", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Travis Swikard's Eastern Mediterranean, East Village downtown, one of San Diego's most exciting and complete restaurants, beautiful room" },
+      { name: "Valle", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Claudette Zepeda's Mexican regional cuisine, Escondido, James Beard nominated, one of the most important restaurants in San Diego — celebrates specific Mexican regional traditions with precision" },
+      { name: "Animae", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Asian-influenced contemporary, Little Italy, Brandon Hernández's ambitious cooking, one of SD's most visually stunning and technically accomplished restaurants" },
+      { name: "Paradisaea", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Intimate tasting menu, one of San Diego's most exciting newer fine dining rooms, serious and personal" },
+      { name: "Kingfisher", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Southeast Asian fine dining, North Park, one of SD's most creative and talked-about newer restaurants" },
+      { name: "Fort Oak", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Wood-fired contemporary, Mission Hills, one of San Diego's most accomplished and consistent restaurants" },
+      { name: "Herb & Wood", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Brian Malarkey's wood-fired Italian-California, Little Italy, beautiful room and reliable excellence" },
+    ],
+
+    // ── Seafood ──
+    seafood: [
+      { name: "George's at the Cove", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "local_authority"], notes: "La Jolla Cove, Trey Foshee's California cuisine, James Beard nominated, rooftop terrace has one of the best ocean views in San Diego — upstairs is casual, downstairs is fine dining" },
+      { name: "The Fishery", signals: ["eater_38"], axis: ["local_authority", "authenticity_value"], notes: "Pacific Beach, working fish market and restaurant, extremely fresh local seafood, casual and excellent — the real deal for San Diego fish" },
+      { name: "Mabel's Gone Fishing", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Seafood-focused, one of SD's most interesting newer approaches to California coastal cooking" },
+      { name: "Fish Guts", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Casual seafood, unpretentious and excellent, the kind of spot locals actually eat fish" },
+      { name: "Serea Coastal Cuisine", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Ocean Beach, coastal California cooking with ocean views, one of SD's better combinations of setting and food quality" },
+    ],
+
+    // ── Japanese / Sushi ──
+    japanese: [
+      { name: "Soichi Sushi", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Chef Soichi Kadono's omakase, University Heights, James Beard nominated, one of the best sushi restaurants in Southern California, intimate counter experience" },
+      { name: "Sushi Tadokoro", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Omakase in Ocean Beach, longtime SD sushi institution, exceptional fish sourcing, one of the originals" },
+      { name: "Sushi Ichifuji", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Serious omakase, one of SD's finest Japanese experiences, precise and excellent" },
+      { name: "Matsu", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Japanese, one of SD's most ambitious and exciting newer Japanese restaurants" },
+      { name: "Yakitori Tsuta", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Authentic yakitori, one of SD's best Japanese casual restaurants, skewers done properly" },
+    ],
+
+    // ── Asian / Pacific ──
+    asian: [
+      { name: "Manna", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Korean fine dining, one of SD's most accomplished Korean restaurants, elevated and thoughtful" },
+      { name: "Shan Xi Magic Kitchen", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Northern Chinese, hand-pulled noodles and Xi'an-style dishes, one of SD's most authentic Chinese restaurants" },
+      { name: "Meet Dumpling", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Handmade dumplings, one of SD's best for genuine Chinese dumpling craft" },
+      { name: "Yiko Yiko", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "West African and global influences, one of SD's most interesting and distinctive newer restaurants" },
+      { name: "Leu Leu", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Southeast Asian influenced, creative and vibrant, one of SD's more exciting newer spots" },
+      { name: "Lilo", signals: ["eater_38"], axis: ["freshness", "local_authority"], notes: "Hawaiian-influenced, one of SD's more interesting takes on Pacific cooking" },
+    ],
+
+    // ── Mexican ──
+    mexican: [
+      { name: "Aqui Es Texcoco", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Barbacoa and consomé, National City, deeply authentic Texcoco-style lamb barbacoa, weekend only, one of the most important Mexican restaurants in San Diego" },
+      { name: "Bosforo", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Baja-influenced Mexican, one of SD's most interesting casual Mexican spots drawing on cross-border culinary culture" },
+    ],
+
+    // ── Italian / Pizza ──
+    italian: [
+      { name: "Cesarina", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Roman-style pasta and pizza, Ocean Beach, Cesarina Mezzoni's home cooking made restaurant, one of SD's most beloved Italian spots" },
+      { name: "Cori Pastificio Trattoria", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Handmade pasta, one of SD's best Italian restaurants, serious pasta craft in a warm neighborhood room" },
+      { name: "Tribute Pizza", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "North Park, one of the best pizzas in San Diego, creative toppings on excellent dough" },
+      { name: "Izola Bakery", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Italian bakery and café, excellent pastries and bread, one of SD's best morning stops" },
+    ],
+
+    // ── Bars / Wine / Cocktails ──
+    bars: [
+      { name: "Wormwood", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "North Park cocktail bar, one of SD's best and most creative cocktail programs, excellent bar snacks" },
+      { name: "Kettner Exchange", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Little Italy, rooftop bar and restaurant, good cocktails and food, popular for a reason" },
+      { name: "Mothership", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Natural wine bar, one of SD's most interesting wine programs" },
+    ],
+
+    // ── Casual / Bakery / Museum ──
+    casual: [
+      { name: "Wayfarer Bread & Pastry", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "La Jolla, outstanding sourdough and pastries, one of SD's best bakeries" },
+      { name: "Tanner's Prime Burger", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "Excellent smash burgers, one of SD's best casual burger spots" },
+      { name: "Nine-Ten Restaurant and Bar", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "La Jolla, Jason Knibb's California cuisine, long-running and reliable, excellent for a classic La Jolla dining experience" },
+      { name: "Artifact at Mingei", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Inside the Mingei International Museum in Balboa Park, one of SD's most interesting museum restaurants, excellent lunch destination" },
+      { name: "Deckman's North at 3131", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Drew Deckman's Baja California cooking brought north, wood-fired and ingredient-driven, outstanding" },
+    ],
+  },
+
 };
 
 // ─── EXPERIENCE SIGNALS DATABASE ──────────────────────────────────────────────
@@ -1765,6 +1903,32 @@ const EXPERIENCE_SIGNALS_DB = {
     { name: "Abbot Kinney Boulevard", type: "neighborhood", axis: ["local_authority", "freshness"], notes: "Venice, the mile, boutique shopping and excellent restaurants, Sunday farmers market, one of LA's most pleasant walking streets" },
     { name: "Malibu", type: "day_trip", axis: ["trusted_authority", "local_authority"], notes: "30-40 min from Santa Monica, Zuma Beach, Nobu Malibu, Point Dume, Malibu Lagoon, celebrity ranches — drive PCH for the experience" },
     { name: "Chinatown", type: "neighborhood", axis: ["local_authority", "freshness"], notes: "Howlin' Ray's, galleries, Philippe the Original (French dip since 1908), interesting for food and a quick wander" },
+  ],
+
+  "Orange County": [
+    { name: "Laguna Beach", type: "neighborhood", axis: ["local_authority", "trusted_authority"], notes: "Artist colony, cliff-side galleries, Pageant of the Masters in summer, dramatic cove beaches, Main Beach is the classic scene — more authentic than Newport" },
+    { name: "Newport Beach", type: "neighborhood", axis: ["local_authority", "populist"], notes: "Balboa Peninsula, ferry to Balboa Island, fun zone, Duffy boat rentals, upscale shopping at Fashion Island — classic OC wealth culture" },
+    { name: "Corona del Mar", type: "neighborhood", axis: ["local_authority"], notes: "Small beach village between Newport and Laguna, excellent restaurants (Farmhouse, Mayfield), tidepools at Little Corona, one of OC's most pleasant beach towns" },
+    { name: "Little Saigon", type: "neighborhood", axis: ["authenticity_value", "local_authority"], notes: "Westminster/Garden Grove, largest Vietnamese community outside Vietnam, Brodard, Pho 79, Banh Cuon — a genuine food pilgrimage destination" },
+    { name: "Crystal Cove State Park", type: "outdoors", axis: ["trusted_authority", "local_authority"], notes: "3.2 miles of beach, historic 1930s beach cottages you can rent, excellent snorkeling, one of the best beach parks in Southern California" },
+    { name: "Disneyland Resort", type: "attraction", axis: ["trusted_authority", "populist"], notes: "Anaheim, the original, always crowded — book Lightning Lane passes, go on weekdays, avoid school holidays. California Adventure has better food and drinks." },
+    { name: "San Juan Capistrano", type: "neighborhood", axis: ["local_authority", "trusted_authority"], notes: "Mission San Juan Capistrano (swallows returning in March), Heritage Barbecue, charming historic downtown, most authentic Mission-era town in SoCal" },
+    { name: "Balboa Island", type: "neighborhood", axis: ["local_authority", "populist"], notes: "Ferry from Newport, frozen chocolate bananas are iconic, fun walk around the small island, very classic OC" },
+    { name: "Huntington Beach", type: "outdoors", axis: ["populist"], notes: "Surf City USA, US Open of Surfing venue, long flat beach good for walking, more laid-back than Newport" },
+  ],
+
+  "San Diego": [
+    { name: "La Jolla", type: "neighborhood", axis: ["trusted_authority", "local_authority"], notes: "Upscale coastal village, La Jolla Cove (sea lions and snorkeling), George's at the Cove, Addison in Del Mar nearby, Birch Aquarium, one of California's most beautiful coastal settings" },
+    { name: "North Park", type: "neighborhood", axis: ["local_authority", "freshness"], notes: "SD's most vibrant food and bar neighborhood, Soichi Sushi, Wormwood, Tribute Pizza, 30th Street corridor, very walkable" },
+    { name: "Little Italy", type: "neighborhood", axis: ["local_authority", "populist"], notes: "Waterfront neighborhood, Saturday farmers market (best in SD), Animae, Herb & Wood, Piazza della Famiglia, good for walking and eating" },
+    { name: "Balboa Park", type: "attraction", axis: ["trusted_authority", "populist"], notes: "1,200 acres, 17 museums including the San Diego Museum of Art, San Diego Zoo, Mingei International Museum, Artifact restaurant — a full day destination" },
+    { name: "San Diego Zoo", type: "attraction", axis: ["trusted_authority", "populist"], notes: "One of the world's great zoos, Balboa Park, Safari Park in Escondido is excellent for African animals — book tickets in advance" },
+    { name: "Ocean Beach", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "OB — laid-back beach town, independent shops, Cesarina, The Fishery, Sushi Tadokoro, farmers market Wednesday evenings, very un-touristy" },
+    { name: "Coronado Island", type: "neighborhood", axis: ["trusted_authority", "local_authority"], notes: "Ferry or bridge from downtown, Hotel del Coronado, wide flat beach, military history, pleasant for a half day or overnight" },
+    { name: "Tijuana", type: "day_trip", axis: ["authenticity_value", "local_authority"], notes: "30 min south, Avenida Revolución and Zona Gastronómica, Caesar salad was invented here, extraordinary tacos and seafood, cross at San Ysidro — bring passport" },
+    { name: "Gaslamp Quarter", type: "neighborhood", axis: ["populist"], notes: "Downtown entertainment district, Victorian architecture, bars and restaurants — more nightlife than food destination, but good for a walking tour of historic downtown" },
+    { name: "Encinitas", type: "neighborhood", axis: ["local_authority"], notes: "North County beach town, surf culture, Self-Realization Fellowship gardens, excellent café scene, Swami's surf break, 30 min from downtown" },
+    { name: "Point Loma", type: "outdoors", axis: ["local_authority", "trusted_authority"], notes: "Cabrillo National Monument, whale watching December-March, tide pools, panoramic views of the harbor and downtown skyline" },
   ],
 
 };
@@ -3706,7 +3870,8 @@ YOU HAVE TWO MODES:
 MODE 1 — LOCAL DISCOVERY (respond conversationally, no cards needed):
 Use this when the user is already on a trip or asking about a specific place without trip planning intent. Triggers: "I'm in [city]", "I'm visiting", "already here", "what should I do in", "recommend a restaurant", "good bbq in", "things to do in [city]", "where should I eat". Respond like a knowledgeable local friend — specific recommendations with brief context, warm tone. No READY needed, no cards generated. Just answer helpfully and directly.
 PRICE TRANSPARENCY: when recommending a fine dining or special occasion restaurant ($100+/person), always briefly signal this — e.g. "splurge-worthy", "special occasion territory", "$150+/person" — so the traveler isn't surprised. Don't lead with high-end options unless the traveler has signaled they want that. Mix price points naturally unless asked for a specific tier.
-AVOID TOURIST TRAPS: never default to obvious tourist-facing restaurants simply because they are well-known or have a view. In Seattle: avoid Ivar's Acres of Clams (waterfront tourist trap), The Crab Pot (gimmick over quality), Elliot's Oyster House (tourist-facing). In San Francisco: avoid Fisherman's Wharf restaurants. In New Orleans: avoid Bourbon Street restaurants. Prefer locally-beloved spots that happen to have views over tourist-facing spots that lead with their view. If the traveler asks specifically for a view, note which options have views AND are genuinely good — don't sacrifice quality for scenery.
+AVOID TOURIST TRAPS: never default to obvious tourist-facing restaurants simply because they are well-known or have a view. In Seattle: avoid Ivar's Acres of Clams (waterfront tourist trap), The Crab Pot (gimmick over quality), Elliot's Oyster House (tourist-facing). In San Francisco: avoid Fisherman's Wharf and Pier 39 restaurants. In New Orleans: avoid Bourbon Street and most French Quarter tourist strip restaurants. In NYC: avoid Times Square restaurants. In Chicago: avoid Navy Pier restaurants. In Hawaii: avoid most Waikiki strip restaurants. Prefer locally-beloved spots that happen to have views over tourist-facing spots that lead with their view. If the traveler asks specifically for a view, note which options have views AND are genuinely good — don't sacrifice quality for scenery.
+BE HONEST ABOUT LIMITATIONS: if a combination of criteria is genuinely hard to find (e.g. "casual seafood with a view" in Seattle — waterfront dining options are limited and most are tourist-facing), say so directly and helpfully. Example: "Honest answer — Seattle doesn't have many casual seafood spots with great water views that are also genuinely good. Ray's Boathouse in Ballard is the best combination, with the upstairs cafe being casual and affordable. Beyond that, the best seafood in the city (Walrus and the Carpenter, Local Tide) doesn't come with dramatic views." A traveler would rather have an honest answer than a padded list of mediocre options.
 
 LOCAL DISCOVERY DATA — use this verified restaurant and experience data when available, prioritizing it over training knowledge:
 ${(() => { try {
