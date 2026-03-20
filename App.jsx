@@ -2833,7 +2833,7 @@ const RESTAURANT_SIGNALS_DB = {
       { name: "Enoteca", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Wine bar and Italian, one of Sun Valley's better wine-focused casual spots" },
     ],
     casual: [
-      { name: "The Casino", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Historic Sun Valley Lodge bar and restaurant, Hemingway drank here, one of the most atmospheric spots in Sun Valley" },
+      { name: "The Casino", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Sun Valley Lodge bar since 1936, Ernest Hemingway's regular haunt — he wrote For Whom the Bell Tolls here in 1939, came back repeatedly until his death in Ketchum in 1961. Gary Cooper, Clark Gable, Marilyn Monroe, Lucille Ball all came through this room. The most historically atmospheric bar in Idaho." },
       { name: "Grumpy's", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Ketchum dive bar and burgers, the most beloved unpretentious spot in Sun Valley, where locals actually hang out" },
       { name: "Warfield", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Ketchum, one of Sun Valley's more interesting newer casual spots" },
       { name: "Scout Wine and Cheese", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Wine shop and small plates, one of Sun Valley's best for a relaxed wine-focused meal" },
@@ -2875,6 +2875,103 @@ const RESTAURANT_SIGNALS_DB = {
       { name: "The Fitzsimmons", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Casual pub, one of Whistler's better spots for a laid-back après experience" },
       { name: "Zog's Dogs", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Hot dogs, Whistler institution, the classic on-mountain casual experience" },
       { name: "Merlin's Bar and Grill", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Blackcomb base, après-ski classic, one of Whistler's most iconic mountain bar experiences" },
+    ],
+  },
+
+
+  "Kauai": {
+    fine_dining: [
+      { name: "Merriman's", signals: ["eater_38"], axis: ["culinary_prestige", "trusted_authority"], notes: "Poipu, Peter Merriman's Hawaii Regional Cuisine pioneer, one of Kauai's most accomplished restaurants, farm-to-table before the term existed on the islands — $80+/person" },
+      { name: "Beach House", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Poipu, oceanfront sunset dining, one of Kauai's most beautiful settings paired with excellent food — reserve the rail for sunset views" },
+      { name: "Bar Acuda", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Hanalei, James Mactavish's tapas bar, one of Kauai's most beloved and accomplished casual-upscale spots, excellent wine list" },
+      { name: "Tidepools", signals: ["eater_38"], axis: ["culinary_prestige", "trusted_authority"], notes: "Grand Hyatt Kauai, thatched-roof bungalows over a koi pond, one of Kauai's most romantic and distinctive dining settings" },
+      { name: "Eating House 1849", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Roy Yamaguchi's Hawaii regional cuisine, Grand Hyatt Kauai, one of Kauai's most reliable fine dining experiences" },
+      { name: "Red Salt", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Ko'a Kea Hotel, one of Kauai's more accomplished hotel restaurants" },
+      { name: "JO2 Natural Cuisine", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "One of Kauai's more interesting newer restaurants, farm-driven and creative" },
+    ],
+    casual: [
+      { name: "Mark's Place", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Lihue, local plate lunch institution, one of Kauai's most beloved local casual spots away from the tourist corridor" },
+      { name: "La Spezia", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Italian, one of Kauai's better casual Italian restaurants" },
+      { name: "Brennecke's Beach Broiler", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Poipu, casual seafood across from the beach, one of Kauai's more reliably pleasant casual spots" },
+      { name: "Porky's", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Local BBQ, one of Kauai's most beloved casual spots for a quick and excellent meal" },
+      { name: "Tip Top", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Lihue, local institution since 1916, macadamia nut pancakes, where Kauai locals have breakfast — very local, not tourist-facing" },
+    ],
+    coffee_shave_ice: [
+      { name: "Little Fish Coffee", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Lihue, excellent coffee, one of Kauai's best for a morning start away from resort coffee" },
+      { name: "Dark Horse", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "One of Kauai's newer and more interesting coffee shops" },
+      { name: "Ha Coffee", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Kauai coffee roaster, excellent local beans, one of the island's best" },
+      { name: "JoJo's Shave Ice", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Waimea, one of Kauai's most beloved shave ice spots, on the way to Waimea Canyon" },
+      { name: "Saimin", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Hawaii's signature noodle soup done properly, one of Kauai's authentic local food experiences" },
+    ],
+  },
+
+  "Big Island": {
+    // Note: Big Island dining scene is thinner than other islands — focus is on not going wrong
+    // and on the extraordinary experiences the island offers beyond food
+    fine_dining: [
+      { name: "Merriman's", signals: ["eater_38"], axis: ["culinary_prestige", "trusted_authority"], notes: "Waimea (Kamuela), Peter Merriman's flagship, Hawaii Regional Cuisine pioneer, upcountry ranch setting at 2,600 feet — one of the Big Island's most accomplished restaurants" },
+      { name: "Manta", signals: ["eater_38"], axis: ["culinary_prestige", "trusted_authority"], notes: "Mauna Kea Beach Hotel, oceanfront fine dining, one of the Big Island's most accomplished resort restaurants, exceptional sunset views" },
+    ],
+    local_hawaii: [
+      { name: "Da Poke Shack", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Kailua-Kona, one of the Big Island's most beloved and authentic poke stops, fresh and simple" },
+      { name: "L&L Hawaiian Barbecue", signals: ["eater_38"], axis: ["authenticity_value", "populist"], notes: "Hawaii's beloved local plate lunch chain, the real local food experience, comfort food for every Hawaii childhood" },
+      { name: "Café 100", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "local_authority"], notes: "Hilo, claimed birthplace of the loco moco (rice, hamburger patty, egg, gravy), James Beard America's Classics nominated, Big Island institution since 1946" },
+      { name: "Tex Drive In", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Honokaa, malasadas (Portuguese donuts) fresh daily, one of the most beloved roadside stops on the Big Island — essential on any Hamakua Coast drive" },
+    ],
+    casual: [
+      { name: "Lava Lava Beach Club", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Anaeho'omalu Bay, feet in the sand dining, sunset cocktails, one of the Big Island's most pleasant casual experiences" },
+      { name: "Huggo's On the Rocks", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Kailua-Kona waterfront, tiki bar on the lava rocks, sunset drinks and seafood, one of the Big Island's most atmospheric casual spots" },
+      { name: "Hula Hula's", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Kailua-Kona, local bar and grill, unpretentious and beloved, the kind of place locals actually eat" },
+    ],
+  },
+
+  "Denver": {
+    fine_dining: [
+      { name: "Frasca Food and Wine", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "culinary_prestige"], notes: "Boulder (30 min from Denver), Bobby Stuckey and Lachlan Mackinnon-Patterson's Friulian Italian, James Beard winner, one of the finest wine programs in the US — $150+/person, Colorado's most important restaurant" },
+      { name: "Beckon", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "RiNo, Duncan Holmes's tasting menu, James Beard nominated, one of Denver's most accomplished and personal fine dining rooms" },
+      { name: "The Wolf's Tailor", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Baker neighborhood, Kelly Whitaker's wood-fired Italian-influenced, James Beard nominated, one of Denver's most creative and beloved restaurants" },
+      { name: "Tavernetta", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Union Station, Frasca team's Denver outpost, Italian, James Beard nominated, one of Denver's finest Italian restaurants" },
+      { name: "Barolo Grill", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "culinary_prestige"], notes: "Cherry Creek, Italian, James Beard nominated, one of Denver's most accomplished and long-running Italian restaurants, exceptional wine list" },
+      { name: "Safta", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "RiNo, Alon Shaya's Israeli, James Beard nominated, one of Denver's most vibrant and accomplished restaurants" },
+      { name: "Annette", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Aurora, Caroline Glover's American, James Beard nominated, wood-fired cooking with Colorado ingredients, one of Denver metro's most important restaurants" },
+      { name: "Marigold", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "One of Denver's most exciting newer fine dining rooms, creative and seasonal" },
+      { name: "Restaurant Olivia", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "One of Denver's newer and most talked-about fine dining concepts" },
+      { name: "Somebody People", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "One of Denver's most interesting newer creative restaurants" },
+      { name: "Sushi by Scratch", signals: ["eater_38"], axis: ["culinary_prestige", "trusted_authority"], notes: "Omakase, same caliber as the Miami and Austin locations, one of Denver's finest Japanese dining experiences" },
+    ],
+    global: [
+      { name: "Tocabe, An American Indian Eatery", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Native American cuisine, frybread tacos and bison dishes, one of the only Native American fast-casual concepts in the US — culturally significant and delicious" },
+      { name: "Hop Alley", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "RiNo, Tommy Lee's Chinese-American, James Beard nominated, one of Denver's most creative and accomplished Asian restaurants" },
+      { name: "Kawa Ni", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Japanese-influenced, one of Denver's more accomplished and interesting Japanese casual restaurants" },
+      { name: "Kizaki", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Japanese, one of Denver's finest Japanese restaurants" },
+      { name: "Dan Da", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Vietnamese, one of Denver's most authentic and beloved Vietnamese restaurants" },
+      { name: "sap sua", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Vietnamese-influenced, one of Denver's most exciting newer Asian restaurants" },
+      { name: "Yuan Wonton", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Chinese wontons and dumplings, one of Denver's best for handmade Chinese" },
+      { name: "Urban Burma", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Burmese cuisine, one of Denver's most distinctive and authentic global casual spots" },
+      { name: "Yemen Grill", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Yemeni cuisine, one of the few excellent Yemeni restaurants in the US, deeply flavored and community-rooted" },
+      { name: "African Grill and Bar", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "West African, one of Denver's more authentic African restaurants" },
+      { name: "MAKfam", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Filipino, one of Denver's most accomplished Filipino restaurants" },
+    ],
+    mexican: [
+      { name: "Alma Fonda Fina", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Kelly Whitaker's Mexican, James Beard nominated, one of Denver's most creative and important Mexican restaurants" },
+      { name: "Tacos Tequila Whiskey / La Diabla Pozole y Mezcal", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Alex Seidel's Mexican concepts, one of Denver's most accomplished Mexican casual restaurant groups" },
+      { name: "La Diabla Pozole y Mezcal", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Pozole and mezcal focus, one of Denver's most creative Mexican restaurants" },
+      { name: "Kike's Red Tacos", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Birria tacos, one of Denver's most beloved authentic Mexican taco spots" },
+      { name: "Lucina Eatery & Bar", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Latin American, one of Denver's more accomplished casual Latin restaurants" },
+      { name: "Xiquita Restaurante y Bar", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Oaxacan cuisine, one of Denver's most authentic regional Mexican restaurants" },
+      { name: "Luchador Taco & More", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Creative tacos, one of Denver's more fun and beloved casual Mexican spots" },
+      { name: "Carne", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Meat-focused Latin, one of Denver's better upscale casual Latin restaurants" },
+    ],
+    casual: [
+      { name: "Hey Kiddo", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "All-day café and wine bar, one of Denver's most beloved neighborhood spots" },
+      { name: "Wildflower", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "One of Denver's more interesting newer creative casual restaurants" },
+      { name: "The Bindery", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Linda Hampsten Fox's all-day café and market, one of Denver's most beloved community spots" },
+      { name: "Odie B's", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "One of Denver's newer neighborhood restaurants generating strong local buzz" },
+      { name: "Spuntino", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Italian-influenced, one of Denver's more accomplished casual Italian spots" },
+      { name: "Molotov Kitschen + Cocktails", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Creative cocktails and food, one of Denver's more interesting neighborhood spots" },
+      { name: "Little Arthur's at Out of the Barrel Taproom", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "One of Denver's more distinctive brewery and food combos" },
+      { name: "Woody's Wings N Things", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Wings institution, one of Denver's most beloved casual spots for wings" },
+      { name: "Odell's Bagel", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "One of Denver's better bagel spots" },
     ],
   },
 
@@ -3323,7 +3420,9 @@ const EXPERIENCE_SIGNALS_DB = {
     { name: "Sun Valley Resort", type: "outdoors", axis: ["trusted_authority"], notes: "America's first destination ski resort (1936), Bald Mountain for experts, Dollar Mountain for families, excellent grooming — historic and uncrowded by major resort standards" },
     { name: "Ketchum", type: "neighborhood", axis: ["local_authority", "trusted_authority"], notes: "The real town adjacent to the resort, Grumpy's, Pioneer Saloon, excellent galleries, Hemingway's grave — more authentic than the Sun Valley resort bubble" },
     { name: "Sawtooth National Recreation Area", type: "outdoors", axis: ["trusted_authority", "local_authority"], notes: "40 minutes north, one of America's most dramatic mountain landscapes, Idaho Rocky Mountain Ranch, Stanley Basin, 40+ mountain lakes — extraordinary and uncrowded" },
-    { name: "Ernest Hemingway Memorial", type: "attraction", axis: ["local_authority", "trusted_authority"], notes: "Trail Creek Cabin area, Hemingway wrote For Whom the Bell Tolls here and is buried in Ketchum — literary pilgrimage" },
+    { name: "Ernest Hemingway Memorial", type: "attraction", axis: ["local_authority", "trusted_authority"], notes: "Trail Creek Cabin area off Sun Valley Road, Hemingway first came to Sun Valley in 1939 as a guest of the resort, wrote For Whom the Bell Tolls here, returned repeatedly, and died by suicide at his Ketchum home in July 1961. He is buried in the Ketchum Cemetery on North Main Street — simple grave, very moving. The memorial bust is near Trail Creek Cabin where he often dined." },
+    { name: "Hemingway's Ketchum", type: "experience", axis: ["local_authority", "trusted_authority"], notes: "Self-guided walking history: Hemingway House (private, 400 block of Canyon Run), Ketchum Cemetery grave, The Casino bar at Sun Valley Lodge, Whiskey Jacques bar where locals still toast him. The Community Library has a Hemingway collection. Ketchum was where Hemingway chose to spend his final years — the landscape of the Wood River Valley is in his late writing." },
+    { name: "Sun Valley Celebrity History", type: "experience", axis: ["trusted_authority", "local_authority"], notes: "Averell Harriman opened Sun Valley in 1936 as the first destination ski resort in America, brought Hollywood immediately — Gary Cooper, Clark Gable, Marilyn Monroe, Lucille Ball, Claudette Colbert all came in the early years. The Sun Valley Lodge photo gallery is extraordinary. Today Arnold Schwarzenegger, Bruce Willis, and others maintain homes in the valley. The resort still has the genteel glamour of its origins." },
     { name: "Galena Lodge", type: "outdoors", axis: ["local_authority"], notes: "Nordic skiing and mountain biking hub, 30 min north toward Stanley, beautiful high country — one of Idaho's best cross-country ski experiences" },
   ],
 
@@ -3335,6 +3434,40 @@ const EXPERIENCE_SIGNALS_DB = {
     { name: "Lost Lake", type: "outdoors", axis: ["local_authority"], notes: "Walk from the village, cross-country skiing in winter, swimming and paddleboarding in summer, one of Whistler's best local escapes" },
     { name: "Audain Art Museum", type: "attraction", axis: ["trusted_authority", "local_authority"], notes: "Excellent BC Indigenous and contemporary art collection, beautiful building, one of the finest small art museums in Canada" },
     { name: "Scandinave Spa Whistler", type: "experience", axis: ["local_authority", "trusted_authority"], notes: "Outdoor hydrotherapy in the forest, après-ski essential, one of the finest Nordic spa experiences in North America — book ahead" },
+  ],
+
+  "Kauai": [
+    { name: "Na Pali Coast", type: "outdoors", axis: ["trusted_authority", "populist"], notes: "16 miles of inaccessible sea cliffs, accessible by boat tour, kayak (summer only), or the Kalalau Trail — one of the world's most dramatic coastlines, the most photographed place in Hawaii" },
+    { name: "Waimea Canyon", type: "outdoors", axis: ["trusted_authority", "populist"], notes: "The Grand Canyon of the Pacific, 10 miles long, 3,600 feet deep, red volcanic rock and waterfalls — drive up Highway 550, stop at Pu'u Hinahina lookout for the full view" },
+    { name: "Hanalei", type: "neighborhood", axis: ["local_authority", "trusted_authority"], notes: "North Shore, taro fields, Hanalei Bay (one of Hawaii's most beautiful beaches), Bar Acuda, casual surf culture — the authentic Kauai north shore experience" },
+    { name: "Poipu", type: "neighborhood", axis: ["trusted_authority", "populist"], notes: "South Shore resort area, consistent sunshine, Poipu Beach Park (monk seals sunbathe here), Grand Hyatt Kauai, Spouting Horn blowhole — the most weather-reliable part of Kauai" },
+    { name: "Kalalau Trail", type: "outdoors", axis: ["trusted_authority", "local_authority"], notes: "11-mile trail along Na Pali Coast, the first 2 miles to Hanakapi'ai Beach are accessible day hike — permit required for full trail, one of the world's great hikes" },
+    { name: "Wailua River", type: "outdoors", axis: ["local_authority", "populist"], notes: "Only navigable river in Hawaii, kayak to Secret Falls (Uluwehi Falls), Fern Grotto boat tour — the most accessible adventure on Kauai" },
+    { name: "Kilauea Lighthouse", type: "attraction", axis: ["trusted_authority", "local_authority"], notes: "National Wildlife Refuge, seabirds nesting on the cliffs, red-footed boobies and frigatebirds, one of Kauai's most dramatic coastal viewpoints" },
+    { name: "Tunnels Beach", type: "outdoors", axis: ["local_authority", "trusted_authority"], notes: "Haena, North Shore, one of Hawaii's best snorkeling beaches, large reef system, beautiful setting under the mountains — summer only, dangerous in winter" },
+  ],
+
+  "Big Island": [
+    { name: "Hawaii Volcanoes National Park", type: "outdoors", axis: ["trusted_authority", "populist"], notes: "Active volcano, Kilauea and Mauna Loa, lava tube hike (Thurston Lava Tube), Chain of Craters Road to the coast — lava viewing depends on current activity, check NPS website, allow full day" },
+    { name: "Manta Ray Night Snorkel", type: "experience", axis: ["trusted_authority", "local_authority"], notes: "Keauhou Bay or Garden Eel Cove, giant manta rays feeding on plankton, one of the world's great wildlife experiences — multiple operators, go with a reputable company" },
+    { name: "Mauna Kea Summit", type: "outdoors", axis: ["trusted_authority", "local_authority"], notes: "13,796 feet, highest point in Hawaii, world's best stargazing, Visitor Information Station at 9,200 feet for sunset (no 4WD needed), summit requires 4WD and acclimatization" },
+    { name: "Hapuna Beach", type: "outdoors", axis: ["trusted_authority", "populist"], notes: "Consistently rated one of America's best beaches, long white sand, excellent swimming, Mauna Kea Beach Hotel adjacent — arrive early for parking" },
+    { name: "Waipio Valley", type: "outdoors", axis: ["trusted_authority", "local_authority"], notes: "Sacred valley of Hawaiian kings, black sand beach, waterfalls, steep road requires 4WD or tour — view from the lookout is extraordinary even without descending" },
+    { name: "South Point", type: "outdoors", axis: ["local_authority"], notes: "Southernmost point in the US, dramatic sea cliffs, cliff jumping into the Pacific, ancient Hawaiian fishing heiau nearby — 45 min from Kona" },
+    { name: "Punalu'u Black Sand Beach", type: "outdoors", axis: ["trusted_authority", "populist"], notes: "Black volcanic sand, green sea turtles basking on the beach, one of Hawaii's most dramatic and accessible beaches" },
+    { name: "Kohala Coast", type: "neighborhood", axis: ["trusted_authority", "local_authority"], notes: "Four Seasons Hualalai, Mauna Kea Beach Hotel, Hapuna Beach Prince — the luxury resort corridor, best weather on the island, ancient heiau and petroglyph fields" },
+  ],
+
+  "Denver": [
+    { name: "RiNo (River North Art District)", type: "neighborhood", axis: ["local_authority", "freshness"], notes: "Denver's most vibrant neighborhood, Beckon, Safta, Hop Alley, excellent breweries, murals everywhere — the best eating and drinking neighborhood in Denver" },
+    { name: "16th Street Mall", type: "neighborhood", axis: ["populist", "local_authority"], notes: "Pedestrian mall through downtown, free shuttle, Union Station at one end (Tavernetta, excellent food hall) — good for orientation but eat elsewhere" },
+    { name: "Union Station", type: "neighborhood", axis: ["local_authority", "trusted_authority"], notes: "Beautifully restored 1914 train station, Tavernetta, Terminal Bar, Crawford Hotel, Great Hall bar — the best public space in Denver" },
+    { name: "Denver Art Museum", type: "attraction", axis: ["trusted_authority"], notes: "Daniel Libeskind titanium addition, excellent Native American and Western American art collections, Frederic C. Hamilton Building is architectural landmark" },
+    { name: "Red Rocks Amphitheatre", type: "attraction", axis: ["trusted_authority", "local_authority"], notes: "15 miles west, natural rock amphitheater, concerts May-October, morning yoga and hiking when no shows — one of the world's great outdoor music venues, early morning hike is spectacular" },
+    { name: "Rocky Mountain National Park", type: "day_trip", axis: ["trusted_authority", "populist"], notes: "90 min northwest, Trail Ridge Road (highest continuous highway in the US), elk viewing, Bear Lake hike — reserve timed entry passes online months ahead in summer" },
+    { name: "Coors Field / LoDo", type: "neighborhood", axis: ["local_authority", "populist"], notes: "Lower Downtown, excellent brewpub scene, Larimer Square, walkable historic district — good for bar-hopping, better food in RiNo" },
+    { name: "Golden", type: "day_trip", axis: ["local_authority", "populist"], notes: "30 min west, Coors Brewery tour (free), Clear Creek whitewater, excellent mountain town, gateway to I-70 mountain corridor" },
+    { name: "Breckenridge or Vail day trip", type: "day_trip", axis: ["local_authority", "trusted_authority"], notes: "90 min on I-70, world-class skiing in winter, mountain biking and hiking in summer — Denver is the ideal base for Front Range ski access" },
   ],
 
 };
