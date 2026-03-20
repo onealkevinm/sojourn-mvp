@@ -3748,6 +3748,14 @@ export default function SojournApp() {
   const [optimizeRecs, setOptimizeRecs] = useState(null);
   const [optimizeLoading, setOptimizeLoading] = useState(false);
   const [showOptimizeModal, setShowOptimizeModal] = useState(false);
+  // Pill index — read once on mount, never changes during session
+  const [pillIdx] = useState(() => {
+    try {
+      const idx = parseInt(localStorage.getItem("sojourn_pill_idx") || "0");
+      localStorage.setItem("sojourn_pill_idx", String((idx + 1) % 25));
+      return idx;
+    } catch(e) { return 0; }
+  });
 
   const fetchOptimizeRecs = async () => {
     if (optimizeRecs || optimizeLoading) return;
@@ -5042,13 +5050,6 @@ Please respond now.`,
           "I'm in Chicago — best deep dish and jazz in the same neighborhood?",
           "In Nashville for work — where do locals go for live music?",
         ];
-
-        // Get rotation index from localStorage — increments each homepage visit
-        let pillIdx = 0;
-        try {
-          pillIdx = parseInt(localStorage.getItem("sojourn_pill_idx") || "0");
-          localStorage.setItem("sojourn_pill_idx", String((pillIdx + 1) % PILL_POOL.length));
-        } catch(e) {}
 
         // Build final 5 prompts: up to 2 loyalty pills + 3 from rotating pool
         const allPrompts = [];
