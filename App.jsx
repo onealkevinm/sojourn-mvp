@@ -2687,6 +2687,197 @@ const RESTAURANT_SIGNALS_DB = {
     ],
   },
 
+
+  "Maui": {
+    fine_dining: [
+      { name: "Mama's Fish House", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "local_authority"], notes: "Paia, legendary Hawaii institution since 1973, seafood caught by named local fishermen, beautiful oceanfront setting — reservations book out months, worth every effort, $100+/person" },
+      { name: "Marlow", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Wailea, one of Maui's most exciting newer fine dining rooms, creative and seasonal with excellent Hawaii ingredient sourcing" },
+      { name: "Tikehau Lounge", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Hotel Wailea, intimate and accomplished, one of Maui's most beautiful dining settings" },
+      { name: "Mala Ocean Tavern", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Lahaina, oceanfront, Mark Ellman's farm-to-table with Pacific influences, one of Maui's most reliable and beloved restaurants" },
+      { name: "Spoon & Key", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "One of Maui's most exciting newer restaurants, creative and ambitious" },
+      { name: "Nuka", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Hana, remote and extraordinary, one of the most unique dining experiences in Hawaii — worth planning your Road to Hana around" },
+      { name: "Oao", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "One of Maui's most talked-about newer creative restaurants" },
+    ],
+    japanese: [
+      { name: "Takumi Maui", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Japanese izakaya, one of Maui's finest and most beloved Japanese restaurants, excellent fish and sake program" },
+      { name: "Star Noodle", signals: ["eater_38"], axis: ["local_authority", "culinary_prestige"], notes: "Lahaina, Sheldon Simeon's ramen and noodles, creative and delicious, one of Maui's most beloved casual restaurants" },
+      { name: "Kitoko Maui", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Japanese-influenced, one of Maui's most interesting newer Japanese restaurants" },
+      { name: "Shikeda Bento Patisserie", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Japanese bento and pastries, one of Maui's most charming and authentic Japanese casual spots" },
+    ],
+    local_hawaii: [
+      { name: "Tin Roof", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Kahului, Sheldon Simeon's plate lunch concept, James Beard nominated, one of the most important restaurants on Maui celebrating Hawaii's multicultural food heritage" },
+      { name: "Ichiban Okazuya", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Japanese-Hawaiian okazuya (deli) tradition, one of Maui's most authentic local food experiences" },
+      { name: "Kaohu Store", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Wailuku, neighborhood store and food, genuine Maui local experience away from the resort corridor" },
+      { name: "Only Ono BBQ", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Hawaiian BBQ plate lunch, one of Maui's most beloved casual local spots" },
+      { name: "Aunty Sandy's Banana Bread", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Ke'anae, roadside banana bread stop on the Road to Hana, one of Maui's most beloved traditions — the banana bread is still warm" },
+    ],
+    casual: [
+      { name: "Leoda's Kitchen and Pie Shop", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Olowalu, roadside pie shop and sandwiches, beloved Maui institution, banana cream pie is legendary" },
+      { name: "Sale Pepe", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Ka'anapali, Italian, one of Maui's better Italian casual restaurants" },
+      { name: "Esters Fair Prospect", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Paia, natural wine bar and small plates, one of Maui's most interesting newer casual spots" },
+      { name: "Balai Pata", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Filipino, one of Maui's most accomplished Filipino restaurants celebrating Hawaii's strong Filipino community" },
+      { name: "Komo", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "One of Maui's newer neighborhood restaurants generating strong local buzz" },
+      { name: "Maui Bees", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Local honey and products, one of Maui's most distinctive food experiences" },
+      { name: "Broth at Alive and Well", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Healthy and local, one of Maui's better wellness-oriented casual spots" },
+    ],
+    bakery_coffee: [
+      { name: "Ululani's Hawaiian Shave Ice", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "The best shave ice on Maui, natural flavors and excellent ice texture, multiple locations — a Maui ritual" },
+      { name: "Akamai Coffee", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Excellent coffee, one of Maui's best for a morning start" },
+    ],
+  },
+
+  "Aspen": {
+    fine_dining: [
+      { name: "Bosq", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Barclay Dodge's intimate tasting menu, James Beard nominated, one of Aspen's most creative and accomplished restaurants, farm-driven and personal" },
+      { name: "Acquolina", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Italian fine dining, one of Aspen's most accomplished and elegant Italian restaurants" },
+      { name: "Cache Cache", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "French bistro institution, downtown Aspen, one of the most reliable and beloved restaurants in town for decades" },
+      { name: "Sant Ambroeus", signals: ["eater_38"], axis: ["culinary_prestige", "trusted_authority"], notes: "Milanese café institution, Aspen location captures the original's elegance, excellent pastries and Northern Italian cuisine" },
+      { name: "Ellina", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "One of Aspen's most exciting newer fine dining rooms, creative and seasonal" },
+      { name: "Wayan Aspen", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Indonesian-influenced, one of Aspen's more interesting and creative newer restaurants" },
+      { name: "Clark's Oyster Bar", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Raw bar and seafood, one of Aspen's most civilized casual-upscale spots" },
+      { name: "Duemani", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Italian, one of Aspen's better Italian casual-upscale options" },
+      { name: "Yuki", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Japanese, one of Aspen's finest Japanese restaurants, excellent après-ski sushi" },
+    ],
+    casual: [
+      { name: "White House Tavern", signals: ["eater_38"], axis: ["local_authority", "trusted_authority"], notes: "Historic building, excellent cocktails and sandwiches, one of Aspen's most atmospheric casual spots" },
+      { name: "Meat & Cheese", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Charcuterie and cheese shop with restaurant, one of Aspen's best for a casual lunch or wine and cheese" },
+      { name: "Steakhouse No. 316", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Reliable steakhouse, one of Aspen's better options for a classic steak dinner" },
+      { name: "Las Montanas", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Mexican-inspired, one of Aspen's better casual options for margaritas and tacos après-ski" },
+      { name: "Aspen Public House", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Neighborhood pub, one of Aspen's more unpretentious and beloved casual spots" },
+      { name: "Mawa's Kitchen", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "African and French-influenced, Mawa McQueen's personal cuisine, one of Aspen's most distinctive and culturally important restaurants" },
+      { name: "Hickory House", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "BBQ institution since 1980, one of Aspen's most beloved and historic casual restaurants" },
+      { name: "Spring Café Aspen", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Healthy and light, one of Aspen's better daytime café options" },
+    ],
+  },
+
+  "Jackson Hole": {
+    fine_dining: [
+      { name: "Snake River Grill", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "culinary_prestige"], notes: "Town Square, James Beard nominated, Rocky Mountain cuisine, one of Jackson's most accomplished and beloved restaurants, beautiful elk antler room — $100+/person" },
+      { name: "Westbank Grill at Four Seasons", signals: ["eater_38"], axis: ["culinary_prestige", "trusted_authority"], notes: "Four Seasons Teton Village, mountain views, one of Jackson's finest and most polished dining rooms, Forbes 5-Star caliber" },
+      { name: "Il Villaggio Osteria", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Teton Village, Italian, one of Jackson's most accomplished and beloved Italian restaurants" },
+      { name: "Palate", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "One of Jackson's more interesting newer creative restaurants" },
+      { name: "The Bistro at the Cloudveil Hotel", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Cloudveil Hotel downtown, creative and seasonal, one of Jackson's better newer hotel restaurants" },
+      { name: "Café Genevieve", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Historic cabin, Southern-influenced, one of Jackson's most atmospheric and beloved restaurants" },
+      { name: "Trio American Bistro", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "One of Jackson's most reliable and accomplished neighborhood fine dining rooms" },
+    ],
+    casual: [
+      { name: "Persephone Bakery", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Jackson's beloved bakery, outstanding croissants and bread, one of the best bakeries in Wyoming, morning institution" },
+      { name: "Local Restaurant and Bar", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Casual American, one of Jackson's most reliably good neighborhood restaurants" },
+      { name: "Roadhouse Brewing Co", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Jackson's craft brewery, excellent beer and casual food, one of the best spots for après-ski" },
+      { name: "Hatch Taqueria & Tequila", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Mexican, one of Jackson's most beloved casual spots for tacos and margaritas" },
+      { name: "The Handle Bar", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Four Seasons Teton Village, après-ski bar, excellent cocktails and casual food, the best bar scene in Teton Village" },
+      { name: "Calico Restaurant", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Teton Village, family-friendly Italian, one of Jackson's most reliable and beloved casual restaurants" },
+      { name: "Gun Barrel Steak and Game House", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Wild game steakhouse, elk and bison, one of Jackson's most uniquely Western dining experiences" },
+      { name: "Yeah Buddy Pizza", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Pizza institution, one of Jackson's most beloved casual spots" },
+      { name: "Silver Dollar Bar at the Worth Hotel", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Historic bar with 2,032 silver dollars inlaid in the counter, one of Jackson's most atmospheric historic spots" },
+      { name: "Snake River Brewing", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Jackson's original craft brewery since 1994, one of the best ski town brewpubs in the US" },
+      { name: "Gather", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "One of Jackson's newer and more interesting casual neighborhood spots" },
+      { name: "Bin22", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Wine shop and casual dining, excellent by-the-glass selection, one of Jackson's better spots for wine lovers" },
+    ],
+  },
+
+  "Vail": {
+    fine_dining: [
+      { name: "Sweet Basil", signals: ["eater_38"], axis: ["trusted_authority", "culinary_prestige"], notes: "Vail Village institution since 1977, one of the most accomplished and reliable fine dining rooms in the Rockies — $100+/person, special occasion standard" },
+      { name: "Matsuhisa", signals: ["eater_38"], axis: ["culinary_prestige", "trusted_authority"], notes: "Nobu Matsuhisa's Vail outpost, Japanese-Peruvian, one of the finest restaurants in ski country" },
+      { name: "La Tour Restaurant & Bar", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "French-influenced, one of Vail's most accomplished and beloved fine dining rooms" },
+      { name: "Mountain Standard", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Rocky Mountain seasonal cuisine, one of Vail's most creative and accomplished restaurants" },
+      { name: "Tavernetta Vail", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Italian, handmade pasta, one of Vail's most beloved Italian restaurants" },
+      { name: "Vintage", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Wine bar and fine dining, one of Vail's better wine-focused restaurants" },
+      { name: "Fall Line Kitchen and Cocktails", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "One of Vail's more interesting newer restaurants" },
+      { name: "Root & Flower", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "One of Vail's most creative newer restaurants" },
+    ],
+    casual: [
+      { name: "The Little Diner", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Vail breakfast institution, hearty mountain breakfast, one of the most beloved morning spots in ski country" },
+      { name: "Annapurna", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Nepalese and Indian, one of Vail's most distinctive and authentic casual spots" },
+      { name: "Alpenrose", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Austrian-influenced, one of Vail's most atmospheric and charming ski town restaurants" },
+      { name: "La Nonna Ristorante Vail", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Italian, one of Vail's more casual and beloved Italian options" },
+      { name: "Osaki's", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Japanese, one of Vail's better casual sushi options après-ski" },
+      { name: "Slope Room", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "On-mountain dining, one of Vail's better ski-in options" },
+      { name: "Avanti Vail", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Food hall concept, multiple vendors, one of Vail's best for casual variety" },
+      { name: "Chasing Rabbits", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "One of Vail's newer and more interesting casual spots" },
+    ],
+  },
+
+  "Park City": {
+    fine_dining: [
+      { name: "Handle", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Briar Handly's farm-to-table, Historic Main Street, James Beard nominated, one of the finest restaurants in Utah, creative and seasonal" },
+      { name: "Riverhorse on Main", signals: ["eater_38"], axis: ["trusted_authority", "culinary_prestige"], notes: "Historic Masonic Hall, one of Park City's most accomplished and atmospheric fine dining rooms, Rocky Mountain cuisine" },
+      { name: "Firewood", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Wood-fired cooking, one of Park City's most accomplished and beloved newer restaurants" },
+      { name: "Tupelo Park City", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Southern-influenced, one of Park City's most creative and accomplished restaurants" },
+      { name: "Twisted Fern", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Farm-to-table, one of Park City's better upscale casual restaurants" },
+      { name: "Fletcher's", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "One of Park City's newer fine dining rooms generating strong attention" },
+      { name: "The Goldener Hirsch Restaurant", signals: ["eater_38"], axis: ["culinary_prestige", "trusted_authority"], notes: "Deer Valley, Austrian-influenced, one of Park City's most elegant ski resort restaurants" },
+    ],
+    casual: [
+      { name: "High West Distillery & Saloon", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Historic Main Street, Utah's first craft distillery, excellent whiskey and food, one of Park City's most essential experiences" },
+      { name: "Five5eeds", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Australian-influenced café, one of Park City's most beloved brunch spots" },
+      { name: "Harvest", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Farm-to-table casual, one of Park City's better healthy casual options" },
+      { name: "Blind Dog Restaurant & Sushi", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Seafood and sushi, one of Park City's more accomplished casual seafood spots" },
+      { name: "Mumbai House", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Indian, one of Park City's most beloved and authentic Indian restaurants" },
+      { name: "Bangkok Thai On Main", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Thai, one of Park City's better casual Thai spots" },
+      { name: "Yuki Yama Sushi", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Sushi, one of Park City's most accomplished Japanese restaurants" },
+      { name: "Pine Cone Ridge", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "One of Park City's newer neighborhood restaurants" },
+      { name: "Burgers & Bourbon", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Montage Deer Valley, casual upscale burgers and whiskey, excellent après-ski" },
+      { name: "Butcher's Chop House & Bar", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Steakhouse, one of Park City's more reliable upscale casual spots" },
+      { name: "The Eating Establishment", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Historic Main Street institution since 1972, breakfast and brunch, one of Park City's most beloved morning spots" },
+    ],
+  },
+
+  "Sun Valley": {
+    fine_dining: [
+      { name: "Michel's Christiania", signals: ["eater_38"], axis: ["trusted_authority", "culinary_prestige"], notes: "Sun Valley institution since 1962, Austrian-French fine dining, one of the most storied restaurants in American ski culture — $100+/person" },
+      { name: "Grill At Knob Hill", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Knob Hill Inn, one of Sun Valley's most accomplished dining rooms, beautiful mountain views" },
+      { name: "The Covey", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Creative contemporary, one of Sun Valley's better fine dining options" },
+      { name: "Roundhouse", signals: ["eater_38"], axis: ["culinary_prestige", "trusted_authority"], notes: "On-mountain at the top of Dollar Mountain, panoramic views, one of the most scenic dining experiences in Idaho ski country" },
+      { name: "Enoteca", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Wine bar and Italian, one of Sun Valley's better wine-focused casual spots" },
+    ],
+    casual: [
+      { name: "The Casino", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Historic Sun Valley Lodge bar and restaurant, Hemingway drank here, one of the most atmospheric spots in Sun Valley" },
+      { name: "Grumpy's", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Ketchum dive bar and burgers, the most beloved unpretentious spot in Sun Valley, where locals actually hang out" },
+      { name: "Warfield", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Ketchum, one of Sun Valley's more interesting newer casual spots" },
+      { name: "Scout Wine and Cheese", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Wine shop and small plates, one of Sun Valley's best for a relaxed wine-focused meal" },
+      { name: "Pioneer", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Pioneer Saloon, steakhouse and bar, Ketchum institution, very Sun Valley" },
+      { name: "Ramen Cowboy", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Ramen in a ski town, unexpectedly excellent, one of Sun Valley's best casual spots" },
+      { name: "Apple's Bar and Grill", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Local institution, casual and beloved, one of Ketchum's most authentic neighborhood spots" },
+      { name: "Sawtooth Brewery Public House", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Local craft brewery, excellent beer and pub food, one of Sun Valley's best casual gathering spots" },
+      { name: "Rickshaw", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Asian-influenced, one of Sun Valley's more distinctive casual spots" },
+      { name: "The Cellar Pub", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Basement bar, classic Sun Valley après-ski" },
+      { name: "Konditorei", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Austrian bakery and café, Sun Valley Resort, one of the most charming morning spots in Idaho ski country" },
+      { name: "Java", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Coffee institution in Ketchum, where locals start their day" },
+      { name: "Cookbook", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Ketchum, one of Sun Valley's more interesting casual spots" },
+      { name: "Maude's", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "One of Sun Valley's newer neighborhood restaurants" },
+    ],
+  },
+
+  "Whistler": {
+    fine_dining: [
+      { name: "Araxi Restaurant + Oyster Bar", signals: ["eater_38"], axis: ["trusted_authority", "culinary_prestige"], notes: "Whistler Village, the anchor fine dining restaurant, BC seafood and farm-to-table, one of the best ski resort restaurants in North America — $150+CAD/person" },
+      { name: "Wild Blue Restaurant + Bar", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "One of Whistler's most exciting newer fine dining rooms, creative and seasonal" },
+      { name: "Bearfoot Bistro", signals: ["eater_38"], axis: ["culinary_prestige", "trusted_authority"], notes: "Whistler institution, exceptional champagne program, ice room vodka tasting, one of the most extravagant dining experiences in ski country" },
+      { name: "Il Caminetto", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Italian, one of Whistler's most accomplished and beloved Italian restaurants" },
+      { name: "The Rimrock Café", signals: ["eater_38"], axis: ["culinary_prestige", "trusted_authority"], notes: "Whistler institution, wild game and seafood, panoramic mountain views, one of the most atmospheric restaurants in Whistler" },
+      { name: "Lorette Brasserie", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "French brasserie, one of Whistler's most interesting newer restaurants" },
+      { name: "Hy's Steakhouse", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Canadian steakhouse institution, Whistler location maintains the classic quality" },
+    ],
+    casual: [
+      { name: "Bar Oso", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Spanish tapas and cocktails, Araxi's casual sibling, one of Whistler's best spots for a relaxed evening" },
+      { name: "21 Steps Kitchen and Bar", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "One of Whistler's more accomplished casual restaurants, rooftop views of the village" },
+      { name: "Creekbread", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Wood-fired pizza, one of Whistler's most beloved casual spots" },
+      { name: "Alta Bistro", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Farm-to-table, one of Whistler's better neighbourhood casual-upscale spots" },
+      { name: "Red Door Bistro", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "One of Whistler's better neighbourhood restaurants" },
+      { name: "Sushi Village", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Whistler sushi institution, one of the best and most beloved Japanese restaurants in ski country" },
+      { name: "Barn Nork", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Thai, one of Whistler's most authentic and beloved casual Asian spots" },
+      { name: "Purebread", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Whistler's beloved bakery, outstanding pastries and bread, a morning institution" },
+      { name: "Portobello", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Market and casual food, one of Whistler's better spots for fresh ingredients and casual meals" },
+      { name: "Bred", signals: ["eater_38"], axis: ["local_authority", "freshness"], notes: "Sandwiches and casual, one of Whistler's newer and more interesting casual spots" },
+      { name: "Handlebar", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Après-ski bar, one of Whistler's most lively and beloved casual après spots" },
+      { name: "The Fitzsimmons", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Casual pub, one of Whistler's better spots for a laid-back après experience" },
+      { name: "Zog's Dogs", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Hot dogs, Whistler institution, the classic on-mountain casual experience" },
+      { name: "Merlin's Bar and Grill", signals: ["eater_38"], axis: ["local_authority", "populist"], notes: "Blackcomb base, après-ski classic, one of Whistler's most iconic mountain bar experiences" },
+    ],
+  },
+
 };
 
 // ─── EXPERIENCE SIGNALS DATABASE ──────────────────────────────────────────────
@@ -3078,6 +3269,72 @@ const EXPERIENCE_SIGNALS_DB = {
     { name: "MoMA", type: "attraction", axis: ["trusted_authority"], notes: "Museum of Modern Art, Midtown, Starry Night and Water Lilies, excellent design collection, Friday evenings free after 5:30pm" },
     { name: "The Bronx", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "La Pirana Lechonera, Arthur Avenue Italian Market (better than Little Italy), Bronx Zoo, Yankee Stadium — the most undervisited borough with the most authentic food" },
     { name: "Arthur Avenue", type: "neighborhood", axis: ["trusted_authority", "local_authority"], notes: "The Bronx, real Italian-American neighborhood, better than Little Italy in every way — fresh pasta, butchers, cheese shops, restaurants that haven't sold out" },
+  ],
+
+  "Maui": [
+    { name: "Road to Hana", type: "outdoors", axis: ["trusted_authority", "populist"], notes: "52 miles of winding road, 600+ curves, waterfalls, black sand beaches, bamboo forests — start before 7am, Aunty Sandy's banana bread at Ke'anae, Nuka restaurant at the end, plan a full day or stay overnight in Hana" },
+    { name: "Haleakala National Park", type: "outdoors", axis: ["trusted_authority", "local_authority"], notes: "10,023-foot dormant volcano, sunrise above the clouds is extraordinary (reserve permits months ahead), stargazing at night, cycling down the crater is a bucket list experience" },
+    { name: "Wailea", type: "neighborhood", axis: ["trusted_authority", "local_authority"], notes: "South Maui resort corridor, Andaz Maui and Four Seasons, excellent beaches (Wailea Beach, Polo Beach), Marlow restaurant — polished and beautiful but less local" },
+    { name: "Paia", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "North Shore surf town, Mama's Fish House, Esters, hippie culture meets world-class windsurfing, Ho'okipa Beach Park — the most authentic town on Maui" },
+    { name: "Ka'anapali", type: "neighborhood", axis: ["trusted_authority", "populist"], notes: "West Maui resort area, Whaler's Village, Black Rock snorkeling cliff dive ceremony at Sheraton at sunset — classic Maui resort experience" },
+    { name: "Molokini Crater", type: "outdoors", axis: ["trusted_authority", "populist"], notes: "Submerged volcanic crater 3 miles offshore, one of the world's best snorkeling sites, 150-foot visibility on calm days — morning boats from Maalaea Harbor" },
+    { name: "Iao Valley State Monument", type: "outdoors", axis: ["trusted_authority", "local_authority"], notes: "Central Maui, Iao Needle volcanic formation, historic 1790 battle site, lush tropical valley, free and beautiful — 30 minutes from Kahului" },
+    { name: "Lahaina", type: "neighborhood", axis: ["trusted_authority", "local_authority"], notes: "Historic whaling town, Mala Ocean Tavern, Front Street — severely impacted by 2023 wildfires, recovery ongoing. The historic district's significance to Hawaiian history and culture remains important." },
+  ],
+
+  "Aspen": [
+    { name: "Aspen Mountain", type: "outdoors", axis: ["trusted_authority"], notes: "Ajax, expert terrain directly above town, gondola from the base of Main Street, one of the most convenient ski-in/ski-out mountain towns in the world" },
+    { name: "Ajax Tavern", type: "experience", axis: ["trusted_authority", "local_authority"], notes: "Ski resort lunch at the Little Nell, one of the great American ski resort dining experiences, people-watching and excellent food" },
+    { name: "Snowmass", type: "outdoors", axis: ["local_authority"], notes: "12 miles from Aspen, family-friendly, Base Village, more terrain than Ajax, often quieter and better value for families" },
+    { name: "Maroon Bells", type: "outdoors", axis: ["trusted_authority", "populist"], notes: "10 miles from Aspen, two 14,000-foot peaks reflected in Maroon Lake, one of the most photographed landscapes in America — shuttle required in summer" },
+    { name: "Hunter Creek Trail", type: "outdoors", axis: ["local_authority"], notes: "The locals' hiking trail above Aspen, beautiful mountain meadows, connects to the backcountry, free and accessible from town" },
+    { name: "Wheeler Opera House", type: "attraction", axis: ["trusted_authority", "local_authority"], notes: "1889 opera house, excellent programming year-round, one of the finest small performance venues in the Mountain West" },
+    { name: "Aspen Art Museum", type: "attraction", axis: ["trusted_authority"], notes: "Shigeru Ban building, free admission, strong contemporary programming, one of the best small art museums in the Mountain West" },
+  ],
+
+  "Jackson Hole": [
+    { name: "Grand Teton National Park", type: "outdoors", axis: ["trusted_authority", "populist"], notes: "Cathedral Group peaks rising above the valley floor, no entry fee with Teton Village proximity, Jenny Lake, String Lake swimming, Signal Mountain summit drive — one of America's most dramatic landscapes" },
+    { name: "Yellowstone National Park", type: "day_trip", axis: ["trusted_authority", "populist"], notes: "90 min north, Old Faithful, Grand Prismatic Spring, Lamar Valley for wildlife (wolves, bison, bears) — allow 2+ days to do it justice" },
+    { name: "Jackson Town Square", type: "neighborhood", axis: ["trusted_authority", "populist"], notes: "Elk antler arches at each corner, Silver Dollar Bar, Snake River Grill — the classic Western town square, busy in summer and winter" },
+    { name: "National Elk Refuge", type: "outdoors", axis: ["trusted_authority", "local_authority"], notes: "7,000+ elk winter here December-April, sleigh rides through the refuge, one of the world's great wildlife spectacles" },
+    { name: "Snake River Float", type: "outdoors", axis: ["local_authority", "trusted_authority"], notes: "Gentle float through the valley with Teton views, excellent wildlife viewing, multiple outfitters — one of the best ways to experience the valley floor" },
+    { name: "Jackson Hole Mountain Resort", type: "outdoors", axis: ["trusted_authority"], notes: "4,139 vertical feet, most challenging resort in the US, Corbet's Couloir, Tram to 10,450 feet — serious terrain for serious skiers, stunning views even for non-skiers" },
+    { name: "National Museum of Wildlife Art", type: "attraction", axis: ["trusted_authority", "local_authority"], notes: "Overlooking the National Elk Refuge, excellent American wildlife art collection, beautiful building — free on some mornings" },
+  ],
+
+  "Vail": [
+    { name: "Vail Village", type: "neighborhood", axis: ["trusted_authority", "populist"], notes: "Car-free Austrian-village style, excellent ski access, sweet basil, covered bridges — beautiful in snow, very convenient for ski-in/ski-out" },
+    { name: "Vail Mountain", type: "outdoors", axis: ["trusted_authority"], notes: "5,289 skiable acres, Blue Sky Basin for powder, Back Bowls for wide-open terrain — one of the largest ski resorts in the US, excellent for intermediate and advanced skiers" },
+    { name: "Beaver Creek", type: "outdoors", axis: ["trusted_authority", "local_authority"], notes: "15 min from Vail, Alain Prost racing mountain, Zach's Cabin on-mountain lunch, less crowded than Vail, excellent intermediate terrain and extraordinary service" },
+    { name: "Gerald R. Ford Amphitheater", type: "attraction", axis: ["local_authority"], notes: "Excellent summer concerts, Bravo! Vail music festival in July, one of the finest outdoor concert venues in the Mountain West" },
+    { name: "Eagle Bahn Gondola", type: "outdoors", axis: ["local_authority"], notes: "Free gondola ride in summer to Game Creek, hiking, mountain biking, views — Vail's outdoor summer playground" },
+  ],
+
+  "Park City": [
+    { name: "Historic Main Street", type: "neighborhood", axis: ["trusted_authority", "local_authority"], notes: "Victorian mining town architecture, Handle, High West Distillery, galleries, excellent restaurants — Utah's most charming historic main street" },
+    { name: "Park City Mountain Resort", type: "outdoors", axis: ["trusted_authority"], notes: "Largest ski resort in the US after Epic-Vail merger, 7,300 acres, connects to Canyons, Olympic Park nearby — outstanding variety of terrain" },
+    { name: "Deer Valley", type: "outdoors", axis: ["trusted_authority", "culinary_prestige"], notes: "Skiers-only resort, impeccable grooming, Goldener Hirsch, Burgers & Bourbon — the most refined ski experience in Utah, strict ski-only policy" },
+    { name: "Utah Olympic Park", type: "attraction", axis: ["trusted_authority", "populist"], notes: "2002 Winter Olympics venue, bobsled rides available to the public, ski jumping, luge — one of the most unique visitor experiences in ski country" },
+    { name: "High West Distillery", type: "experience", axis: ["trusted_authority", "local_authority"], notes: "World's only ski-in distillery, excellent Utah whiskey, beautiful converted livery stable — one of Park City's essential experiences" },
+    { name: "Sundance Film Festival", type: "event", axis: ["trusted_authority"], notes: "January, world's premier independent film festival, Park City is the main venue — book accommodation a year ahead, town transforms completely" },
+  ],
+
+  "Sun Valley": [
+    { name: "Sun Valley Resort", type: "outdoors", axis: ["trusted_authority"], notes: "America's first destination ski resort (1936), Bald Mountain for experts, Dollar Mountain for families, excellent grooming — historic and uncrowded by major resort standards" },
+    { name: "Ketchum", type: "neighborhood", axis: ["local_authority", "trusted_authority"], notes: "The real town adjacent to the resort, Grumpy's, Pioneer Saloon, excellent galleries, Hemingway's grave — more authentic than the Sun Valley resort bubble" },
+    { name: "Sawtooth National Recreation Area", type: "outdoors", axis: ["trusted_authority", "local_authority"], notes: "40 minutes north, one of America's most dramatic mountain landscapes, Idaho Rocky Mountain Ranch, Stanley Basin, 40+ mountain lakes — extraordinary and uncrowded" },
+    { name: "Ernest Hemingway Memorial", type: "attraction", axis: ["local_authority", "trusted_authority"], notes: "Trail Creek Cabin area, Hemingway wrote For Whom the Bell Tolls here and is buried in Ketchum — literary pilgrimage" },
+    { name: "Galena Lodge", type: "outdoors", axis: ["local_authority"], notes: "Nordic skiing and mountain biking hub, 30 min north toward Stanley, beautiful high country — one of Idaho's best cross-country ski experiences" },
+  ],
+
+  "Whistler": [
+    { name: "Whistler Blackcomb", type: "outdoors", axis: ["trusted_authority"], notes: "8,171 acres across two mountains, 200+ runs, Peak 2 Peak Gondola connecting the peaks — consistently rated the best ski resort in North America" },
+    { name: "Peak 2 Peak Gondola", type: "experience", axis: ["trusted_authority", "populist"], notes: "Connects Whistler and Blackcomb peaks, 4.4km span, 436m above valley floor, glass floor gondola available — one of the world's great mountain gondola experiences" },
+    { name: "Whistler Village", type: "neighborhood", axis: ["trusted_authority", "populist"], notes: "Car-free pedestrian village, Araxi, Bearfoot Bistro, excellent ski access, lively après scene — one of North America's best ski village designs" },
+    { name: "Squamish and Sea-to-Sky Highway", type: "day_trip", axis: ["trusted_authority", "local_authority"], notes: "1.5 hours south to Vancouver, Sea-to-Sky Highway is one of the world's great drives, Shannon Falls, Stawamus Chief climbing, Britannia Mine Museum" },
+    { name: "Lost Lake", type: "outdoors", axis: ["local_authority"], notes: "Walk from the village, cross-country skiing in winter, swimming and paddleboarding in summer, one of Whistler's best local escapes" },
+    { name: "Audain Art Museum", type: "attraction", axis: ["trusted_authority", "local_authority"], notes: "Excellent BC Indigenous and contemporary art collection, beautiful building, one of the finest small art museums in Canada" },
+    { name: "Scandinave Spa Whistler", type: "experience", axis: ["local_authority", "trusted_authority"], notes: "Outdoor hydrotherapy in the forest, après-ski essential, one of the finest Nordic spa experiences in North America — book ahead" },
   ],
 
 };
