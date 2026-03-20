@@ -2629,6 +2629,64 @@ const RESTAURANT_SIGNALS_DB = {
     ],
   },
 
+
+  "New York City": {
+    fine_dining: [
+      { name: "Le Bernardin", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "culinary_prestige"], notes: "Eric Ripert's Michelin 3-star seafood temple, Midtown, James Beard winner multiple times, one of the world's great restaurants — $350+/person, essential NYC fine dining pilgrimage" },
+      { name: "Restaurant Daniel", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "culinary_prestige"], notes: "Daniel Boulud's Michelin 2-star Upper East Side institution, James Beard winner, French cuisine at its most accomplished — $250+/person, classic NYC special occasion" },
+      { name: "The Four Horsemen", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Williamsburg, James Beard winner, natural wine list of extraordinary depth, creative seasonal food, one of NYC's most important and beloved restaurants" },
+      { name: "Claud", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "East Village, Josh Pinsky's French-influenced, one of NYC's most talked-about newer fine dining rooms, excellent wine list" },
+      { name: "Via Carota", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "West Village, Rita Sodi and Jody Williams's Italian, James Beard nominated, rustic and perfect, one of NYC's most beloved restaurants — no reservations, expect a wait" },
+      { name: "Lilia", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Williamsburg, Missy Robbins's pasta-focused Italian, James Beard nominated, one of NYC's finest Italian restaurants — book weeks ahead" },
+      { name: "Café Commerce", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "West Village, one of NYC's most exciting newer neighborhood fine dining rooms, creative and seasonal" },
+      { name: "Sailor", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Carroll Gardens Brooklyn, one of NYC's most interesting newer restaurants, natural wine and creative cooking" },
+      { name: "Rolo's", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "Ridgewood Queens, one of NYC's most exciting newer neighborhood restaurants" },
+      { name: "Mam", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "One of NYC's most talked-about newer fine dining concepts, creative and personal" },
+      { name: "Sunn's", signals: ["eater_38"], axis: ["culinary_prestige", "freshness"], notes: "One of NYC's newer and more compelling casual fine dining spots" },
+    ],
+    french_european: [
+      { name: "Le Veau d'Or", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "local_authority"], notes: "Upper East Side, classic French bistro since 1937, Lee Hanson and Riad Nasr's restoration, one of NYC's most atmospheric and accomplished restaurants — old Paris transported to Lexington Avenue" },
+      { name: "Balthazar", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "SoHo, Keith McNally's French brasserie institution since 1997, raw bar, steak frites, the quintessential NYC dining experience, always buzzing" },
+      { name: "Txikito", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Chelsea, Alex Raij and Eder Montero's Basque, one of NYC's finest and most personal Spanish restaurants" },
+    ],
+    seafood: [
+      { name: "Grand Central Oyster Bar", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "local_authority"], notes: "Grand Central Terminal, open since 1913, James Beard America's Classics, pan roast and oyster stew under the vaulted ceiling, one of NYC's great historic dining experiences" },
+      { name: "Noz Market", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Japanese seafood market and restaurant, extraordinary fish sourcing, one of NYC's finest for omakase-adjacent Japanese seafood" },
+      { name: "Abuqir", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Egyptian seafood, Astoria Queens, whole fish and mezze, one of the best Egyptian restaurants in the US, beloved by the Astoria community" },
+    ],
+    steakhouse: [
+      { name: "Keens Steakhouse", signals: ["eater_38"], axis: ["trusted_authority", "local_authority"], notes: "Murray Hill, since 1885, pipes hanging from the ceiling, mutton chop is the must-order, one of NYC's great historic restaurants — old New York preserved perfectly" },
+      { name: "Red Hook Tavern", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Red Hook Brooklyn, Billy Durney's dry-aged beef, one of the finest burgers and steaks in NYC" },
+    ],
+    pizza: [
+      { name: "Una Pizza Napoletana", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "culinary_prestige"], notes: "Anthony Mangieri's Neapolitan obsession, East Village, James Beard nominated, considered one of the best pizzas in the world — only open Wed-Sat, sells out" },
+      { name: "L'Industrie Pizzeria", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Williamsburg, excellent Roman-style slices, one of NYC's most beloved casual pizza spots" },
+    ],
+    asian: [
+      { name: "Ho Foods", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "East Village, Taiwanese beef noodle soup, one of the best single-dish restaurants in NYC, deeply authentic" },
+      { name: "Zaab Zaab", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: ["Elmhurst Queens, Isan Thai, one of the most authentic regional Thai restaurants in the US, som tum papaya salad is extraordinary"] },
+      { name: "Sky Pavilion", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Flushing Queens, Cantonese seafood, one of the finest Chinese restaurants in NYC's extraordinary Flushing food scene" },
+      { name: "Bong", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Korean, one of NYC's most creative and accomplished Korean restaurants" },
+      { name: "Nepali Bhanchha Ghar", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Jackson Heights Queens, Nepali home cooking, one of the few genuinely excellent Nepali restaurants in the US" },
+      { name: "Hyderabadi Zaiqa", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Jackson Heights Queens, Hyderabadi biryani, one of NYC's most authentic South Indian Muslim restaurants" },
+      { name: "Adda", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "Long Island City Queens, Chintan Pandya's Indian, James Beard nominated, one of the finest Indian restaurants in the US" },
+      { name: "Golden Diner", signals: ["eater_38"], axis: ["culinary_prestige", "local_authority"], notes: "Chinatown, Sam Yoo's Asian-American diner, one of NYC's most creative and beloved casual restaurants — scallion pancake pastrami sandwich is legendary" },
+    ],
+    global: [
+      { name: "Chama Mama", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Chelsea, Georgian cuisine, one of the few excellent Georgian restaurants in the US, khachapuri and khinkali are extraordinary" },
+      { name: "Carnitas Ramirez", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Bushwick Brooklyn, Michoacán-style carnitas, the most authentic carnitas in NYC, weekend only" },
+      { name: "La Pirana Lechonera", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Bronx, Puerto Rican lechón (roast pig), one of the most authentic and delicious Puerto Rican restaurants in NYC" },
+      { name: "Charles Pan-Fried Chicken", signals: ["eater_38", "james_beard"], axis: ["trusted_authority", "local_authority"], notes: "Harlem, Charles Gabriel's pan-fried chicken, James Beard America's Classics, one of NYC's most beloved and historically significant restaurants" },
+      { name: "Kabawa", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "West African, one of NYC's most authentic and important West African restaurants" },
+      { name: "Al Badawi", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Bay Ridge Brooklyn, Palestinian and Syrian cuisine, one of NYC's most authentic Middle Eastern restaurants" },
+      { name: "A&A Bake Doubles and Roti", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "Flatbush Brooklyn, Trinidadian doubles, one of the best and most authentic Caribbean street food spots in NYC" },
+    ],
+    casual: [
+      { name: "Superiority Burger", signals: ["eater_38", "james_beard"], axis: ["culinary_prestige", "local_authority"], notes: "East Village, Brooks Headley's vegetarian burger counter, James Beard winner, one of NYC's most beloved casual spots — the best vegetarian burger in America" },
+      { name: "Hamburger America", signals: ["eater_38"], axis: ["authenticity_value", "local_authority"], notes: "West Village, George Motz's hamburger museum and restaurant, celebrating American regional burgers, one of NYC's most fun and distinctive casual spots" },
+    ],
+  },
+
 };
 
 // ─── EXPERIENCE SIGNALS DATABASE ──────────────────────────────────────────────
@@ -3004,6 +3062,22 @@ const EXPERIENCE_SIGNALS_DB = {
     { name: "King William Historic District", type: "neighborhood", axis: ["local_authority", "trusted_authority"], notes: "Beautiful Victorian mansions, bed and breakfasts, walking distance to the River Walk, the most architecturally interesting neighborhood in San Antonio" },
     { name: "Brackenridge Park", type: "outdoors", axis: ["local_authority"], notes: "Museum cluster, San Antonio Zoo, Japanese Tea Garden, Sunken Garden Theater — the park heart of San Antonio" },
     { name: "McNay Art Museum", type: "attraction", axis: ["trusted_authority"], notes: "Beautiful Spanish Colonial Revival mansion, first modern art museum in Texas, excellent post-Impressionist collection, free on Sundays" },
+  ],
+
+  "New York City": [
+    { name: "West Village", type: "neighborhood", axis: ["local_authority", "trusted_authority"], notes: "Via Carota, Café Commerce, cobblestone streets, the most charming and walkable neighborhood in Manhattan — worth the visit even just to wander" },
+    { name: "Williamsburg", type: "neighborhood", axis: ["local_authority", "freshness"], notes: "Four Horsemen, Lilia, L'Industrie, music venues, vintage shops — Brooklyn's most vibrant neighborhood, 10 min from Manhattan on the L train" },
+    { name: "Flushing Queens", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "Best Chinese food in the US, Sky Pavilion, Nan Xiang Xiaolongbao, Golden Shopping Mall basement — a genuine food pilgrimage, 30 min on the 7 train" },
+    { name: "Jackson Heights Queens", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "Most diverse neighborhood on earth, Nepali, Bangladeshi, Colombian, Indian — Roosevelt Avenue food crawl is one of NYC's greatest culinary experiences" },
+    { name: "The High Line", type: "outdoors", axis: ["trusted_authority", "populist"], notes: "Elevated park on former rail line, excellent public art, Hudson Yards views, Chelsea art galleries below — crowded but genuinely excellent, go on weekday mornings" },
+    { name: "Central Park", type: "outdoors", axis: ["trusted_authority", "populist"], notes: "843 acres, Reservoir loop for running, Strawberry Fields, Bethesda Fountain, Conservatory Garden (free, stunning in spring), Shakespeare in the Park in summer" },
+    { name: "The Metropolitan Museum of Art", type: "attraction", axis: ["trusted_authority"], notes: "The Met, one of the world's great museums, Egyptian Temple of Dendur, Impressionist galleries — suggested admission, allow 3+ hours, rooftop bar in summer" },
+    { name: "Brooklyn Heights Promenade", type: "outdoors", axis: ["local_authority", "trusted_authority"], notes: "Best view of the Manhattan skyline, walk the Brooklyn Bridge from Brooklyn side, DUMBO below has excellent coffee and restaurants" },
+    { name: "Harlem", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "Charles Pan-Fried Chicken, Apollo Theater, Strivers' Row architecture, Marcus Garvey Park, the most historically significant African American neighborhood in America" },
+    { name: "Smorgasburg", type: "market", axis: ["local_authority", "populist"], notes: "Weekend outdoor food market, Williamsburg (Sat) and Prospect Park (Sun), April-October, the best food market in NYC, 100 vendors" },
+    { name: "MoMA", type: "attraction", axis: ["trusted_authority"], notes: "Museum of Modern Art, Midtown, Starry Night and Water Lilies, excellent design collection, Friday evenings free after 5:30pm" },
+    { name: "The Bronx", type: "neighborhood", axis: ["local_authority", "authenticity_value"], notes: "La Pirana Lechonera, Arthur Avenue Italian Market (better than Little Italy), Bronx Zoo, Yankee Stadium — the most undervisited borough with the most authentic food" },
+    { name: "Arthur Avenue", type: "neighborhood", axis: ["trusted_authority", "local_authority"], notes: "The Bronx, real Italian-American neighborhood, better than Little Italy in every way — fresh pasta, butchers, cheese shops, restaurants that haven't sold out" },
   ],
 
 };
