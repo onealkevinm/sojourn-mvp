@@ -1556,6 +1556,15 @@ const QUALITY_SIGNALS_DB = {
   "Chateau du Sureau": { tier: "ultra_luxury", relais_chateaux: true, notes: "Oakhurst CA, near Yosemite, French castle, independent" },
 
 
+  // ── CONDÉ NAST HOT LIST 2025 (US) ────────────────────────────────────────
+  // Freshness signal — new, noteworthy, generating buzz
+  "The Beach Club at Boca Raton": { tier: "luxury", cn_hot_list: true, forbes_stars: 5, notes: "Boca Raton FL, Boca Raton Resort, Hilton Honors" },
+  "The Dunlin": { tier: "luxury", cn_hot_list: true, tl_gold: true, notes: "Johns Island SC, Lowcountry, Auberge Resorts" },
+  "The Henson": { tier: "luxury", cn_hot_list: true, notes: "Hensonville NY, Catskills, independent — new mountain retreat" },
+  "The Manner": { tier: "ultra_luxury", cn_hot_list: true, notes: "SoHo NYC, independent — buzzy new luxury boutique" },
+  "The Ranch Hudson Valley": { tier: "luxury", cn_hot_list: true, notes: "Sloatsburg NY, Hudson Valley wellness ranch, independent" },
+  "The Surrey": { tier: "ultra_luxury", cn_hot_list: true, notes: "Upper East Side NYC, Corinthia Hotels — restored landmark" },
+
   // ── FORBES 5-STAR ADDITIONS (states beyond AZ/CA) ──────────────────────────
   "Four Seasons Resort and Residences Napa Valley": { tier: "ultra_luxury", forbes_stars: 5, notes: "Calistoga CA, independent" },
   "The Ritz-Carlton Half Moon Bay": { tier: "luxury", forbes_stars: 5, notes: "Half Moon Bay CA, Marriott Bonvoy" },
@@ -1590,6 +1599,150 @@ const QUALITY_SIGNALS_DB = {
   "Stein Eriksen Lodge Deer Valley": { tier: "luxury", forbes_stars: 5, notes: "Park City UT, ski-in/ski-out, independent" },
   "The Inn at Little Washington": { tier: "ultra_luxury", forbes_stars: 5, michelin_keys: 3, relais_chateaux: true, notes: "Washington VA, Patrick O'Connell" },
   "Salamander Middleburg": { tier: "luxury", forbes_stars: 5, notes: "Middleburg VA, independent, equestrian resort" },
+
+
+  // ── FORBES 4-STAR — KEY DESTINATION MARKETS ──────────────────────────────
+  // Forbes 4-Star = excellent, above average service and facilities
+  // Focused on markets in our restaurant/experience database
+  // Seattle
+  "Four Seasons Hotel Seattle": { tier: "luxury", forbes_stars: 4, notes: "First Hill Seattle, independent" },
+  "The Fairmont Olympic Seattle": { tier: "luxury", forbes_stars: 4, notes: "Downtown Seattle, historic 1924, Fairmont/Accor" },
+  "Hotel 1000 Seattle": { tier: "luxury", forbes_stars: 4, notes: "Downtown Seattle, independent" },
+  "The Charter Hotel Seattle": { tier: "luxury", forbes_stars: 4, notes: "Belltown Seattle, Curio Collection/Hilton" },
+  // San Francisco
+  "The Ritz-Carlton San Francisco": { tier: "luxury", forbes_stars: 4, notes: "Nob Hill SF, Marriott Bonvoy" },
+  "Cavallo Point Lodge": { tier: "luxury", forbes_stars: 4, notes: "Sausalito CA, Golden Gate views, Aramark" },
+  "Hotel Nikko San Francisco": { tier: "luxury", forbes_stars: 4, notes: "Union Square SF, independent" },
+  "Palace Hotel San Francisco": { tier: "luxury", forbes_stars: 4, notes: "Market Street SF, Luxury Collection/Marriott, historic 1875" },
+  "The St. Regis San Francisco": { tier: "luxury", forbes_stars: 5, notes: "Union Square SF, Marriott Bonvoy" },
+  // Napa / Wine Country
+  "Milliken Creek Inn": { tier: "luxury", forbes_stars: 4, notes: "Napa CA, riverfront, independent" },
+  "The Kenwood Inn and Spa": { tier: "luxury", forbes_stars: 4, relais_chateaux: true, notes: "Kenwood CA, Sonoma Valley, independent" },
+  "MacArthur Place Hotel & Spa": { tier: "luxury", forbes_stars: 4, notes: "Sonoma CA, independent" },
+  // Los Angeles
+  "The Jeremy West Hollywood": { tier: "luxury", forbes_stars: 4, notes: "West Hollywood CA, independent" },
+  "Kimpton La Peer Hotel": { tier: "luxury", forbes_stars: 4, notes: "West Hollywood CA, IHG/Kimpton" },
+  "The Mr. C Beverly Hills": { tier: "luxury", forbes_stars: 4, notes: "Beverly Hills CA, independent" },
+  "Shutters on the Beach": { tier: "luxury", forbes_stars: 4, michelin_keys: 2, notes: "Santa Monica CA, independent" },
+  "Hotel Bel-Air": { tier: "ultra_luxury", forbes_stars: 4, michelin_keys: 2, notes: "Bel Air CA, Dorchester Collection" },
+  // San Diego
+  "Estancia La Jolla Hotel & Spa": { tier: "luxury", forbes_stars: 4, notes: "La Jolla CA, independent" },
+  "Hotel del Coronado": { tier: "luxury", forbes_stars: 4, notes: "Coronado CA, historic 1888, Curio Collection/Hilton" },
+  "Kimpton Solamar Hotel": { tier: "luxury", forbes_stars: 4, notes: "Gaslamp San Diego, IHG/Kimpton" },
+  // Palm Springs
+  "La Quinta Resort & Club": { tier: "luxury", forbes_stars: 4, notes: "La Quinta CA, Waldorf Astoria/Hilton, historic 1926" },
+  "Hyatt Regency Indian Wells": { tier: "premium", forbes_stars: 4, notes: "Indian Wells CA, World of Hyatt" },
+  // Phoenix / Scottsdale
+  "The Boulders Resort & Spa": { tier: "luxury", forbes_stars: 4, notes: "Carefree AZ, Waldorf Astoria/Hilton" },
+  "Andaz Scottsdale Resort": { tier: "luxury", forbes_stars: 4, notes: "Scottsdale AZ, World of Hyatt" },
+  "Sanctuary Camelback Mountain": { tier: "luxury", forbes_stars: 4, notes: "Paradise Valley AZ, independent" },
+  "Omni Scottsdale Resort at Montelucia": { tier: "luxury", forbes_stars: 4, notes: "Paradise Valley AZ, Omni Hotels" },
+  // New York City
+  "The NoMad Hotel New York": { tier: "luxury", forbes_stars: 4, michelin_keys: 1, notes: "NoMad NYC, independent" },
+  "The Greenwich Hotel": { tier: "luxury", forbes_stars: 4, michelin_keys: 1, notes: "Tribeca NYC, Robert De Niro, independent" },
+  "Crosby Street Hotel": { tier: "luxury", forbes_stars: 4, notes: "SoHo NYC, Firmdale Hotels" },
+  "The Whitby Hotel": { tier: "luxury", forbes_stars: 4, notes: "Midtown NYC, Firmdale Hotels" },
+  "1 Hotel Brooklyn Bridge": { tier: "premium", forbes_stars: 4, michelin_keys: 1, notes: "Brooklyn NY, SH Hotels" },
+  "The William Vale": { tier: "luxury", forbes_stars: 4, notes: "Williamsburg Brooklyn, independent" },
+  "Wythe Hotel": { tier: "premium", forbes_stars: 4, michelin_keys: 1, notes: "Williamsburg Brooklyn, independent" },
+  // Washington DC
+  "The Jefferson Washington DC": { tier: "luxury", forbes_stars: 4, tl_gold: true, notes: "16th Street DC, historic 1923, independent" },
+  "Kimpton George Hotel": { tier: "luxury", forbes_stars: 4, notes: "Capitol Hill DC, IHG/Kimpton" },
+  "Hotel Zena Washington DC": { tier: "luxury", forbes_stars: 4, notes: "Dupont Circle DC, Vignette Collection/IHG" },
+  // Chicago
+  "Kimpton Gray Hotel": { tier: "luxury", forbes_stars: 4, notes: "Loop Chicago, IHG/Kimpton" },
+  "The Godfrey Hotel Chicago": { tier: "luxury", forbes_stars: 4, notes: "River North Chicago, independent" },
+  "Loews Chicago Hotel": { tier: "luxury", forbes_stars: 4, notes: "Streeterville Chicago, Loews Hotels" },
+  // New Orleans
+  "Hotel Monteleone": { tier: "luxury", forbes_stars: 4, notes: "French Quarter New Orleans, historic 1886, independent — revolving Carousel Bar" },
+  "The Ace Hotel New Orleans": { tier: "premium", forbes_stars: 4, notes: "Warehouse District, Ace Hotels" },
+  "Audubon Cottages": { tier: "luxury", forbes_stars: 4, notes: "French Quarter New Orleans, independent" },
+  // Nashville
+  "1 Hotel Nashville": { tier: "luxury", forbes_stars: 4, notes: "SoBro Nashville, SH Hotels" },
+  "The Joseph Nashville": { tier: "luxury", forbes_stars: 4, notes: "SoBro Nashville, Autograph Collection/Marriott" },
+  "Thompson Nashville": { tier: "luxury", forbes_stars: 4, notes: "The Gulch Nashville, World of Hyatt" },
+  // Atlanta
+  "Kimpton Sylvan Hotel": { tier: "luxury", forbes_stars: 4, notes: "Buckhead Atlanta, IHG/Kimpton" },
+  "Hotel Clermont": { tier: "premium", forbes_stars: 4, notes: "Ponce City Market Atlanta, independent" },
+  // Miami
+  "The Surf Club Four Seasons": { tier: "ultra_luxury", forbes_stars: 5, notes: "Surfside FL, Four Seasons/Thomas Keller restaurant" },
+  "Kimpton Surfcomber Hotel": { tier: "luxury", forbes_stars: 4, notes: "South Beach FL, IHG/Kimpton" },
+  "Soho Beach House Miami Beach": { tier: "luxury", forbes_stars: 4, notes: "Mid-Beach FL, Soho House" },
+  // Hawaii
+  "Andaz Maui at Wailea": { tier: "luxury", forbes_stars: 4, cn_hot_list: true, notes: "Wailea Maui, World of Hyatt" },
+  "Montage Kapalua Bay": { tier: "luxury", forbes_stars: 4, tl_gold: true, notes: "Kapalua Maui, Montage Hotels" },
+  "Fairmont Kea Lani": { tier: "luxury", forbes_stars: 4, tl_gold: true, notes: "Wailea Maui, Fairmont/Accor" },
+  "Hyatt Regency Maui Resort": { tier: "premium", forbes_stars: 4, notes: "Ka'anapali Maui, World of Hyatt" },
+  "Grand Hyatt Kauai Resort": { tier: "luxury", forbes_stars: 4, notes: "Poipu Kauai, World of Hyatt" },
+  "Turtle Bay Resort": { tier: "premium", forbes_stars: 4, notes: "North Shore Oahu, independent" },
+  // Mountain / Ski
+  "The Little Nell": { tier: "ultra_luxury", forbes_stars: 5, notes: "Aspen CO, ski-in/ski-out, independent" },
+  "Hotel Jerome": { tier: "luxury", forbes_stars: 4, notes: "Aspen CO, Auberge Resorts" },
+  "The Sky Hotel Aspen": { tier: "luxury", forbes_stars: 4, notes: "Aspen CO, Autograph Collection/Marriott" },
+  "Park Hyatt Beaver Creek": { tier: "luxury", forbes_stars: 4, notes: "Beaver Creek CO, ski-in/ski-out, World of Hyatt" },
+  "The Sebastian Vail": { tier: "luxury", forbes_stars: 4, notes: "Vail CO, independent" },
+  "Sonnenalp Hotel": { tier: "luxury", forbes_stars: 4, notes: "Vail Village CO, independent, Bavarian style" },
+  "Goldener Hirsch Inn": { tier: "luxury", forbes_stars: 4, notes: "Deer Valley UT, Auberge Resorts, ski-in/ski-out" },
+  "St. Regis Deer Valley": { tier: "luxury", forbes_stars: 4, notes: "Park City UT, Marriott Bonvoy, ski-in/ski-out" },
+  "Amangani": { tier: "ultra_luxury", forbes_stars: 4, aman: true, notes: "Jackson Hole WY, Aman, Teton views" },
+  "Snake River Lodge & Spa": { tier: "luxury", forbes_stars: 4, notes: "Teton Village WY, Autograph Collection/Marriott" },
+
+
+  // ── SMALL LUXURY HOTELS OF THE WORLD — US MEMBERS ────────────────────────
+  // SLH properties are bookable on World of Hyatt points — directly relevant
+  // for Hyatt Globalist members. SLH signal = quality independent boutique.
+  "Appellation Healdsburg": { tier: "luxury", slh: true, notes: "Healdsburg CA, Sonoma wine country, independent boutique, Hyatt bookable" },
+  "Camden Harbour Inn": { tier: "luxury", slh: true, relais_chateaux: true, notes: "Camden ME, coastal Maine, independent, Hyatt bookable" },
+  "Carneros Resort and Spa": { tier: "luxury", slh: true, forbes_stars: 4, notes: "Napa CA, wine country, independent, Hyatt bookable" },
+  "Castle Hot Springs": { tier: "luxury", slh: true, notes: "Morristown AZ, Bradshaw Mountains, historic hot springs resort, Hyatt bookable" },
+  "HGU New York": { tier: "luxury", slh: true, notes: "Flatiron NYC, boutique independent, Hyatt bookable" },
+  "Hotel Belleclaire": { tier: "premium", slh: true, notes: "Upper West Side NYC, historic 1903, independent, Hyatt bookable" },
+  "Hotel Lucia": { tier: "luxury", slh: true, notes: "Downtown Portland OR, independent boutique, Hyatt bookable" },
+  "Hotel on Rivington": { tier: "luxury", slh: true, notes: "Lower East Side NYC, independent, Hyatt bookable" },
+  "L'Auberge de Sedona": { tier: "luxury", slh: true, forbes_stars: 4, notes: "Sedona AZ, Oak Creek, independent, Hyatt bookable" },
+  "Lennox Miami Beach": { tier: "luxury", slh: true, notes: "South Beach FL, Art Deco district, independent, Hyatt bookable" },
+  "Longfellow Hotel": { tier: "luxury", slh: true, notes: "Portland ME, independent boutique, Hyatt bookable" },
+  "Mirror Lake Inn Resort & Spa": { tier: "luxury", slh: true, notes: "Lake Placid NY, Adirondacks, independent, Hyatt bookable" },
+  "Rawah Ranch": { tier: "ultra_luxury", slh: true, notes: "Glendevey CO, remote wilderness dude ranch, all-inclusive, Hyatt bookable" },
+  "Refinery Hotel New York": { tier: "luxury", slh: true, notes: "Midtown Manhattan NYC, historic 1912 hat factory, independent, Hyatt bookable" },
+  "Rusty Parrot Lodge & Spa": { tier: "luxury", slh: true, notes: "Jackson Hole WY, downtown Jackson, independent boutique, Hyatt bookable" },
+  "Seal Cove Inn": { tier: "luxury", slh: true, notes: "Moss Beach CA, Half Moon Bay area, coastal boutique, independent, Hyatt bookable" },
+  "Sentinel": { tier: "luxury", slh: true, notes: "Portland OR, historic Elks Lodge, independent, Hyatt bookable" },
+  "Sitzmark Vail": { tier: "luxury", slh: true, notes: "Vail Village CO, slope-side boutique, independent, Hyatt bookable" },
+  "Snowpine Lodge": { tier: "luxury", slh: true, notes: "Alta UT, ski-in/ski-out, independent, Hyatt bookable" },
+  "Southbridge Napa Valley": { tier: "luxury", slh: true, notes: "St. Helena CA, Napa wine country, independent boutique, Hyatt bookable" },
+  "Stein Eriksen Residences": { tier: "luxury", slh: true, notes: "Deer Valley UT, Park City, independent, Hyatt bookable" },
+  "The Battery": { tier: "ultra_luxury", slh: true, notes: "San Francisco CA, members club hotel, Jackson Square, independent, Hyatt bookable" },
+  "The Francis": { tier: "luxury", slh: true, notes: "Portland ME, Victorian mansion, independent boutique, Hyatt bookable" },
+  "The Frederick Hotel": { tier: "luxury", slh: true, notes: "Milledgeville GA, historic boutique, independent, Hyatt bookable" },
+  "The Grady": { tier: "luxury", slh: true, notes: "Charlotte NC, independent boutique, Hyatt bookable" },
+  "The Grayson Miami": { tier: "luxury", slh: true, notes: "Coconut Grove Miami FL, independent boutique, Hyatt bookable" },
+  "The Inn at Rancho Santa Fe": { tier: "luxury", slh: true, notes: "Rancho Santa Fe CA, historic 1923 ranch estate, independent, Hyatt bookable" },
+  "The Iroquois Hotel": { tier: "luxury", slh: true, notes: "Midtown NYC, historic boutique near Bryant Park, independent, Hyatt bookable" },
+  "The Lodge at St Edward Park": { tier: "luxury", slh: true, notes: "Kenmore WA near Seattle, historic 1931 seminary, lake views, independent, Hyatt bookable" },
+  "The Mansion at Ocean Edge": { tier: "luxury", slh: true, notes: "Brewster MA, Cape Cod, resort and spa, independent, Hyatt bookable" },
+  "Pillars Hotel & Club": { tier: "luxury", slh: true, notes: "Fort Lauderdale FL, waterfront boutique, independent, Hyatt bookable" },
+  "The Plymouth South Beach": { tier: "luxury", slh: true, notes: "South Beach Miami FL, Art Deco boutique, independent, Hyatt bookable" },
+  "The Quoin Hotel": { tier: "luxury", slh: true, notes: "Wilmington DE, historic boutique, independent, Hyatt bookable" },
+  "The Roundtree Amagansett": { tier: "luxury", slh: true, notes: "Amagansett NY, Hamptons, independent boutique, Hyatt bookable" },
+  "The Stavrand Russian River Valley": { tier: "luxury", slh: true, notes: "Guerneville CA, Sonoma wine country, independent, Hyatt bookable" },
+  "Topping Rose House": { tier: "ultra_luxury", slh: true, notes: "Bridgehampton NY, Hamptons, farm-to-table estate, Jean-Georges restaurant, independent, Hyatt bookable" },
+  "Wentworth Mansion": { tier: "luxury", slh: true, tl_gold: true, notes: "Charleston SC, historic 1886 Gilded Age mansion, independent, Hyatt bookable" },
+  "WestHouse Hotel New York": { tier: "luxury", slh: true, notes: "Midtown NYC, independent boutique, Hyatt bookable" },
+  "Winslow's Bungalows": { tier: "luxury", slh: true, notes: "Palm Springs CA, boutique bungalow resort, independent, Hyatt bookable" },
+  "Wylder Hotel Windham": { tier: "luxury", slh: true, notes: "Windham NY, Catskills, independent boutique, Hyatt bookable" },
+  "Zelda Dearest": { tier: "luxury", slh: true, notes: "Palm Springs CA, intimate boutique, independent, Hyatt bookable" },
+
+
+  "Casia Lodge & Ranch": { tier: "luxury", slh: true, notes: "Twisp WA, Methow Valley, North Cascades, independent boutique, excellent Nordic skiing and hiking, Hyatt bookable" },
+  "Colton House Hotel": { tier: "luxury", slh: true, notes: "Austin TX, independent boutique, Hyatt bookable" },
+  "Cougar Ridge Lodge": { tier: "luxury", slh: true, notes: "Torrey UT, near Capitol Reef National Park, independent, Hyatt bookable" },
+  "Ella's Cottages": { tier: "luxury", slh: true, notes: "Key West FL, boutique cottage resort, independent, Hyatt bookable" },
+  "Historic Rocky Waters Inn": { tier: "luxury", slh: true, notes: "Gatlinburg TN, Great Smoky Mountains, historic inn, independent, Hyatt bookable" },
+  "Lighthouse Hotel": { tier: "luxury", slh: true, notes: "Key West FL, boutique independent, Hyatt bookable" },
+  "Maison Twenty Seven": { tier: "luxury", slh: true, notes: "Santa Monica CA, boutique independent, Hyatt bookable" },
+  "Ridley House": { tier: "luxury", slh: true, notes: "Key West FL, historic boutique, independent, Hyatt bookable" },
+  "RiverView Ranch Retreat & Western Adventures": { tier: "luxury", slh: true, notes: "Alberton MT, Clark Fork River, wilderness ranch, independent, Hyatt bookable" },
 
 };
 
