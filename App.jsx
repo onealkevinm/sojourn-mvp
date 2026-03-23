@@ -4859,7 +4859,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss }) => {
         <span style={{ background: option.tagColor + "18", color: option.tagColor, fontSize: "11px", padding: "5px 12px", borderRadius: "12px", fontFamily: "'Playfair Display',Georgia,serif", border: `1px solid ${option.tagColor}33` }}>{option.tag}</span>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <span style={{ color: "#e8e4dc", fontSize: "18px", fontFamily: "'Playfair Display',Georgia,serif" }}>${typeof option.totalCost === "number" ? option.totalCost.toLocaleString() : String(option.totalCost).replace(/^\$+/,"")}</span>
-          {onDismiss && !isExpanded && <button onClick={e => { e.stopPropagation(); onDismiss(option.id); }} title="Not for me" style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", color: "#444", fontSize: "11px", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, lineHeight: 1 }}>✕</button>}
+          {onDismiss && !isExpanded && <button onClick={e => { e.stopPropagation(); onDismiss(option.id); }} title="Not for me — dismiss this option" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "6px", color: "#888", fontSize: "11px", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, lineHeight: 1 }}>✕</button>}
         </div>
       </div>
       <div style={{ marginBottom: "8px" }}>
@@ -5711,6 +5711,7 @@ export default function SojournApp() {
   const [optimizeRecs, setOptimizeRecs] = useState(null);
   const [optimizeLoading, setOptimizeLoading] = useState(false);
   const [showOptimizeModal, setShowOptimizeModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(null); // "loyalty" | "cards" | null
   // Pill index — read once on mount, never changes during session
   const [pillIdx] = useState(() => {
     try {
@@ -6376,6 +6377,11 @@ JSON SCHEMA — you MUST use exactly these field names or cards will not display
 {"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","cardStrategy":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer. (2) experiences[] is EMPTY by default. Only populate it when the user has explicitly requested specific dining or activities and asked for them to be included in their trip. Never generate experiences speculatively.
 NEVER use: results, cards, tripOptions, color, title, property, priceStructure — these will break the display.
 
+SMART OPTION SUPPRESSION — evaluate traveler profile before generating options:
+- REDEMPTION OPPORTUNITY: only generate if the traveler has at least one loyalty program with 5,000+ points in a single program. If total redeemable balance is effectively zero, replace this slot with a second Best Value or additional Quality option.
+- BEST POINTS EARNED / FUTURE VALUE: only generate if the traveler has at least one loyalty program OR a co-branded travel card. If they have no loyalty programs AND only a cashback card, replace with a second Wild Card or Best Value.
+- Never generate a Redemption Opportunity that requires points the traveler doesn't have.
+
 CARD QUALITY RULES (when generating new cards):
 - NUMBER FORMATTING: all numbers of 1,000 or more must use comma separators in ALL text fields — pointsEarned, whyThis, detail, tradeoff, loyaltyHighlight, cardStrategy. Examples: "3,200 Delta miles" not "3200 Delta miles", "$1,315" not "$1315", "26,000 Hyatt points" not "26000 Hyatt points", "$2,890" not "$2890". This applies to every number in every field without exception.
 - Go deeper, not wider. For any given destination or region, surface the most interesting and fitting properties within that geography before reaching to neighboring regions. A lesser-known gem within the stated area is always preferable to a well-known property just outside it. The Idaho Rocky Mountain Ranch in the Sawtooths is a better Idaho answer than Jackson Hole — even if Jackson Hole is more famous. Depth of knowledge within the query's geography signals intelligence. Breadth across neighboring geographies signals laziness.
@@ -6598,6 +6604,59 @@ Please respond now.`,
     return (<>
       {itineraryOption && <ItineraryOverlay option={itineraryOption} tripSummary={tripSummary} userProfile={userProfile} onClose={() => setItineraryOption(null)} />}
 
+      {/* Profile Quick-View Modal — Loyalty or Cards */}
+      {showProfileModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }} onClick={() => setShowProfileModal(null)}>
+          <div style={{ background: "#0e0c0a", border: "1px solid rgba(201,168,76,0.2)", borderRadius: "20px", width: "100%", maxWidth: "460px", padding: "28px", position: "relative", maxHeight: "80vh", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
+              <div>
+                <div style={{ fontSize: "10px", letterSpacing: "0.3em", color: "#C9A84C", textTransform: "uppercase", fontFamily: "serif", marginBottom: "4px" }}>Sojourn · Profile</div>
+                <div style={{ fontSize: "18px", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic", color: "#e8e4dc" }}>{showProfileModal === "loyalty" ? "Loyalty Programs" : "Credit Cards"}</div>
+              </div>
+              <button onClick={() => setShowProfileModal(null)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#666", width: "30px", height: "30px", borderRadius: "8px", cursor: "pointer", fontSize: "14px" }}>✕</button>
+            </div>
+            {showProfileModal === "loyalty" && (
+              <div>
+                {(userProfile?.loyaltyAccounts || []).filter(a => a.tier && a.tier !== "None").length === 0
+                  ? <div style={{ color: "#555", fontSize: "13px", fontStyle: "italic" }}>No loyalty programs added yet. Add them in your profile.</div>
+                  : (userProfile?.loyaltyAccounts || []).filter(a => a.tier && a.tier !== "None").map((a, i) => (
+                    <div key={i} style={{ padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <div style={{ color: "#b0a898", fontSize: "13px" }}>{a.program}</div>
+                          <div style={{ color: "#555", fontSize: "11px" }}>{a.tier} · {a.balance || "balance not set"}</div>
+                        </div>
+                        {a.balance && <div style={{ color: "#C9A84C", fontSize: "12px", fontFamily: "serif" }}>est. ${Math.round((parseInt((a.balance||"0").replace(/,/g,""))||0) * ({
+                          "World of Hyatt": 1.7, "Chase Ultimate Rewards": 1.5, "Alaska Mileage Plan": 1.5,
+                          "Delta SkyMiles": 1.2, "United MileagePlus": 1.4, "American AAdvantage": 1.3,
+                          "Marriott Bonvoy": 0.8, "Hilton Honors": 0.5, "Southwest Rapid Rewards": 1.5,
+                        }[a.program] || 1.0) / 100).toLocaleString()}</div>}
+                      </div>
+                    </div>
+                  ))
+                }
+              </div>
+            )}
+            {showProfileModal === "cards" && (
+              <div>
+                {(userProfile?.cards || []).length === 0
+                  ? <div style={{ color: "#555", fontSize: "13px", fontStyle: "italic" }}>No cards added yet.</div>
+                  : (userProfile?.cards || []).map((c, i) => (
+                    <div key={i} style={{ padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                      <div style={{ color: "#b0a898", fontSize: "13px" }}>{c.name}</div>
+                      <div style={{ color: "#555", fontSize: "11px" }}>{c.multipliers || "see card details"}</div>
+                    </div>
+                  ))
+                }
+              </div>
+            )}
+            <div style={{ marginTop: "16px", paddingTop: "14px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+              <div style={{ color: "#444", fontSize: "11px", fontStyle: "italic" }}>To update your programs or cards, return to the main query page and use the bottom bar.</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Optimize Modal */}
       {showOptimizeModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }} onClick={() => setShowOptimizeModal(false)}>
@@ -6668,7 +6727,9 @@ Please respond now.`,
             <div style={{ fontSize: "12px", color: "#555" }}>Your travel, optimized.</div>
           </div>
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <button onClick={() => { setShowOptimizeModal(true); fetchOptimizeRecs(); }} title="Optimize your setup" style={{ background: "none", border: "1px solid rgba(201,168,76,0.2)", color: "#C9A84C", padding: "7px 12px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", fontFamily: "serif", letterSpacing: "0.05em" }}>✦ Optimize Your Setup</button>
+            <button onClick={() => { setShowOptimizeModal(true); fetchOptimizeRecs(); }} title="Optimize your setup" style={{ background: "none", border: "1px solid rgba(201,168,76,0.2)", color: "#C9A84C", padding: "7px 12px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", fontFamily: "serif", letterSpacing: "0.05em" }}>✦ Optimize</button>
+            <button onClick={() => setShowProfileModal("loyalty")} title="Your loyalty programs" style={{ background: "none", border: "1px solid rgba(255,255,255,0.12)", color: "#7a7060", padding: "7px 12px", borderRadius: "20px", cursor: "pointer", fontSize: "12px" }}>Loyalty</button>
+            <button onClick={() => setShowProfileModal("cards")} title="Your credit cards" style={{ background: "none", border: "1px solid rgba(255,255,255,0.12)", color: "#7a7060", padding: "7px 12px", borderRadius: "20px", cursor: "pointer", fontSize: "12px" }}>Cards</button>
             <button onClick={() => { mp.track("new_trip_started"); resetApp(); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "#666", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px" }}>New Trip</button>
           </div>
         </div>
@@ -6696,7 +6757,7 @@ Please respond now.`,
             <div style={{ fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "3px" }}>
               {tripOptions.filter(o => !dismissedIds.includes(o.id)).length} option{tripOptions.filter(o => !dismissedIds.includes(o.id)).length !== 1 ? "s" : ""}, optimized for you
             </div>
-            <div style={{ color: "#555", fontSize: "12px" }}>{expandedId ? "Viewing details · click back to compare all" : "Click any option to explore · dismiss to narrow"}</div>
+            <div style={{ color: "#555", fontSize: "12px" }}>{expandedId ? "Viewing details · click back to compare all" : "Click any option for details · dismiss ✕ options to narrow · refine your search below"}</div>
           </div>
         </div>
 
@@ -6805,9 +6866,9 @@ Please respond now.`,
             <div style={{ background: "rgba(12,11,10,0.95)", border: "1px solid rgba(201,168,76,0.18)", borderRadius: "16px", padding: "14px 16px 12px" }}>
               {/* Header */}
               <div style={{ marginBottom: "12px" }}>
-                <span style={{ color: "#b0a898", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif", fontWeight: "600" }}>Make it yours</span>
+                <span style={{ color: "#b0a898", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif", fontWeight: "600" }}>Continue the conversation</span>
                 <span style={{ color: "#3a3530", fontSize: "12px", margin: "0 6px" }}>—</span>
-                <span style={{ color: "#4a4540", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }}>explore dining, drinks, and activities; clarify details or adjust the plan. Your options update as you go.</span>
+                <span style={{ color: "#4a4540", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }}>Refine your query · dive deeper into current options · generate new ones · explore dining, drinks and activities</span>
               </div>
               {/* Context-aware suggestion pills — regenerate based on conversation state */}
               {(() => {
@@ -6911,7 +6972,7 @@ Please respond now.`,
                   value={refineInput}
                   onChange={e => setRefineInput(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter") { e.stopPropagation(); handleRefine(); } }}
-                  placeholder="Ask anything about these options..."
+                  placeholder={`${(conversationRef.current&&conversationRef.current[0]&&conversationRef.current[0].content||"").slice(0,80) || "Continue your search..."}...`}
                   style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "12px", padding: "9px 0", fontFamily: "'DM Sans',system-ui,sans-serif", outline: "none" }}
                 />
                 {refineLoading ? (
