@@ -7341,8 +7341,8 @@ Please respond now.`,
 
       {/* Header */}
       <div style={{ padding: "28px 24px 0", textAlign: "center" }}>
-        <div style={{ fontSize: "11px", letterSpacing: "0.3em", color: "#C9A84C", textTransform: "uppercase", marginBottom: "4px", fontFamily: "serif" }}>Sojourn · AI</div>
-        
+        <div style={{ fontSize: "11px", letterSpacing: "0.3em", color: "#C9A84C", textTransform: "uppercase", marginBottom: "2px", fontFamily: "serif" }}>Sojourn · AI</div>
+        <div className="desktop-only" style={{ color: "#444", fontSize: "11px", letterSpacing: "0.08em" }}>Your travel, optimized.</div>
       </div>
 
       {/* Hero — centerpoint on first load */}
@@ -7359,8 +7359,11 @@ Please respond now.`,
 
         const formatBalance = (bal) => {
           if (!bal) return null;
-          const num = bal.replace(/[^0-9,]/g, "").replace(/^0+/, "");
-          return num && parseInt(num.replace(/,/g,"")) > 0 ? num : null;
+          const stripped = bal.replace(/[^0-9,]/g, "").replace(/^0+/, "");
+          const numericVal = parseInt(stripped.replace(/,/g,""));
+          if (!stripped || numericVal <= 0) return null;
+          // Always format with commas regardless of how user entered it
+          return numericVal.toLocaleString();
         };
 
         const loyaltyPills = [];
@@ -7435,12 +7438,13 @@ Please respond now.`,
             <div style={{ color: "#6a6460", fontSize: "15px", lineHeight: "1.7", maxWidth: "580px", margin: "0 auto" }}>Tell me about your trip — or start with an idea. Explore destinations, discover events and dining, build an itinerary, and book your trip — all in one conversation. Every recommendation shaped by your loyalty programs, credit cards, and travel style — working together.</div>
           </div>
           <div style={{ width: "100%", maxWidth: "860px" }}>
-            <div style={{ background: "rgba(255,255,255,0.04)", border: "2px solid rgba(255,255,255,0.14)", outline: "1px solid rgba(255,255,255,0.05)", outlineOffset: "3px", borderRadius: "20px", padding: "6px 6px 6px 22px", display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "18px" }}>
+            <div style={{ background: "rgba(255,255,255,0.04)", border: "2px solid rgba(255,255,255,0.14)", outline: "1px solid rgba(255,255,255,0.05)", outlineOffset: "3px", borderRadius: "20px", padding: "6px 6px 6px 22px", display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "18px", position: "relative" }}>
               <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
                 placeholder={`Where to? e.g. "4 days in Japan in October, two adults" · "surprise me with a long weekend under $1,500" · "best use of my Hyatt points this winter"`}
-                rows={4} style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "15px", lineHeight: "1.7", padding: "14px 0", fontFamily: "'DM Sans',system-ui,sans-serif", resize: "none" }} />
-              <div style={{ display: "flex", gap: "6px", paddingBottom: "10px", flexShrink: 0 }}>
-                <button onClick={listening ? () => { recognitionRef.current?.stop(); setListening(false); } : startListening} style={{ width: "40px", height: "40px", borderRadius: "12px", border: "none", cursor: "pointer", background: listening ? "rgba(201,76,76,0.2)" : "rgba(255,255,255,0.06)", color: listening ? "#C94C4C" : "#666", fontSize: "16px", animation: listening ? "pulse 1.2s infinite" : "none" }}>&#127908;</button>
+                rows={4} style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "15px", lineHeight: "1.7", padding: "14px 40px 14px 0", fontFamily: "'DM Sans',system-ui,sans-serif", resize: "none" }} />
+              {/* Mic floats top-right inside box */}
+              <button onClick={listening ? () => { recognitionRef.current?.stop(); setListening(false); } : startListening} style={{ position: "absolute", top: "8px", right: "54px", width: "30px", height: "30px", borderRadius: "8px", border: "none", cursor: "pointer", background: listening ? "rgba(201,76,76,0.2)" : "transparent", color: listening ? "#C94C4C" : "#555", fontSize: "14px", animation: listening ? "pulse 1.2s infinite" : "none", display: "flex", alignItems: "center", justifyContent: "center" }}>&#127908;</button>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px", paddingBottom: "8px", flexShrink: 0 }}>
                 <button onClick={handleSend} disabled={!input.trim() || loading} style={{ width: "40px", height: "40px", borderRadius: "12px", border: "none", cursor: input.trim() && !loading ? "pointer" : "default", background: input.trim() && !loading ? "#C9A84C" : "rgba(201,168,76,0.15)", color: input.trim() && !loading ? "#0a0908" : "#555", fontSize: "18px", fontWeight: "bold" }}>&#8593;</button>
               </div>
             </div>
