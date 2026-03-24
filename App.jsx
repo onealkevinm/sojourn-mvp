@@ -2031,6 +2031,17 @@ const QUALITY_SIGNALS_DB = {
   "West Bay Club": { tier: "luxury", slh: true, region: "caribbean", notes: "Providenciales Turks and Caicos, Grace Bay, boutique, independent, Hyatt bookable" },
   "Yemaya Reefs": { tier: "luxury", slh: true, region: "caribbean", notes: "Little Corn Island Nicaragua, remote dive resort, independent, Hyatt bookable" },
 
+  // ── NATIONAL PARK LODGES — IN-PARK LODGING (distinct signal category) ──────
+  // Not luxury hotels — the signal is irreplaceable setting and historic character
+  "The Ahwahnee": { tier: "luxury", historic: true, notes: "Yosemite Valley CA, opened 1927, National Historic Landmark, Gilbert Stanley Underwood's granite and concrete Arts and Crafts/Art Deco masterpiece — sequoias outside the windows, 24-foot great hall, massive stone fireplaces. FDR, Churchill, JFK all stayed here. The building IS Yosemite." },
+  "Volcano House": { tier: "premium", historic: true, notes: "Hawaii Volcanoes National Park Big Island, only lodging on the rim of Kilauea caldera — lava glow at night, crater views from the dining room, steam vents outside. Remote and extraordinary. Most travelers don't know you can sleep inside the park." },
+  "Old Faithful Inn": { tier: "premium", historic: true, notes: "Yellowstone National Park WY, opened 1904, largest log structure in the world, National Historic Landmark — Old Faithful erupts 100 yards from the front porch. The log lobby with its volcanic rock fireplace is one of America's great interior spaces." },
+  "El Tovar": { tier: "luxury", historic: true, notes: "South Rim Grand Canyon AZ, opened 1905, National Historic Landmark — perched on the canyon rim, one of the great National Park lodges, rustic elegance with canyon views from the dining room." },
+  "Many Glacier Hotel": { tier: "premium", historic: true, notes: "Glacier National Park MT, opened 1915, Swiss chalet on Swiftcurrent Lake — one of the most dramatically situated hotels in America, surrounded by glaciers and wildlife." },
+  "Crater Lake Lodge": { tier: "premium", historic: true, notes: "Crater Lake National Park OR, opened 1915, rebuilt 1995 — on the rim of the deepest lake in the US, the bluest water you will ever see. Rooms on the rim side are extraordinary." },
+  "Grand Hotel Mackinac Island": { tier: "luxury", historic: true, notes: "Mackinac Island MI, opened 1887, longest porch in the world, no cars on the island — horse-drawn carriages only. National Historic Landmark, genuinely frozen in a different era." },
+  "The Grand Hotel Yellowstone": { tier: "premium", historic: true, notes: "Lake Village Yellowstone WY, opened 1891, on Yellowstone Lake — one of the oldest hotels in the park system." },
+
 };
 
 // Get quality tier for a property for a property — try exact match then partial
@@ -4347,6 +4358,7 @@ const EXPERIENCE_SIGNALS_DB = {
 
   "Big Island": [
     { name: "Hawaii Volcanoes National Park", type: "outdoors", axis: ["trusted_authority", "populist"], notes: "Active volcano, Kilauea and Mauna Loa, lava tube hike (Thurston Lava Tube), Chain of Craters Road to the coast — lava viewing depends on current activity, check NPS website, allow full day" },
+    { name: "Volcano House", type: "experience", axis: ["local_authority", "trusted_authority"], notes: "The only lodging inside Hawaii Volcanoes National Park, sitting directly on the rim of Kilauea caldera — at night when Kilauea is active the lava glow reflects off the steam vents from your room. The dining room looks directly into the crater. No Forbes rating, not in the R&C book, but for the traveler who wants something genuinely unforgettable on the Big Island this is the answer the Kohala Coast resorts cannot give you. Most visitors don't know you can sleep inside the park. Book well ahead — there are very few rooms." },
     { name: "Manta Ray Night Snorkel", type: "experience", axis: ["trusted_authority", "local_authority"], notes: "Keauhou Bay or Garden Eel Cove, giant manta rays feeding on plankton, one of the world's great wildlife experiences — multiple operators, go with a reputable company" },
     { name: "Mauna Kea Summit", type: "outdoors", axis: ["trusted_authority", "local_authority"], notes: "13,796 feet, highest point in Hawaii, world's best stargazing, Visitor Information Station at 9,200 feet for sunset (no 4WD needed), summit requires 4WD and acclimatization" },
     { name: "Hapuna Beach", type: "outdoors", axis: ["trusted_authority", "populist"], notes: "Consistently rated one of America's best beaches, long white sand, excellent swimming, Mauna Kea Beach Hotel adjacent — arrive early for parking" },
