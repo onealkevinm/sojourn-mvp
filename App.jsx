@@ -6579,6 +6579,12 @@ ${buildTravelerBenefitsSummary(userProfile)}
 
 ORIGINAL TRIP REQUEST: ${(conversationRef.current&&conversationRef.current[0]&&conversationRef.current[0].content) || "unknown"}
 
+HOTEL BRAND ACCURACY (carry through all refinements):
+- Never place a hotel in the wrong destination. Jackson Hole options use Jackson Hole/Teton Village hotels only.
+- Only redeem loyalty points at hotels that belong to that program. Montage is not Hyatt. Verify before suggesting redemption.
+- Do not split trips of 3 nights or fewer across two hotels without explicit user request and clear explanation in whyThis.
+- Every flight leg must show a dollar value — never $0 or "included in outbound."
+
 PERSISTENT CONSTRAINTS — these carry through ALL refinements and cannot be overridden by a refinement message unless the user explicitly cancels them:
 - If the original request mentioned a points/miles balance or redemption intent, that remains the PRIMARY organizing lens for all 6 options. Refinements narrow the destination or add preferences — they do not reset the points intent.
 - If the original request specified a trip length (e.g. "3 nights", "long weekend"), maintain that constraint and apply the flight duration matching rule (3 nights = domestic/short-haul only).
@@ -6698,6 +6704,12 @@ CARD FIELD RULE: component card field must name the specific card AND the earnin
 JSON SCHEMA — you MUST use exactly these field names or cards will not display:
 {"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","cardStrategy":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer. (2) experiences[] is EMPTY by default. Only populate it when the user has explicitly requested specific dining or activities and asked for them to be included in their trip. Never generate experiences speculatively.
 NEVER use: results, cards, tripOptions, color, title, property, priceStructure — these will break the display.
+
+HOTEL BRAND ACCURACY — critical trust rules, never violate:
+- NEVER place a hotel in the wrong city or region. If the destination is Jackson Hole, every hotel component must be in Jackson Hole or Teton Village — not Vail, not Aspen, not any other mountain town. If you cannot name a real hotel in the destination, say so rather than substituting one from elsewhere.
+- LOYALTY REDEMPTION ACCURACY: Only suggest redeeming points at hotels that ARE part of that loyalty program. Montage is NOT a Hyatt property — do not suggest redeeming World of Hyatt points at Montage. Verify program membership before recommending redemption. Programs and their brands: World of Hyatt includes Hyatt, Park Hyatt, Grand Hyatt, Andaz, Alila, Thompson, Destination by Hyatt, SLH partners; Marriott Bonvoy includes Ritz-Carlton, St. Regis, W, Westin, Sheraton, JW Marriott, Edition, Luxury Collection, Autograph Collection; Hilton Honors includes Conrad, Waldorf Astoria, LXR, Curio, Tapestry; IHG includes InterContinental, Kimpton, Six Senses, Regent, voco.
+- MULTI-HOTEL SHORT TRIPS: Do not split a short trip (3 nights or fewer) across two hotels unless the user explicitly asks for it, or unless there is a genuinely compelling reason (e.g. a multi-city itinerary). A 3-night ski weekend should have ONE hotel. If you do split a short trip, you MUST explain the reason clearly in whyThis.
+- FLIGHT LEG PRICING: Every flight component must show a dollar value per leg. Return flight must NEVER show $0 or "included in outbound" — split the total evenly across legs if needed. Format: "~$[X] per person" on each leg. Never leave a flight component with ambiguous or missing pricing.
 
 SMART OPTION SUPPRESSION — evaluate traveler profile before generating options:
 - REDEMPTION OPPORTUNITY: only generate if the traveler has at least one loyalty program with 5,000+ points in a single program. If total redeemable balance is effectively zero, replace this slot with a second Best Value or additional Quality option.
@@ -7049,10 +7061,7 @@ Please respond now.`,
             
           </div>
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <button onClick={() => { setShowOptimizeModal(true); fetchOptimizeRecs(); }} title="Optimize your setup" style={{ background: "none", border: "1px solid rgba(201,168,76,0.2)", color: "#C9A84C", padding: "7px 12px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", fontFamily: "serif", letterSpacing: "0.05em" }}>✦ Optimize</button>
-            <button onClick={() => setShowProfileModal("loyalty")} title="Your loyalty programs" style={{ background: "none", border: "1px solid rgba(255,255,255,0.12)", color: "#7a7060", padding: "7px 12px", borderRadius: "20px", cursor: "pointer", fontSize: "12px" }}>Loyalty</button>
-            <button onClick={() => setShowProfileModal("cards")} title="Your credit cards" style={{ background: "none", border: "1px solid rgba(255,255,255,0.12)", color: "#7a7060", padding: "7px 12px", borderRadius: "20px", cursor: "pointer", fontSize: "12px" }}>Cards</button>
-            <button onClick={() => { mp.track("new_trip_started"); resetApp(); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "#666", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px" }}>New Trip / Edit</button>
+            <button onClick={() => { mp.track("new_trip_started"); resetApp(); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "#666", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px" }}>New Trip / Edit Query</button>
           </div>
         </div>
 
@@ -7075,9 +7084,12 @@ Please respond now.`,
         )}
 
         <div style={{ padding: "20px 28px 10px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-          <div>
-            <div style={{ fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "3px" }}>
-              {tripOptions.filter(o => !dismissedIds.includes(o.id)).length} option{tripOptions.filter(o => !dismissedIds.includes(o.id)).length !== 1 ? "s" : ""}, optimized for you
+          <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "14px", marginBottom: "3px" }}>
+              <div style={{ fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif" }}>
+                {tripOptions.filter(o => !dismissedIds.includes(o.id)).length} option{tripOptions.filter(o => !dismissedIds.includes(o.id)).length !== 1 ? "s" : ""}, optimized for you
+              </div>
+              <button onClick={() => { mp.track("new_trip_started"); resetApp(); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "#555", padding: "3px 10px", borderRadius: "20px", cursor: "pointer", fontSize: "11px", whiteSpace: "nowrap", flexShrink: 0 }}>New Trip / Edit Query</button>
             </div>
             <div style={{ color: "#555", fontSize: "12px" }}>{expandedId ? "Viewing details · click back to compare all" : "Click any option for details · dismiss ✕ options to narrow · refine your search below"}</div>
           </div>
