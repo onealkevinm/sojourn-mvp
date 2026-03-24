@@ -1848,11 +1848,187 @@ const QUALITY_SIGNALS_DB = {
   "Hotel Xcaret Mexico": { tier: "luxury", forbes_stars: 4, region: "mexico", notes: "Playa del Carmen Mexico, all-inclusive" },
   "Conrad Punta de Mita": { tier: "luxury", forbes_stars: 4, region: "mexico", notes: "Punta de Mita Nayarit Mexico, Hilton Honors" },
   "Grand Velas Riviera Nayarit": { tier: "luxury", forbes_stars: 4, region: "mexico", notes: "Nuevo Vallarta Mexico, Grand Velas, all-inclusive" },
-  "One&Only Mandarina": { tier: "ultra_luxury", forbes_stars: 4, region: "mexico", notes: "Nayarit Mexico, One&Only Resorts, treehouse and beach villas" },
+  "One&Only Mandarina": { tier: "ultra_luxury", forbes_stars: 4, region: "mexico", notes: "Nayarit Mexico, One&Only Resorts, treehouse villas in 200-year-old jungle canopy and beach villas with access to a 50-meter infinity pool directly on the sand — one of the most extraordinary resort settings in Mexico" },
   "The St. Regis Punta Mita Resort": { tier: "ultra_luxury", forbes_stars: 4, region: "mexico", notes: "Punta Mita Nayarit Mexico, Marriott Bonvoy" },
   "Naviva, A Four Seasons Resort": { tier: "ultra_luxury", forbes_stars: 4, region: "mexico", notes: "Punta Mita Nayarit Mexico, adults-only tented camp, independent" },
   "Casa de Sierra Nevada": { tier: "ultra_luxury", forbes_stars: 4, region: "mexico", notes: "San Miguel de Allende Mexico, Belmond, historic colonial mansions" },
   "Live Aqua Urban Resort San Miguel de Allende": { tier: "luxury", forbes_stars: 4, region: "mexico", notes: "San Miguel de Allende Mexico, independent" },
+
+
+  // ── FORBES 4-STAR — UNITED STATES (additional properties) ────────────────
+  // Arizona
+  "The Phoenician": { tier: "luxury", forbes_stars: 4, notes: "Scottsdale AZ, Camelback Mountain, Luxury Collection/Marriott" },
+  "Enchantment Resort": { tier: "luxury", forbes_stars: 4, notes: "Sedona AZ, Boynton Canyon, independent" },
+  "L'Auberge de Sedona": { tier: "luxury", forbes_stars: 4, slh: true, notes: "Sedona AZ, Oak Creek, independent" },
+  // California
+  "Yaamava Resort & Casino": { tier: "luxury", forbes_stars: 4, notes: "Highland CA, San Manuel Band of Mission Indians" },
+  "Bernardus Lodge & Spa": { tier: "luxury", forbes_stars: 4, notes: "Carmel Valley CA, independent" },
+  "Alila Ventana Big Sur": { tier: "ultra_luxury", forbes_stars: 4, michelin_keys: 3, notes: "Big Sur CA, adults-only, World of Hyatt" },
+  "Hotel Californian": { tier: "luxury", forbes_stars: 4, notes: "Santa Barbara CA, independent, Spanish Colonial Revival" },
+  "Agua Caliente Resort Casino Spa": { tier: "luxury", forbes_stars: 4, notes: "Rancho Mirage CA, Agua Caliente Band of Cahuilla Indians" },
+  "The Ritz-Carlton Marina del Rey": { tier: "luxury", forbes_stars: 4, notes: "Marina del Rey CA, Marriott Bonvoy" },
+  "Four Seasons Hotel Silicon Valley": { tier: "luxury", forbes_stars: 4, notes: "East Palo Alto CA, independent" },
+  "Hotel Nikko San Francisco": { tier: "luxury", forbes_stars: 4, notes: "Union Square SF, independent" },
+  // Colorado
+  "St Julien Hotel & Spa": { tier: "luxury", forbes_stars: 4, notes: "Boulder CO, independent" },
+  "Four Seasons Hotel Denver": { tier: "luxury", forbes_stars: 4, notes: "Downtown Denver CO, independent" },
+  "Four Seasons Resort and Residences Vail": { tier: "ultra_luxury", forbes_stars: 4, notes: "Vail CO, ski-in/ski-out, independent" },
+  // DC
+  "The Ritz-Carlton Tysons Corner": { tier: "luxury", forbes_stars: 4, notes: "McLean VA near DC, Marriott Bonvoy" },
+  // Florida
+  "Camp Creek Inn": { tier: "luxury", forbes_stars: 4, notes: "Inlet Beach FL, 30A Panhandle, independent" },
+  "The Ritz-Carlton Fort Lauderdale": { tier: "luxury", forbes_stars: 4, notes: "Fort Lauderdale FL, Marriott Bonvoy" },
+  "The Ritz-Carlton Bal Harbour": { tier: "luxury", forbes_stars: 4, notes: "Bal Harbour FL, Marriott Bonvoy" },
+  "Trump National Doral Miami": { tier: "luxury", forbes_stars: 4, notes: "Doral FL, golf resort" },
+  "The Ritz-Carlton Naples Tiburon": { tier: "luxury", forbes_stars: 4, notes: "Naples FL, Tiburon Golf Club, Marriott Bonvoy" },
+  "Conrad Orlando": { tier: "luxury", forbes_stars: 4, notes: "Grande Lakes Orlando FL, Hilton Honors" },
+  "JW Marriott Orlando Grande Lakes": { tier: "luxury", forbes_stars: 4, notes: "Orlando FL, Marriott Bonvoy" },
+  "Tower at The Boca Raton": { tier: "ultra_luxury", forbes_stars: 4, notes: "Boca Raton FL, Forbes 5-Star adjacent, independent" },
+  // Georgia
+  "The Ritz-Carlton Reynolds Lake Oconee": { tier: "luxury", forbes_stars: 4, notes: "Greensboro GA, Lake Oconee, Marriott Bonvoy" },
+  // Hawaii
+  "Sensei Lanai, A Four Seasons Resort": { tier: "ultra_luxury", forbes_stars: 4, notes: "Lanai Hawaii, wellness-focused, Larry Ellison ownership, independent" },
+  "Halekulani": { tier: "ultra_luxury", forbes_stars: 4, notes: "Waikiki Oahu, independent, the most storied luxury hotel in Hawaii" },
+  "The Ritz-Carlton Maui Kapalua": { tier: "luxury", forbes_stars: 4, notes: "Kapalua Maui, Marriott Bonvoy" },
+  // Illinois
+  "Park Hyatt Chicago": { tier: "luxury", forbes_stars: 4, notes: "Water Tower Chicago, World of Hyatt" },
+  "The St. Regis Chicago": { tier: "ultra_luxury", forbes_stars: 4, notes: "Lakeshore Drive Chicago, Marriott Bonvoy" },
+  "Waldorf Astoria Chicago": { tier: "luxury", forbes_stars: 4, notes: "Gold Coast Chicago, Hilton Honors" },
+  // Louisiana
+  "Four Seasons Hotel New Orleans": { tier: "luxury", forbes_stars: 4, notes: "CBD New Orleans, independent" },
+  "The Windsor Court": { tier: "luxury", forbes_stars: 4, notes: "CBD New Orleans, independent, English antiques collection" },
+  "The Ritz-Carlton New Orleans": { tier: "luxury", forbes_stars: 4, notes: "French Quarter adjacent, Marriott Bonvoy" },
+  // Maryland
+  "Four Seasons Hotel Baltimore": { tier: "luxury", forbes_stars: 4, notes: "Inner Harbor Baltimore, independent" },
+  "Inn at Perry Cabin": { tier: "luxury", forbes_stars: 4, michelin_keys: 1, notes: "St. Michaels MD, Eastern Shore, Pendry/Marriott" },
+  // Massachusetts
+  "The Inn at Hastings Park": { tier: "luxury", forbes_stars: 4, notes: "Lexington MA, independent boutique" },
+  "The Newbury Boston": { tier: "luxury", forbes_stars: 4, notes: "Back Bay Boston, Luxury Collection/Marriott, historic 1927" },
+  "The Ritz-Carlton Boston": { tier: "luxury", forbes_stars: 4, notes: "Avery Street Boston, Marriott Bonvoy" },
+  "Mirbeau Inn & Spa Plymouth": { tier: "luxury", forbes_stars: 4, notes: "Plymouth MA, independent spa resort" },
+  "The Wauwinet": { tier: "luxury", forbes_stars: 4, michelin_keys: 1, relais_chateaux: true, notes: "Nantucket MA, independent" },
+  // Missouri
+  "The Ritz-Carlton St. Louis": { tier: "luxury", forbes_stars: 4, notes: "Clayton MO, Marriott Bonvoy" },
+  // Montana
+  "Triple Creek Ranch": { tier: "ultra_luxury", forbes_stars: 4, tl_gold: true, relais_chateaux: true, notes: "Darby MT, all-inclusive luxury ranch, Relais & Chateaux" },
+  "GreenO": { tier: "ultra_luxury", forbes_stars: 4, notes: "Greenough MT, adults-only eco-luxury ranch, independent" },
+  "Paws Up Montana": { tier: "ultra_luxury", forbes_stars: 4, notes: "Greenough MT, glamping and ranch resort, 37,000 acres, independent" },
+  // Nevada
+  "The Palazzo at The Venetian": { tier: "luxury", forbes_stars: 4, notes: "Las Vegas Strip, Las Vegas Sands" },
+  "THE VILLAS Caesars Palace": { tier: "ultra_luxury", forbes_stars: 4, notes: "Las Vegas, Caesars Entertainment" },
+  "Wynn Las Vegas": { tier: "luxury", forbes_stars: 4, notes: "Las Vegas Strip, Wynn Resorts" },
+  "The Venetian Resort Las Vegas": { tier: "luxury", forbes_stars: 4, notes: "Las Vegas Strip, Las Vegas Sands" },
+  "Encore at Wynn Las Vegas": { tier: "luxury", forbes_stars: 4, notes: "Las Vegas Strip, Wynn Resorts" },
+  // New Mexico
+  "Four Seasons Resort Rancho Encantado": { tier: "ultra_luxury", forbes_stars: 4, notes: "Santa Fe NM, independent" },
+  // New York
+  "The Aurora Inn": { tier: "luxury", forbes_stars: 4, notes: "Aurora NY, Finger Lakes, independent" },
+  "Mirbeau Inn & Spa Skaneateles": { tier: "luxury", forbes_stars: 4, notes: "Skaneateles NY, Finger Lakes, independent" },
+  "Mirbeau Inn & Spa Rhinebeck": { tier: "luxury", forbes_stars: 4, notes: "Rhinebeck NY, Hudson Valley, independent" },
+  "Aman New York": { tier: "ultra_luxury", forbes_stars: 4, aman: true, notes: "Crown Building NYC, Aman" },
+  "The Dominick": { tier: "luxury", forbes_stars: 4, notes: "SoHo NYC, independent" },
+  "Equinox Hotel New York": { tier: "luxury", forbes_stars: 4, notes: "Hudson Yards NYC, independent" },
+  "The Langham New York Fifth Avenue": { tier: "luxury", forbes_stars: 4, notes: "Midtown NYC, Langham Hotels" },
+  "Pendry Manhattan West": { tier: "luxury", forbes_stars: 4, notes: "Hudson Yards NYC, Pendry/Marriott" },
+  "Andaz 5th Avenue": { tier: "luxury", forbes_stars: 4, notes: "Midtown NYC, World of Hyatt" },
+  "The Lodge at Turning Stone": { tier: "luxury", forbes_stars: 4, notes: "Verona NY, Oneida Nation resort" },
+  "The Plaza Hotel": { tier: "ultra_luxury", forbes_stars: 4, notes: "Fifth Avenue NYC, historic 1907, Fairmont/Accor" },
+  // North Carolina
+  "The Inn on Biltmore Estate": { tier: "luxury", forbes_stars: 4, cn_gold: true, notes: "Asheville NC, Biltmore Estate grounds, independent" },
+  "Old Edwards Inn and Spa": { tier: "luxury", forbes_stars: 4, notes: "Highlands NC, independent" },
+  "The Ivey's Hotel": { tier: "luxury", forbes_stars: 4, notes: "Charlotte NC, independent boutique" },
+  "The Fearrington House Inn": { tier: "luxury", forbes_stars: 4, relais_chateaux: true, notes: "Pittsboro NC, Relais & Chateaux, country house hotel" },
+  // Oregon
+  "Tributary Hotel": { tier: "luxury", forbes_stars: 4, notes: "McMinnville OR, Willamette Valley wine country, independent" },
+  // Pennsylvania
+  "The Grand Lodge at Nemacolin": { tier: "luxury", forbes_stars: 4, notes: "Farmington PA, Nemacolin resort, independent" },
+  "Four Seasons Hotel Philadelphia at Comcast Center": { tier: "luxury", forbes_stars: 4, notes: "Center City Philadelphia, independent" },
+  "The Rittenhouse": { tier: "luxury", forbes_stars: 4, notes: "Rittenhouse Square Philadelphia, independent" },
+  "The Lodge at Glendorn": { tier: "ultra_luxury", forbes_stars: 4, relais_chateaux: true, notes: "Bradford PA, private wilderness estate, Relais & Chateaux" },
+  // Rhode Island
+  "Castle Hill Inn": { tier: "luxury", forbes_stars: 4, notes: "Newport RI, Newport Harbor, independent" },
+  // South Carolina
+  "Hotel Bennett": { tier: "luxury", forbes_stars: 4, notes: "Marion Square Charleston SC, independent" },
+  "The Charleston Place": { tier: "luxury", forbes_stars: 4, notes: "Historic District Charleston SC, Belmond" },
+  "The Inn & Club at Harbour Town": { tier: "luxury", forbes_stars: 4, notes: "Sea Pines Hilton Head SC, Sea Pines Resort" },
+  // Tennessee
+  "Four Seasons Hotel Nashville": { tier: "luxury", forbes_stars: 4, notes: "SoBro Nashville, independent" },
+  "The Joseph Nashville": { tier: "luxury", forbes_stars: 4, notes: "SoBro Nashville, Autograph Collection/Marriott" },
+  // Texas
+  "Commodore Perry Estate": { tier: "ultra_luxury", forbes_stars: 4, notes: "Austin TX, Auberge Resorts, historic 1928 estate" },
+  "Archer Hotel Austin": { tier: "luxury", forbes_stars: 4, notes: "Second Street Austin TX, independent" },
+  "Austin Proper Hotel & Residences": { tier: "luxury", forbes_stars: 4, notes: "Second Street Austin TX, independent" },
+  "Fairmont Austin": { tier: "luxury", forbes_stars: 4, notes: "Convention Center Austin TX, Fairmont/Accor" },
+  "The Houstonian Hotel Club and Spa": { tier: "luxury", forbes_stars: 4, notes: "River Oaks Houston TX, independent" },
+  "Hotel Granduca Houston": { tier: "luxury", forbes_stars: 4, notes: "Uptown Houston TX, independent, Italian villa style" },
+  "Mokara Hotel & Spa": { tier: "luxury", forbes_stars: 4, notes: "River Walk San Antonio TX, independent" },
+  // Utah
+  "The Chateaux Deer Valley": { tier: "luxury", forbes_stars: 4, notes: "Park City UT, Deer Valley, independent" },
+  // Virginia
+  "Nicewonder Farm & Vineyards": { tier: "luxury", forbes_stars: 4, notes: "Bristol VA, farm and vineyard retreat, independent" },
+  "Williamsburg Inn": { tier: "luxury", forbes_stars: 4, notes: "Colonial Williamsburg VA, Colonial Williamsburg Foundation" },
+  // Washington State
+  // Wisconsin
+  "The American Club": { tier: "luxury", forbes_stars: 4, notes: "Kohler WI, independent, historic 1918 workers dormitory, Destination Kohler" },
+  // Wyoming
+  "Four Seasons Resort and Residences Jackson Hole": { tier: "ultra_luxury", forbes_stars: 4, notes: "Teton Village WY, ski-in/ski-out, Teton views, independent" },
+  "Rusty Parrot Lodge and Spa": { tier: "luxury", forbes_stars: 4, slh: true, notes: "Jackson WY, downtown Jackson, independent boutique" },
+
+
+  // ── SLH — MEXICO ──────────────────────────────────────────────────────────
+  "Bespoke Tulum": { tier: "luxury", slh: true, region: "mexico", notes: "Tulum Mexico, boutique, independent, Hyatt bookable" },
+  "Brick Hotel Mexico City": { tier: "luxury", slh: true, region: "mexico", notes: "Polanco Mexico City, independent boutique, Hyatt bookable" },
+  "Decu Downtown": { tier: "luxury", slh: true, region: "mexico", notes: "Merida Mexico, independent boutique, Hyatt bookable" },
+  "Diez Diez Collection": { tier: "luxury", slh: true, region: "mexico", notes: "Merida Mexico, independent, Hyatt bookable" },
+  "Hacienda Pena Pobre": { tier: "luxury", slh: true, region: "mexico", notes: "Tlalpan Mexico City, historic hacienda, independent, Hyatt bookable" },
+  "Hotel Casa Huamantla": { tier: "luxury", slh: true, region: "mexico", notes: "Huamantla Tlaxcala Mexico, colonial town near Popocatepetl, independent, Hyatt bookable" },
+  "Hotel de la Soledad": { tier: "luxury", slh: true, region: "mexico", notes: "Morelia Michoacan Mexico, historic colonial city, independent, Hyatt bookable" },
+  "La Casa Que Canta": { tier: "ultra_luxury", slh: true, region: "mexico", notes: "Zihuatanejo Mexico, clifftop boutique over the Pacific, one of Mexico's most romantic hotels, independent, Hyatt bookable" },
+  "La Valise Mazunte": { tier: "ultra_luxury", slh: true, region: "mexico", notes: "Mazunte Oaxaca Mexico, remote Pacific coast, adults-only, independent, Hyatt bookable" },
+  "La Valise Mexico City": { tier: "luxury", slh: true, region: "mexico", notes: "Roma Norte Mexico City, intimate boutique, independent, Hyatt bookable" },
+  "La Valise San Miguel de Allende": { tier: "luxury", slh: true, region: "mexico", notes: "San Miguel de Allende Mexico, boutique, independent, Hyatt bookable" },
+  "La Valise Tulum": { tier: "luxury", slh: true, region: "mexico", notes: "Tulum Mexico, adults-only beachfront boutique, independent, Hyatt bookable" },
+  "La Zebra": { tier: "luxury", slh: true, region: "mexico", notes: "Tulum Mexico, beachfront boutique, independent, Hyatt bookable" },
+  "ME Cabo": { tier: "luxury", slh: true, region: "mexico", notes: "Cabo San Lucas Mexico, Melia Hotels" },
+  "Mezzanine Tulum": { tier: "luxury", slh: true, region: "mexico", notes: "Tulum Mexico, boutique hotel and spa, independent, Hyatt bookable" },
+  "Mi Amor Tulum": { tier: "luxury", slh: true, region: "mexico", notes: "Tulum Mexico, adults-only boutique, independent, Hyatt bookable" },
+  "Roso Guest House": { tier: "luxury", slh: true, region: "mexico", notes: "Mexico City, intimate boutique, independent, Hyatt bookable" },
+  "TAGO Tulum": { tier: "luxury", slh: true, region: "mexico", notes: "Tulum Mexico, boutique, independent, Hyatt bookable" },
+  "Todos Santos Boutique Hotel": { tier: "luxury", slh: true, region: "mexico", notes: "Todos Santos Baja California Sur, historic town near Cabo, independent, Hyatt bookable" },
+  "Villa Maria Cristina": { tier: "luxury", slh: true, region: "mexico", notes: "Guanajuato Mexico, UNESCO World Heritage city, colonial boutique, independent, Hyatt bookable" },
+  "Villa Santa Cruz": { tier: "luxury", slh: true, region: "mexico", notes: "Todos Santos Baja California Sur, boutique villa, independent, Hyatt bookable" },
+  "Villas del Mar San Jose del Cabo": { tier: "luxury", slh: true, region: "mexico", notes: "San Jose del Cabo Mexico, villa resort, independent, Hyatt bookable" },
+  "Wakax Hacienda": { tier: "luxury", slh: true, region: "mexico", notes: "Tulum Mexico, cenote and boutique hotel, independent, Hyatt bookable" },
+
+  // ── SLH — CARIBBEAN ───────────────────────────────────────────────────────
+  "Barbuda Belle": { tier: "ultra_luxury", slh: true, region: "caribbean", notes: "Barbuda, remote and pristine, only small resort on the island, independent, Hyatt bookable" },
+  "Bequia Beach Hotel": { tier: "luxury", slh: true, region: "caribbean", notes: "Bequia St. Vincent and the Grenadines, sailing culture, independent, Hyatt bookable" },
+  "Bluefields Bay Villas": { tier: "luxury", slh: true, region: "caribbean", notes: "Westmoreland Jamaica, private villas, independent, Hyatt bookable" },
+  "Casa Colonial Beach & Spa": { tier: "luxury", slh: true, region: "caribbean", notes: "Puerto Plata Dominican Republic, independent, Hyatt bookable" },
+  "Coral Reef Club": { tier: "ultra_luxury", slh: true, region: "caribbean", notes: "St. James Barbados, family-run since 1952, gardens and beach, one of Barbados's most beloved intimate hotels, independent, Hyatt bookable" },
+  "Goldwynn Resort & Residences": { tier: "luxury", slh: true, region: "caribbean", notes: "Nassau Bahamas, Cable Beach, independent, Hyatt bookable" },
+  "Hermitage Bay": { tier: "luxury", slh: true, cn_gold: true, relais_chateaux: true, region: "caribbean", notes: "Antigua, all-inclusive boutique, Relais & Chateaux, CN Gold List, Hyatt bookable" },
+  "Hotel El Convento": { tier: "luxury", slh: true, region: "caribbean", notes: "Old San Juan Puerto Rico, 17th century convent, independent, Hyatt bookable" },
+  "Malliouhana Resort": { tier: "luxury", slh: true, region: "caribbean", notes: "Meads Bay Anguilla, Auberge Resorts, Hyatt bookable" },
+  "O:live Boutique Hotel": { tier: "luxury", slh: true, region: "caribbean", notes: "Condado San Juan Puerto Rico, independent boutique, Hyatt bookable" },
+  "ONE GT Grand Cayman": { tier: "luxury", slh: true, region: "caribbean", notes: "George Town Grand Cayman, independent, Hyatt bookable" },
+  "Paradise Beach Nevis": { tier: "luxury", slh: true, region: "caribbean", notes: "Nevis, intimate beachfront, independent, Hyatt bookable" },
+  "Petit St. Vincent": { tier: "ultra_luxury", slh: true, region: "caribbean", notes: "Petit St. Vincent island, private island resort, signal flag system for room service, no phones or TVs in villas, independent, Hyatt bookable" },
+  "Point Grace Resort and Spa": { tier: "luxury", slh: true, region: "caribbean", notes: "Grace Bay Providenciales Turks and Caicos, independent, Hyatt bookable" },
+  "S Hotel Kingston": { tier: "luxury", slh: true, region: "caribbean", notes: "Kingston Jamaica, independent boutique, Hyatt bookable" },
+  "S Hotel Montego Bay": { tier: "luxury", slh: true, region: "caribbean", notes: "Montego Bay Jamaica, independent, Hyatt bookable" },
+  "Sailrock South Caicos": { tier: "ultra_luxury", slh: true, region: "caribbean", notes: "South Caicos Turks and Caicos, remote private island feel, independent, Hyatt bookable" },
+  "South Bank Turks and Caicos": { tier: "ultra_luxury", slh: true, region: "caribbean", notes: "Providenciales Turks and Caicos, boutique, independent, Hyatt bookable" },
+  "Spice Island Beach Resort": { tier: "luxury", slh: true, region: "caribbean", notes: "Grand Anse Grenada, family-run, one of Grenada's most beloved resorts, independent, Hyatt bookable" },
+  "Sublime Samana Hotel & Residences": { tier: "luxury", slh: true, region: "caribbean", notes: "Las Terrenas Samana Dominican Republic, independent boutique, Hyatt bookable" },
+  "Sunset Reef St. Kitts": { tier: "luxury", slh: true, region: "caribbean", notes: "St. Kitts, boutique, independent, Hyatt bookable" },
+  "Tamarind Hills Resort and Villas": { tier: "luxury", slh: true, region: "caribbean", notes: "Antigua, hillside villas with Antigua Sound views, independent, Hyatt bookable" },
+  "The Inn at English Harbour": { tier: "luxury", slh: true, region: "caribbean", notes: "English Harbour Antigua, historic Nelson's Dockyard area, independent, Hyatt bookable" },
+  "The Liming Bequia": { tier: "luxury", slh: true, region: "caribbean", notes: "Bequia St. Vincent and the Grenadines, boutique, sailing hub of the Grenadines, independent, Hyatt bookable" },
+  "The Sandpiper": { tier: "ultra_luxury", slh: true, region: "caribbean", notes: "St. James Barbados, family-run, one of Barbados's most refined intimate hotels, independent, Hyatt bookable" },
+  "The Trident Hotel": { tier: "luxury", slh: true, region: "caribbean", notes: "Port Antonio Jamaica, Errol Flynn Marina area, independent, Hyatt bookable" },
+  "West Bay Club": { tier: "luxury", slh: true, region: "caribbean", notes: "Providenciales Turks and Caicos, Grace Bay, boutique, independent, Hyatt bookable" },
+  "Yemaya Reefs": { tier: "luxury", slh: true, region: "caribbean", notes: "Little Corn Island Nicaragua, remote dive resort, independent, Hyatt bookable" },
 
 };
 
