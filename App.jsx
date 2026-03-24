@@ -5983,24 +5983,30 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
       )}
       {/* Bar */}
       <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderTop: activePanel ? "none" : "1px solid rgba(255,255,255,0.06)", borderRadius: activePanel ? "0 0 12px 12px" : "12px", padding: "9px 16px", display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-        <span style={{ color: "#444", fontSize: "10px", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "serif", flexShrink: 0 }}>Optimizing for</span>
-        <button onClick={() => toggle("loyalty")} style={pillStyle(activePanel === "loyalty")}>
-          Loyalty {activeLoyalty.length > 0 ? `· ${activeLoyalty.length}` : ""}
-          {totalValue > 0 ? <span style={{ color: "#C9A84C", marginLeft: "4px" }}>est. ${totalValue.toLocaleString()}</span> : ""}
-          <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "loyalty" ? "▴" : "▾"}</span>
-        </button>
-        <button onClick={() => toggle("cards")} style={pillStyle(activePanel === "cards")}>
-          Cards {cards.length > 0 ? `· ${cards.length}` : ""}
-          <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "cards" ? "▴" : "▾"}</span>
-        </button>
-        <button onClick={() => toggle("brands")} style={pillStyle(activePanel === "brands")}>
-          Brands {brands.length > 0 ? `· ${brands.length}` : ""}
-          <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "brands" ? "▴" : "▾"}</span>
-        </button>
-        <button onClick={() => { toggle("optimize"); if (activePanel !== "optimize" && onOptimizeClick) onOptimizeClick(); }} style={{ ...pillStyle(activePanel === "optimize"), borderColor: activePanel === "optimize" ? "rgba(201,168,76,0.5)" : "rgba(201,168,76,0.15)", color: activePanel === "optimize" ? "#C9A84C" : "#8a7a5a" }}>
+        <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "6px" }}>
+          <span style={{ color: "#444", fontSize: "10px", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "serif" }}>Optimizing for:</span>
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            <button onClick={() => toggle("loyalty")} style={pillStyle(activePanel === "loyalty")}>
+              Loyalty {activeLoyalty.length > 0 ? `· ${activeLoyalty.length}` : ""}
+              {totalValue > 0 ? <span style={{ color: "#C9A84C", marginLeft: "4px" }}>est. ${totalValue.toLocaleString()}</span> : ""}
+              <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "loyalty" ? "▴" : "▾"}</span>
+            </button>
+            <button onClick={() => toggle("cards")} style={pillStyle(activePanel === "cards")}>
+              Cards {cards.length > 0 ? `· ${cards.length}` : ""}
+              <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "cards" ? "▴" : "▾"}</span>
+            </button>
+            <button onClick={() => toggle("brands")} style={pillStyle(activePanel === "brands")}>
+              Brands {brands.length > 0 ? `· ${brands.length}` : ""}
+              <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "brands" ? "▴" : "▾"}</span>
+            </button>
+          </div>
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            <button onClick={() => { toggle("optimize"); if (activePanel !== "optimize" && onOptimizeClick) onOptimizeClick(); }} style={{ ...pillStyle(activePanel === "optimize"), borderColor: activePanel === "optimize" ? "rgba(201,168,76,0.5)" : "rgba(201,168,76,0.15)", color: activePanel === "optimize" ? "#C9A84C" : "#8a7a5a" }}>
           ✦ Optimize Your Setup
           <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "optimize" ? "▴" : "▾"}</span>
-        </button>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -6258,6 +6264,13 @@ SINGLE-DESTINATION TRIPS — when user specifies a destination (e.g. "Carmel, CA
 
 STATE-LEVEL GEOGRAPHY CONSTRAINT:
 When a user specifies a state or region, apply this tiered rule:
+
+SMALL CITY AND UNKNOWN MARKET HONESTY (dining/local discovery queries):
+- For cities NOT in Sojourn's known restaurant database, acknowledge knowledge limitations directly. Say: "I have limited specific knowledge of [city]'s current restaurant scene — here are a couple I'm more confident about, but I'd recommend checking Google Maps or Yelp for current hours and status."
+- NEVER recommend a restaurant in the wrong city. If you cannot find a coffee shop in Ellensburg WA, do not suggest one from Ellensburg CA or any other city.
+- NEVER fabricate restaurant details for small markets just to appear helpful. A closed or wrong restaurant destroys trust far more than admitting a knowledge gap.
+- For dining in unknown markets: offer 1-2 high-confidence options maximum. Do not pad to 4-5 with low-confidence entries.
+- If a restaurant is in our RESTAURANT_SIGNALS_DB for that city, use it with confidence. If it is not, hedge appropriately.
 
 TIER 1 — Options 1-5: Must be within the stated geography. If you cannot confidently name real operating properties for a given destination within the state, use the state's gateway cities and known resort towns rather than substituting a neighboring state. For Idaho: Boise (gateway), McCall, Coeur d'Alene, Sun Valley/Ketchum, Stanley/Sawtooths, Sandpoint are all valid Idaho options. Do NOT substitute Montana, Oregon, or Wyoming for Idaho options.
 
@@ -6705,11 +6718,24 @@ JSON SCHEMA — you MUST use exactly these field names or cards will not display
 {"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","cardStrategy":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer. (2) experiences[] is EMPTY by default. Only populate it when the user has explicitly requested specific dining or activities and asked for them to be included in their trip. Never generate experiences speculatively.
 NEVER use: results, cards, tripOptions, color, title, property, priceStructure — these will break the display.
 
+CARD MULTIPLIER ACCURACY — never fabricate or inflate earning rates:
+- Delta SkyMiles Reserve earns 3x ONLY on Delta purchases (Delta flights, Delta.com). All other purchases including ferries, trains, hotels, restaurants, taxis earn 1x base. Do not claim 3x on ferry tickets, ground transport, or non-Delta travel.
+- Chase Sapphire Reserve earns 3x on travel AND dining. "Travel" includes: flights, hotels, taxis, Lyft, Uber, ferries, trains, parking. This is a broad category.
+- Amex Platinum earns 5x on flights booked directly with airlines or via Amex Travel. NOT on hotels, NOT on other travel.
+- Amex Gold earns 4x at restaurants and US supermarkets. 3x on flights booked directly. NOT on hotels.
+- When in doubt about a specific merchant category, default to the card's base rate (1x or 1.5x depending on the card). NEVER round up or guess a higher rate.
+
 HOTEL BRAND ACCURACY — critical trust rules, never violate:
 - NEVER place a hotel in the wrong city or region. If the destination is Jackson Hole, every hotel component must be in Jackson Hole or Teton Village — not Vail, not Aspen, not any other mountain town. If you cannot name a real hotel in the destination, say so rather than substituting one from elsewhere.
 - LOYALTY REDEMPTION ACCURACY: Only suggest redeeming points at hotels that ARE part of that loyalty program. Montage is NOT a Hyatt property — do not suggest redeeming World of Hyatt points at Montage. Verify program membership before recommending redemption. Programs and their brands: World of Hyatt includes Hyatt, Park Hyatt, Grand Hyatt, Andaz, Alila, Thompson, Destination by Hyatt, SLH partners; Marriott Bonvoy includes Ritz-Carlton, St. Regis, W, Westin, Sheraton, JW Marriott, Edition, Luxury Collection, Autograph Collection; Hilton Honors includes Conrad, Waldorf Astoria, LXR, Curio, Tapestry; IHG includes InterContinental, Kimpton, Six Senses, Regent, voco.
 - MULTI-HOTEL SHORT TRIPS: Do not split a short trip (3 nights or fewer) across two hotels unless the user explicitly asks for it, or unless there is a genuinely compelling reason (e.g. a multi-city itinerary). A 3-night ski weekend should have ONE hotel. If you do split a short trip, you MUST explain the reason clearly in whyThis.
 - FLIGHT LEG PRICING: Every flight component must show a dollar value per leg. Return flight must NEVER show $0 or "included in outbound" — split the total evenly across legs if needed. Format: "~$[X] per person" on each leg. Never leave a flight component with ambiguous or missing pricing.
+
+DOMESTIC vs INTERNATIONAL DEFAULT:
+- When a user asks to "use my miles" or "best use of my Delta/United/Alaska miles" WITHOUT specifying international travel, DEFAULT to domestic US options. Most travelers asking about miles redemption are thinking about domestic trips first.
+- Only suggest international redemptions if: (a) the user explicitly mentions international travel, or (b) the user mentions a specific international destination, or (c) the user says "I want to go somewhere international" or similar.
+- For Delta SkyMiles specifically: domestic redemptions on Delta often offer good value (1.0-1.2 cpp). Do not automatically jump to international business class just because that theoretically offers better cpp — the user may not want to travel internationally.
+- Always offer at least 2-3 domestic options before introducing international if the query is ambiguous.
 
 SMART OPTION SUPPRESSION — evaluate traveler profile before generating options:
 - REDEMPTION OPPORTUNITY: only generate if the traveler has at least one loyalty program with 5,000+ points in a single program. If total redeemable balance is effectively zero, replace this slot with a second Best Value or additional Quality option.
@@ -7441,9 +7467,9 @@ Please respond now.`,
             <div style={{ background: "rgba(255,255,255,0.04)", border: "2px solid rgba(255,255,255,0.14)", outline: "1px solid rgba(255,255,255,0.05)", outlineOffset: "3px", borderRadius: "20px", padding: "6px 6px 6px 22px", display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "18px", position: "relative" }}>
               <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
                 placeholder={`Where to? e.g. "4 days in Japan in October, two adults" · "surprise me with a long weekend under $1,500" · "best use of my Hyatt points this winter"`}
-                rows={4} style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "15px", lineHeight: "1.7", padding: "14px 40px 14px 0", fontFamily: "'DM Sans',system-ui,sans-serif", resize: "none" }} />
+                rows={4} style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "15px", lineHeight: "1.7", padding: "14px 50px 14px 0", fontFamily: "'DM Sans',system-ui,sans-serif", resize: "none" }} />
               {/* Mic floats top-right inside box */}
-              <button onClick={listening ? () => { recognitionRef.current?.stop(); setListening(false); } : startListening} style={{ position: "absolute", top: "8px", right: "54px", width: "30px", height: "30px", borderRadius: "8px", border: "none", cursor: "pointer", background: listening ? "rgba(201,76,76,0.2)" : "transparent", color: listening ? "#C94C4C" : "#555", fontSize: "14px", animation: listening ? "pulse 1.2s infinite" : "none", display: "flex", alignItems: "center", justifyContent: "center" }}>&#127908;</button>
+              <button onClick={listening ? () => { recognitionRef.current?.stop(); setListening(false); } : startListening} style={{ position: "absolute", top: "8px", right: "8px", width: "30px", height: "30px", borderRadius: "8px", border: "none", cursor: "pointer", background: listening ? "rgba(201,76,76,0.2)" : "transparent", color: listening ? "#C94C4C" : "#555", fontSize: "14px", animation: listening ? "pulse 1.2s infinite" : "none", display: "flex", alignItems: "center", justifyContent: "center" }}>&#127908;</button>
               <div style={{ display: "flex", flexDirection: "column", gap: "4px", paddingBottom: "8px", flexShrink: 0 }}>
                 <button onClick={handleSend} disabled={!input.trim() || loading} style={{ width: "40px", height: "40px", borderRadius: "12px", border: "none", cursor: input.trim() && !loading ? "pointer" : "default", background: input.trim() && !loading ? "#C9A84C" : "rgba(201,168,76,0.15)", color: input.trim() && !loading ? "#0a0908" : "#555", fontSize: "18px", fontWeight: "bold" }}>&#8593;</button>
               </div>
