@@ -4988,7 +4988,7 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                                 {(r.pointsUsed||0).toLocaleString()} {r.program?.replace(" SkyMiles","").replace(" Honors","").replace(" Bonvoy","")} · {r.centsPerPoint?.toFixed(1)}¢/pt
                               </div>
                             ))}
-                            {hasEarning && <div style={{ color: "#4a4540", fontSize: "10px", marginTop: "4px", borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "4px" }}>+${opt.pointsValue.toLocaleString()} earned</div>}
+                            {hasEarning && <div style={{ color: "#7a7060", fontSize: "10px", marginTop: "4px", borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "4px" }}>+${opt.pointsValue.toLocaleString()} earned</div>}
                           </div>
                         );
                       }
@@ -5013,8 +5013,8 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
 
                   {/* Why this */}
                   <td style={{ padding: "16px 12px", verticalAlign: "middle" }}>
-                    <div style={{ color: "#7a7468", fontSize: "12px", lineHeight: "1.55" }}>{opt.whyThis}</div>
-                    {opt.tradeoff && <div style={{ color: "#3a3a3a", fontSize: "10px", marginTop: "5px", fontStyle: "italic" }}>{opt.tradeoff}</div>}
+                    <div style={{ color: "#9a9088", fontSize: "12px", lineHeight: "1.55" }}>{opt.whyThis}</div>
+                    {opt.tradeoff && <div style={{ color: "#7a7060", fontSize: "10px", marginTop: "5px", fontStyle: "italic" }}>{opt.tradeoff}</div>}
                   </td>
 
                   {/* Dismiss X */}
@@ -5132,7 +5132,7 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
           <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(255,255,255,0.04)", borderRadius: "8px", padding: "3px 8px" }}>
             <span style={{ color: "#C9A84C", fontSize: "10px" }}>▪</span>
             <span style={{ color: "#7a7468", fontSize: "11px" }}>{cardName}</span>
-            {cardReason && <span style={{ color: "#4a4540", fontSize: "10px" }}>· {cardReason}</span>}
+            {cardReason && <span style={{ color: "#7a7060", fontSize: "10px" }}>· {cardReason}</span>}
           </div>
         );
       })()}
@@ -5163,7 +5163,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss }) => {
       </div>
       <div style={{ marginBottom: "8px" }}>
         <div style={{ color: "#e8e4dc", fontSize: "15px", fontWeight: "600", lineHeight: "1.3", marginBottom: "3px", fontFamily: "'Playfair Display',Georgia,serif" }}>{option.headline}</div>
-        <div style={{ color: "#7a7468", fontSize: "12px", lineHeight: "1.4" }}>{option.subhead}</div>
+        <div style={{ color: "#9a9088", fontSize: "12px", lineHeight: "1.4" }}>{option.subhead}</div>
       </div>
       {/* Points earned — compact single line */}
       {(() => {
@@ -5257,8 +5257,31 @@ const ItineraryOverlay = ({ option, tripSummary, userProfile, onClose }) => {
   // Parse start date from trip summary
   const parseStartDate = (dateStr) => {
     try {
-      const match = dateStr.match(/(\w+ \d+|\d+\/\d+)/);
-      if (match) return new Date(match[0] + ", 2025");
+      if (!dateStr) return new Date();
+      // Try ISO format first (YYYY-MM-DD)
+      const isoMatch = dateStr.match(/(\d{4}-\d{2}-\d{2})/);
+      if (isoMatch) return new Date(isoMatch[1]);
+      // Try "Month Day, Year" or "Month Day Year"
+      const fullMatch = dateStr.match(/(\w+ \d+,?\s*\d{4})/);
+      if (fullMatch) return new Date(fullMatch[1]);
+      // Try "Month Day" — use next occurrence of that date
+      const partialMatch = dateStr.match(/(\w+ \d+)/);
+      if (partialMatch) {
+        const currentYear = new Date().getFullYear();
+        const attempt = new Date(partialMatch[1] + ", " + currentYear);
+        // If the date has passed, use next year
+        if (attempt < new Date()) return new Date(partialMatch[1] + ", " + (currentYear + 1));
+        return attempt;
+      }
+      // Try MM/DD format
+      const slashMatch = dateStr.match(/(\d{1,2}\/\d{1,2})/);
+      if (slashMatch) {
+        const [m, d] = slashMatch[1].split('/');
+        const currentYear = new Date().getFullYear();
+        const attempt = new Date(currentYear, parseInt(m)-1, parseInt(d));
+        if (attempt < new Date()) return new Date(currentYear + 1, parseInt(m)-1, parseInt(d));
+        return attempt;
+      }
     } catch(e) {}
     return new Date();
   };
@@ -7023,13 +7046,13 @@ Please respond now.`,
         <div style={{ padding: "24px 28px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <div style={{ fontSize: "11px", letterSpacing: "0.25em", color: "#C9A84C", textTransform: "uppercase", marginBottom: "3px", fontFamily: "serif" }}>Sojourn · AI</div>
-            <div style={{ fontSize: "12px", color: "#555" }}>Your travel, optimized.</div>
+            
           </div>
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             <button onClick={() => { setShowOptimizeModal(true); fetchOptimizeRecs(); }} title="Optimize your setup" style={{ background: "none", border: "1px solid rgba(201,168,76,0.2)", color: "#C9A84C", padding: "7px 12px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", fontFamily: "serif", letterSpacing: "0.05em" }}>✦ Optimize</button>
             <button onClick={() => setShowProfileModal("loyalty")} title="Your loyalty programs" style={{ background: "none", border: "1px solid rgba(255,255,255,0.12)", color: "#7a7060", padding: "7px 12px", borderRadius: "20px", cursor: "pointer", fontSize: "12px" }}>Loyalty</button>
             <button onClick={() => setShowProfileModal("cards")} title="Your credit cards" style={{ background: "none", border: "1px solid rgba(255,255,255,0.12)", color: "#7a7060", padding: "7px 12px", borderRadius: "20px", cursor: "pointer", fontSize: "12px" }}>Cards</button>
-            <button onClick={() => { mp.track("new_trip_started"); resetApp(); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "#666", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px" }}>New Trip</button>
+            <button onClick={() => { mp.track("new_trip_started"); resetApp(); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "#666", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px" }}>New Trip / Edit</button>
           </div>
         </div>
 
@@ -7167,7 +7190,7 @@ Please respond now.`,
               <div style={{ marginBottom: "12px" }}>
                 <span style={{ color: "#b0a898", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif", fontWeight: "600" }}>Continue the conversation</span>
                 <span style={{ color: "#3a3530", fontSize: "12px", margin: "0 6px" }}>—</span>
-                <span style={{ color: "#4a4540", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }}>Refine your query · dive deeper into current options · generate new ones · explore dining, drinks and activities</span>
+                <span style={{ color: "#7a7060", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }}>Refine your query · dive deeper into current options · generate new ones · explore dining, drinks and activities</span>
               </div>
               {/* Context-aware suggestion pills — regenerate based on conversation state */}
               {(() => {
@@ -7307,7 +7330,7 @@ Please respond now.`,
       {/* Header */}
       <div style={{ padding: "28px 24px 0", textAlign: "center" }}>
         <div style={{ fontSize: "11px", letterSpacing: "0.3em", color: "#C9A84C", textTransform: "uppercase", marginBottom: "4px", fontFamily: "serif" }}>Sojourn · AI</div>
-        <div style={{ fontSize: "12px", color: "#555" }}>Your travel, optimized.</div>
+        
       </div>
 
       {/* Hero — centerpoint on first load */}
@@ -7396,7 +7419,7 @@ Please respond now.`,
         return (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 24px 12px", animation: "fadeUp 0.5s ease forwards" }}>
           <div style={{ marginBottom: "24px", textAlign: "center", width: "100%", maxWidth: "860px" }}>
-            <div style={{ fontSize: "38px", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic", color: "#e8e4dc", lineHeight: "1.1", marginBottom: "16px", whiteSpace: "nowrap" }}>Every great trip begins with a conversation.</div>
+            <div style={{ fontSize: "clamp(22px, 5vw, 34px)", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic", color: "#e8e4dc", lineHeight: "1.2", marginBottom: "16px" }}>Every great trip begins with a conversation.</div>
             <div style={{ color: "#6a6460", fontSize: "15px", lineHeight: "1.7", maxWidth: "580px", margin: "0 auto" }}>Tell me about your trip — or start with an idea. Explore destinations, discover events and dining, build an itinerary, and book your trip — all in one conversation. Every recommendation shaped by your loyalty programs, credit cards, and travel style — working together.</div>
           </div>
           <div style={{ width: "100%", maxWidth: "860px" }}>
@@ -7443,7 +7466,7 @@ Please respond now.`,
             <div style={{ display: "flex", justifyContent: "flex-start", flexDirection: "column", gap: "8px" }}>
               <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "18px 18px 18px 4px" }}><TypingIndicator /></div>
               {loadingMessage && (
-                <div style={{ color: "#C9A84C", fontSize: "12px", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic", paddingLeft: "4px", animation: "fadeUp 0.4s ease forwards" }}>{loadingMessage}</div>
+                <div style={{ color: "#C9A84C", fontSize: "12px", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic", paddingLeft: "4px", animation: "fadeUp 0.4s ease forwards", alignSelf: "flex-start" }}>{loadingMessage}</div>
               )}
             </div>
           )}
