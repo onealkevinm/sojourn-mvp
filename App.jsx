@@ -1728,6 +1728,7 @@ const QUALITY_SIGNALS_DB = {
   "The Stavrand Russian River Valley": { tier: "luxury", slh: true, notes: "Guerneville CA, Sonoma wine country, independent, Hyatt bookable" },
   "Topping Rose House": { tier: "ultra_luxury", slh: true, notes: "Bridgehampton NY, Hamptons, farm-to-table estate, Jean-Georges restaurant, independent, Hyatt bookable" },
   "Wentworth Mansion": { tier: "luxury", slh: true, tl_gold: true, notes: "Charleston SC, historic 1886 Gilded Age mansion, independent, Hyatt bookable" },
+  "Planters Inn": { tier: "luxury", relais_chateaux: true, notes: "Historic District Charleston SC, Relais & Chateaux, Peninsula Grill on premises, one of Charleston's most elegant and intimate small hotels — the R&C book on the bedside table is part of the experience" },
   "WestHouse Hotel New York": { tier: "luxury", slh: true, notes: "Midtown NYC, independent boutique, Hyatt bookable" },
   "Winslow's Bungalows": { tier: "luxury", slh: true, notes: "Palm Springs CA, boutique bungalow resort, independent, Hyatt bookable" },
   "Wylder Hotel Windham": { tier: "luxury", slh: true, notes: "Windham NY, Catskills, independent boutique, Hyatt bookable" },
@@ -1888,7 +1889,7 @@ const QUALITY_SIGNALS_DB = {
   "The Ritz-Carlton Reynolds Lake Oconee": { tier: "luxury", forbes_stars: 4, notes: "Greensboro GA, Lake Oconee, Marriott Bonvoy" },
   // Hawaii
   "Sensei Lanai, A Four Seasons Resort": { tier: "ultra_luxury", forbes_stars: 4, notes: "Lanai Hawaii, wellness-focused, Larry Ellison ownership, independent" },
-  "Halekulani": { tier: "ultra_luxury", forbes_stars: 4, notes: "Waikiki Oahu, independent, the most storied luxury hotel in Hawaii" },
+  "Halekulani": { tier: "ultra_luxury", forbes_stars: 4, notes: "Waikiki Oahu, independent, the most storied luxury hotel in Hawaii — original building dates to 1907, orchid mosaic pool built around a century-old kiawe tree, House Without A Key bar is one of the great hotel sunset experiences anywhere (live Hawaiian music, Waianae Mountains backdrop). Old Hawaii elegance in a different register from the resort corridor." },
   "The Ritz-Carlton Maui Kapalua": { tier: "luxury", forbes_stars: 4, notes: "Kapalua Maui, Marriott Bonvoy" },
   // Illinois
   "Park Hyatt Chicago": { tier: "luxury", forbes_stars: 4, notes: "Water Tower Chicago, World of Hyatt" },
