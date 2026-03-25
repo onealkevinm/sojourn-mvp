@@ -4397,6 +4397,23 @@ const getRestaurantSignals = (city, axisPreference = null, cuisine = null) => {
 };
 
 // Build restaurant context string for AI prompt injection on local discovery queries
+const getPropertyStoryNotes = (hotelName) => {
+  if (!hotelName) return null;
+  const q = getQualitySignal(hotelName);
+  if (q && q.notes && q.notes.length > 60) return q.notes;
+  const words = hotelName.toLowerCase().split(' ').slice(0, 3).join(' ');
+  const keys = Object.keys(QUALITY_SIGNALS_DB);
+  const partial = keys.find(k =>
+    k.toLowerCase().includes(words) ||
+    words.includes(k.toLowerCase().split(' ').slice(0,2).join(' '))
+  );
+  if (partial) {
+    const pq = QUALITY_SIGNALS_DB[partial];
+    if (pq && pq.notes && pq.notes.length > 60) return pq.notes;
+  }
+  return null;
+};
+
 const buildRestaurantContext = (city) => {
   const cityData = RESTAURANT_SIGNALS_DB[city];
   if (!cityData) return "";
@@ -5140,6 +5157,82 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
   );
 };
 
+const ExpandedWhyThis = ({ option, userProfile }) => {
+  const [expanded, setExpanded] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!option) return;
+    setExpanded(null);
+    setLoading(true);
+
+    const hotelComp = (option.components || []).find(c =>
+      c.label && c.label.toLowerCase().includes('hotel')
+    );
+    const propertyName = hotelComp?.detail?.split('·')[0]?.trim() || option.headline || '';
+    const storyNotes = getPropertyStoryNotes(propertyName);
+
+    const tag = option.tag || 'Recommended';
+    const tagFraming = {
+      'Wild Card': 'Focus on what is unexpected, distinctive, and experientially unique. Emphasize the element of discovery and why a curious traveler would find this more memorable than the conventional choice.',
+      'Quality Upgrade': 'Focus on the property character, quality signals, and what elevated hospitality actually feels like here. Draw on specific details — architecture, setting, service philosophy, amenities like plunge pools, private terraces, or notable dining.',
+      'Best Value': 'Acknowledge the quality honestly while making the value case feel exciting rather than compromising. What does this option get right that more expensive options miss?',
+      'Redemption Opportunity': 'Make the redemption feel like a genuine win. Then paint the picture of what this property is actually like — specific, anticipation-building details.',
+    }[tag] || 'Speak to what makes this option distinctively right for this traveler given their profile and preferences.';
+
+    const profile = userProfile || {};
+    const loyalty = (profile.loyaltyAccounts || []).filter(a => a.tier && a.tier !== 'None').map(a => a.program).join(', ') || 'not set';
+    const brands = (profile.preferredBrands || []).slice(0, 5).join(', ') || 'not set';
+
+    const prompt = `You are Sojourn, a luxury travel advisor writing an expanded property narrative for a traveler who clicked to learn more.
+
+OPTION:
+- Headline: ${option.headline || ''}
+- Tag: ${tag}
+- Destination: ${option.subhead || ''}
+- Cost: $${(option.totalCost||0).toLocaleString()}
+- Brief why this: ${option.whyThis || ''}
+${storyNotes ? `- Property context: ${storyNotes}` : ''}
+
+TRAVELER:
+- Loyalty: ${loyalty}
+- Preferred brands: ${brands}
+- Home airport: ${profile.travelProfile?.homeAirport || 'unknown'}
+
+INSTRUCTION: ${tagFraming}
+
+Write 150-200 words in 3 flowing paragraphs — NO headers, NO bullets, pure narrative prose, second person:
+1. The property's character, setting, and distinctive style
+2. Specific details that build anticipation: room types, notable amenities (plunge pools, terraces, views), dining, spa highlights
+3. Why this feels personally chosen for this traveler
+
+Warm, specific, knowledgeable. Like a trusted friend who has been there. Do NOT repeat the brief whyThis verbatim.`;
+
+    fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 400, messages: [{ role: "user", content: prompt }] })
+    })
+    .then(r => r.json())
+    .then(data => setExpanded(data?.content?.[0]?.text?.trim() || null))
+    .catch(() => setExpanded(null))
+    .finally(() => setLoading(false));
+  }, [option?.id]);
+
+  return (
+    <div>
+      <div style={{ color: "#b0a898", fontSize: "13px", lineHeight: "1.8", opacity: loading ? 0.5 : 1, transition: "opacity 0.3s" }}>
+        {fmtNums(expanded || option.whyThis || '')}
+      </div>
+      {option.tradeoff && (
+        <div style={{ color: "#7a7060", fontSize: "11px", marginTop: "12px", fontStyle: "italic", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "10px" }}>
+          ⚖ {option.tradeoff}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss }) => {
   const isRec = option.id === 1;
   return (
@@ -5182,7 +5275,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss }) => {
           {option.whyThis && (
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "20px", marginBottom: "16px" }}>
               <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "8px" }}>Why This Option</div>
-              <div style={{ color: "#b0a898", fontSize: "13px", lineHeight: "1.7" }}>{fmtNums(option.whyThis)}</div>
+              <ExpandedWhyThis option={option} userProfile={userProfile} />
             </div>
           )}
           {/* Experiences — dining, activities surfaced in conversation */}
@@ -6741,6 +6834,11 @@ SMART OPTION SUPPRESSION — evaluate traveler profile before generating options
 - REDEMPTION OPPORTUNITY: only generate if the traveler has at least one loyalty program with 5,000+ points in a single program. If total redeemable balance is effectively zero, replace this slot with a second Best Value or additional Quality option.
 - BEST POINTS EARNED / FUTURE VALUE: only generate if the traveler has at least one loyalty program OR a co-branded travel card. If they have no loyalty programs AND only a cashback card, replace with a second Wild Card or Best Value.
 - Never generate a Redemption Opportunity that requires points the traveler doesn't have.
+
+WORD COUNT DISCIPLINE — strictly enforce these limits:
+- whyThis in comparison grid: TARGET 40-60 words. Lead with what makes this option distinctive for THIS traveler. One sentence on the property character, one on the practical case. No padding.
+- tradeoff: MAX 20 words. One honest counterpoint. No hedging language.
+- Chat/refinement responses: TARGET 100-150 words MAX. Good writing is tight. Say the essential thing well and stop.
 
 CARD QUALITY RULES (when generating new cards):
 - NUMBER FORMATTING: all numbers of 1,000 or more must use comma separators in ALL text fields — pointsEarned, whyThis, detail, tradeoff, loyaltyHighlight, cardStrategy. Examples: "3,200 Delta miles" not "3200 Delta miles", "$1,315" not "$1315", "26,000 Hyatt points" not "26000 Hyatt points", "$2,890" not "$2890". This applies to every number in every field without exception.
