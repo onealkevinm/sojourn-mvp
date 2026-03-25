@@ -6438,7 +6438,12 @@ REQUIRED JSON SCHEMA:
     }
 
     // ── CONCIERGE MODE: clarify before generating ──────────────────────────
-    if (conciergeMode) {
+    // If user is confirming/agreeing while in concierge mode, skip to generation
+    const isEarlyConfirmation = conciergeMode && /^(yes|yeah|yep|sure|ok|okay|go|generate|let's go|do it|sounds good|great|perfect)/i.test(userMessage.trim()) && userMessage.trim().split(' ').length < 8;
+    if (isEarlyConfirmation) {
+      setConciergeMode(false);
+      // Fall through to generation mode below
+    } else if (conciergeMode) {
       try {
         const p = userProfile;
         const tp = p.travelProfile || {};
@@ -6507,9 +6512,16 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
       }
       setLoading(false);
       return;
-    }
+    } // end conciergeMode block
 
     // ── GENERATION MODE: produce cards ────────────────────────────────────
+    // Detect confirmation messages (user saying yes after READY prompt)
+    // and substitute with a proper generation trigger using full conversation context
+    const isConfirmation = /^(yes|yeah|yep|sure|ok|okay|go|generate|let's go|do it|please|sounds good|great|perfect|absolutely)/i.test(userMessage.trim()) && userMessage.trim().split(' ').length < 10;
+    const effectiveMessage = isConfirmation
+      ? `Generate my trip options based on everything we discussed: ${conversationRef.current.filter(m => m.role === 'user').map(m => m.content).join(' ')}`
+      : userMessage;
+
     const loadingSteps = [
       "Reviewing your loyalty accounts...",
       "Checking points balances and tier status...",
@@ -6528,6 +6540,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
     const clearMessages = () => { clearInterval(messageInterval); setLoadingMessage(""); };
 
     const fullContext = conversationRef.current.map(m => m.content).join(" ");
+    const generationTrigger = (typeof effectiveMessage !== 'undefined' ? effectiveMessage : userMessage);
 
     const tryGenerate = async () => {
       const controller = new AbortController();
@@ -7596,7 +7609,7 @@ Please respond now.`,
             <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start", animation: "fadeUp 0.3s ease forwards" }}>
               <div style={{ maxWidth: "80%", padding: "12px 16px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.role === "user" ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)", border: msg.role === "user" ? "1px solid rgba(201,168,76,0.25)" : "1px solid rgba(255,255,255,0.07)", color: msg.role === "user" ? "#e8e4dc" : "#b0a898", fontSize: "14px", lineHeight: "1.6", fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit", fontStyle: msg.role === "assistant" ? "italic" : "normal" }}>{msg.text}</div>
               {msg.isReadyPrompt && (
-                <button onClick={() => { setConciergeMode(false); callClaude("Generate my options now based on everything discussed."); }} style={{ marginTop: "10px", padding: "11px 22px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "20px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.06em", fontFamily: "'Playfair Display',Georgia,serif" }}>
+                <button onClick={() => { setConciergeMode(false); callClaude("Generate my options now based on everything discussed: " + conversationRef.current.filter(m=>m.role==="user").map(m=>m.content).join(" ")); }} style={{ marginTop: "10px", padding: "11px 22px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "20px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.06em", fontFamily: "'Playfair Display',Georgia,serif" }}>
                   Show Me What's Possible →
                 </button>
               )}
