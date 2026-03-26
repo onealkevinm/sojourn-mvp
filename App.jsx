@@ -5293,7 +5293,7 @@ const WhyThisExpanded = ({ option, userProfile }) => {
     deeperText && React.createElement('div', {
       style: { color: '#9a9088', fontSize: '13px', lineHeight: '1.8', marginTop: '14px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.05)' }
     }, deeperText),
-    canGoDeeper && React.createElement('button', {
+    canGoDeeper && !deeper && React.createElement('button', {
       onClick: handleDeeper,
       style: { marginTop: '12px', background: 'none', border: '1px solid rgba(201,168,76,0.25)', color: '#8a7a5a', padding: '6px 14px', borderRadius: '20px', fontSize: '11px', cursor: 'pointer', fontFamily: "serif", letterSpacing: '0.06em' }
     }, deeperLoading ? '· thinking...' : 'Tell me more →'),
@@ -6667,7 +6667,8 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
       const filteredOptions = isEarningQuery
         ? parsed.options.map(o => o.tag === "Future Value" ? { ...o, tag: "Redemption Opportunity", tagColor: "#4CC97A" } : o)
         : parsed.options;
-      setTripOptions(filteredOptions);
+      Object.keys(_whyThisCache).forEach(k => delete _whyThisCache[k]);
+        setTripOptions(filteredOptions);
       setTripSummary(parsed.tripSummary);
       setPhase("results");
     } catch(e) {
@@ -6675,7 +6676,8 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         const parsed = await tryGenerate();
         const isEarningQuery2 = /business.?trip|work.?trip|maximize.?point|build.?mile|build.?point|earn.?status|rack.?up|maximize.?earn/i.test(input);
         const filteredOptions2 = isEarningQuery2
-          ? parsed.options.map(o => o.tag === "Future Value" ? { ...o, tag: "Redemption Opportunity", tagColor: "#4CC97A" } : o)
+          ? parsed.options.map(o => o.tag === "Future Value" ? { ...o, tag: "Redemption OppObject.keys(_whyThisCache).forEach(k => delete _whyThisCache[k]);
+        ortunity", tagColor: "#4CC97A" } : o)
           : parsed.options;
         setTripOptions(filteredOptions2);
         setTripSummary(parsed.tripSummary);
@@ -7095,7 +7097,8 @@ Please respond now.`,
         const originalQueryText = (conversationRef.current&&conversationRef.current[0]&&conversationRef.current[0].content||"").toLowerCase();
         const isEarningRefine = /business.?trip|work.?trip|maximize.?point|build.?mile|build.?point|earn.?status|rack.?up|maximize.?earn/i.test(originalQueryText);
         const refinedOptions = isEarningRefine
-          ? parsed.options.map(o => o.tag === "Future Value" ? { ...o, tag: "Redemption Opportunity", tagColor: "#4CC97A" } : o)
+          ? parseObject.keys(_whyThisCache).forEach(k => delete _whyThisCache[k]);
+        d.options.map(o => o.tag === "Future Value" ? { ...o, tag: "Redemption Opportunity", tagColor: "#4CC97A" } : o)
           : parsed.options;
         setTripOptions(refinedOptions);
         if (parsed.summary) setTripSummary(parsed.summary);
@@ -7110,7 +7113,7 @@ Please respond now.`,
         const preambleJsonMatch = rawPreamble.search(/(\[\{|\{"[a-zA-Z])/);
         const cleanPreamble = preambleJsonMatch > -1 ? rawPreamble.slice(0, preambleJsonMatch).trim() : rawPreamble;
         const confirmation = cleanPreamble.length > 10 ? cleanPreamble : "Updated your options — cards now reflect your latest preferences.";
-        setRefineMessages(prev => [...prev, { role: "assistant", text: confirmation }]);
+        setRefineMessages(prev => [...prev, { role: "assistant", text: confirmation + " ✦ Options updated above ↑", isOptionsUpdate: true }]);
         setRefineLoading(false);
         return;
       }
@@ -7140,7 +7143,8 @@ Please respond now.`,
           const forceText = forceData.content?.[0]?.text?.trim() || "";
           const forceParsed = tryParseOptions(forceText);
           if (forceParsed && forceParsed.options?.length > 0) {
-            const refinedOptions = forceParsed.options.map(o => ({
+            const rObject.keys(_whyThisCache).forEach(k => delete _whyThisCache[k]);
+        efinedOptions = forceParsed.options.map(o => ({
               ...o,
               tagColor: o.tagColor || isEarningRefine ? "#4C9AC9" : isRedemptionRefine ? "#4CC97A" : o.tagColor || "#C9A84C"
             }));
@@ -7148,7 +7152,7 @@ Please respond now.`,
             if (forceParsed.summary) setTripSummary(forceParsed.summary);
             setExpandedId(null);
             setShowCompare(false);
-            setRefineMessages(prev => [...prev, { role: "assistant", text: replyText.slice(0, 200).trim() || "Updated your options." }]);
+            setRefineMessages(prev => [...prev, { role: "assistant", text: (replyText.slice(0, 200).trim() || "Updated your options.") + " ✦ Options updated above ↑", isOptionsUpdate: true }]);
             clearInterval(refineInterval);
             setRefineLoading(false);
             return;
@@ -7784,7 +7788,7 @@ Please respond now.`,
         <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px 0", display: "flex", flexDirection: "column", gap: "14px" }}>
           {messages.slice(1).map((msg, i) => (
             <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start", animation: "fadeUp 0.3s ease forwards" }}>
-              <div style={{ maxWidth: "80%", padding: "12px 16px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.role === "user" ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)", border: msg.role === "user" ? "1px solid rgba(201,168,76,0.25)" : "1px solid rgba(255,255,255,0.07)", color: msg.role === "user" ? "#e8e4dc" : "#b0a898", fontSize: "14px", lineHeight: "1.6", fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit", fontStyle: msg.role === "assistant" ? "italic" : "normal" }}>{msg.text}</div>
+              <div style={{ maxWidth: "80%", padding: "12px 16px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.role === "user" ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)", border: msg.role === "user" ? "1px solid rgba(201,168,76,0.25)" : "1px solid rgba(255,255,255,0.07)", color: msg.isOptionsUpdate ? "#C9A84C" : msg.role === "user" ? "#e8e4dc" : "#b0a898", fontSize: "14px", lineHeight: "1.6", fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit", fontStyle: msg.role === "assistant" ? "italic" : "normal" }}>{msg.text}</div>
               {msg.isReadyPrompt && (
                 <button onClick={() => { setConciergeMode(false); callClaude("Generate my options now based on everything discussed: " + conversationRef.current.filter(m=>m.role==="user").map(m=>m.content).join(" ")); }} style={{ marginTop: "10px", padding: "11px 22px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "20px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.06em", fontFamily: "'Playfair Display',Georgia,serif" }}>
                   Show Me What's Possible →
