@@ -7114,8 +7114,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         const parsed = await tryGenerate();
         const isEarningQuery2 = /business.?trip|work.?trip|maximize.?point|build.?mile|build.?point|earn.?status|rack.?up|maximize.?earn/i.test(input);
         const filteredOptions2 = isEarningQuery2
-          ? parsed.options.map(o => o.tag === "Future Value" ? { ...o, tag: "Redemption OppObject.keys(_whyThisCache).forEach(k => delete _whyThisCache[k]);
-        ortunity", tagColor: "#4CC97A" } : o)
+          ? parsed.options.map(o => o.tag === "Future Value" ? { ...o, tag: "Redemption Opportunity", tagColor: "#4CC97A" } : o)
           : parsed.options;
         setTripOptions(filteredOptions2);
         setTripSummary(parsed.tripSummary);
@@ -7534,9 +7533,9 @@ Please respond now.`,
       if (parsed) {
         const originalQueryText = (conversationRef.current&&conversationRef.current[0]&&conversationRef.current[0].content||"").toLowerCase();
         const isEarningRefine = /business.?trip|work.?trip|maximize.?point|build.?mile|build.?point|earn.?status|rack.?up|maximize.?earn/i.test(originalQueryText);
+        Object.keys(_whyThisCache).forEach(k => delete _whyThisCache[k]);
         const refinedOptions = isEarningRefine
-          ? parseObject.keys(_whyThisCache).forEach(k => delete _whyThisCache[k]);
-        d.options.map(o => o.tag === "Future Value" ? { ...o, tag: "Redemption Opportunity", tagColor: "#4CC97A" } : o)
+          ? parsed.options.map(o => o.tag === "Future Value" ? { ...o, tag: "Redemption Opportunity", tagColor: "#4CC97A" } : o)
           : parsed.options;
         setTripOptions(refinedOptions);
         if (parsed.summary) setTripSummary(parsed.summary);
@@ -7581,8 +7580,8 @@ Please respond now.`,
           const forceText = forceData.content?.[0]?.text?.trim() || "";
           const forceParsed = tryParseOptions(forceText);
           if (forceParsed && forceParsed.options?.length > 0) {
-            const rObject.keys(_whyThisCache).forEach(k => delete _whyThisCache[k]);
-        efinedOptions = forceParsed.options.map(o => ({
+            Object.keys(_whyThisCache).forEach(k => delete _whyThisCache[k]);
+            const refinedOptions = forceParsed.options.map(o => ({
               ...o,
               tagColor: o.tagColor || isEarningRefine ? "#4C9AC9" : isRedemptionRefine ? "#4CC97A" : o.tagColor || "#C9A84C"
             }));
@@ -8150,6 +8149,11 @@ Please respond now.`,
           "Safari trip — where to start and how to use points well",
           "Long weekend ski trip — best mountains for spring snow",
           "Family trip with kids under 10 — somewhere that works for everyone",
+          "National park road trip this summer — where to stay inside the parks?",
+          "Best national park lodges to book now before they sell out",
+          "I want to stay somewhere historic and full of character — not a chain hotel",
+          "Old West experience — dude ranch or historic western hotel",
+          "Parkitecture lodges — Old Faithful, Timberline, Ahwahnee, which should I do?",
           "Solo trip — somewhere I can explore freely and meet people",
           "Road trip through the American West — 10 days, two people",
           "Where would my Hyatt points go furthest right now?",
