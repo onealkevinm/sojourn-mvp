@@ -5402,7 +5402,7 @@ const OnboardingFlow = ({ onComplete }) => {
 
 // ─── Components ──────────────────────────────────────────────────────────────
 
-const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOptionId, showDismissed, setShowDismissed, hiddenOptions }) => {
+const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOptionId, showDismissed, setShowDismissed, hiddenOptions, isMobile }) => {
   const [hovered, setHovered] = React.useState(null);
 
   return (
@@ -5411,11 +5411,11 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "700px" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              <th style={{ textAlign: "left", padding: "10px 16px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "32%" }}>Option</th>
-              <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Cash Out of Pocket</th>
-              <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Points</th>
-              <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Net Value</th>
-              <th style={{ textAlign: "left", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "26%" }}>Why This</th>
+              <th style={{ textAlign: "left", padding: "10px 16px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: isMobile ? "60%" : "32%" }}>Option</th>
+              {!isMobile && <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Cash Out of Pocket</th>}
+              {!isMobile && <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Points</th>}
+              <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: isMobile ? "40%" : "auto" }}>{isMobile ? "Cost" : "Net Value"}</th>
+              {!isMobile && <th style={{ textAlign: "left", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "26%" }}>Why This</th>}
               <th style={{ width: "32px" }}></th>
             </tr>
           </thead>
@@ -5455,8 +5455,8 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                     {!isOnHold && <div style={{ color: isHov ? "#C9A84C" : "#333", fontSize: "10px", marginTop: "5px", letterSpacing: "0.05em", transition: "color 0.15s" }}>View details →</div>}
                   </td>
 
-                  {/* Total cost */}
-                  <td style={{ padding: "16px 12px", textAlign: "right", verticalAlign: "middle" }}>
+                  {/* Total cost — hidden on mobile (shown in net value cell) */}
+                  {!isMobile && <td style={{ padding: "16px 12px", textAlign: "right", verticalAlign: "middle" }}>
                     <div style={{ color: "#e8e4dc", fontSize: "16px", fontFamily: "'Playfair Display',Georgia,serif" }}>
                       ${typeof opt.totalCost === "number" ? opt.totalCost.toLocaleString() : String(opt.totalCost||0).replace(/^\$+/,"")}
                     </div>
@@ -5467,8 +5467,9 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                       : null}
                   </td>
 
-                  {/* Points earned / redeemed */}
-                  <td style={{ padding: "16px 12px", textAlign: "right", verticalAlign: "middle" }}>
+                  }
+                  {/* Points earned / redeemed — hidden on mobile */}
+                  {!isMobile && <td style={{ padding: "16px 12px", textAlign: "right", verticalAlign: "middle" }}>
                     {(() => {
                       const hasRedemptions = opt.redemptions?.length > 0;
                       const hasEarning = opt.pointsValue > 0;
@@ -5498,19 +5499,31 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                     })()}
                   </td>
 
-                  {/* Net cost */}
+                  }
+                  {/* Net cost / mobile shows as "Cost" combining cash + redemption info */}
                   <td style={{ padding: "16px 12px", textAlign: "right", verticalAlign: "middle" }}>
+                    {isMobile ? (
+                      <div>
+                        <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "'Playfair Display',Georgia,serif" }}>
+                          ${typeof opt.totalCost === "number" ? opt.totalCost.toLocaleString() : String(opt.totalCost||0).replace(/^\$+/,"")}
+                        </div>
+                        {opt.pointsValue > 0 && <div style={{ color: opt.tagColor, fontSize: "10px", marginTop: "2px" }}>+${opt.pointsValue?.toLocaleString()} earned</div>}
+                        {opt.redemption && <div style={{ color: "#4CC97A", fontSize: "10px", marginTop: "2px" }}>Redemption ✓</div>}
+                      </div>
+                    ) : (
                     <div style={{ color: "#e8e4dc", fontSize: "16px", fontFamily: "'Playfair Display',Georgia,serif" }}>
                       ${typeof opt.netValue === "number" ? opt.netValue.toLocaleString() : String(opt.netValue||0).replace(/^\$+/,"")}
                     </div>
                     <div style={{ color: "#444", fontSize: "10px", marginTop: "2px" }}>est. value</div>
                   </td>
 
-                  {/* Why this */}
-                  <td style={{ padding: "16px 12px", verticalAlign: "middle" }}>
+                  )}
+                  </td>
+                  {/* Why this — desktop only as column; mobile shown below via extra row */}
+                  {!isMobile && <td style={{ padding: "16px 12px", verticalAlign: "middle" }}>
                     <div style={{ color: "#9a9088", fontSize: "12px", lineHeight: "1.55" }}>{opt.whyThis}</div>
                     {opt.tradeoff && <div style={{ color: "#7a7060", fontSize: "10px", marginTop: "5px", fontStyle: "italic" }}>{opt.tradeoff}</div>}
-                  </td>
+                  </td>}
 
                   {/* Dismiss X */}
                   <td style={{ padding: "0 10px", textAlign: "center", verticalAlign: "middle" }}>
@@ -5525,6 +5538,15 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                     )}
                   </td>
                 </tr>
+                {/* Mobile: whyThis expands as full-width row below the option */}
+                {isMobile && opt.whyThis && (
+                  <tr style={{ background: "rgba(255,255,255,0.01)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <td colSpan={3} style={{ padding: "0 16px 14px", verticalAlign: "top" }}>
+                      <div style={{ color: "#9a9088", fontSize: "12px", lineHeight: "1.6" }}>{opt.whyThis}</div>
+                      {opt.tradeoff && <div style={{ color: "#7a7060", fontSize: "10px", marginTop: "4px", fontStyle: "italic" }}>{opt.tradeoff}</div>}
+                    </td>
+                  </tr>
+                )}
               );
             })}
           </tbody>
@@ -5795,7 +5817,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userPr
         <span style={{ background: option.tagColor + "18", color: option.tagColor, fontSize: "11px", padding: "5px 12px", borderRadius: "12px", fontFamily: "'Playfair Display',Georgia,serif", border: `1px solid ${option.tagColor}33` }}>{option.tag}</span>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <span style={{ color: "#e8e4dc", fontSize: "18px", fontFamily: "'Playfair Display',Georgia,serif" }}>${typeof option.totalCost === "number" ? option.totalCost.toLocaleString() : String(option.totalCost).replace(/^\$+/,"")}</span>
-          {onDismiss && !isExpanded && <button onClick={e => { e.stopPropagation(); onDismiss(option.id); }} title="Not for me — dismiss this option" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "6px", color: "#888", fontSize: "11px", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, lineHeight: 1 }}>✕</button>}
+          {onDismiss && !isExpanded && <button onClick={e => { e.stopPropagation(); onDismiss(option.id); }} title="Not for me — dismiss this option" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.35)", borderRadius: "6px", color: "#b0a898", fontSize: "11px", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, lineHeight: 1 }}>✕</button>}
         </div>
       </div>
       <div style={{ marginBottom: "8px" }}>
@@ -6387,7 +6409,8 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
     background: active ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.03)",
     border: `1px solid ${active ? "rgba(201,168,76,0.35)" : "rgba(255,255,255,0.08)"}`,
     color: active ? "#C9A84C" : "#6a6460", borderRadius: "20px",
-    padding: "5px 14px", cursor: "pointer", fontSize: "11px",
+    padding: window.innerWidth <= 768 ? "4px 10px" : "5px 14px",
+    cursor: "pointer", fontSize: "11px",
     fontFamily: "'DM Sans',system-ui,sans-serif", transition: "all 0.15s"
   });
 
@@ -6624,9 +6647,9 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
       )}
       {/* Bar */}
       <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderTop: activePanel ? "none" : "1px solid rgba(255,255,255,0.06)", borderRadius: activePanel ? "0 0 12px 12px" : "12px", padding: "9px 16px", display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-        <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "6px" }}>
+        <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "5px" }}>
           <span style={{ color: "#444", fontSize: "10px", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "serif" }}>Optimizing for:</span>
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
             <button onClick={() => toggle("loyalty")} style={pillStyle(activePanel === "loyalty")}>
               Loyalty {activeLoyalty.length > 0 ? `· ${activeLoyalty.length}` : ""}
               {totalValue > 0 ? <span style={{ color: "#C9A84C", marginLeft: "4px" }}>est. ${totalValue.toLocaleString()}</span> : ""}
@@ -6657,6 +6680,15 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
 
 export default function SojournApp() {
   useEffect(() => { mp.track("session_start"); }, []);
+
+  // ── Mobile detection ─────────────────────────────────────────────────────
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [phase, setPhase] = useState(() => { try { return localStorage.getItem("sojourn_profile") ? "chat" : "onboarding"; } catch(e) { return "onboarding"; } }); // onboarding | chat | results
   const [messages, setMessages] = useState([
     { role: "assistant", text: "Where to next? Tell me about your trip — destination, rough dates, who's traveling, any preferences or must-haves. The more context you share, the sharper the options." }
@@ -7904,7 +7936,7 @@ Please respond now.`,
               <div style={{ fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif" }}>
                 {tripOptions.filter(o => !dismissedIds.includes(o.id)).length} option{tripOptions.filter(o => !dismissedIds.includes(o.id)).length !== 1 ? "s" : ""}, optimized for you
               </div>
-              <button onClick={() => { mp.track("new_trip_started"); resetApp(); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "#555", padding: "3px 10px", borderRadius: "20px", cursor: "pointer", fontSize: "11px", whiteSpace: "nowrap", flexShrink: 0 }}>New Trip / Edit Query</button>
+
             </div>
             <div style={{ color: "#555", fontSize: "12px" }}>{expandedId ? "Viewing details · click back to compare all" : "Click any option for details · dismiss ✕ options to narrow · refine your search below"}</div>
           </div>
@@ -7914,7 +7946,7 @@ Please respond now.`,
           {expandedId ? (
             <div style={{ animation: "fadeUp 0.3s ease forwards" }}>
               <button onClick={() => setExpandedId(null)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", color: "#888", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", marginBottom: "16px" }}>← Back to Grid</button>
-              <TripCard option={tripOptions.find(o => o.id === expandedId)} isExpanded={true} onToggle={() => setExpandedId(null)} onItinerary={(opt) => { mp.track("itinerary_viewed", { tag: opt.tag, headline: opt.headline }); setItineraryOption(opt); }} userProfile={userProfile} />
+              <TripCard option={tripOptions.find(o => o.id === expandedId)} isExpanded={true} onToggle={() => setExpandedId(null)} onItinerary={(opt) => { mp.track("itinerary_viewed", { tag: opt.tag, headline: opt.headline }); setItineraryOption(opt); }} userProfile={userProfile} isMobile={isMobile} />
               {/* Other options mini-strip */}
               <div style={{ marginTop: "20px" }}>
                 <div style={{ color: "#333", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>Other Options</div>
@@ -8317,7 +8349,7 @@ Please respond now.`,
       {!isFirst && (
         <div style={{ padding: "12px 24px 16px" }}>
           <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", padding: "4px 4px 4px 16px", display: "flex", alignItems: "flex-end", gap: "8px" }}>
-            <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Reply..." rows={2}
+            <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Refine these options, ask a question, or start a conversation..." rows={2}
               style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "14px", lineHeight: "1.5", padding: "10px 0", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
             <div style={{ display: "flex", gap: "6px", paddingBottom: "6px", flexShrink: 0 }}>
               <button onClick={listening ? () => { recognitionRef.current?.stop(); setListening(false); } : startListening} style={{ width: "36px", height: "36px", borderRadius: "10px", border: "none", cursor: "pointer", background: listening ? "rgba(201,76,76,0.2)" : "rgba(255,255,255,0.06)", color: listening ? "#C94C4C" : "#666", fontSize: "16px", animation: listening ? "pulse 1.2s infinite" : "none" }}>&#127908;</button>
