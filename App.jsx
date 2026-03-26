@@ -5511,13 +5511,13 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                         {opt.redemption && <div style={{ color: "#4CC97A", fontSize: "10px", marginTop: "2px" }}>Redemption ✓</div>}
                       </div>
                     ) : (
-                    <div style={{ color: "#e8e4dc", fontSize: "16px", fontFamily: "'Playfair Display',Georgia,serif" }}>
-                      ${typeof opt.netValue === "number" ? opt.netValue.toLocaleString() : String(opt.netValue||0).replace(/^\$+/,"")}
-                    </div>
-                    <div style={{ color: "#444", fontSize: "10px", marginTop: "2px" }}>est. value</div>
-                  </td>
-
-                  )}
+                      <div>
+                        <div style={{ color: "#e8e4dc", fontSize: "16px", fontFamily: "'Playfair Display',Georgia,serif" }}>
+                          ${typeof opt.netValue === "number" ? opt.netValue.toLocaleString() : String(opt.netValue||0).replace(/^\$+/,"")}
+                        </div>
+                        <div style={{ color: "#444", fontSize: "10px", marginTop: "2px" }}>est. value</div>
+                      </div>
+                    )}
                   </td>
                   {/* Why this — desktop only as column; mobile shown below via extra row */}
                   {!isMobile && <td style={{ padding: "16px 12px", verticalAlign: "middle" }}>
