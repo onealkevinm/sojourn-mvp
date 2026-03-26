@@ -1072,7 +1072,7 @@ const QUALITY_SIGNALS_DB = {
   "Bernardus Lodge": { tier: "luxury", relais_chateaux: true, notes: "Carmel Valley, wine country feel" },
   "Inn at Little Washington": { tier: "luxury", relais_chateaux: true, michelin_keys: 3, michelin_stars: 3, notes: "Washington VA, Patrick O'Connell" },
   "Blackberry Mountain": { tier: "luxury", relais_chateaux: true, tl_gold: true, notes: "Tennessee, adults only, sister to Blackberry Farm" },
-  "Idaho Rocky Mountain Ranch": { tier: "luxury", relais_chateaux: true, notes: "Sawtooth Valley Idaho, historic guest ranch" },
+  "Idaho Rocky Mountain Ranch": { tier: "luxury",  notes: "Sawtooth Valley Idaho, historic guest ranch" },
   "Dunton Hot Springs": { tier: "luxury", relais_chateaux: true, notes: "Colorado ghost town resort" },
   "Brush Creek Ranch": { tier: "luxury", relais_chateaux: true, notes: "Saratoga Wyoming" },
   "Auberge du Soleil": { tier: "luxury", forbes_stars: 5, cn_hot_list: true, tl_gold: true, notes: "Napa Valley — NOT Carmel, Auberge Resorts" },
@@ -2041,6 +2041,8 @@ const QUALITY_SIGNALS_DB = {
   "Crater Lake Lodge": { tier: "premium", historic: true, notes: "Crater Lake National Park OR, opened 1915, rebuilt 1995 — on the rim of the deepest lake in the US, the bluest water you will ever see. Rooms on the rim side are extraordinary." },
   "Grand Hotel Mackinac Island": { tier: "luxury", historic: true, notes: "Mackinac Island MI, opened 1887, longest porch in the world, no cars on the island — horse-drawn carriages only. National Historic Landmark, genuinely frozen in a different era." },
   "The Grand Hotel Yellowstone": { tier: "premium", historic: true, notes: "Lake Village Yellowstone WY, opened 1891, on Yellowstone Lake — one of the oldest hotels in the park system." },
+
+  "Mission Pacific Beach Resort": { tier: "luxury", notes: "Oceanside CA, Destination by Hyatt, World of Hyatt bookable" },
 
 };
 
@@ -5157,12 +5159,21 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
   );
 };
 
+// Cache for expanded whyThis text — persists within session
+const _whyThisCache = {};
+
 const WhyThisExpanded = ({ option, userProfile }) => {
   const [text, setText] = React.useState('');
   const [done, setDone] = React.useState(false);
 
   React.useEffect(() => {
     if (!option || !option.id || !option.whyThis) return;
+    // Use cache if available
+    if (_whyThisCache[option.id]) {
+      setText(_whyThisCache[option.id]);
+      setDone(true);
+      return;
+    }
     let cancelled = false;
 
     const hotelComp = (option.components || []).find(c => c && c.label && c.label.toLowerCase().includes('hotel'));
@@ -5219,7 +5230,10 @@ const WhyThisExpanded = ({ option, userProfile }) => {
     .then(function(d) {
       if (!cancelled) {
         var t = d && d.content && d.content[0] && d.content[0].text;
-        if (t && t.length > 40) setText(t.trim());
+        if (t && t.length > 40) {
+          _whyThisCache[option.id] = t.trim();
+          setText(t.trim());
+        }
         setDone(true);
       }
     })
@@ -5239,9 +5253,7 @@ const WhyThisExpanded = ({ option, userProfile }) => {
         style: { color: '#C9A84C', marginLeft: '6px', fontSize: '11px', fontStyle: 'italic' }
       }, '· expanding')
     ),
-    option && option.tradeoff && React.createElement('div', {
-      style: { color: '#7a7060', fontSize: '11px', marginTop: '12px', fontStyle: 'italic', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px' }
-    }, '⚖ ' + option.tradeoff)
+    null /* tradeoff rendered by dedicated Tradeoff block below */
   );
 };
 
@@ -6370,6 +6382,12 @@ SINGLE-DESTINATION TRIPS — when user specifies a destination (e.g. "Carmel, CA
 STATE-LEVEL GEOGRAPHY CONSTRAINT:
 When a user specifies a state or region, apply this tiered rule:
 
+ROAD TRIP AND MULTI-STOP QUERY RULES:
+- GEOGRAPHY ACCURACY: If a user asks for a Utah road trip, all stops must be in Utah (or explicitly noted as just across a state border). Do not place Colorado stops in a Utah itinerary.
+- MULTI-HOTEL WHY THIS: When an option involves multiple hotels or a multi-stop road trip, the whyThis must speak to the OVERALL option and the journey arc, then briefly characterize each stop. Do not focus only on one property.
+- FLIGHT-FREE QUERIES: If a user says "road trip from Seattle" or "no flights", ALL options must be driveable from Seattle. Remove ALL flight components. A road trip from Seattle with flight components is wrong.
+- REFINEMENT TO ROAD TRIP: When user asks to convert to a road trip, generate new JSON options with zero flight components, starting driving distances from the user's home airport city.
+
 SMALL CITY AND UNKNOWN MARKET HONESTY (dining/local discovery queries):
 - For cities NOT in Sojourn's known restaurant database, acknowledge knowledge limitations directly. Say: "I have limited specific knowledge of [city]'s current restaurant scene — here are a couple I'm more confident about, but I'd recommend checking Google Maps or Yelp for current hours and status."
 - NEVER recommend a restaurant in the wrong city. If you cannot find a coffee shop in Ellensburg WA, do not suggest one from Ellensburg CA or any other city.
@@ -6738,6 +6756,14 @@ ${(tripOptions||[]).filter(o => !dismissedIds.includes(o.id)).map(o => {
     (compSummary ? "\n  Components: " + compSummary : "");
 }).join("\n\n")}${dismissedIds.length > 0 ? "\n\nDismissed by user (do not regenerate): " + tripOptions.filter(o => dismissedIds.includes(o.id)).map(o => o.headline).join(", ") : ""}
 
+
+REFINEMENT THAT REQUIRES NEW OPTIONS — generate fresh JSON immediately, no chat response:
+- "show me options like X" → regenerate all 6 options with that character
+- "road trip from Seattle" / "no flights" → regenerate with zero flight components  
+- "more luxury options" / "more budget" → shift all options in that direction
+- "different destinations" → new destinations across all 6 options
+- Any request where the current options are fundamentally wrong for the ask
+When regenerating: output ONLY valid JSON starting with { — no preamble, no "I'll update your options" text. The JSON IS the response.
 
 WHEN TO GENERATE NEW CARDS — do this immediately, no confirmation needed:
 - User asks to show options in a specific state or region ("show me Idaho options", "keep it in California") — this ALWAYS requires new JSON, never just a conversational response claiming you've updated
