@@ -120,12 +120,48 @@ const LOYALTY_BRAND_MAP = {
 
 // Independent hotels — explicitly NOT in any major loyalty program
 const INDEPENDENT_HOTELS = [
+  // Luxury independents — no points programs
   "Peninsula", "Four Seasons", "Rosewood", "Mandarin Oriental", "Aman", "Amanyara", "Amanjiwo",
   "Belmond", "Montage", "Auberge", "Relais & Chateaux",
   "1 Hotels", "Ace Hotels", "Surf Hotel", "Blackberry Farm", "Brush Creek Ranch",
   "Sandy Lane", "Eden Rock", "Round Hill", "Jade Mountain",
-  "Fairmont", "Raffles", "Swissotel"
+  "Fairmont", "Raffles", "Swissotel",
+  // AccorHotels brands (Accor ALL program — not Hyatt/Marriott/Hilton/IHG)
+  "Sofitel", "Novotel", "Mercure", "MGallery", "SO/", "Pullman", "25hours",
+  // National park / concessioner lodges — NO hotel loyalty points, ever
+  "Xanterra", "Forever Resorts", "Aramark Parks",
+  "Old Faithful Inn", "Old Faithful Lodge", "Old Faithful Snow Lodge",
+  "Lake Yellowstone Hotel", "Mammoth Hot Springs Hotel", "Canyon Lodge", "Grant Village",
+  "El Tovar", "Bright Angel Lodge", "Thunderbird Lodge", "Grand Canyon Lodge",
+  "Many Glacier Hotel", "Lake McDonald Lodge", "Swiftcurrent Motor Inn",
+  "Crater Lake Lodge", "Mazama Village",
+  "Paradise Inn", "National Park Inn", "Longmire",
+  "Kalaloch Lodge", "Lake Crescent Lodge", "Sol Duc Hot Springs Resort",
+  "Zion Lodge", "Bryce Canyon Lodge",
+  "Jenny Lake Lodge", "Colter Bay Village", "Jackson Lake Lodge", "Signal Mountain Lodge",
+  "Volcano House", "Kilauea Military Camp",
+  "LeConte Lodge", "Far View Lodge",
+  "Timberline Lodge",
+  "Skyland Resort", "Big Meadows Lodge",
+  "Kettle Falls Hotel",
+  // Independent historic hotels not in any program
+  "Alisal Ranch", "Greyfield Inn", "Gasparilla Inn",
+  "The Lodge at Wakulla Springs",
 ];
+
+// Reverse lookup: given a hotel name, which program can earn/redeem points there?
+// Returns null if independent/no program
+const getHotelProgram = (hotelName) => {
+  if (!hotelName) return null;
+  const name = hotelName.toLowerCase();
+  // Check independents first
+  if (INDEPENDENT_HOTELS.some(h => name.includes(h.toLowerCase()))) return null;
+  // Check brand maps
+  for (const [program, brands] of Object.entries(LOYALTY_BRAND_MAP)) {
+    if (brands.some(b => name.includes(b.toLowerCase()))) return program;
+  }
+  return null; // unknown — treat as independent, do not assume redeemable
+};
 
 
 // ─── STRUCTURED TRAVEL BENEFITS DATABASE ────────────────────────────────────
@@ -7386,7 +7422,19 @@ CARD MULTIPLIER ACCURACY — never fabricate or inflate earning rates:
 
 HOTEL BRAND ACCURACY — critical trust rules, never violate:
 - NEVER place a hotel in the wrong city or region. If the destination is Jackson Hole, every hotel component must be in Jackson Hole or Teton Village — not Vail, not Aspen, not any other mountain town. If you cannot name a real hotel in the destination, say so rather than substituting one from elsewhere.
-- LOYALTY REDEMPTION ACCURACY: Only suggest redeeming points at hotels that ARE part of that loyalty program. Montage is NOT a Hyatt property. El Tovar, Old Faithful Inn, Crater Lake Lodge, Paradise Inn, Jenny Lake Lodge, Timberline Lodge, and ALL national park lodges are operated by Xanterra or NPS concessioners — they are NOT bookable with Hyatt, Marriott, Hilton, or any hotel loyalty points. Do not suggest redemptions at national park properties. Verify program membership before recommending redemption. Programs and their brands: World of Hyatt includes Hyatt, Park Hyatt, Grand Hyatt, Andaz, Alila, Thompson, Destination by Hyatt, SLH partners; Marriott Bonvoy includes Ritz-Carlton, St. Regis, W, Westin, Sheraton, JW Marriott, Edition, Luxury Collection, Autograph Collection; Hilton Honors includes Conrad, Waldorf Astoria, LXR, Curio, Tapestry; IHG includes InterContinental, Kimpton, Six Senses, Regent, voco.
+- LOYALTY REDEMPTION ACCURACY — SYSTEM RULE, NOT A SUGGESTION:
+The app has a LOYALTY_BRAND_MAP and INDEPENDENT_HOTELS list. Before suggesting ANY points redemption at a specific hotel, mentally check: does this hotel's brand appear in LOYALTY_BRAND_MAP for the program? If uncertain, treat as independent and do not suggest redemption.
+
+Known independent / non-redeemable hotels (partial list — when in doubt, no redemption):
+- National park lodges: El Tovar, Old Faithful Inn, Lake Yellowstone Hotel, Jenny Lake Lodge, Crater Lake Lodge, Paradise Inn, Lake McDonald Lodge, Many Glacier Hotel, Zion Lodge, Timberline Lodge, Kalaloch Lodge, Lake Crescent Lodge, Sol Duc, Grand Canyon Lodge, Jackson Lake Lodge, LeConte Lodge, Far View Lodge, Skyland Resort, Volcano House — ALL operated by Xanterra or NPS concessioners, ZERO loyalty programs
+- Luxury independents: Montage, Four Seasons, Peninsula, Rosewood, Mandarin Oriental, Aman, Auberge, Belmond, Fairmont (AccorALL only), Sofitel (AccorALL only)
+- Historic independents: Alisal Ranch, Greyfield Inn, Gasparilla Inn
+
+Program membership — quick reference:
+- World of Hyatt: Park Hyatt, Grand Hyatt, Andaz, Hyatt Regency, Alila, Thompson, Hyatt Centric, JdV, Unbound Collection, SLH partners. NOT: Montage, Four Seasons, any Marriott/Hilton/IHG brand
+- Marriott Bonvoy: Ritz-Carlton, St. Regis, W, Westin, Sheraton, JW Marriott, EDITION, Autograph Collection, Renaissance, Luxury Collection, Tribute Portfolio, Delta Hotels, Design Hotels. NOT: any Hyatt/Hilton/IHG brand
+- Hilton Honors: Waldorf Astoria, Conrad, LXR, Curio Collection, Tapestry, DoubleTree, Canopy, Embassy Suites. NOT: any Marriott/Hyatt/IHG brand
+- IHG One Rewards: InterContinental, Kimpton, Six Senses, Regent, Hotel Indigo, voco, Crowne Plaza. NOT: any Marriott/Hyatt/Hilton brand Verify program membership before recommending redemption. Programs and their brands: World of Hyatt includes Hyatt, Park Hyatt, Grand Hyatt, Andaz, Alila, Thompson, Destination by Hyatt, SLH partners; Marriott Bonvoy includes Ritz-Carlton, St. Regis, W, Westin, Sheraton, JW Marriott, Edition, Luxury Collection, Autograph Collection; Hilton Honors includes Conrad, Waldorf Astoria, LXR, Curio, Tapestry; IHG includes InterContinental, Kimpton, Six Senses, Regent, voco.
 - MULTI-HOTEL SHORT TRIPS: Do not split a short trip (3 nights or fewer) across two hotels unless the user explicitly asks for it, or unless there is a genuinely compelling reason (e.g. a multi-city itinerary). A 3-night ski weekend should have ONE hotel. If you do split a short trip, you MUST explain the reason clearly in whyThis.
 - FLIGHT LEG PRICING: Every flight component must show a dollar value per leg. Return flight must NEVER show $0 or "included in outbound" — split the total evenly across legs if needed. Format: "~$[X] per person" on each leg. Never leave a flight component with ambiguous or missing pricing.
 
