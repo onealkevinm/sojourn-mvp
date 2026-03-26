@@ -7985,6 +7985,7 @@ Please respond now.`,
               showDismissed={showDismissed}
               setShowDismissed={setShowDismissed}
               hiddenOptions={tripOptions.filter(o => dismissedIds.includes(o.id))}
+              isMobile={isMobile}
             />
           )}
         </div>
