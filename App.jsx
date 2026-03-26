@@ -2070,7 +2070,7 @@ const buildQualityContext = (propertyNames) => {
       q.relais_chateaux ? "Relais & Châteaux" : null,
       q.tl_gold ? "T&L Gold List" : null,
       q.cn_hot_list ? "Condé Nast Hot List" : null,
-    ].filter(Boolean).join(', ');
+    ].filter(Boolean).join('\n');
     return `${name}: ${q.tier.replace('_', ' ')}${markers ? ` (${markers})` : ''}`;
   }).filter(Boolean);
   return signals.join('; ');
@@ -5199,8 +5199,7 @@ const WhyThisExpanded = ({ option, userProfile }) => {
       'Paragraph 1: Property character, setting, style.',
       'Paragraph 2: Specific details that build anticipation (room types, plunge pools, dining, views).',
       'Paragraph 3: Why this feels personally right for this traveler.',
-    ].filter(Boolean).join('
-');
+    ].filter(Boolean).join('\n');
 
     fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
