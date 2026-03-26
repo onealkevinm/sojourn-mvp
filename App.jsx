@@ -5667,9 +5667,13 @@ const ItineraryOverlay = ({ option, tripSummary, userProfile, onClose }) => {
 };
 
 const TypingIndicator = () => (
-  <div style={{ display: "flex", gap: "5px", alignItems: "center", padding: "14px 16px" }}>
+  <div style={{ display: "flex", gap: "6px", alignItems: "center", padding: "14px 16px" }}>
     {[0, 1, 2].map(i => (
-      <div key={i} style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#C9A84C", animation: `bounce 1.2s ease ${i * 0.2}s infinite` }} />
+      <div key={i} style={{
+        width: "8px", height: "8px", borderRadius: "50%",
+        background: i === 0 ? "#C9A84C" : i === 1 ? "#b0945a" : "#9a7e4a",
+        animation: `typingBounce 1.0s ease-in-out ${i * 0.18}s infinite`
+      }} />
     ))}
   </div>
 );
@@ -6927,6 +6931,28 @@ Please respond now.`,
       let replyText = data.content?.[0]?.text?.trim() || "";
 
       // Try to parse as new options set — handle multiple JSON formats
+      const tryParseOptions = (text) => {
+        try {
+          const optionsIdx = text.indexOf('"options"');
+          const start = optionsIdx > -1 ? text.lastIndexOf("{", optionsIdx) : text.indexOf("{");
+          const end = text.lastIndexOf("}");
+          if (start !== -1 && end !== -1 && end > start) {
+            const parsed = JSON.parse(text.slice(start, end + 1));
+            const arr = parsed.options || parsed.cards || parsed.tripOptions || parsed.results;
+            if (arr?.length > 0) return { options: normalizeOptions(arr), summary: parsed.tripSummary, preamble: text.slice(0, start).trim() };
+          }
+        } catch(e) {}
+        try {
+          const start = text.indexOf("[{");
+          const end = text.lastIndexOf("}]");
+          if (start !== -1 && end !== -1) {
+            const parsed = JSON.parse(text.slice(start, end + 2));
+            if (Array.isArray(parsed) && parsed.length > 0) return { options: normalizeOptions(parsed), preamble: "" };
+          }
+        } catch(e) {}
+        return null;
+      };
+
       const normalizeOptions = (raw) => {
         // Normalize alternate field names the AI sometimes uses
         return raw.map((o, i) => ({
@@ -7024,10 +7050,50 @@ Please respond now.`,
         return;
       }
 
+      // Check if AI promised to update but delivered only chat — force JSON retry
+      const promisedUpdate = /i'?ll (update|create|generate|show|give|provide|revise|change|add|include|focus)/i.test(replyText) ||
+        /updating.*options|new options|road trip option|option.*road trip/i.test(replyText);
+      const looksLikeRefinementRequest = /road.?trip|no flights|from seattle|option.*like|show.*option|different.*option|update.*option|revise|swap|replace|redwood|pacific coast/i.test(msg);
+
+      if (promisedUpdate && looksLikeRefinementRequest && !replyText.includes('"options"') && !replyText.includes('"headline"')) {
+        // AI talked instead of generating JSON — force a direct JSON-only call
+        try {
+          const forceRes = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+            body: JSON.stringify({
+              model: "claude-sonnet-4-20250514",
+              max_tokens: 6000,
+              system: `You are a travel option generator. Output ONLY valid JSON — no prose, no explanation. Start immediately with { and end with }. Generate 6 travel options based on the request. Use the same JSON schema as before with fields: tripSummary, options array with id/tag/tagColor/headline/subhead/totalCost/pointsEarned/pointsValue/netValue/redemption/tags/tradeoff/loyaltyHighlight/cardStrategy/whyThis/components/experiences.`,
+              messages: [
+                ...conversationRef.current.slice(-6).map(m => ({ role: m.role, content: m.content })),
+                { role: "user", content: `Generate the updated options as JSON only. Request: ${msg}. Original trip: ${(conversationRef.current[0]?.content || '')}. Output JSON immediately, no preamble.` }
+              ]
+            })
+          });
+          const forceData = await forceRes.json();
+          const forceText = forceData.content?.[0]?.text?.trim() || "";
+          const forceParsed = tryParseOptions(forceText);
+          if (forceParsed && forceParsed.options?.length > 0) {
+            const refinedOptions = forceParsed.options.map(o => ({
+              ...o,
+              tagColor: o.tagColor || isEarningRefine ? "#4C9AC9" : isRedemptionRefine ? "#4CC97A" : o.tagColor || "#C9A84C"
+            }));
+            setTripOptions(refinedOptions);
+            if (forceParsed.summary) setTripSummary(forceParsed.summary);
+            setExpandedId(null);
+            setShowCompare(false);
+            setRefineMessages(prev => [...prev, { role: "assistant", text: replyText.slice(0, 200).trim() || "Updated your options." }]);
+            clearInterval(refineInterval);
+            setRefineLoading(false);
+            return;
+          }
+        } catch(forceErr) { /* fall through to show conversational */ }
+      }
+
       // Conversational response — strip any JSON that leaked into the text
       replyText = replyText.replace(/```json/g, "").replace(/```/g, "").trim();
       // Strip everything from first JSON-like structure onward
-      // Matches: [{ or any { followed shortly by a quoted key
       const jsonMatch = replyText.search(/(\[\{|\{"[a-zA-Z])/);
       const cleanReply = jsonMatch > -1 ? replyText.slice(0, jsonMatch).trim() : replyText;
       setRefineMessages(prev => [...prev, { role: "assistant", text: cleanReply || replyText }]);
@@ -7372,8 +7438,11 @@ Please respond now.`,
             </div>
           )}
           {refineLoading && (
-            <div style={{ display: "flex", alignItems: "center", padding: "8px 4px", marginBottom: "4px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "6px 4px", marginBottom: "4px" }}>
               <TypingIndicator />
+              <span style={{ color: "#5a5040", fontSize: "11px", fontStyle: "italic", animation: "pulse 2s ease infinite" }}>
+                {refineLoadingMessage || "Working on it..."}
+              </span>
             </div>
           )}
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", marginTop: "4px", paddingTop: "16px" }}>
@@ -7514,7 +7583,7 @@ Please respond now.`,
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
         @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+        @keyframes typingBounce{0%,60%,100%{transform:translateY(0);opacity:0.4}30%{transform:translateY(-6px);opacity:1}}@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
         @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(1.15)}}
         textarea:focus{outline:none} textarea{resize:none}
       `}</style>
