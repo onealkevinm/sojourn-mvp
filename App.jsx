@@ -5428,8 +5428,8 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
               const hotel = (opt.components||[]).find(c => c.label?.toLowerCase().includes("hotel") || c.label?.toLowerCase().includes("accommodation"));
               const flight = (opt.components||[]).find(c => c.label === "Flight");
               return (
+                <React.Fragment key={opt.id}>
                 <tr
-                  key={opt.id}
                   onClick={() => !isOnHold && onSelectOption && onSelectOption(opt.id)}
                   onMouseEnter={() => setHovered(opt.id)}
                   onMouseLeave={() => setHovered(null)}
@@ -5465,9 +5465,7 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                       : opt.redemption || opt.redemptions?.length === 1
                       ? <div style={{ color: "#4CC97A", fontSize: "10px", marginTop: "2px" }}>Redemption applied</div>
                       : null}
-                  </td>
-
-                  }
+                  </td>}
                   {/* Points earned / redeemed — hidden on mobile */}
                   {!isMobile && <td style={{ padding: "16px 12px", textAlign: "right", verticalAlign: "middle" }}>
                     {(() => {
@@ -5497,9 +5495,7 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                         </div>
                       );
                     })()}
-                  </td>
-
-                  }
+                  </td>}
                   {/* Net cost / mobile shows as "Cost" combining cash + redemption info */}
                   <td style={{ padding: "16px 12px", textAlign: "right", verticalAlign: "middle" }}>
                     {isMobile ? (
@@ -5538,7 +5534,6 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                     )}
                   </td>
                 </tr>
-                {/* Mobile: whyThis expands as full-width row below the option */}
                 {isMobile && opt.whyThis && (
                   <tr style={{ background: "rgba(255,255,255,0.01)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     <td colSpan={3} style={{ padding: "0 16px 14px", verticalAlign: "top" }}>
@@ -5547,7 +5542,8 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                     </td>
                   </tr>
                 )}
-              );
+              </React.Fragment>
+            );
             })}
           </tbody>
         </table>
