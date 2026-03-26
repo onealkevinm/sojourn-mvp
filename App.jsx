@@ -5210,19 +5210,30 @@ Warm, specific, knowledgeable. Like a trusted friend who has been there. Do NOT 
 
     fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": ANTHROPIC_KEY,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
       body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 400, messages: [{ role: "user", content: prompt }] })
     })
     .then(r => r.json())
-    .then(data => setExpanded(data?.content?.[0]?.text?.trim() || null))
+    .then(data => {
+      const text = data?.content?.[0]?.text;
+      setExpanded(text && text.length > 50 ? text.trim() : null);
+    })
     .catch(() => setExpanded(null))
     .finally(() => setLoading(false));
   }, [option?.id]);
 
+  if (!option) return null;
+
   return (
     <div>
-      <div style={{ color: "#b0a898", fontSize: "13px", lineHeight: "1.8", opacity: loading ? 0.5 : 1, transition: "opacity 0.3s" }}>
+      <div style={{ color: "#b0a898", fontSize: "13px", lineHeight: "1.8", opacity: loading ? 0.6 : 1, transition: "opacity 0.4s" }}>
         {fmtNums(expanded || option.whyThis || '')}
+        {loading && <span style={{ color: "#C9A84C", marginLeft: "6px", fontSize: "11px", fontStyle: "italic" }}>expanding...</span>}
       </div>
       {option.tradeoff && (
         <div style={{ color: "#7a7060", fontSize: "11px", marginTop: "12px", fontStyle: "italic", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "10px" }}>
@@ -6495,9 +6506,14 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         const data = await res.json();
         const reply = data.content?.[0]?.text?.trim() || "";
 
-        if (reply.startsWith("READY:")) {
-          const confirmation = reply.replace("READY:", "").trim();
-          setMessages(prev => [...prev, { role: "assistant", text: confirmation, isReadyPrompt: true }]);
+        const readyIdx = reply.indexOf("READY:");
+        if (readyIdx !== -1) {
+          // Split: everything before READY: is the answer, READY: onward is the confirmation
+          const answerPart = reply.slice(0, readyIdx).trim();
+          const readyPart = reply.slice(readyIdx).replace("READY:", "").trim();
+          // Show the answer text first (if any), then the READY prompt with the button
+          const fullText = answerPart ? answerPart + (readyPart ? "\n\n" + readyPart : "") : readyPart;
+          setMessages(prev => [...prev, { role: "assistant", text: fullText, isReadyPrompt: true }]);
           setConciergeMode(false);
         } else {
           // Need more info — show question
