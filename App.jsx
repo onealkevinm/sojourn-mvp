@@ -5157,94 +5157,96 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
   );
 };
 
-const ExpandedWhyThis = ({ option, userProfile }) => {
-  const [expanded, setExpanded] = React.useState(null);
-  const [loading, setLoading] = React.useState(false);
+const WhyThisExpanded = ({ option, userProfile }) => {
+  const [text, setText] = React.useState('');
+  const [done, setDone] = React.useState(false);
 
   React.useEffect(() => {
-    if (!option) return;
-    setExpanded(null);
-    setLoading(true);
+    if (!option || !option.id || !option.whyThis) return;
+    let cancelled = false;
 
-    const hotelComp = (option.components || []).find(c =>
-      c.label && c.label.toLowerCase().includes('hotel')
-    );
-    const propertyName = hotelComp?.detail?.split('·')[0]?.trim() || option.headline || '';
-    const storyNotes = getPropertyStoryNotes(propertyName);
-
+    const hotelComp = (option.components || []).find(c => c && c.label && c.label.toLowerCase().includes('hotel'));
+    const propName = hotelComp && hotelComp.detail ? hotelComp.detail.split('·')[0].trim() : (option.headline || '');
+    const notes = propName ? getPropertyStoryNotes(propName) : null;
     const tag = option.tag || 'Recommended';
-    const tagFraming = {
-      'Wild Card': 'Focus on what is unexpected, distinctive, and experientially unique. Emphasize the element of discovery and why a curious traveler would find this more memorable than the conventional choice.',
-      'Quality Upgrade': 'Focus on the property character, quality signals, and what elevated hospitality actually feels like here. Draw on specific details — architecture, setting, service philosophy, amenities like plunge pools, private terraces, or notable dining.',
-      'Best Value': 'Acknowledge the quality honestly while making the value case feel exciting rather than compromising. What does this option get right that more expensive options miss?',
-      'Redemption Opportunity': 'Make the redemption feel like a genuine win. Then paint the picture of what this property is actually like — specific, anticipation-building details.',
-    }[tag] || 'Speak to what makes this option distinctively right for this traveler given their profile and preferences.';
+
+    const framingMap = {
+      'Wild Card': 'Focus on the unexpected and experientially unique aspects. Why would a curious traveler find this more memorable than the obvious choice?',
+      'Quality Upgrade': 'Focus on property character and what elevated hospitality actually feels like. Reference specific details: setting, architecture, amenities like plunge pools or private terraces.',
+      'Best Value': 'Make the value feel exciting, not a compromise. What does this get right that pricier options miss?',
+      'Redemption Opportunity': 'Make the redemption feel like a genuine win, then paint what this property is actually like.',
+    };
+    const framing = framingMap[tag] || 'What makes this distinctively right for this traveler?';
 
     const profile = userProfile || {};
-    const loyalty = (profile.loyaltyAccounts || []).filter(a => a.tier && a.tier !== 'None').map(a => a.program).join(', ') || 'not set';
+    const loyalty = (profile.loyaltyAccounts || []).filter(a => a && a.tier && a.tier !== 'None').map(a => a.program).join(', ') || 'not set';
     const brands = (profile.preferredBrands || []).slice(0, 5).join(', ') || 'not set';
 
-    const prompt = `You are Sojourn, a luxury travel advisor writing an expanded property narrative for a traveler who clicked to learn more.
+    const prompt = [
+      'You are Sojourn, a luxury travel advisor.',
+      'Write an expanded property narrative: 150-200 words, 3 short paragraphs, second person, no bullets, no headers.',
+      '',
+      'Option headline: ' + (option.headline || ''),
+      'Option type: ' + tag,
+      'Destination: ' + (option.subhead || ''),
+      'Brief summary: ' + (option.whyThis || ''),
+      notes ? 'Property notes: ' + notes : '',
+      '',
+      'Traveler loyalty: ' + loyalty,
+      'Preferred brands: ' + brands,
+      '',
+      'Instruction: ' + framing,
+      'Paragraph 1: Property character, setting, style.',
+      'Paragraph 2: Specific details that build anticipation (room types, plunge pools, dining, views).',
+      'Paragraph 3: Why this feels personally right for this traveler.',
+    ].filter(Boolean).join('
+');
 
-OPTION:
-- Headline: ${option.headline || ''}
-- Tag: ${tag}
-- Destination: ${option.subhead || ''}
-- Cost: $${(option.totalCost||0).toLocaleString()}
-- Brief why this: ${option.whyThis || ''}
-${storyNotes ? `- Property context: ${storyNotes}` : ''}
-
-TRAVELER:
-- Loyalty: ${loyalty}
-- Preferred brands: ${brands}
-- Home airport: ${profile.travelProfile?.homeAirport || 'unknown'}
-
-INSTRUCTION: ${tagFraming}
-
-Write 150-200 words in 3 flowing paragraphs — NO headers, NO bullets, pure narrative prose, second person:
-1. The property's character, setting, and distinctive style
-2. Specific details that build anticipation: room types, notable amenities (plunge pools, terraces, views), dining, spa highlights
-3. Why this feels personally chosen for this traveler
-
-Warm, specific, knowledgeable. Like a trusted friend who has been there. Do NOT repeat the brief whyThis verbatim.`;
-
-    fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
+    fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "x-api-key": ANTHROPIC_KEY,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true"
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
       },
-      body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 400, messages: [{ role: "user", content: prompt }] })
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 380,
+        messages: [{ role: 'user', content: prompt }],
+      }),
     })
-    .then(r => r.json())
-    .then(data => {
-      const text = data?.content?.[0]?.text;
-      setExpanded(text && text.length > 50 ? text.trim() : null);
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!cancelled) {
+        var t = d && d.content && d.content[0] && d.content[0].text;
+        if (t && t.length > 40) setText(t.trim());
+        setDone(true);
+      }
     })
-    .catch(() => setExpanded(null))
-    .finally(() => setLoading(false));
-  }, [option?.id]);
+    .catch(function() { if (!cancelled) setDone(true); });
 
-  if (!option) return null;
+    return function() { cancelled = true; };
+  }, [option ? option.id : null]);
 
-  return (
-    <div>
-      <div style={{ color: "#b0a898", fontSize: "13px", lineHeight: "1.8", opacity: loading ? 0.6 : 1, transition: "opacity 0.4s" }}>
-        {fmtNums(expanded || option.whyThis || '')}
-        {loading && <span style={{ color: "#C9A84C", marginLeft: "6px", fontSize: "11px", fontStyle: "italic" }}>expanding...</span>}
-      </div>
-      {option.tradeoff && (
-        <div style={{ color: "#7a7060", fontSize: "11px", marginTop: "12px", fontStyle: "italic", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "10px" }}>
-          ⚖ {option.tradeoff}
-        </div>
-      )}
-    </div>
+  var display = text || (option && option.whyThis) || '';
+
+  return React.createElement('div', null,
+    React.createElement('div', {
+      style: { color: '#b0a898', fontSize: '13px', lineHeight: '1.8', opacity: done || text ? 1 : 0.6, transition: 'opacity 0.4s' }
+    },
+      display,
+      !done && React.createElement('span', {
+        style: { color: '#C9A84C', marginLeft: '6px', fontSize: '11px', fontStyle: 'italic' }
+      }, '· expanding')
+    ),
+    option && option.tradeoff && React.createElement('div', {
+      style: { color: '#7a7060', fontSize: '11px', marginTop: '12px', fontStyle: 'italic', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px' }
+    }, '⚖ ' + option.tradeoff)
   );
 };
 
-const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss }) => {
+const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userProfile }) => {
   const isRec = option.id === 1;
   return (
     <div onClick={onToggle} style={{
@@ -5286,7 +5288,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss }) => {
           {option.whyThis && (
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "20px", marginBottom: "16px" }}>
               <div style={{ color: "#555", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "8px" }}>Why This Option</div>
-              <ExpandedWhyThis option={option} userProfile={userProfile} />
+              <WhyThisExpanded option={option} userProfile={userProfile} />
             </div>
           )}
           {/* Experiences — dining, activities surfaced in conversation */}
@@ -7252,7 +7254,7 @@ Please respond now.`,
           {expandedId ? (
             <div style={{ animation: "fadeUp 0.3s ease forwards" }}>
               <button onClick={() => setExpandedId(null)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", color: "#888", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", marginBottom: "16px" }}>← Back to Grid</button>
-              <TripCard option={tripOptions.find(o => o.id === expandedId)} isExpanded={true} onToggle={() => setExpandedId(null)} onItinerary={(opt) => { mp.track("itinerary_viewed", { tag: opt.tag, headline: opt.headline }); setItineraryOption(opt); }} />
+              <TripCard option={tripOptions.find(o => o.id === expandedId)} isExpanded={true} onToggle={() => setExpandedId(null)} onItinerary={(opt) => { mp.track("itinerary_viewed", { tag: opt.tag, headline: opt.headline }); setItineraryOption(opt); }} userProfile={userProfile} />
               {/* Other options mini-strip */}
               <div style={{ marginTop: "20px" }}>
                 <div style={{ color: "#333", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>Other Options</div>
