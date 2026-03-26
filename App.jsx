@@ -5680,21 +5680,21 @@ const WhyThisExpanded = ({ option, userProfile }) => {
     const prompt = [
       'You are Sojourn, a luxury travel advisor.',
       isMultiStop
-        ? 'Write a trip narrative covering the FULL journey: 175-225 words, flowing paragraphs, second person, no bullets, no headers. You MUST mention every hotel stop by name.'
+        ? 'Write a multi-stop trip narrative: 175-225 words, flowing paragraphs, second person, no bullets, no headers. CRITICAL STRUCTURE: Your FIRST sentence must frame the entire journey — name ALL stops together (e.g. "This Olympic Peninsula loop takes you from Lake Crescent Lodge to Kalaloch to Sol Duc..."). Do NOT open by writing about only one property. After framing the journey, characterize each stop in turn. Every named stop must get at least 2 sentences of specific detail.'
         : 'Write an expanded property narrative: 150-200 words, 3 short paragraphs, second person, no bullets, no headers.',
       '',
       'Option headline: ' + (option.headline || ''),
       'Option type: ' + tag,
       'Destination: ' + (option.subhead || ''),
       'Brief summary: ' + (option.whyThis || ''),
-      isMultiStop ? 'ALL STOPS (mention each by name): ' + compSummary : (notes ? 'Property notes: ' + notes : ''),
+      isMultiStop ? 'ALL STOPS — every one must appear in your narrative, each with specific detail: ' + compSummary : (notes ? 'Property notes: ' + notes : ''),
       '',
       'Traveler loyalty: ' + loyalty,
       'Preferred brands: ' + brands,
       '',
       'Instruction: ' + framing,
       isMultiStop
-        ? 'Structure: (1) Overall journey arc and why this routing makes sense. (2) What makes each stop special — name and characterize every hotel. (3) Why this trip fits this traveler personally. Do not skip or omit any named stop.'
+        ? 'Structure: (1) Journey arc sentence naming ALL stops — this must come first, before any single-property description. (2) Each stop in sequence: 2-3 sentences on what makes it distinctive — setting, character, one specific detail. Never spend more than 3 sentences on any single stop. (3) Closing sentence on why this routing fits this specific traveler. Do not open with a single property. Do not omit any stop.'
         : 'Paragraph 1: Property character, setting, style. Paragraph 2: Specific anticipation-building details (room types, plunge pools, dining, views). Paragraph 3: Why this fits this traveler.',
     ].filter(Boolean).join('\n');
 
@@ -7463,6 +7463,7 @@ SMART OPTION SUPPRESSION — evaluate traveler profile before generating options
 
 WORD COUNT DISCIPLINE — strictly enforce these limits:
 - whyThis in comparison grid: TARGET 40-60 words. Lead with what makes this option distinctive for THIS traveler. One sentence on the property character, one on the practical case. No padding.
+- whyThis for MULTI-STOP options: Must name ALL stops in the first sentence. Never open with only one property. Example: "Three iconic Olympic lodges — Lake Crescent, Kalaloch, and Sol Duc — form a loop through every terrain type in the park..." Then 1-2 sentences on the collective character.
 - tradeoff: MAX 20 words. One honest counterpoint. No hedging language.
 - Chat/refinement responses: TARGET 100-150 words MAX. Good writing is tight. Say the essential thing well and stop.
 
