@@ -5193,23 +5193,33 @@ const WhyThisExpanded = ({ option, userProfile }) => {
     const loyalty = (profile.loyaltyAccounts || []).filter(a => a && a.tier && a.tier !== 'None').map(a => a.program).join(', ') || 'not set';
     const brands = (profile.preferredBrands || []).slice(0, 5).join(', ') || 'not set';
 
+    // Build component summary — critical for multi-stop trips
+    var allComps = (option.components || []).filter(function(c) { return c && c.label; });
+    var hotelStops = allComps.filter(function(c) { return c.label.toLowerCase().includes('hotel'); });
+    var isMultiStop = hotelStops.length > 1;
+    var compSummary = allComps.map(function(c) {
+      return c.label + ': ' + (c.detail || '') + (c.value ? ' (' + c.value + ')' : '');
+    }).join(' | ');
+
     const prompt = [
       'You are Sojourn, a luxury travel advisor.',
-      'Write an expanded property narrative: 150-200 words, 3 short paragraphs, second person, no bullets, no headers.',
+      isMultiStop
+        ? 'Write a trip narrative covering the FULL journey: 175-225 words, flowing paragraphs, second person, no bullets, no headers. You MUST mention every hotel stop by name.'
+        : 'Write an expanded property narrative: 150-200 words, 3 short paragraphs, second person, no bullets, no headers.',
       '',
       'Option headline: ' + (option.headline || ''),
       'Option type: ' + tag,
       'Destination: ' + (option.subhead || ''),
       'Brief summary: ' + (option.whyThis || ''),
-      notes ? 'Property notes: ' + notes : '',
+      isMultiStop ? 'ALL STOPS (mention each by name): ' + compSummary : (notes ? 'Property notes: ' + notes : ''),
       '',
       'Traveler loyalty: ' + loyalty,
       'Preferred brands: ' + brands,
       '',
       'Instruction: ' + framing,
-      'Paragraph 1: Property character, setting, style.',
-      'Paragraph 2: Specific details that build anticipation (room types, plunge pools, dining, views).',
-      'Paragraph 3: Why this feels personally right for this traveler.',
+      isMultiStop
+        ? 'Structure: (1) Overall journey arc and why this routing makes sense. (2) What makes each stop special — name and characterize every hotel. (3) Why this trip fits this traveler personally. Do not skip or omit any named stop.'
+        : 'Paragraph 1: Property character, setting, style. Paragraph 2: Specific anticipation-building details (room types, plunge pools, dining, views). Paragraph 3: Why this fits this traveler.',
     ].filter(Boolean).join('\n');
 
     fetch('https://api.anthropic.com/v1/messages', {
@@ -5243,6 +5253,33 @@ const WhyThisExpanded = ({ option, userProfile }) => {
   }, [option ? option.id : null]);
 
   var display = text || (option && option.whyThis) || '';
+  var isExpanded = text && text.length > 100;
+  var canGoDeeper = done && isExpanded && !deeper;
+  var [deeper, setDeeper] = React.useState(false);
+  var [deeperText, setDeeperText] = React.useState('');
+  var [deeperLoading, setDeeperLoading] = React.useState(false);
+
+  var handleDeeper = function() {
+    if (!option || deeperLoading) return;
+    setDeeper(true);
+    setDeeperLoading(true);
+    var allComps = (option.components || []).map(function(c) {
+      return c ? c.label + ': ' + (c.detail || '') : '';
+    }).filter(Boolean).join(', ');
+    var deepPrompt = "You are Sojourn. The traveler wants to know even more about this trip option. Expand on the previous description with 200-350 additional words of vivid, specific detail. Cover: dining highlights, the best room or suite type to request, practical tips for this specific trip (what to do first day, best time of day for key activities), and any insider details that would help them feel fully informed and excited. Do not repeat what was already said. Be concrete and anticipation-building. Option: " + (option.headline || '') + ". Components: " + allComps + ". Previous description: " + display;
+    fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+      body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 600, messages: [{ role: "user", content: deepPrompt }] })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var t = d && d.content && d.content[0] && d.content[0].text;
+      if (t) setDeeperText(t.trim());
+    })
+    .catch(function() {})
+    .finally(function() { setDeeperLoading(false); });
+  };
 
   return React.createElement('div', null,
     React.createElement('div', {
@@ -5253,6 +5290,13 @@ const WhyThisExpanded = ({ option, userProfile }) => {
         style: { color: '#C9A84C', marginLeft: '6px', fontSize: '11px', fontStyle: 'italic' }
       }, '· expanding')
     ),
+    deeperText && React.createElement('div', {
+      style: { color: '#9a9088', fontSize: '13px', lineHeight: '1.8', marginTop: '14px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.05)' }
+    }, deeperText),
+    canGoDeeper && React.createElement('button', {
+      onClick: handleDeeper,
+      style: { marginTop: '12px', background: 'none', border: '1px solid rgba(201,168,76,0.25)', color: '#8a7a5a', padding: '6px 14px', borderRadius: '20px', fontSize: '11px', cursor: 'pointer', fontFamily: "serif", letterSpacing: '0.06em' }
+    }, deeperLoading ? '· thinking...' : 'Tell me more →'),
     null /* tradeoff rendered by dedicated Tradeoff block below */
   );
 };
@@ -6685,6 +6729,27 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
       setRefineMessages(prev => [...prev, { role: "user", text: msg }]);
     }
     setRefineLoading(true);
+
+    // ── REGENERATION DETECTION — route through full callClaude if user wants new options
+    const regenSignals = [
+      /road.?trip.*from|drive.*from|no.?flights?|without.*flight|driving.*trip/i,
+      /show.*different.*option|generate.*new|new.*option|different.*destination/i,
+      /more.*like.*wild.?card|more.*like.*luxury|more.*budget.*option/i,
+      /seattle.*to.*redwood|pacific.*coast.*drive|highway.*1/i,
+      /update.*option|revise.*option|change.*option|redo.*option/i,
+    ];
+    const isRegenRequest = regenSignals.some(r => r.test(msg));
+
+    if (isRegenRequest) {
+      // Build a composite message that includes refinement intent + original context
+      const originalQuery = conversationRef.current.filter(m => m.role === 'user').map(m => m.content).join(' ');
+      const regenMsg = `${msg}. Original trip context: ${originalQuery.slice(0, 500)}`;
+      setRefineLoading(false);
+      // Update conversation ref so callClaude has the refinement context
+      conversationRef.current = [{ role: 'user', content: regenMsg }];
+      callClaude(regenMsg);
+      return;
+    }
 
     // 6b trigger — check for explicit preference signal
     const activeOptions = tripOptions.filter(o => !dismissedIds.includes(o.id));
