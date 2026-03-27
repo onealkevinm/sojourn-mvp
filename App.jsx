@@ -5748,7 +5748,7 @@ const DancingDots = () => React.createElement('div', {
   React.createElement('span', { style: { width: '7px', height: '7px', borderRadius: '50%', background: '#C9A84C', display: 'inline-block', animation: 'pulse 1.2s ease-in-out 0.5s infinite' } })
 );
 
-WhyThisExpanded = ({ option, userProfile }) => {
+const WhyThisExpanded = ({ option, userProfile }) => {
   const [text, setText] = React.useState('');
   const [done, setDone] = React.useState(false);
 
