@@ -5739,7 +5739,7 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
 // Cache for expanded whyThis text — persists within session
 const _whyThisCache = {};
 
-const // Reusable dancing dots loading indicator
+// Reusable dancing dots loading indicator
 const DancingDots = () => React.createElement('div', {
   style: { display: 'flex', gap: '5px', alignItems: 'center', padding: '10px 0' }
 },
