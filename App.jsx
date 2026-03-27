@@ -7502,7 +7502,6 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         ? `${msg}. Keep all original trip parameters from this request unless I explicitly changed them: ${originalTripContext}`
         : msg;
       setRefineLoading(false);
-      clearInterval(refineInterval);
       clearTimeout(refineTimeout);
       // Update conversation so callClaude regenerates with full context
       conversationRef.current = [{ role: 'user', content: regenMsg }];
@@ -7515,8 +7514,8 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
       }]);
       clearTimeout(refineTimeout);
       setRefineLoading(false);
-      clearInterval(refineInterval);
       setRefineLoadingMessage('');
+      // Note: refineInterval not yet declared at this point — cleanup happens in finally
       callClaude(regenMsg);
       return;
     }
@@ -8030,7 +8029,7 @@ Please respond now.`,
   };
 
   // Extract preference signals from a completed session and store them
-  const extractAndSavePreferences = async (refineConvo, tripConvo) => {
+  async function extractAndSavePreferences(refineConvo, tripConvo) {
     if (refineConvo.length < 2 && tripConvo.length < 2) return;
     const convoText = [...tripConvo, ...refineConvo]
       .filter(m => m.text || m.content)
@@ -8058,7 +8057,7 @@ Please respond now.`,
         saveLearnedPrefs(merged);
       }
     } catch(e) { console.log("Pref extraction failed silently", e); }
-  };
+  }
 
   // ── Results screen ──
   if (phase === "onboarding") {
