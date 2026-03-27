@@ -7493,7 +7493,18 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
     ];
     const isRegenRequest = regenSignals.some(r => r.test(msg));
 
-    if (isRegenRequest) {
+    // Never regenerate options once user has isolated/focused on one
+    // At that point all messages should be conversational about that option
+    const userHasFocused = !!focusedOptionId || deepDiveConfirmed;
+
+    // Also detect if THIS message itself is a preference/selection signal
+    // In that case, route to focus detection rather than regen
+    const isPreferenceSignal = /(i('d| would)? (like|want|pick|choose|go with|take|book)|let'?s (go|do|book)|i('m| am) (sold|in|interested)|that('?s| is) (the one|it|perfect|great)|this one|that one|love (this|that|the))/i.test(msg);
+
+    // Itinerary/detail enrichment requests should never trigger regen
+    const isDetailRequest = /itinerary|integrate|add.*dining|add.*activit|tell me more|more detail|deeper|dining.*option|restaurant|what to do|activities|experiences/i.test(msg);
+
+    if (isRegenRequest && !userHasFocused && !isPreferenceSignal && !isDetailRequest) {
       // Route through callClaude for full option regeneration
       // Preserve original query context + add the refinement
       const originalQuery = (conversationRef.current || []).filter(m => m.role === 'user').map(m => m.content).join(' ');
@@ -7643,7 +7654,8 @@ ${focusedOptionId ? `The traveler has chosen the ${tripOptions.find(o=>o.id===fo
 - If they flag something specific, drill into just that component
 - If there's a next-best alternative (different departure time, different room type), mention it once briefly inline
 - When everything is confirmed, close with exactly one sentence: "Your trip is set — click 'Book This Trip' whenever you're ready." Stop there.
-- Tone: warm, confident, forward-moving — concierge finalizing, not salesperson closing` : "Standard refinement mode — present options and answer questions."}
+- Tone: warm, confident, forward-moving — concierge finalizing, not salesperson closing
+- CRITICAL: If the user has expressed preference for a specific option or is asking about itinerary/dining/activities for a specific option, respond CONVERSATIONALLY. Do NOT regenerate the full JSON options set. The user has made their choice — help them plan it.` : "Standard refinement mode — present options and answer questions."}
 
 BOOKING INTENT DETECTION — critical:
 - If the traveler says anything like "I would like to go with", "I want the X option", "let's do the X", "I'm going with X", "ready to book" — treat this as a booking intent signal
