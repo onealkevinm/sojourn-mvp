@@ -5411,10 +5411,11 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "700px" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              <th style={{ textAlign: "left", padding: "10px 16px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: isMobile ? "60%" : "32%" }}>Option</th>
+              {!isMobile && <th style={{ textAlign: "left", padding: "10px 16px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "32%" }}>Option</th>}
+              {isMobile && <th style={{ textAlign: "left", padding: "8px 10px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Options</th>}
               {!isMobile && <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Cash Out of Pocket</th>}
               {!isMobile && <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Points</th>}
-              <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: isMobile ? "40%" : "auto" }}>{isMobile ? "Cost" : "Net Value"}</th>
+              {!isMobile && <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Net Value</th>}
               {!isMobile && <th style={{ textAlign: "left", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "26%" }}>Why This</th>}
               <th style={{ width: "32px" }}></th>
             </tr>
@@ -5443,16 +5444,31 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                   }}
                 >
                   {/* Option name + tag */}
-                  <td style={{ padding: "16px 16px", verticalAlign: "middle" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
-                      <span style={{ background: opt.tagColor + "18", color: opt.tagColor, fontSize: "10px", padding: "3px 9px", borderRadius: "10px", fontFamily: "serif", border: `1px solid ${opt.tagColor}22`, whiteSpace: "nowrap" }}>{opt.tag}</span>
-                      {isRec && !isOnHold && <span style={{ color: "#C9A84C", fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif" }}>★ Top Pick</span>}
-                      {isFocused && <span style={{ color: "#C9A84C", fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif" }}>● Selected</span>}
-                    </div>
-                    <div style={{ color: "#d8d4cc", fontSize: "13px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.3", marginBottom: "4px" }}>{opt.headline}</div>
-                    <div style={{ color: "#555", fontSize: "11px" }}>{opt.subhead}</div>
-                    {hotel && <div style={{ color: "#3a3a3a", fontSize: "10px", marginTop: "4px" }}>{hotel.detail?.split("·")[0]?.trim()}</div>}
-                    {!isOnHold && <div style={{ color: isHov ? "#C9A84C" : "#333", fontSize: "10px", marginTop: "5px", letterSpacing: "0.05em", transition: "color 0.15s" }}>View details →</div>}
+                  <td style={{ padding: isMobile ? "10px 8px 10px 10px" : "16px 16px", verticalAlign: "middle" }}>
+                    {isMobile ? (
+                      <div style={{ background: opt.tagColor + "10", border: `1px solid ${opt.tagColor}30`, borderRadius: "10px", padding: "10px 12px" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "5px" }}>
+                          <span style={{ background: opt.tagColor + "20", color: opt.tagColor, fontSize: "10px", padding: "2px 8px", borderRadius: "8px", fontFamily: "serif", border: `1px solid ${opt.tagColor}33`, whiteSpace: "nowrap" }}>{opt.tag}</span>
+                          <span style={{ color: "#e8e4dc", fontSize: "14px", fontFamily: "'Playfair Display',Georgia,serif", fontWeight: 600 }}>
+                            ${typeof opt.totalCost === "number" ? opt.totalCost.toLocaleString() : String(opt.totalCost||0).replace(/^\$+/,"")}
+                          </span>
+                        </div>
+                        <div style={{ color: "#d8d4cc", fontSize: "12px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.3", marginBottom: "4px" }}>{opt.headline}</div>
+                        {!isOnHold && <div style={{ color: opt.tagColor, fontSize: "10px", marginTop: "6px", opacity: 0.8 }}>Tap for details →</div>}
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+                          <span style={{ background: opt.tagColor + "18", color: opt.tagColor, fontSize: "10px", padding: "3px 9px", borderRadius: "10px", fontFamily: "serif", border: `1px solid ${opt.tagColor}22`, whiteSpace: "nowrap" }}>{opt.tag}</span>
+                          {isRec && !isOnHold && <span style={{ color: "#C9A84C", fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif" }}>★ Top Pick</span>}
+                          {isFocused && <span style={{ color: "#C9A84C", fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif" }}>● Selected</span>}
+                        </div>
+                        <div style={{ color: "#d8d4cc", fontSize: "13px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.3", marginBottom: "4px" }}>{opt.headline}</div>
+                        <div style={{ color: "#555", fontSize: "11px" }}>{opt.subhead}</div>
+                        {hotel && <div style={{ color: "#3a3a3a", fontSize: "10px", marginTop: "4px" }}>{hotel.detail?.split("·")[0]?.trim()}</div>}
+                        {!isOnHold && <div style={{ color: isHov ? "#C9A84C" : "#333", fontSize: "10px", marginTop: "5px", letterSpacing: "0.05em", transition: "color 0.15s" }}>View details →</div>}
+                      </>
+                    )}
                   </td>
 
                   {/* Total cost — hidden on mobile (shown in net value cell) */}
@@ -5496,25 +5512,15 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                       );
                     })()}
                   </td>}
-                  {/* Net cost / mobile shows as "Cost" combining cash + redemption info */}
-                  <td style={{ padding: "16px 12px", textAlign: "right", verticalAlign: "middle" }}>
-                    {isMobile ? (
-                      <div>
-                        <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "'Playfair Display',Georgia,serif" }}>
-                          ${typeof opt.totalCost === "number" ? opt.totalCost.toLocaleString() : String(opt.totalCost||0).replace(/^\$+/,"")}
-                        </div>
-                        {opt.pointsValue > 0 && <div style={{ color: opt.tagColor, fontSize: "10px", marginTop: "2px" }}>+${opt.pointsValue?.toLocaleString()} earned</div>}
-                        {opt.redemption && <div style={{ color: "#4CC97A", fontSize: "10px", marginTop: "2px" }}>Redemption ✓</div>}
+                  {/* Net cost — desktop only; mobile has cost inside the option card */}
+                  {!isMobile && <td style={{ padding: "16px 12px", textAlign: "right", verticalAlign: "middle" }}>
+                    <div>
+                      <div style={{ color: "#e8e4dc", fontSize: "16px", fontFamily: "'Playfair Display',Georgia,serif" }}>
+                        ${typeof opt.netValue === "number" ? opt.netValue.toLocaleString() : String(opt.netValue||0).replace(/^\$+/,"")}
                       </div>
-                    ) : (
-                      <div>
-                        <div style={{ color: "#e8e4dc", fontSize: "16px", fontFamily: "'Playfair Display',Georgia,serif" }}>
-                          ${typeof opt.netValue === "number" ? opt.netValue.toLocaleString() : String(opt.netValue||0).replace(/^\$+/,"")}
-                        </div>
-                        <div style={{ color: "#444", fontSize: "10px", marginTop: "2px" }}>est. value</div>
-                      </div>
-                    )}
-                  </td>
+                      <div style={{ color: "#666", fontSize: "10px", marginTop: "2px" }}>est. value</div>
+                    </div>
+                  </td>}
                   {/* Why this — desktop only as column; mobile shown below via extra row */}
                   {!isMobile && <td style={{ padding: "16px 12px", verticalAlign: "middle" }}>
                     <div style={{ color: "#9a9088", fontSize: "12px", lineHeight: "1.55" }}>{opt.whyThis}</div>
@@ -5535,9 +5541,9 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                   </td>
                 </tr>
                 {isMobile && opt.whyThis && (
-                  <tr style={{ background: "rgba(255,255,255,0.01)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                    <td colSpan={3} style={{ padding: "0 16px 14px", verticalAlign: "top" }}>
-                      <div style={{ color: "#9a9088", fontSize: "12px", lineHeight: "1.6" }}>{opt.whyThis}</div>
+                  <tr>
+                    <td colSpan={3} style={{ padding: "0 10px 12px", verticalAlign: "top" }}>
+                      <div style={{ color: "#9a9088", fontSize: "12px", lineHeight: "1.6", wordBreak: "break-word", whiteSpace: "normal", maxWidth: "100%", overflowWrap: "break-word" }}>{opt.whyThis}</div>
                       {opt.tradeoff && <div style={{ color: "#7a7060", fontSize: "10px", marginTop: "4px", fontStyle: "italic" }}>{opt.tradeoff}</div>}
                     </td>
                   </tr>
@@ -5749,6 +5755,36 @@ const WhyThisExpanded = ({ option, userProfile }) => {
   var display = text || (option && option.whyThis) || '';
   var isExpanded = text && text.length > 100;
   var canGoDeeper = done && isExpanded && !deeper;
+
+  // Render text with **Section Title** as left-aligned bold section headers
+  var renderFormattedText = function(rawText) {
+    if (!rawText) return null;
+    // Split on **...** patterns — each becomes a new section
+    var parts = rawText.split(/\*\*([^*]+)\*\*/g);
+    var elements = [];
+    for (var pi = 0; pi < parts.length; pi++) {
+      var part = parts[pi];
+      if (!part.trim()) continue;
+      if (pi % 2 === 1) {
+        // Odd indices are the bold section titles — render as block heading
+        elements.push(
+          React.createElement('div', {
+            key: 'h' + pi,
+            style: { color: '#C9A84C', fontSize: '11px', fontWeight: 700, fontFamily: 'serif', letterSpacing: '0.06em', textTransform: 'uppercase', marginTop: '14px', marginBottom: '4px' }
+          }, part.trim())
+        );
+      } else {
+        // Even indices are body text — render as paragraph
+        elements.push(
+          React.createElement('div', {
+            key: 'p' + pi,
+            style: { color: '#b0a898', fontSize: '13px', lineHeight: '1.75' }
+          }, part.trim())
+        );
+      }
+    }
+    return elements.length > 0 ? elements : React.createElement('div', { style: { color: '#b0a898', fontSize: '13px', lineHeight: '1.75' } }, rawText);
+  };
   var [deeper, setDeeper] = React.useState(false);
   var [deeperText, setDeeperText] = React.useState('');
   var [deeperLoading, setDeeperLoading] = React.useState(false);
@@ -5777,9 +5813,9 @@ const WhyThisExpanded = ({ option, userProfile }) => {
 
   return React.createElement('div', null,
     React.createElement('div', {
-      style: { color: '#b0a898', fontSize: '13px', lineHeight: '1.8', opacity: done || text ? 1 : 0.6, transition: 'opacity 0.4s' }
+      style: { opacity: done || text ? 1 : 0.6, transition: 'opacity 0.4s' }
     },
-      display,
+      renderFormattedText(display),
       !done && React.createElement('span', {
         style: { color: '#C9A84C', marginLeft: '6px', fontSize: '11px', fontStyle: 'italic' }
       }, '· expanding')
@@ -5813,7 +5849,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userPr
         <span style={{ background: option.tagColor + "18", color: option.tagColor, fontSize: "11px", padding: "5px 12px", borderRadius: "12px", fontFamily: "'Playfair Display',Georgia,serif", border: `1px solid ${option.tagColor}33` }}>{option.tag}</span>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <span style={{ color: "#e8e4dc", fontSize: "18px", fontFamily: "'Playfair Display',Georgia,serif" }}>${typeof option.totalCost === "number" ? option.totalCost.toLocaleString() : String(option.totalCost).replace(/^\$+/,"")}</span>
-          {onDismiss && !isExpanded && <button onClick={e => { e.stopPropagation(); onDismiss(option.id); }} title="Not for me — dismiss this option" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.35)", borderRadius: "6px", color: "#b0a898", fontSize: "11px", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, lineHeight: 1 }}>✕</button>}
+          {onDismiss && !isExpanded && <button onClick={e => { e.stopPropagation(); onDismiss(option.id); }} title="Not for me — dismiss this option" style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.5)", borderRadius: "6px", color: "#d0c8bc", fontSize: "12px", width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, lineHeight: 1, fontWeight: "bold" }}>✕</button>}
         </div>
       </div>
       <div style={{ marginBottom: "8px" }}>
