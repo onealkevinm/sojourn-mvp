@@ -18,6 +18,9 @@ const mp = {
 };
 
 const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
+if (!ANTHROPIC_KEY) {
+  console.error("[Sojourn] CRITICAL: VITE_ANTHROPIC_KEY is not set. All API calls will fail with auth errors.");
+}
 
 // ─── Simulated user profile (will eventually come from OAuth integrations) ───
 const USER_PROFILE = {
@@ -5818,6 +5821,12 @@ const WhyThisExpanded = ({ option, userProfile }) => {
     .then(function(r) { return r.json(); })
     .then(function(d) {
       if (!cancelled) {
+        // Handle API error responses
+        if (d && (d.type === "error" || d.error)) {
+          console.warn("[Sojourn] WhyThis API error:", d.error?.type || d.type);
+          setDone(true);
+          return;
+        }
         var t = d && d.content && d.content[0] && d.content[0].text;
         if (t && t.length > 40) {
           _whyThisCache[option.id] = t.trim();
@@ -5896,10 +5905,16 @@ const WhyThisExpanded = ({ option, userProfile }) => {
     })
     .then(function(r) { return r.json(); })
     .then(function(d) {
+      if (d && (d.type === "error" || d.error)) {
+        console.warn("[Sojourn] Tell me more API error:", d.error?.type || d.type);
+        setDeeperText("Unable to load — please try again.");
+        return;
+      }
       var t = d && d.content && d.content[0] && d.content[0].text;
       if (t) setDeeperText(t.trim());
+      else setDeeperText("Unable to load — please try again.");
     })
-    .catch(function() {})
+    .catch(function(err) { console.warn("[Sojourn] Tell me more fetch error:", err); setDeeperText("Unable to load — please try again."); })
     .finally(function() { setDeeperLoading(false); });
   };
 
@@ -7730,9 +7745,21 @@ Please respond now.`,
         })
       });
       const data = await res.json();
+      // Handle API error responses (overloaded, rate limit, auth errors)
+      if (data.type === "error" || data.error) {
+        const errType = data.error?.type || data.type || "unknown";
+        console.warn("[Sojourn] API error in handleRefine:", errType, data.error?.message);
+        const errMsg = errType === "overloaded_error" ? "Sojourn is busy right now — please try again in a moment." :
+                       errType === "rate_limit_error" ? "Too many requests — please wait a moment and try again." :
+                       errType === "authentication_error" ? "API authentication error — check Vercel environment variables." :
+                       "Something went wrong — please try again.";
+        setRefineMessages(prev => [...prev, { role: "assistant", text: errMsg }]);
+        return;
+      }
       let replyText = data.content?.[0]?.text?.trim() || "";
-      // Guard: if API returned no content at all, show error
       if (!replyText) {
+        // Log for debugging — helps diagnose what the API actually returned
+        console.warn("[Sojourn] Empty replyText. data:", JSON.stringify(data).slice(0, 200));
         setRefineMessages(prev => [...prev, { role: "assistant", text: "I didn't get a response — please try again." }]);
         return;
       }
