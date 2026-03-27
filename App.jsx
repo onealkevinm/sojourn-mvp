@@ -5739,7 +5739,16 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
 // Cache for expanded whyThis text — persists within session
 const _whyThisCache = {};
 
-const WhyThisExpanded = ({ option, userProfile }) => {
+const // Reusable dancing dots loading indicator
+const DancingDots = () => React.createElement('div', {
+  style: { display: 'flex', gap: '5px', alignItems: 'center', padding: '10px 0' }
+},
+  React.createElement('span', { style: { width: '7px', height: '7px', borderRadius: '50%', background: '#C9A84C', display: 'inline-block', animation: 'pulse 1.2s ease-in-out 0s infinite' } }),
+  React.createElement('span', { style: { width: '7px', height: '7px', borderRadius: '50%', background: '#C9A84C', display: 'inline-block', animation: 'pulse 1.2s ease-in-out 0.25s infinite' } }),
+  React.createElement('span', { style: { width: '7px', height: '7px', borderRadius: '50%', background: '#C9A84C', display: 'inline-block', animation: 'pulse 1.2s ease-in-out 0.5s infinite' } })
+);
+
+WhyThisExpanded = ({ option, userProfile }) => {
   const [text, setText] = React.useState('');
   const [done, setDone] = React.useState(false);
 
@@ -5923,25 +5932,22 @@ const WhyThisExpanded = ({ option, userProfile }) => {
   };
 
   return React.createElement('div', null,
-    React.createElement('div', {
-      style: { opacity: done || text ? 1 : 0.6, transition: 'opacity 0.4s' }
-    },
-      renderFormattedText(display),
-      !done && !text && React.createElement('div', {
-        style: { display: 'flex', gap: '4px', alignItems: 'center', padding: '8px 0' }
-      },
-        React.createElement('span', { style: { width: '6px', height: '6px', borderRadius: '50%', background: '#C9A84C', display: 'inline-block', animation: 'pulse 1.2s ease-in-out 0s infinite' } }),
-        React.createElement('span', { style: { width: '6px', height: '6px', borderRadius: '50%', background: '#C9A84C', display: 'inline-block', animation: 'pulse 1.2s ease-in-out 0.3s infinite' } }),
-        React.createElement('span', { style: { width: '6px', height: '6px', borderRadius: '50%', background: '#C9A84C', display: 'inline-block', animation: 'pulse 1.2s ease-in-out 0.6s infinite' } })
-      )
+    React.createElement('div', { style: { transition: 'opacity 0.3s' } },
+      // Show expanded API text if loaded, otherwise show the short whyThis
+      text ? renderFormattedText(text) : React.createElement('div', {
+        style: { color: '#b0a898', fontSize: '13px', lineHeight: '1.75' }
+      }, option.whyThis || ''),
+      // Show dots while API text is loading
+      !done && React.createElement(DancingDots, null)
     ),
     deeperText && React.createElement('div', {
       style: { color: '#9a9088', fontSize: '13px', lineHeight: '1.8', marginTop: '14px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.05)' }
     }, deeperText),
+    deeper && deeperLoading && React.createElement(DancingDots, null),
     canGoDeeper && !deeper && React.createElement('button', {
       onClick: handleDeeper,
       style: { marginTop: '12px', background: 'none', border: '1px solid rgba(201,168,76,0.25)', color: '#8a7a5a', padding: '6px 14px', borderRadius: '20px', fontSize: '11px', cursor: 'pointer', fontFamily: "serif", letterSpacing: '0.06em' }
-    }, deeperLoading ? '· thinking...' : 'Tell me more →'),
+    }, 'Tell me more →'),
     null /* tradeoff rendered by dedicated Tradeoff block below */
   );
 };
@@ -7467,21 +7473,50 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
 
     // ── REGENERATION DETECTION — route through full callClaude if user wants new options
     const regenSignals = [
-      /road.?trip.*from|drive.*from|no.?flights?|without.*flight|driving.*trip/i,
-      /show.*different.*option|generate.*new|new.*option|different.*destination/i,
-      /more.*like.*wild.?card|more.*like.*luxury|more.*budget.*option/i,
-      /seattle.*to.*redwood|pacific.*coast.*drive|highway.*1/i,
-      /update.*option|revise.*option|change.*option|redo.*option/i,
+      // Travel mode changes
+      /road.?trip|drive.*from|no.?flights?|without.*flight|driving.*trip|fly.*less|skip.*flight/i,
+      // New options / destination changes
+      /show.*me.*option|different.*option|new.*option|other.*option|change.*destination|different.*destination/i,
+      /switch.*to|change.*to|instead.*of|rather.*than|swap.*to|move.*to/i,
+      // Budget / quality changes
+      /more.*budget|cheaper|less.*expensive|more.*luxury|upgrade|step.*up|step.*down|more.*affordable/i,
+      /more.*like.*wild.?card|more.*like.*luxury|more.*points|use.*my.*points|redeem/i,
+      // Destination specifics
+      /in\s+(montana|idaho|utah|colorado|arizona|nevada|oregon|washington|california|texas|florida|hawaii|alaska|vermont|maine|new\s+york|new\s+mexico|wyoming|canada|mexico|europe|japan|italy|france|spain|greece|bali|thailand|costa\s+rica)/i,
+      // Explicit update requests
+      /update.*option|revise.*option|redo|regenerate|show.*new|give.*me.*new|find.*me|look.*for/i,
+      /can\s+you\s+(show|find|give|get|make|create|generate|update|change|swap|switch)/i,
+      // Direct preference changes
+      /i\s+(want|prefer|would\s+like|need|am\s+looking\s+for|only\s+want|don.t\s+want)/i,
+      // Geographic refinements
+      /stay.*in|options.*in|somewhere.*in|hotels.*in|trips.*to|fly.*to|go.*to/i,
     ];
     const isRegenRequest = regenSignals.some(r => r.test(msg));
 
     if (isRegenRequest) {
-      // Build a composite message that includes refinement intent + original context
-      const originalQuery = conversationRef.current.filter(m => m.role === 'user').map(m => m.content).join(' ');
-      const regenMsg = `${msg}. Original trip context: ${originalQuery.slice(0, 500)}`;
+      // Route through callClaude for full option regeneration
+      // Preserve original query context + add the refinement
+      const originalQuery = (conversationRef.current || []).filter(m => m.role === 'user').map(m => m.content).join(' ');
+      const originalTripContext = originalQuery.slice(0, 600);
+      const regenMsg = originalTripContext
+        ? `${msg}. Keep all original trip parameters from this request unless I explicitly changed them: ${originalTripContext}`
+        : msg;
       setRefineLoading(false);
-      // Update conversation ref so callClaude has the refinement context
+      clearInterval(refineInterval);
+      clearTimeout(refineTimeout);
+      // Update conversation so callClaude regenerates with full context
       conversationRef.current = [{ role: 'user', content: regenMsg }];
+      // Add confirmation to refine history so it's visible when user returns
+      const regenConfirm = msg.length < 120 ? msg : msg.slice(0, 100) + '...';
+      setRefineMessages(prev => [...prev, {
+        role: 'assistant',
+        text: `Refreshing your options based on: "${regenConfirm}" — scroll up to see the new results ↑`,
+        isOptionsUpdate: true
+      }]);
+      clearTimeout(refineTimeout);
+      setRefineLoading(false);
+      clearInterval(refineInterval);
+      setRefineLoadingMessage('');
       callClaude(regenMsg);
       return;
     }
@@ -7883,8 +7918,10 @@ Please respond now.`,
         // Strip any JSON that leaked into the preamble
         const preambleJsonMatch = rawPreamble.search(/(\[\{|\{"[a-zA-Z])/);
         const cleanPreamble = preambleJsonMatch > -1 ? rawPreamble.slice(0, preambleJsonMatch).trim() : rawPreamble;
-        const confirmation = cleanPreamble.length > 10 ? cleanPreamble : "Updated your options — cards now reflect your latest preferences.";
-        setRefineMessages(prev => [...prev, { role: "assistant", text: confirmation + " ✦ Options updated above ↑", isOptionsUpdate: true }]);
+        const confirmation = cleanPreamble.length > 10
+          ? cleanPreamble
+          : `I've updated your options based on "${msg.slice(0, 80)}${msg.length > 80 ? '...' : ''}"`;
+        setRefineMessages(prev => [...prev, { role: "assistant", text: confirmation + " ✦ Scroll up to see the new options ↑", isOptionsUpdate: true }]);
         setRefineLoading(false);
         return;
       }
@@ -7923,7 +7960,8 @@ Please respond now.`,
             if (forceParsed.summary) setTripSummary(forceParsed.summary);
             setExpandedId(null);
             setShowCompare(false);
-            setRefineMessages(prev => [...prev, { role: "assistant", text: (replyText.slice(0, 200).trim() || "Updated your options.") + " ✦ Options updated above ↑", isOptionsUpdate: true }]);
+            const forceConfirm = replyText.slice(0, 200).trim() || `Updated your options based on: "${msg.slice(0, 80)}${msg.length > 80 ? '...' : ''}"`;
+            setRefineMessages(prev => [...prev, { role: "assistant", text: forceConfirm + " ✦ Scroll up to see the new options ↑", isOptionsUpdate: true }]);
             clearInterval(refineInterval);
             setRefineLoading(false);
             return;
