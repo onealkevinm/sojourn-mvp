@@ -5703,18 +5703,11 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
         </div>
       </div>
       {isFlight && route ? (
-        <div style={{ marginBottom: "8px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "5px" }}>
-            <span style={{ color: "#b0a898", fontSize: "14px", fontFamily: "serif", fontWeight: "600" }}>{flightNum}</span>
-            <span style={{ color: "#C9A84C", fontSize: "13px", letterSpacing: "0.05em" }}>{route}</span>
-          </div>
-          {times && (
-            <div style={{ background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: "8px", padding: "8px 12px", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-              <span style={{ color: "#C9A84C", fontSize: "11px" }}>✈</span>
-              <span style={{ color: "#c0b8ae", fontSize: "13px" }}>{times}</span>
-              {duration && <span style={{ color: "#888", fontSize: "12px", marginLeft: "4px" }}>({duration})</span>}
-            </div>
-          )}
+        <div style={{ color: "#c0b8ae", fontSize: "13px", marginBottom: "6px" }}>
+          {flightNum && <span style={{ marginRight: "6px" }}>{flightNum}</span>}
+          {route && <span style={{ marginRight: "6px" }}>· {route}</span>}
+          {times && <span style={{ marginRight: "6px" }}>· {times}</span>}
+          {duration && <span style={{ color: "#888", fontSize: "12px" }}>({duration})</span>}
         </div>
       ) : (
         <div style={{ color: "#c0b8ae", fontSize: "13px", marginBottom: "6px" }}>{fmtNums(detail)}</div>
