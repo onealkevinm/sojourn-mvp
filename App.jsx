@@ -5743,9 +5743,9 @@ const _whyThisCache = {};
 const DancingDots = () => React.createElement('div', {
   style: { display: 'flex', gap: '5px', alignItems: 'center', padding: '10px 0' }
 },
-  React.createElement('span', { style: { width: '7px', height: '7px', borderRadius: '50%', background: '#C9A84C', display: 'inline-block', animation: 'pulse 1.2s ease-in-out 0s infinite' } }),
-  React.createElement('span', { style: { width: '7px', height: '7px', borderRadius: '50%', background: '#C9A84C', display: 'inline-block', animation: 'pulse 1.2s ease-in-out 0.25s infinite' } }),
-  React.createElement('span', { style: { width: '7px', height: '7px', borderRadius: '50%', background: '#C9A84C', display: 'inline-block', animation: 'pulse 1.2s ease-in-out 0.5s infinite' } })
+  React.createElement('span', { style: { width: '7px', height: '7px', borderRadius: '50%', background: '#C9A84C', display: 'inline-block', animation: 'sojourn-dot 1.4s ease-in-out 0s infinite' } }),
+  React.createElement('span', { style: { width: '7px', height: '7px', borderRadius: '50%', background: '#C9A84C', display: 'inline-block', animation: 'sojourn-dot 1.4s ease-in-out 0.28s infinite' } }),
+  React.createElement('span', { style: { width: '7px', height: '7px', borderRadius: '50%', background: '#C9A84C', display: 'inline-block', animation: 'sojourn-dot 1.4s ease-in-out 0.56s infinite' } })
 );
 
 const WhyThisExpanded = ({ option, userProfile }) => {
@@ -7459,7 +7459,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
     setRefineLoading(true);
 
     // Safety timeout — reset loading after 30s in case of silent failure
-    const refineTimeout = setTimeout(() => {
+    let refineTimeout = setTimeout(() => {
       setRefineLoading(false);
       setRefineLoadingMessage("");
       setRefineMessages(prev => {
@@ -8471,6 +8471,7 @@ Please respond now.`,
         @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @keyframes typingBounce{0%,60%,100%{transform:translateY(0);opacity:0.4}30%{transform:translateY(-6px);opacity:1}}@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
         @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(1.15)}}
+        @keyframes sojourn-dot{0%,80%,100%{opacity:0.2;transform:translateY(0)}40%{opacity:1;transform:translateY(-5px)}}
         textarea:focus{outline:none} textarea{resize:none}
       `}</style>
 
