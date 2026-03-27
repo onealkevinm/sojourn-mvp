@@ -5737,7 +5737,16 @@ const WhyThisExpanded = ({ option, userProfile }) => {
   const [done, setDone] = React.useState(false);
 
   React.useEffect(() => {
-    if (!option || !option.id || !option.whyThis) return;
+    // Reset on option change — clear stale content immediately
+    setText('');
+    setDone(false);
+    if (!option || !option.id) return;
+    // If no whyThis field, show a placeholder rather than nothing
+    if (!option.whyThis) {
+      setText(option.headline || '');
+      setDone(true);
+      return;
+    }
     // Use cache if available
     if (_whyThisCache[option.id]) {
       setText(_whyThisCache[option.id]);
@@ -6097,7 +6106,30 @@ const ItineraryOverlay = ({ option, tripSummary, userProfile, onClose }) => {
   // Determine total days from components
   const maxDay = components.reduce((m, c) => Math.max(m, c.day || 1), 1);
   const returnComp = components.find(c => c.label?.toLowerCase().includes("return") || c.label?.toLowerCase().includes("departure"));
-  const totalDays = returnComp?.day || maxDay + 1;
+
+  // Calculate nights from actual date range if available
+  const calcNightsFromDates = (dateStr) => {
+    if (!dateStr) return null;
+    // Try "April 7-12", "Apr 7 - 12", "Apr 7 - Apr 12", "April 7 to 12" etc.
+    const rangeMatch = dateStr.match(/(\w+)\s+(\d+)\s*[-–to]+\s*(?:\w+\s+)?(\d+)/i);
+    if (rangeMatch) {
+      const month = rangeMatch[1];
+      const start = parseInt(rangeMatch[2]);
+      const end = parseInt(rangeMatch[3]);
+      if (end > start) return end - start;
+    }
+    // Try two full dates: "April 7 - April 12" or "4/7 - 4/12"
+    const twoDateMatch = dateStr.match(/(\d{1,2})[\/\-](\d{1,2}).*?(\d{1,2})[\/\-](\d{1,2})/);
+    if (twoDateMatch) {
+      const d1 = parseInt(twoDateMatch[2]);
+      const d2 = parseInt(twoDateMatch[4]);
+      if (d2 > d1) return d2 - d1;
+    }
+    return null;
+  };
+
+  const nightsFromDates = calcNightsFromDates(rawDates);
+  const totalDays = nightsFromDates ? nightsFromDates + 1 : (returnComp?.day || maxDay + 1);
   const totalNights = totalDays - 1 || 3;
 
   // Icon mapper by component type
@@ -7401,6 +7433,19 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
     }
     setRefineLoading(true);
 
+    // Safety timeout — reset loading after 30s in case of silent failure
+    const refineTimeout = setTimeout(() => {
+      setRefineLoading(false);
+      setRefineLoadingMessage("");
+      setRefineMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (!last || last.role !== "assistant") {
+          return [...prev, { role: "assistant", text: "Request timed out — please try again." }];
+        }
+        return prev;
+      });
+    }, 30000);
+
     // ── REGENERATION DETECTION — route through full callClaude if user wants new options
     const regenSignals = [
       /road.?trip.*from|drive.*from|no.?flights?|without.*flight|driving.*trip/i,
@@ -7686,6 +7731,11 @@ Please respond now.`,
       });
       const data = await res.json();
       let replyText = data.content?.[0]?.text?.trim() || "";
+      // Guard: if API returned no content at all, show error
+      if (!replyText) {
+        setRefineMessages(prev => [...prev, { role: "assistant", text: "I didn't get a response — please try again." }]);
+        return;
+      }
 
       // Try to parse as new options set — handle multiple JSON formats
       const tryParseOptions = (text) => {
@@ -7855,11 +7905,18 @@ Please respond now.`,
       // Strip everything from first JSON-like structure onward
       const jsonMatch = replyText.search(/(\[\{|\{"[a-zA-Z])/);
       const cleanReply = jsonMatch > -1 ? replyText.slice(0, jsonMatch).trim() : replyText;
-      setRefineMessages(prev => [...prev, { role: "assistant", text: cleanReply || replyText }]);
+      // If cleanReply is empty (pure JSON response with no preamble), show neutral confirmation
+      const displayReply = cleanReply && cleanReply.length > 5
+        ? cleanReply
+        : (replyText && !replyText.trim().startsWith('{') && !replyText.trim().startsWith('['))
+          ? replyText
+          : "I've reviewed your request — let me know if you'd like to adjust anything.";
+      setRefineMessages(prev => [...prev, { role: "assistant", text: displayReply }]);
     } catch (e) {
       console.error("Refine error:", e);
       try { setRefineMessages(prev => [...prev, { role: "assistant", text: "Something went wrong — please try again." }]); } catch(e2) {}
     } finally {
+      clearTimeout(refineTimeout);
       setRefineLoading(false);
       clearInterval(refineInterval);
       setRefineLoadingMessage("");
