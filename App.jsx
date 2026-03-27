@@ -163,6 +163,76 @@ const getHotelProgram = (hotelName) => {
   return null; // unknown — treat as independent, do not assume redeemable
 };
 
+// Post-generation validation: fix brand/program mismatches in AI-generated options
+// Catches cases like "Marriott Residence Inn" + "Hyatt points" or "Alaska flight" + "Delta miles"
+const validateOptions = (options) => {
+  if (!options || !Array.isArray(options)) return options;
+
+  return options.map(opt => {
+    let fixed = { ...opt };
+
+    // Check hotel component vs redemption program alignment
+    const hotelComp = (opt.components || []).find(c =>
+      c && c.label && (c.label.toLowerCase().includes('hotel') || c.label.toLowerCase().includes('accommodation'))
+    );
+    const flightComp = (opt.components || []).find(c =>
+      c && c.label && c.label.toLowerCase().includes('flight')
+    );
+
+    // Validate hotel redemption alignment
+    if (opt.redemption && hotelComp && hotelComp.detail) {
+      const hotelName = hotelComp.detail.split('·')[0].trim();
+      const correctProgram = getHotelProgram(hotelName);
+      const claimedProgram = opt.redemption;
+
+      // If hotel is independent or program doesn't match, strip the redemption
+      if (correctProgram === null && INDEPENDENT_HOTELS.some(h => hotelName.toLowerCase().includes(h.toLowerCase()))) {
+        console.warn(`[Sojourn] Stripped invalid redemption: ${claimedProgram} at independent hotel ${hotelName}`);
+        fixed.redemption = null;
+        fixed.redemptions = [];
+      } else if (correctProgram && claimedProgram &&
+                 !claimedProgram.toLowerCase().includes(correctProgram.toLowerCase().split(' ')[0])) {
+        console.warn(`[Sojourn] Program mismatch: ${claimedProgram} at ${hotelName} (should be ${correctProgram})`);
+        fixed.redemption = null;
+        fixed.redemptions = [];
+      }
+    }
+
+    // Validate flight component vs airline loyalty alignment
+    if (flightComp && flightComp.detail) {
+      const flightDetail = flightComp.detail.toLowerCase();
+      const loyaltyHighlights = opt.loyaltyHighlights || '';
+      const cardStrategy = opt.cardStrategy || '';
+      const combined = (loyaltyHighlights + ' ' + cardStrategy).toLowerCase();
+
+      // Detect airline mismatch: Alaska flight but Delta benefits shown
+      if (flightDetail.includes('alaska') && combined.includes('sky club')) {
+        console.warn(`[Sojourn] Airline mismatch: Alaska flight but Delta Sky Club shown`);
+        fixed.loyaltyHighlights = (opt.loyaltyHighlights || '').replace(/sky club[^.]*\./gi, '').trim();
+      }
+      if (flightDetail.includes('alaska') && combined.includes('delta reserve')) {
+        console.warn(`[Sojourn] Card mismatch: Alaska flight but Delta Reserve benefits shown`);
+        fixed.cardStrategy = (opt.cardStrategy || '').replace(/delta reserve[^.]*\./gi, '').trim();
+      }
+      if ((flightDetail.includes('united') || flightDetail.includes('ua ')) && combined.includes('sky club')) {
+        fixed.loyaltyHighlights = (opt.loyaltyHighlights || '').replace(/sky club[^.]*\./gi, '').trim();
+      }
+    }
+
+    // Validate: Redemption Opportunity tag but no valid redemption
+    if ((opt.tag === 'Redemption Opportunity' || opt.tag === 'Best Points Redemption') &&
+        !fixed.redemption && (!fixed.redemptions || fixed.redemptions.length === 0)) {
+      console.warn(`[Sojourn] Redemption tag with no valid redemption — stripping tag`);
+      fixed.tag = 'Best Value';
+      fixed.tagColor = '#C9C94C';
+    }
+
+    return fixed;
+  });
+};
+
+
+
 
 // ─── STRUCTURED TRAVEL BENEFITS DATABASE ────────────────────────────────────
 // Three buckets per benefit:
@@ -5791,6 +5861,13 @@ const WhyThisExpanded = ({ option, userProfile }) => {
   var [deeperText, setDeeperText] = React.useState('');
   var [deeperLoading, setDeeperLoading] = React.useState(false);
 
+  // Reset Tell me more state whenever the option changes
+  React.useEffect(() => {
+    setDeeper(false);
+    setDeeperText('');
+    setDeeperLoading(false);
+  }, [option ? option.id : null]);
+
   var handleDeeper = function() {
     if (!option || deeperLoading) return;
     setDeeper(true);
@@ -5798,7 +5875,11 @@ const WhyThisExpanded = ({ option, userProfile }) => {
     var allComps = (option.components || []).map(function(c) {
       return c ? c.label + ': ' + (c.detail || '') : '';
     }).filter(Boolean).join(', ');
-    var deepPrompt = "You are Sojourn. The traveler wants to know even more about this trip option. Expand on the previous description with 200-350 additional words of vivid, specific detail. Cover: dining highlights, the best room or suite type to request, practical tips for this specific trip (what to do first day, best time of day for key activities), and any insider details that would help them feel fully informed and excited. Do not repeat what was already said. Be concrete and anticipation-building. Option: " + (option.headline || '') + ". Components: " + allComps + ". Previous description: " + display;
+    var // Build party size context for room strategy
+    var partySize = (profile && profile.partySize) || (option.subhead && option.subhead.match(/(\d+)\s*(?:people|adults|guests|travelers)/i) ? option.subhead.match(/(\d+)\s*(?:people|adults|guests|travelers)/i)[1] : null);
+    var partySizeNote = partySize ? "Party size: " + partySize + " people." : "";
+
+    deepPrompt = "You are Sojourn, a knowledgeable travel advisor. The traveler wants deeper detail on this option. Write 220-300 words total using EXACTLY these four sections with **bold headers**. Do not repeat what was already covered in the main description. Be specific, honest, and anticipation-building.\n\n**Dining & Drinks**\nRecommend 2 dining and 2 drinks options specific to this property or neighborhood. If dining was mentioned in the main description, go deeper or different — no redundancy. Be specific: dish names, atmosphere, best time to go.\n\n**Room Strategy**\n" + partySizeNote + " Note: specific room numbers cannot be reserved in advance at most properties. Instead, recommend room TYPE or location (e.g. corner room, high floor, garden-facing) and the best way to request it (call ahead, note at check-in). Only include this section if there are genuinely distinctive room types worth knowing about at this property — skip if it's a standard hotel with no meaningful variation.\n\n**Strategic Timing & First Day**\nPractical, honest tips for the first 24 hours. Do not promise things outside the traveler's control (e.g. early check-in is request-only, not guaranteed). Focus on what time to arrive, what to do first, best time for key activities, how to avoid crowds.\n\n**Insider Intelligence**\nAuthentic, specific details that reward the informed traveler — local knowledge, lesser-known experiences, seasonal considerations, things that make this feel like an insider's visit rather than a tourist's. Keep it grounded and real.\n\nOption: " + (option.headline || '') + ". Components: " + allComps + ". Previous description: " + display;
     fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
@@ -5818,9 +5899,13 @@ const WhyThisExpanded = ({ option, userProfile }) => {
       style: { opacity: done || text ? 1 : 0.6, transition: 'opacity 0.4s' }
     },
       renderFormattedText(display),
-      !done && React.createElement('span', {
-        style: { color: '#C9A84C', marginLeft: '6px', fontSize: '11px', fontStyle: 'italic' }
-      }, '· expanding')
+      !done && !text && React.createElement('div', {
+        style: { display: 'flex', gap: '4px', alignItems: 'center', padding: '8px 0' }
+      },
+        React.createElement('span', { style: { width: '6px', height: '6px', borderRadius: '50%', background: '#C9A84C', display: 'inline-block', animation: 'pulse 1.2s ease-in-out 0s infinite' } }),
+        React.createElement('span', { style: { width: '6px', height: '6px', borderRadius: '50%', background: '#C9A84C', display: 'inline-block', animation: 'pulse 1.2s ease-in-out 0.3s infinite' } }),
+        React.createElement('span', { style: { width: '6px', height: '6px', borderRadius: '50%', background: '#C9A84C', display: 'inline-block', animation: 'pulse 1.2s ease-in-out 0.6s infinite' } })
+      )
     ),
     deeperText && React.createElement('div', {
       style: { color: '#9a9088', fontSize: '13px', lineHeight: '1.8', marginTop: '14px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.05)' }
@@ -5839,9 +5924,10 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userPr
   return (
     <div onClick={onToggle} style={{
       width: isExpanded ? "100%" : "300px", minWidth: isExpanded ? "unset" : "300px",
+      boxSizing: "border-box",
       background: isRec ? "linear-gradient(145deg,#1a1712,#13110e)" : "linear-gradient(145deg,#131211,#0e0d0c)",
       border: isRec ? "1px solid rgba(201,168,76,0.35)" : "1px solid rgba(255,255,255,0.08)",
-      borderRadius: "20px", padding: "18px", cursor: "pointer",
+      borderRadius: "20px", padding: isMobile && isExpanded ? "14px 12px" : "18px", cursor: "pointer",
       transition: "all 0.35s cubic-bezier(0.4,0,0.2,1)",
       boxShadow: isRec ? "0 8px 40px rgba(201,168,76,0.12),0 2px 8px rgba(0,0,0,0.4)" : "0 4px 20px rgba(0,0,0,0.3)",
       position: "relative", overflow: "hidden", flexShrink: 0,
@@ -6716,9 +6802,7 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
               Brands {brands.length > 0 ? `· ${brands.length}` : ""}
               <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "brands" ? "▴" : "▾"}</span>
             </button>
-          </div>
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-            <button onClick={() => { toggle("optimize"); if (activePanel !== "optimize" && onOptimizeClick) onOptimizeClick(); }} style={{ ...pillStyle(activePanel === "optimize"), borderColor: activePanel === "optimize" ? "rgba(201,168,76,0.5)" : "rgba(201,168,76,0.15)", color: activePanel === "optimize" ? "#C9A84C" : "#8a7a5a" }}>
+          <button onClick={() => { toggle("optimize"); if (activePanel !== "optimize" && onOptimizeClick) onOptimizeClick(); }} style={{ ...pillStyle(activePanel === "optimize"), borderColor: activePanel === "optimize" ? "rgba(201,168,76,0.5)" : "rgba(201,168,76,0.15)", color: activePanel === "optimize" ? "#C9A84C" : "#8a7a5a" }}>
           ✦ Optimize Your Setup
           <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "optimize" ? "▴" : "▾"}</span>
             </button>
@@ -7254,7 +7338,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         ? parsed.options.map(o => o.tag === "Future Value" ? { ...o, tag: "Redemption Opportunity", tagColor: "#4CC97A" } : o)
         : parsed.options;
       Object.keys(_whyThisCache).forEach(k => delete _whyThisCache[k]);
-        setTripOptions(filteredOptions);
+        setTripOptions(validateOptions(filteredOptions));
       setTripSummary(parsed.tripSummary);
       setPhase("results");
     } catch(e) {
@@ -7264,7 +7348,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         const filteredOptions2 = isEarningQuery2
           ? parsed.options.map(o => o.tag === "Future Value" ? { ...o, tag: "Redemption Opportunity", tagColor: "#4CC97A" } : o)
           : parsed.options;
-        setTripOptions(filteredOptions2);
+        setTripOptions(validateOptions(filteredOptions2));
         setTripSummary(parsed.tripSummary);
         setPhase("results");
         mp.track("cards_generated", { destination: parsed.tripSummary?.destination || "unknown", option_count: parsed.options?.length || 0 });
@@ -7706,7 +7790,7 @@ Please respond now.`,
         const refinedOptions = isEarningRefine
           ? parsed.options.map(o => o.tag === "Future Value" ? { ...o, tag: "Redemption Opportunity", tagColor: "#4CC97A" } : o)
           : parsed.options;
-        setTripOptions(refinedOptions);
+        setTripOptions(validateOptions(refinedOptions));
         if (parsed.summary) setTripSummary(parsed.summary);
         // Stay on the currently expanded card if it still exists in the new options
         setExpandedId(prev => {
@@ -7754,7 +7838,7 @@ Please respond now.`,
               ...o,
               tagColor: o.tagColor || isEarningRefine ? "#4C9AC9" : isRedemptionRefine ? "#4CC97A" : o.tagColor || "#C9A84C"
             }));
-            setTripOptions(refinedOptions);
+            setTripOptions(validateOptions(refinedOptions));
             if (forceParsed.summary) setTripSummary(forceParsed.summary);
             setExpandedId(null);
             setShowCompare(false);
@@ -8016,7 +8100,7 @@ Please respond now.`,
           </div>
         </div>
 
-        <div style={{ padding: "0 28px 48px" }}>
+        <div style={{ padding: isMobile ? "0 8px 32px" : "0 28px 48px" }}>
           {expandedId ? (
             <div style={{ animation: "fadeUp 0.3s ease forwards" }}>
               <button onClick={() => setExpandedId(null)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", color: "#888", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", marginBottom: "16px" }}>← Back to Grid</button>
