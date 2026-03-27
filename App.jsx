@@ -5408,7 +5408,7 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
   return (
     <div style={{ animation: "fadeUp 0.35s ease forwards" }}>
       <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "700px" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", minWidth: isMobile ? "unset" : "700px" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               {!isMobile && <th style={{ textAlign: "left", padding: "10px 16px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "32%" }}>Option</th>}
@@ -5522,8 +5522,8 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                     </div>
                   </td>}
                   {/* Why this — desktop only as column; mobile shown below via extra row */}
-                  {!isMobile && <td style={{ padding: "16px 12px", verticalAlign: "middle" }}>
-                    <div style={{ color: "#9a9088", fontSize: "12px", lineHeight: "1.55" }}>{opt.whyThis}</div>
+                  {!isMobile && <td style={{ padding: "16px 12px", verticalAlign: "middle", maxWidth: "280px", width: "28%" }}>
+                    <div style={{ color: "#9a9088", fontSize: "12px", lineHeight: "1.55", whiteSpace: "normal", overflowWrap: "break-word", wordBreak: "break-word" }}>{opt.whyThis}</div>
                     {opt.tradeoff && <div style={{ color: "#7a7060", fontSize: "10px", marginTop: "5px", fontStyle: "italic" }}>{opt.tradeoff}</div>}
                   </td>}
 
@@ -5760,7 +5760,9 @@ const WhyThisExpanded = ({ option, userProfile }) => {
   var renderFormattedText = function(rawText) {
     if (!rawText) return null;
     // Split on **...** patterns — each becomes a new section
-    var parts = rawText.split(/\*\*([^*]+)\*\*/g);
+    // Normalize: ensure ** sections always start on new line
+    var normalizedText = rawText.replace(/([^\n])\*\*/g, '$1\n**');
+    var parts = normalizedText.split(/\*\*([^*]+)\*\*/g);
     var elements = [];
     for (var pi = 0; pi < parts.length; pi++) {
       var part = parts[pi];
@@ -6873,7 +6875,11 @@ Suppress or replace Redemption Opportunity when:
 Suppress or replace Future Value / Best Points Earned when:
 - The query is clearly a leisure/experiential trip with no earning intent (e.g. honeymoon, anniversary, "I want to splurge") — replace with a second Recommended or Unique Experience variant.
 
-The goal is 6 honest, genuinely useful options — not 6 slots mechanically filled regardless of fit. A replaced bucket should be labeled with a descriptive tag that reflects what it actually is (e.g. "Most Distinctive Lodge", "Best Park Experience", "Remote Wilderness") rather than forcing a label that doesn't apply.
+The goal is 6 honest, genuinely useful options — not 6 slots mechanically filled regardless of fit.
+- REDEMPTION BUCKET REQUIRES CHAIN HOTEL: Never put an independent hotel (Four Seasons, Montage, Auberge, Rosewood, Aman, etc.) in the Redemption Opportunity bucket. Redemption requires a chain loyalty program. If no chain redemption is available, replace this bucket per the adaptive rule above.
+- INSUFFICIENT BALANCE: If a traveler's points balance is too low for meaningful redemption, do not contort the bucket to make it work — replace with Best Value or Quality Upgrade instead. Never frame "partial coverage" as a selling point.
+
+A replaced bucket should be labeled with a descriptive tag that reflects what it actually is (e.g. "Most Distinctive Lodge", "Best Park Experience", "Remote Wilderness") rather than forcing a label that doesn't apply.
 
 POINTS-LED QUERY DETECTION: Activate this mode when the user's intent is to redeem or use points/miles — even if vaguely stated. Triggers include: explicit balance mention ("I have 64k Delta miles"), redemption intent ("use my miles", "redeem points", "burn my Hyatt points"), or program-specific context established earlier in the conversation. When a single program is clear, anchor all 6 options around it. When multiple programs are mentioned or the user said "open to any", generate options that draw on whichever program offers the best value for each bucket and note why. Do NOT generate options that ignore stated redemption intent.
 
@@ -6922,8 +6928,9 @@ INTELLIGENCE RULES:
 - Hotel: ALWAYS use a real, specific named property (e.g. "Mokara Hotel & Spa" not "boutique hotel" or "historic inn"). Never invent placeholder names. If you cannot name a real property in the destination, use a nearby city with real inventory.
 - Hotel detail: property name · exact room config matching party size (e.g. "Two adjoining Kings" or "3BR villa sleeps 6") · nights · neighborhood. Never just "suite" — always specify beds and how the party fits.
 - Flight detail field MUST use this EXACT format with · separators and spaces: "[Airline] · [ORIGIN-DEST] [nonstop/1-stop] · [departure time range] · [~Xh duration]" e.g. "Alaska Airlines · SEA-LIH nonstop · morning ~8-10am · ~6h30m" or "Delta · SEA-HNL nonstop · afternoon ~1-3pm · ~5h45m". CRITICAL: always put spaces around the · separator. Never concatenate airline and route without a separator (never "DeltaSEA-HNL"). Departure time should be a realistic range, not a specific invented flight number.
-- FLIGHT COST RULE: NEVER put $0 on a return flight by claiming the cost is "included in roundtrip." Each leg (Flight and Return Flight) must show its own cash value. For a roundtrip fare of $800 total for 2 people, show Flight value = 400 and Return Flight value = 400 (split evenly). The totalCost must equal the sum of all component values. Never leave Return Flight at $0 unless it is genuinely a free redemption ticket.
-- The points field should note ticket count: "2 tickets · est. X miles earned".
+- FLIGHT COST RULE: Each leg (Flight and Return Flight) must show its own cash value — never $0 unless it is genuinely a free redemption ticket. For a roundtrip fare of $800 total for 2 people, show Flight value = 400 and Return Flight value = 400 (split evenly).
+- MILES PER LEG: Each flight leg must show miles earned independently in its points field. Format: "2 tickets · est. X miles earned" for outbound, "2 tickets · est. X miles earned" for return. NEVER use "Included in roundtrip" or "included in outbound" — every leg shows its own earning. Miles per leg should reflect actual flight distance (e.g. SEA-LAX ~1136 miles, JFK-LAX ~2475 miles).
+- AIRLINE ALIGNMENT: The loyalty program earning, card benefits, and Sky Club/lounge access shown for a flight MUST match the actual airline on the ticket. If the flight is Alaska Airlines, show Alaska Mileage Plan earning — not Delta SkyMiles. If the flight is United, show MileagePlus. Never attribute Delta Sky Club access to an Alaska or United flight.
 - Rental car pricing: use realistic market rates. A full-size SUV in Hawaii runs $150-250/day in peak season, $80-150/day off-peak. A standard sedan runs $60-100/day. Never show rental car costs below $40/day — these are not realistic. Total rental cost = daily rate × number of days. Always show both daily rate and total: "$175/day · 5 days · $875 total".
 - Rental car cashback: USAA 1.5% cashback on a $875 rental = $13 — never show cashback exceeding 1.5% of the rental cost. Do not inflate cashback estimates.
 - Small/rural destinations: if the destination has fewer than 6 real bookable hotel options at the requested quality level, expand to the nearest metro area (e.g. Boerne TX → include San Antonio options 30 min away, label them clearly as "San Antonio · 30 min from Boerne"). Never fabricate hotel names.
@@ -7498,7 +7505,15 @@ CARD MULTIPLIER ACCURACY — never fabricate or inflate earning rates:
 
 HOTEL BRAND ACCURACY — critical trust rules, never violate:
 - NEVER place a hotel in the wrong city or region. If the destination is Jackson Hole, every hotel component must be in Jackson Hole or Teton Village — not Vail, not Aspen, not any other mountain town. If you cannot name a real hotel in the destination, say so rather than substituting one from elsewhere.
-- LOYALTY REDEMPTION ACCURACY — SYSTEM RULE, NOT A SUGGESTION:
+- CARD AND LOYALTY ALIGNMENT — SYSTEM RULE:
+The card benefits, lounge access, and earning shown for EACH COMPONENT must match that component's actual provider:
+- Delta Reserve card benefits (Sky Club, SkyMiles earning) ONLY apply to Delta flights. If the flight is Alaska, United, or American, do NOT show Delta Reserve benefits for that flight.
+- Alaska Airlines Visa benefits apply only to Alaska flights. Amex Platinum 5x applies to any airline ticket purchased directly.
+- Hotel card benefits (Hilton Aspire, Hyatt card) only apply to stays at that hotel's brand properties.
+- Never show a Sky Club benefit on a non-Delta flight. Never show Centurion Lounge as a benefit unless the card shown actually includes it.
+- When the traveler's card portfolio includes multiple airline cards, match each card's benefits to the correct airline in each option.
+
+LOYALTY REDEMPTION ACCURACY — SYSTEM RULE, NOT A SUGGESTION:
 The app has a LOYALTY_BRAND_MAP and INDEPENDENT_HOTELS list. Before suggesting ANY points redemption at a specific hotel, mentally check: does this hotel's brand appear in LOYALTY_BRAND_MAP for the program? If uncertain, treat as independent and do not suggest redemption.
 
 Known independent / non-redeemable hotels (partial list — when in doubt, no redemption):
@@ -7995,7 +8010,7 @@ Please respond now.`,
           ) : (
             <GridView
               options={tripOptions.filter(o => !dismissedIds.includes(o.id))}
-              onSelectOption={(id) => { mp.track("card_expanded", { tag: tripOptions.find(o=>o.id===id)?.tag, headline: tripOptions.find(o=>o.id===id)?.headline }); setExpandedId(id); }}
+              onSelectOption={(id) => { mp.track("card_expanded", { tag: tripOptions.find(o=>o.id===id)?.tag, headline: tripOptions.find(o=>o.id===id)?.headline }); setExpandedId(id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
               onDismiss={(id, restore) => {
                 if (restore) {
                   setDismissedIds(prev => prev.filter(x => x !== id));
@@ -8123,7 +8138,7 @@ Please respond now.`,
                   !askedAboutEarning && isEarningIntent ? "Which option actually builds the most points for this trip?" : null,
                   !askedAboutValue && isRedemptionIntent ? "Which redemption gives me the most value for my miles?" : null,
                   isOccasion ? `What makes the ${recName} the right choice for this occasion?` : null,
-                  !askedAboutVibe && isDestinationUncertain ? "Which of these would I actually regret not choosing?" : null,
+                  !askedAboutVibe && isDestinationUncertain ? "If you could only choose one of these, which would you pick for me?" : null,
                   hasConversation ? `What's the strongest case for the ${recName} option?` : null,
                   wildCard ? "What makes the Wild Card worth considering over the Recommended?" : null,
                   "Which of these would you book if it were your trip?",
