@@ -193,11 +193,15 @@ const validateOptions = (options) => {
         console.warn(`[Sojourn] Stripped invalid redemption: ${claimedProgram} at independent hotel ${hotelName}`);
         fixed.redemption = null;
         fixed.redemptions = [];
-      } else if (correctProgram && claimedProgram &&
-                 !claimedProgram.toLowerCase().includes(correctProgram.toLowerCase().split(' ')[0])) {
-        console.warn(`[Sojourn] Program mismatch: ${claimedProgram} at ${hotelName} (should be ${correctProgram})`);
-        fixed.redemption = null;
-        fixed.redemptions = [];
+      } else if (correctProgram && claimedProgram) {
+        // Check if claimed program overlaps with correct program
+        // "World of Hyatt" → check for "hyatt"; "Marriott Bonvoy" → check for "marriott"
+        const programKeyword = correctProgram.toLowerCase().replace('world of ', '').replace(' bonvoy', '').replace(' honors', '').replace(' one rewards', '').replace(' mileageplus', '').replace(' skymiles', '').replace(' aadvantage', '').replace(' mileage plan', '').split(' ')[0];
+        if (!claimedProgram.toLowerCase().includes(programKeyword)) {
+          console.warn(`[Sojourn] Program mismatch: ${claimedProgram} at ${hotelName} (should be ${correctProgram})`);
+          fixed.redemption = null;
+          fixed.redemptions = [];
+        }
       }
     }
 
@@ -5772,8 +5776,8 @@ const WhyThisExpanded = ({ option, userProfile }) => {
     const framing = framingMap[tag] || 'What makes this distinctively right for this traveler?';
 
     const profile = userProfile || {};
-    const loyalty = (profile.loyaltyAccounts || []).filter(a => a && a.tier && a.tier !== 'None').map(a => a.program).join(', ') || 'not set';
-    const brands = (profile.preferredBrands || []).slice(0, 5).join(', ') || 'not set';
+    const loyalty = (userProfile.loyaltyAccounts || []).filter(a => a && a.tier && a.tier !== 'None').map(a => a.program).join(', ') || 'not set';
+    const brands = (userProfile.preferredBrands || []).slice(0, 5).join(', ') || 'not set';
 
     // Build component summary — critical for multi-stop trips
     var allComps = (option.components || []).filter(function(c) { return c && c.label; });
@@ -5894,7 +5898,7 @@ const WhyThisExpanded = ({ option, userProfile }) => {
       return c ? c.label + ': ' + (c.detail || '') : '';
     }).filter(Boolean).join(', ');
     // Build party size context for room strategy
-    var partySize = (profile && profile.partySize) || (option.subhead && option.subhead.match(/(\d+)\s*(?:people|adults|guests|travelers)/i) ? option.subhead.match(/(\d+)\s*(?:people|adults|guests|travelers)/i)[1] : null);
+    var partySize = (userProfile && userProfile.partySize) || (option.subhead && option.subhead.match(/(\d+)\s*(?:people|adults|guests|travelers)/i) ? option.subhead.match(/(\d+)\s*(?:people|adults|guests|travelers)/i)[1] : null);
     var partySizeNote = partySize ? "Party size: " + partySize + " people." : "";
 
     deepPrompt = "You are Sojourn, a knowledgeable travel advisor. The traveler wants deeper detail on this option. Write 220-300 words total using EXACTLY these four sections with **bold headers**. Do not repeat what was already covered in the main description. Be specific, honest, and anticipation-building.\n\n**Dining & Drinks**\nRecommend 2 dining and 2 drinks options specific to this property or neighborhood. If dining was mentioned in the main description, go deeper or different — no redundancy. Be specific: dish names, atmosphere, best time to go.\n\n**Room Strategy**\n" + partySizeNote + " Note: specific room numbers cannot be reserved in advance at most properties. Instead, recommend room TYPE or location (e.g. corner room, high floor, garden-facing) and the best way to request it (call ahead, note at check-in). Only include this section if there are genuinely distinctive room types worth knowing about at this property — skip if it's a standard hotel with no meaningful variation.\n\n**Strategic Timing & First Day**\nPractical, honest tips for the first 24 hours. Do not promise things outside the traveler's control (e.g. early check-in is request-only, not guaranteed). Focus on what time to arrive, what to do first, best time for key activities, how to avoid crowds.\n\n**Insider Intelligence**\nAuthentic, specific details that reward the informed traveler — local knowledge, lesser-known experiences, seasonal considerations, things that make this feel like an insider's visit rather than a tourist's. Keep it grounded and real.\n\nOption: " + (option.headline || '') + ". Components: " + allComps + ". Previous description: " + display;
