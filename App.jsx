@@ -5444,13 +5444,13 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                   }}
                 >
                   {/* Option name + tag */}
-                  <td style={{ padding: isMobile ? "10px 8px 10px 10px" : "16px 16px", verticalAlign: "middle" }}>
+                  <td colSpan={isMobile ? 2 : 1} style={{ padding: isMobile ? "10px 8px 10px 10px" : "16px 16px", verticalAlign: "middle" }}>
                     {isMobile ? (
                       <div style={{ background: opt.tagColor + "10", border: `1px solid ${opt.tagColor}30`, borderRadius: "10px", padding: "10px 12px" }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "5px" }}>
                           <span style={{ background: opt.tagColor + "20", color: opt.tagColor, fontSize: "10px", padding: "2px 8px", borderRadius: "8px", fontFamily: "serif", border: `1px solid ${opt.tagColor}33`, whiteSpace: "nowrap" }}>{opt.tag}</span>
                           <span style={{ color: "#e8e4dc", fontSize: "14px", fontFamily: "'Playfair Display',Georgia,serif", fontWeight: 600 }}>
-                            ${typeof opt.totalCost === "number" ? opt.totalCost.toLocaleString() : String(opt.totalCost||0).replace(/^\$+/,"")}
+                            <span style={{ fontSize: "10px", color: "#9a9088", fontFamily: "sans-serif", fontWeight: 400 }}>Est. </span>${typeof opt.totalCost === "number" ? opt.totalCost.toLocaleString() : String(opt.totalCost||0).replace(/^\$+/,"")}
                           </span>
                         </div>
                         <div style={{ color: "#d8d4cc", fontSize: "12px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.3", marginBottom: "4px" }}>{opt.headline}</div>
@@ -5474,7 +5474,7 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                   {/* Total cost — hidden on mobile (shown in net value cell) */}
                   {!isMobile && <td style={{ padding: "16px 12px", textAlign: "right", verticalAlign: "middle" }}>
                     <div style={{ color: "#e8e4dc", fontSize: "16px", fontFamily: "'Playfair Display',Georgia,serif" }}>
-                      ${typeof opt.totalCost === "number" ? opt.totalCost.toLocaleString() : String(opt.totalCost||0).replace(/^\$+/,"")}
+                      <span style={{ fontSize: "10px", color: "#9a9088", fontFamily: "sans-serif" }}>Est. </span>${typeof opt.totalCost === "number" ? opt.totalCost.toLocaleString() : String(opt.totalCost||0).replace(/^\$+/,"")}
                     </div>
                     {(opt.redemptions?.length > 1 || (opt.redemptions?.length === 1 && opt.redemption))
                       ? <div style={{ color: "#4CC97A", fontSize: "10px", marginTop: "2px" }}>Redemptions applied</div>
@@ -5516,7 +5516,7 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                   {!isMobile && <td style={{ padding: "16px 12px", textAlign: "right", verticalAlign: "middle" }}>
                     <div>
                       <div style={{ color: "#e8e4dc", fontSize: "16px", fontFamily: "'Playfair Display',Georgia,serif" }}>
-                        ${typeof opt.netValue === "number" ? opt.netValue.toLocaleString() : String(opt.netValue||0).replace(/^\$+/,"")}
+                        <span style={{ fontSize: "10px", color: "#9a9088", fontFamily: "sans-serif" }}>Est. </span>${typeof opt.netValue === "number" ? opt.netValue.toLocaleString() : String(opt.netValue||0).replace(/^\$+/,"")}
                       </div>
                       <div style={{ color: "#666", fontSize: "10px", marginTop: "2px" }}>est. value</div>
                     </div>
@@ -5527,8 +5527,8 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                     {opt.tradeoff && <div style={{ color: "#7a7060", fontSize: "10px", marginTop: "5px", fontStyle: "italic" }}>{opt.tradeoff}</div>}
                   </td>}
 
-                  {/* Dismiss X */}
-                  <td style={{ padding: "0 10px", textAlign: "center", verticalAlign: "middle" }}>
+                  {/* Dismiss X — hidden on mobile (full-width card has no room) */}
+                  {!isMobile && <td style={{ padding: "0 10px", textAlign: "center", verticalAlign: "middle" }}>
                     {!isOnHold && onDismiss && (
                       <button
                         onClick={e => { e.stopPropagation(); onDismiss(opt.id); }}
@@ -5538,11 +5538,11 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                         onMouseLeave={e => e.currentTarget.style.color = "#2a2a2a"}
                       >✕</button>
                     )}
-                  </td>
+                  </td>}
                 </tr>
                 {isMobile && opt.whyThis && (
                   <tr>
-                    <td colSpan={3} style={{ padding: "0 10px 12px", verticalAlign: "top" }}>
+                    <td colSpan={2} style={{ padding: "0 10px 12px", verticalAlign: "top" }}>
                       <div style={{ color: "#9a9088", fontSize: "12px", lineHeight: "1.6", wordBreak: "break-word", whiteSpace: "normal", maxWidth: "100%", overflowWrap: "break-word" }}>{opt.whyThis}</div>
                       {opt.tradeoff && <div style={{ color: "#7a7060", fontSize: "10px", marginTop: "4px", fontStyle: "italic" }}>{opt.tradeoff}</div>}
                     </td>
@@ -5833,8 +5833,9 @@ const WhyThisExpanded = ({ option, userProfile }) => {
   );
 };
 
-const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userProfile }) => {
+const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userProfile, isMobile }) => {
   const isRec = option.id === 1;
+  const [showDisclosure, setShowDisclosure] = React.useState(false);
   return (
     <div onClick={onToggle} style={{
       width: isExpanded ? "100%" : "300px", minWidth: isExpanded ? "unset" : "300px",
@@ -5928,9 +5929,27 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userPr
             <button onClick={() => onItinerary && onItinerary(option)} style={{ flex: 1, padding: "14px", background: "rgba(255,255,255,0.04)", color: "#b0a898", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", fontSize: "12px", fontWeight: "600", cursor: "pointer", letterSpacing: "0.06em", fontFamily: "'Playfair Display',Georgia,serif" }}>
               View as Itinerary ↗
             </button>
-            <button onClick={(e) => { e.stopPropagation(); mp.track("book_intent", { tag: option.tag, headline: option.headline, total_cost: option.totalCost, net_value: option.netValue, destination: option.subhead }); alert("Booking coming soon! We logged your interest in: " + option.headline); }} style={{ flex: 2, padding: "14px", background: option.tagColor, color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>
+            <button onClick={(e) => { e.stopPropagation(); mp.track("book_intent", { tag: option.tag, headline: option.headline, total_cost: option.totalCost, net_value: option.netValue, destination: option.subhead }); setShowDisclosure(true); }} style={{ flex: 2, padding: "14px", background: option.tagColor, color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>
               Book This Trip →
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Pricing disclosure modal */}
+      {showDisclosure && (
+        <div onClick={e => e.stopPropagation()} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+          <div style={{ background: "#1a1814", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "16px", padding: "28px 24px", maxWidth: "380px", width: "100%" }}>
+            <div style={{ color: "#C9A84C", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Before You Book</div>
+            <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.4", marginBottom: "10px" }}>{option.headline}</div>
+            <div style={{ color: "#9a9088", fontSize: "13px", lineHeight: "1.7", marginBottom: "20px" }}>
+              Prices shown are estimates to help you compare options — not live quotes. Actual rates will vary by date, availability, and booking channel. Always verify before completing your reservation.
+            </div>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button onClick={() => setShowDisclosure(false)} style={{ flex: 1, padding: "11px", background: "transparent", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "10px", color: "#9a9088", fontSize: "12px", cursor: "pointer" }}>Go Back</button>
+              <button onClick={() => { setShowDisclosure(false); window.open("https://www.google.com/travel/hotels?q=" + encodeURIComponent(option.subhead || option.headline), "_blank"); }} style={{ flex: 2, padding: "11px", background: option.tagColor, border: "none", borderRadius: "10px", color: "#0a0908", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'Playfair Display',Georgia,serif" }}>Search Live Rates →</button>
+            </div>
+            <div style={{ color: "#555", fontSize: "10px", textAlign: "center", marginTop: "12px", letterSpacing: "0.04em" }}>Opens Google Hotels in a new tab</div>
           </div>
         </div>
       )}
@@ -6842,7 +6861,15 @@ TRAVELER PROFILE:
 - Credit cards: ${cardList}
 - Hotel loyalty: ${hotelLoyalty||"none"}
 - Airline miles: ${airlineLoyalty||"none"}
-EXACT POINTS BALANCES — these are the traveler's actual balances. NEVER suggest a redemption requiring more points than shown here. If insufficient balance exists for a meaningful redemption, say so and use a cash option instead:
+EXACT POINTS BALANCES — these are the traveler's actual balances. REDEMPTION PRE-CHECK — before generating the Redemption Opportunity bucket, scan the balances below:
+1. Identify which programs have non-zero balances
+2. Check if any of those programs have hotel or airline partners at the destination
+3. Only if BOTH conditions are true should you generate a Redemption Opportunity
+4. If a program has zero balance (empty string, "0", or no entry), it CANNOT be used for redemption
+5. NEVER write "You would need Hyatt points for this but since you have none, here is the cash rate" — this is not a redemption, it is a cash option and belongs in Best Value
+6. NEVER show a cash rate inside the Redemption Opportunity bucket
+
+Traveler loyalty balances (NEVER suggest a redemption requiring more points than shown):
 ${(p.loyaltyAccounts||[]).map(a => `  ${a.program}: ${a.balance} (tier: ${a.tier})`).join("\n")}
 STRUCTURED BENEFITS — use these exact values for multipliers, lounge access, tier benefits, free breakfast eligibility, and transfer partners. Do not rely on training knowledge when this data is present:
 ${buildTravelerBenefitsSummary(p)}
