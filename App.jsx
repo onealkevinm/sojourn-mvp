@@ -5875,7 +5875,7 @@ const WhyThisExpanded = ({ option, userProfile }) => {
     var allComps = (option.components || []).map(function(c) {
       return c ? c.label + ': ' + (c.detail || '') : '';
     }).filter(Boolean).join(', ');
-    var // Build party size context for room strategy
+    // Build party size context for room strategy
     var partySize = (profile && profile.partySize) || (option.subhead && option.subhead.match(/(\d+)\s*(?:people|adults|guests|travelers)/i) ? option.subhead.match(/(\d+)\s*(?:people|adults|guests|travelers)/i)[1] : null);
     var partySizeNote = partySize ? "Party size: " + partySize + " people." : "";
 
