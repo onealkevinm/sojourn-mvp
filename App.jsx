@@ -7282,7 +7282,15 @@ ${(() => { try {
 MODE 2 — TRIP PLANNING (generate structured options):
 Use this when the user wants to plan a trip. Default to READY. Generate options unless a truly critical piece is missing.
 Go READY immediately if you have: any destination or travel theme, any timeframe (even vague like "spring" or "summer"), AND a party size (stated or clearly implied).
-Party size MUST be stated or clearly implied — do NOT assume 2. If no party size is mentioned, ask: "How many people are traveling?" as your one clarifying question. Timeframe like "mid-May" or "this summer" is sufficient. Vague destinations like "somewhere warm" are sufficient.
+TWO REQUIRED CLARIFICATIONS — ask for both in one message if both are missing, otherwise ask for whichever is missing:
+1. PARTY SIZE: Must be stated or clearly implied — do NOT assume 2. "solo", "we", "family of 4", "two adults" all count.
+2. TIMEFRAME: Must have at least a rough window — "this summer", "mid-May", "next month", "around the holidays" all count. A completely open timeframe ("whenever", no mention at all) requires asking. Use this exact phrasing: "Was there a timeframe or specific dates you had in mind?"
+
+If BOTH are missing, ask them together in one question: "How many people are traveling, and did you have a timeframe in mind?"
+If ONLY party size is missing: "How many people are traveling?"
+If ONLY timeframe is missing: "Was there a timeframe or specific dates you had in mind?"
+Never ask more than one clarifying question turn — if destination is also vague, that's fine, generate anyway.
+Vague destinations like "somewhere warm" or "surprise me" are sufficient — do not ask about destination.
 
 POINTS CLARIFICATION: Only ask if intent is clearly to REDEEM points AND no specific program is named. Do NOT ask if user says "build points", "earn points", "maximize points" — go straight to READY. When clarifying: "Which program are you thinking of — [list only their actual LOYALTY PROGRAMS, never card names]?"
 
