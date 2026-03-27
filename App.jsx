@@ -5412,12 +5412,12 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               {!isMobile && <th style={{ textAlign: "left", padding: "10px 16px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "32%" }}>Option</th>}
-              {isMobile && <th style={{ textAlign: "left", padding: "8px 10px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Options</th>}
+              {isMobile && <th style={{ textAlign: "left", padding: "8px 10px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "100%" }}>Options</th>}
               {!isMobile && <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Cash Out of Pocket</th>}
               {!isMobile && <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Points</th>}
               {!isMobile && <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Net Value</th>}
               {!isMobile && <th style={{ textAlign: "left", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "26%" }}>Why This</th>}
-              <th style={{ width: "32px" }}></th>
+              {!isMobile && <th style={{ width: "32px" }}></th>}
             </tr>
           </thead>
           <tbody>
@@ -5444,7 +5444,7 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                   }}
                 >
                   {/* Option name + tag */}
-                  <td colSpan={isMobile ? 2 : 1} style={{ padding: isMobile ? "10px 8px 10px 10px" : "16px 16px", verticalAlign: "middle" }}>
+                  <td colSpan={1} style={{ padding: isMobile ? "10px 8px 10px 10px" : "16px 16px", verticalAlign: "middle" }}>
                     {isMobile ? (
                       <div style={{ background: opt.tagColor + "10", border: `1px solid ${opt.tagColor}30`, borderRadius: "10px", padding: "10px 12px" }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "5px" }}>
@@ -5542,7 +5542,7 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                 </tr>
                 {isMobile && opt.whyThis && (
                   <tr>
-                    <td colSpan={2} style={{ padding: "0 10px 12px", verticalAlign: "top" }}>
+                    <td colSpan={1} style={{ padding: "0 10px 12px", verticalAlign: "top" }}>
                       <div style={{ color: "#9a9088", fontSize: "12px", lineHeight: "1.6", wordBreak: "break-word", whiteSpace: "normal", maxWidth: "100%", overflowWrap: "break-word" }}>{opt.whyThis}</div>
                       {opt.tradeoff && <div style={{ color: "#7a7060", fontSize: "10px", marginTop: "4px", fontStyle: "italic" }}>{opt.tradeoff}</div>}
                     </td>
@@ -8423,12 +8423,12 @@ Please respond now.`,
       {/* Compact input — after first exchange */}
       {!isFirst && (
         <div style={{ padding: "12px 24px 16px" }}>
-          <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", padding: "4px 4px 4px 16px", display: "flex", alignItems: "flex-end", gap: "8px" }}>
-            <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Refine these options, ask a question, or start a conversation..." rows={2}
-              style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "14px", lineHeight: "1.5", padding: "10px 0", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
-            <div style={{ display: "flex", gap: "6px", paddingBottom: "6px", flexShrink: 0 }}>
-              <button onClick={listening ? () => { recognitionRef.current?.stop(); setListening(false); } : startListening} style={{ width: "36px", height: "36px", borderRadius: "10px", border: "none", cursor: "pointer", background: listening ? "rgba(201,76,76,0.2)" : "rgba(255,255,255,0.06)", color: listening ? "#C94C4C" : "#666", fontSize: "16px", animation: listening ? "pulse 1.2s infinite" : "none" }}>&#127908;</button>
-              <button onClick={handleSend} disabled={!input.trim() || loading} style={{ width: "36px", height: "36px", borderRadius: "10px", border: "none", cursor: input.trim() && !loading ? "pointer" : "default", background: input.trim() && !loading ? "#C9A84C" : "rgba(201,168,76,0.15)", color: input.trim() && !loading ? "#0a0908" : "#555", fontSize: "16px", fontWeight: "bold" }}>&#8593;</button>
+          <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", padding: "8px 8px 8px 16px", display: "flex", alignItems: "flex-end", gap: "8px" }}>
+            <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Refine these options, ask a question, or start a conversation..." rows={3}
+              style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "14px", lineHeight: "1.6", padding: "6px 0 4px", fontFamily: "'DM Sans',system-ui,sans-serif", resize: "none", minHeight: "60px" }} />
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", paddingBottom: "4px", flexShrink: 0 }}>
+              <button onClick={listening ? () => { recognitionRef.current?.stop(); setListening(false); } : startListening} style={{ width: "34px", height: "34px", borderRadius: "10px", border: "none", cursor: "pointer", background: listening ? "rgba(201,76,76,0.2)" : "rgba(255,255,255,0.06)", color: listening ? "#C94C4C" : "#666", fontSize: "15px", animation: listening ? "pulse 1.2s infinite" : "none" }}>&#127908;</button>
+              <button onClick={handleSend} disabled={!input.trim() || loading} style={{ width: "34px", height: "34px", borderRadius: "10px", border: "none", cursor: input.trim() && !loading ? "pointer" : "default", background: input.trim() && !loading ? "#C9A84C" : "rgba(201,168,76,0.15)", color: input.trim() && !loading ? "#0a0908" : "#555", fontSize: "16px", fontWeight: "bold" }}>&#8593;</button>
             </div>
           </div>
         </div>
