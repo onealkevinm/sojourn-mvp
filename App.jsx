@@ -5967,56 +5967,51 @@ const WhyThisExpanded = ({ option, userProfile }) => {
 const BOOKING_AFFILIATE_ID = "YOUR_BOOKING_AFFILIATE_ID"; // Replace after registration
 
 const buildBookingLink = (hotelName, destination, checkIn, checkOut, adults) => {
-  // Parse check-in/check-out from dates string like "April 7-12" or "June 15-20, 2025"
-  const parseCheckInOut = (datesStr, hotelDetail) => {
-    if (!datesStr) return { ci: '', co: '' };
-    // Try to extract nights from hotel detail: "Four Seasons · Santa Fe · 3 nights"
-    const nightsMatch = hotelDetail && hotelDetail.match(/(\d+)\s*night/i);
-    const nights = nightsMatch ? parseInt(nightsMatch[1]) : 3;
-    // Try ISO date
-    const isoMatch = datesStr.match(/(\d{4}-\d{2}-\d{2})/);
-    if (isoMatch) {
-      const d = new Date(isoMatch[1]);
-      const co = new Date(d); co.setDate(co.getDate() + nights);
-      return { ci: isoMatch[1], co: co.toISOString().split('T')[0] };
-    }
-    // Try "Month Day-Day" like "April 7-12"
-    const rangeMatch = datesStr.match(/(\w+)\s+(\d+)[–\-](\d+)/i);
+  // checkIn/checkOut can be ISO dates (YYYY-MM-DD) from tripSummary, or fallback to date string parsing
+  const isISO = (s) => s && /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+  let ci = isISO(checkIn) ? checkIn : '';
+  let co = isISO(checkOut) ? checkOut : '';
+
+  // Fallback: parse from human-readable date string if ISO not available
+  if (!ci && checkIn) {
+    const rangeMatch = checkIn.match(/(\w+)\s+(\d+)[–\-](\d+)/i);
     if (rangeMatch) {
       const year = new Date().getFullYear();
-      const ciStr = `${rangeMatch[1]} ${rangeMatch[2]}, ${year}`;
-      const coStr = `${rangeMatch[1]} ${rangeMatch[3]}, ${year}`;
-      const ci = new Date(ciStr); const co = new Date(coStr);
-      if (co < ci) co.setFullYear(year + 1);
-      const fmt = (d) => d.toISOString().split('T')[0];
-      return { ci: fmt(ci), co: fmt(co) };
+      const d1 = new Date(`${rangeMatch[1]} ${rangeMatch[2]}, ${year}`);
+      const d2 = new Date(`${rangeMatch[1]} ${rangeMatch[3]}, ${year}`);
+      if (d2 < d1) d2.setFullYear(year + 1);
+      ci = d1.toISOString().split('T')[0];
+      co = d2.toISOString().split('T')[0];
+    } else {
+      // Extract nights from hotel detail if available
+      const nightsMatch = (hotelName || '').match(/(\d+)\s*night/i);
+      const nights = nightsMatch ? parseInt(nightsMatch[1]) : 0;
+      const startMatch = checkIn.match(/(\w+\s+\d+)/);
+      if (startMatch) {
+        const d = new Date(startMatch[1] + ', ' + new Date().getFullYear());
+        if (!isNaN(d)) {
+          ci = d.toISOString().split('T')[0];
+          if (nights > 0) {
+            const d2 = new Date(d); d2.setDate(d2.getDate() + nights);
+            co = d2.toISOString().split('T')[0];
+          }
+        }
+      }
     }
-    // Try "Month Day" start + nights duration
-    const startMatch = datesStr.match(/(\w+\s+\d+)/);
-    if (startMatch) {
-      const ci = new Date(startMatch[1] + ', ' + new Date().getFullYear());
-      const co = new Date(ci); co.setDate(co.getDate() + nights);
-      const fmt = (d) => d.toISOString().split('T')[0];
-      return { ci: fmt(ci), co: fmt(co) };
-    }
-    return { ci: '', co: '' };
-  };
+  }
 
-  const hotelDetail = hotelName || '';
-  const { ci, co } = parseCheckInOut(checkIn, hotelDetail);
   const cleanName = hotelName ? hotelName.split('·')[0].trim() : '';
   const cleanDest = destination || '';
   const numAdults = adults || 2;
 
-  // Build Booking.com search URL (property search — deep link to specific property)
-  const searchQuery = encodeURIComponent(`${cleanName} ${cleanDest}`.trim());
   const params = new URLSearchParams({
     ss: `${cleanName} ${cleanDest}`.trim(),
     ...(ci && { checkin: ci }),
     ...(co && { checkout: co }),
     group_adults: numAdults,
     no_rooms: 1,
-    aid: BOOKING_AFFILIATE_ID,
+    ...(BOOKING_AFFILIATE_ID !== 'YOUR_BOOKING_AFFILIATE_ID' && { aid: BOOKING_AFFILIATE_ID }),
   });
   return `https://www.booking.com/searchresults.html?${params.toString()}`;
 };
@@ -6061,7 +6056,7 @@ const extractFlightCodes = (flightDetail) => {
 };
 
 
-const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userProfile, isMobile }) => {
+const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userProfile, isMobile, tripSummary }) => {
   const isRec = option.id === 1;
   const [showDisclosure, setShowDisclosure] = React.useState(false);
   return (
@@ -6174,8 +6169,17 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userPr
         const flightCodes = extractFlightCodes(flightComp?.detail);
         const returnCodes = extractFlightCodes(returnComp?.detail);
         const partySize = extractPartySize(option, userProfile?.travelProfile);
-        const dates = userProfile?.travelProfile?.dates || option.subhead || '';
-        const bookingUrl = hotelName ? buildBookingLink(hotelName, option.subhead, dates, dates, partySize) : null;
+        // Use resolved ISO dates from tripSummary if available, else fall back to human-readable dates string
+        const resolvedCheckIn = tripSummary?.checkIn || '';
+        const resolvedCheckOut = tripSummary?.checkOut || '';
+        const datesStr = userProfile?.travelProfile?.dates || option.subhead || '';
+        const bookingUrl = hotelName ? buildBookingLink(
+          hotelName,
+          option.subhead,
+          resolvedCheckIn || datesStr,
+          resolvedCheckOut || datesStr,
+          partySize
+        ) : null;
         const flightUrl = flightCodes.origin ? buildGoogleFlightsLink(flightCodes.origin, flightCodes.dest, dates, dates, partySize) : buildGoogleFlightsLink(userProfile?.travelProfile?.homeAirport, option.subhead, dates, dates, partySize);
 
         return (
@@ -7395,8 +7399,7 @@ COMPONENT VALUE RULE — CRITICAL:
 - netValue = totalCost - pointsValue
 - redemptions (top-level array) = list each redemption applied: [{"program": "Delta SkyMiles", "pointsUsed": 50000, "dollarsValue": 700, "centsPerPoint": 1.4, "component": "Flights"}]. One entry per redeemed program. Leave as [] if no redemptions.
 
-REQUIRED JSON SCHEMA:
-{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","cardStrategy":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] must be an EMPTY ARRAY by default. ONLY populate it if the user has explicitly requested specific dining, activities, breweries, distilleries, or excursions in this conversation and asked for them to be included. Never speculatively generate experiences.`;
+DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these rules. Today is Monday, March 30, 2026.\n1. SPECIFIC DATES given → use exactly. checkIn and checkOut as YYYY-MM-DD. nights = checkOut minus checkIn in days.\n2. DEPART DAY OF WEEK + nights ("leaving Friday, 5 nights") → checkIn = next occurrence of that weekday from today. checkOut = checkIn + nights.\n3. RETURN DAY OF WEEK + nights ("back Sunday, 5 nights") → checkOut = next that weekday from today. checkIn = checkOut minus nights.\n4. MONTH + nights ("April, 5 nights") → pick a mid-month Tuesday avoiding peak weekends. checkOut = checkIn + nights.\n5. SEASON + duration ("this summer, a week") → pick a representative date. checkOut = checkIn + nights.\n6. No specific time → leave checkIn and checkOut as empty strings, nights as 0.\nNIGHTS vs DAYS: "5 days" = 4 nights. Always use nights for hotel stays.\ndates field = human-readable string like "April 22-27". checkIn/checkOut = ISO YYYY-MM-DD.\n\nREQUIRED JSON SCHEMA:\n{"tripSummary":{"origin":"","destination":"","dates":"","checkIn":"","checkOut":"","nights":0,"preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","cardStrategy":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] must be an EMPTY ARRAY by default. ONLY populate it if the user has explicitly requested specific dining, activities, breweries, distilleries, or excursions in this conversation and asked for them to be included. Never speculatively generate experiences.`;
   };
 
 
@@ -7475,7 +7478,22 @@ NEVER ask about budget, hotel preference, or anything already in the profile.
 NEVER refuse a local discovery or dining question — always answer helpfully.
 
 When ready to plan, respond with EXACTLY:
-READY: [one sentence reflecting back what you heard] Ready for me to generate your options?
+READY: [one sentence reflecting back what you heard, including resolved dates] Ready for me to generate your options?
+
+DATE RESOLUTION — resolve to specific dates before the READY line. Today is Monday, March 30, 2026.
+
+Rules in priority order:
+1. SPECIFIC DATES ("April 22-27", "June 15 for 5 nights") — use exactly. nights = checkOut minus checkIn.
+2. DEPART DAY + NIGHTS ("leaving Friday, 5 nights") — checkIn = next occurrence of that weekday from today. checkOut = checkIn + nights.
+3. RETURN DAY + NIGHTS ("back Sunday, 5 nights") — checkOut = next occurrence of that weekday from today. checkIn = checkOut minus nights. Outbound flight = checkIn date.
+4. MONTH + NIGHTS ("sometime in April, 5 nights") — pick a mid-month Tuesday, avoid peak weekends and US holidays. checkOut = checkIn + nights.
+5. SEASON + DURATION ("this summer, a week") — pick a representative date in that season, state assumption in READY line.
+6. DURATION ONLY, no time window ("5 nights") — do NOT infer. Ask timeframe question first.
+
+NIGHTS vs DAYS: "5 days" = 4 nights. "5 nights" = 5 nights. Always express hotel stays as nights.
+
+Always surface resolved dates in READY so user can correct. Example:
+"READY: 5 nights in Santa Fe for 4 people, checking in Friday April 25, checking out Wednesday April 30. Ready for me to generate your options?"
 
 Conversation so far: ${JSON.stringify(conversationRef.current)}`,
             messages: [{ role: "user", content: userMessage }],
@@ -7897,8 +7915,7 @@ HARD CONSTRAINTS — these override everything else:
 COMPONENT VALUE RULE: component value = cash out of pocket only (0 if covered by points). points field: use "X miles/points redeemed" for redemptions, "est. X points earned" for earning. loyaltyHighlight = status perks and program benefits across ALL programs relevant to this trip — lounge access, hotel status perks, card travel credits. Not points math (that's in components). cardStrategy = highest-earning card per cash-paid component with multiplier.
 CARD FIELD RULE: component card field must name the specific card AND the earning reason in this format: "[Card Name] · [Nx] [category]" — e.g. "Chase Sapphire Reserve · 3x travel" or "Amex Platinum · 5x hotels". Never just list the card name alone. Pick the card with the highest multiplier for that spend category from the traveler's actual cards.
 
-JSON SCHEMA — you MUST use exactly these field names or cards will not display:
-{"tripSummary":{"origin":"","destination":"","dates":"","preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","cardStrategy":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer. (2) experiences[] is EMPTY by default. Only populate it when the user has explicitly requested specific dining or activities and asked for them to be included in their trip. Never generate experiences speculatively.
+DATE FIELDS — same rules as above: populate checkIn (YYYY-MM-DD), checkOut (YYYY-MM-DD), nights (integer) in tripSummary. Today is Monday, March 30, 2026. Carry through resolved dates from the original query unless the user changed them.\n\nJSON SCHEMA — you MUST use exactly these field names or cards will not display:\n{"tripSummary":{"origin":"","destination":"","dates":"","checkIn":"","checkOut":"","nights":0,"preferences":[],"constraints":[]},"options":[{"id":1,"tag":"","tagColor":"","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","cardStrategy":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer. (2) experiences[] is EMPTY by default. Only populate it when the user has explicitly requested specific dining or activities and asked for them to be included in their trip. Never generate experiences speculatively.
 NEVER use: results, cards, tripOptions, color, title, property, priceStructure — these will break the display.
 
 CARD MULTIPLIER ACCURACY — never fabricate or inflate earning rates:
@@ -8425,7 +8442,7 @@ Please respond now.`,
           {expandedId ? (
             <div style={{ animation: "fadeUp 0.3s ease forwards" }}>
               <button onClick={() => setExpandedId(null)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", color: "#888", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", marginBottom: "16px" }}>← Back to Grid</button>
-              <TripCard option={tripOptions.find(o => o.id === expandedId)} isExpanded={true} onToggle={() => setExpandedId(null)} onItinerary={(opt) => { mp.track("itinerary_viewed", { tag: opt.tag, headline: opt.headline }); setItineraryOption(opt); }} userProfile={userProfile} isMobile={isMobile} />
+              <TripCard option={tripOptions.find(o => o.id === expandedId)} isExpanded={true} onToggle={() => setExpandedId(null)} onItinerary={(opt) => { mp.track("itinerary_viewed", { tag: opt.tag, headline: opt.headline }); setItineraryOption(opt); }} userProfile={userProfile} isMobile={isMobile} tripSummary={tripSummary} />
               {/* Other options mini-strip */}
               <div style={{ marginTop: "20px" }}>
                 <div style={{ color: "#333", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>Other Options</div>
