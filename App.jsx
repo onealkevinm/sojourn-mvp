@@ -5662,7 +5662,7 @@ const fmtNums = (str) => {
   return String(str).replace(/(\d{4,})/g, n => parseInt(n).toLocaleString());
 };
 
-const ComponentRow = ({ label, value, detail, points, card }) => {
+const ComponentRow = ({ label, value, detail, points, card, checkIn, checkOut, nights }) => {
   const isFlight = label === "Flight" || label === "Return Flight";
   const parts = isFlight ? detail.split(" · ") : [];
   const flightNum = parts[0] || "";
@@ -5712,24 +5712,6 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
       ) : (
         <div style={{ color: "#c0b8ae", fontSize: "13px", marginBottom: "6px" }}>{fmtNums(detail)}</div>
       )}
-      {/* Affiliate link — hotel gets Booking.com, flight gets Google Flights */}
-      {label && label.toLowerCase().includes('hotel') && detail && (
-        <a href={buildBookingLink(detail.split('·')[0]?.trim(), detail.split('·')[1]?.trim() || '', '', '', 2)}
-          target="_blank" rel="noopener noreferrer"
-          style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#6a6460", fontSize: "11px", textDecoration: "none", marginBottom: "6px", borderBottom: "1px solid rgba(106,100,96,0.3)" }}>
-          Book this hotel →
-        </a>
-      )}
-      {label && (label === 'Flight' || label === 'Return Flight') && detail && (() => {
-        const fc = extractFlightCodes(detail);
-        const url = fc.origin ? buildGoogleFlightsLink(fc.origin, fc.dest, '', '', 2) : null;
-        return url ? (
-          <a href={url} target="_blank" rel="noopener noreferrer"
-            style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#6a6460", fontSize: "11px", textDecoration: "none", marginBottom: "6px", borderBottom: "1px solid rgba(106,100,96,0.3)" }}>
-            Confirm flight details →
-          </a>
-        ) : null;
-      })()}
       {card && (() => {
         // Extract multiplier from card string if present — e.g. "Chase Sapphire Reserve · 3x travel"
         const cardParts = card.split(/·|—|-(?=\s*\d)/);
@@ -5738,7 +5720,7 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
         return (
           <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(255,255,255,0.04)", borderRadius: "8px", padding: "3px 8px" }}>
             <span style={{ color: "#C9A84C", fontSize: "10px" }}>▪</span>
-            <span style={{ color: "#7a7468", fontSize: "11px" }}>{cardName}</span>
+            <span style={{ color: "#7a7468", fontSize: "11px" }}>Use your {cardName}</span>
             {cardReason && <span style={{ color: "#7a7060", fontSize: "10px" }}>· {cardReason}</span>}
           </div>
         );
@@ -6005,28 +5987,41 @@ const buildBookingLink = (hotelName, destination, checkIn, checkOut, adults) => 
   const cleanDest = destination || '';
   const numAdults = adults || 2;
 
-  const params = new URLSearchParams({
-    ss: `${cleanName} ${cleanDest}`.trim(),
-    ...(ci && { checkin: ci }),
-    ...(co && { checkout: co }),
-    group_adults: numAdults,
-    no_rooms: 1,
-    ...(BOOKING_AFFILIATE_ID !== 'YOUR_BOOKING_AFFILIATE_ID' && { aid: BOOKING_AFFILIATE_ID }),
-  });
+  // Use hotel name only as search — adding destination confuses Booking.com's matcher
+  const searchTerm = cleanName;
+  const params = new URLSearchParams();
+  params.set('ss', searchTerm);
+  if (ci) params.set('checkin', ci);
+  if (co) params.set('checkout', co);
+  params.set('group_adults', String(numAdults));
+  params.set('no_rooms', '1');
+  params.set('sb_travel_purpose', 'leisure');
+  if (BOOKING_AFFILIATE_ID && BOOKING_AFFILIATE_ID !== 'YOUR_BOOKING_AFFILIATE_ID') {
+    params.set('aid', BOOKING_AFFILIATE_ID);
+  }
   return `https://www.booking.com/searchresults.html?${params.toString()}`;
 };
 
-const buildGoogleFlightsLink = (origin, destination, departDate, returnDate, adults) => {
-  // Google Flights URL with pre-populated search
-  // Format: https://www.google.com/travel/flights?q=Flights+from+SEA+to+SBA
-  const from = (origin || '').replace(/[^A-Z]/g, '').slice(0, 3);
-  const to = (destination || '').replace(/[^A-Z]/g, '').slice(0, 3);
+const buildGoogleFlightsLink = (origin, destination, airline, departDate, adults) => {
+  // Google Flights deep link with airline, route, and date pre-populated
+  const from = (origin || '').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 3);
+  const to = (destination || '').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 3);
+
   if (!from || !to) {
-    const dest = destination || '';
-    return `https://www.google.com/travel/flights?q=${encodeURIComponent(`flights to ${dest}`)}`;
+    const dest = airline || destination || '';
+    return `https://www.google.com/travel/flights?q=${encodeURIComponent('flights to ' + dest)}`;
   }
-  const query = `Flights from ${from} to ${to}`;
-  return `https://www.google.com/travel/flights?q=${encodeURIComponent(query)}`;
+
+  // Build query: "Delta flights from SEA to SBA" — Google Flights picks up airline filter
+  const airlineName = (airline || '').split('·')[0].trim();
+  const airlinePrefix = airlineName && airlineName !== from ? airlineName + ' ' : '';
+  const query = `${airlinePrefix}flights from ${from} to ${to}`;
+
+  // Add date if available (ISO format YYYY-MM-DD)
+  const isISO = (s) => s && /^\d{4}-\d{2}-\d{2}$/.test(s);
+  const dateParam = isISO(departDate) ? `&tfs=CAE${departDate.replace(/-/g,'')}` : '';
+
+  return `https://www.google.com/travel/flights?q=${encodeURIComponent(query)}${dateParam}`;
 };
 
 const extractPartySize = (option, tripSummary) => {
@@ -6135,7 +6130,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userPr
           {/* Trip Components */}
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", marginTop: "4px", paddingTop: "14px", marginBottom: "6px" }}>
             <div style={{ color: "#666", fontSize: "10px", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>Trip Components</div>
-            {(option.components||[]).map(c => <ComponentRow key={c.label + c.value} {...c} />)}
+            {(option.components||[]).map(c => <ComponentRow key={c.label + c.value} {...c} checkIn={tripSummary?.checkIn || ''} checkOut={tripSummary?.checkOut || ''} nights={tripSummary?.nights || 0} />)}
           </div>
           {option.loyaltyHighlight && (
             <div style={{ marginTop: "12px", padding: "12px 16px", background: option.tagColor + "0e", borderRadius: "12px", border: `1px solid ${option.tagColor}22` }}>
@@ -6180,7 +6175,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userPr
           resolvedCheckOut || datesStr,
           partySize
         ) : null;
-        const flightUrl = flightCodes.origin ? buildGoogleFlightsLink(flightCodes.origin, flightCodes.dest, dates, dates, partySize) : buildGoogleFlightsLink(userProfile?.travelProfile?.homeAirport, option.subhead, dates, dates, partySize);
+        const flightUrl = flightCodes.origin ? buildGoogleFlightsLink(flightCodes.origin, flightCodes.dest, flightCodes.airline, resolvedCheckIn || datesStr, partySize) : buildGoogleFlightsLink(userProfile?.travelProfile?.homeAirport, option.subhead, '', resolvedCheckIn || datesStr, partySize);
 
         return (
           <div onClick={e => e.stopPropagation()} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.82)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
@@ -6227,7 +6222,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userPr
 
                 {/* Return flight if different destination */}
                 {returnCodes.origin && returnCodes.origin !== flightCodes.dest && (
-                  <a href={buildGoogleFlightsLink(returnCodes.origin, returnCodes.dest, dates, dates, partySize)} target="_blank" rel="noopener noreferrer"
+                  <a href={buildGoogleFlightsLink(returnCodes.origin, returnCodes.dest, returnCodes.airline, resolvedCheckOut || datesStr, partySize)} target="_blank" rel="noopener noreferrer"
                     style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", padding: "14px 16px", textDecoration: "none", cursor: "pointer" }}>
                     <div>
                       <div style={{ color: "#e8e4dc", fontSize: "13px", fontWeight: "600", marginBottom: "2px" }}>✈ Return: {returnCodes.origin} → {returnCodes.dest}</div>
@@ -6244,6 +6239,24 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userPr
             </div>
           </div>
         );
+      })()}
+      {/* Affiliate link — below card pill, separate row */}
+      {label && label.toLowerCase().includes('hotel') && detail && (
+        <a href={buildBookingLink(detail.split('·')[0]?.trim(), detail.split('·')[1]?.trim() || '', checkIn || '', checkOut || '', 2)}
+          target="_blank" rel="noopener noreferrer"
+          style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#6a6460", fontSize: "11px", textDecoration: "none", marginTop: "8px", borderBottom: "1px solid rgba(106,100,96,0.3)" }}>
+          Book this hotel →
+        </a>
+      )}
+      {label && (label === 'Flight' || label === 'Return Flight') && detail && (() => {
+        const fc = extractFlightCodes(detail);
+        const url = fc.origin ? buildGoogleFlightsLink(fc.origin, fc.dest, fc.airline, checkIn || '', 2) : null;
+        return url ? (
+          <a href={url} target="_blank" rel="noopener noreferrer"
+            style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#6a6460", fontSize: "11px", textDecoration: "none", marginTop: "8px", borderBottom: "1px solid rgba(106,100,96,0.3)" }}>
+            Confirm flight details →
+          </a>
+        ) : null;
       })()}
     </div>
   );
@@ -7456,7 +7469,7 @@ Go READY immediately if you have: any destination or travel theme, AND a party s
 IMPORTANT: Trip DURATION (e.g. "3 nights", "a week") is NOT a timeframe — it tells you how long but not when. A query with duration but no when (no season, month, or relative window) is missing timeframe and requires the question: "Was there a timeframe or specific dates you had in mind?"
 Exception: if user explicitly says they are flexible or have no dates in mind, proceed immediately.
 TWO REQUIRED CLARIFICATIONS — ask for both in one message if both are missing, otherwise ask for whichever is missing:
-1. PARTY SIZE: Must be stated or clearly implied — do NOT assume 2. "solo", "we", "family of 4", "two adults" all count.
+1. PARTY SIZE: Must be stated or clearly implied — do NOT assume 2. "solo", "we", "family of 4", "two adults" all count. Dates alone (even specific ones like "July 7-10") are NOT sufficient — if party size is missing, always ask before generating.
 2. TIMEFRAME: Must have at least a rough window — "this summer", "mid-May", "next month", "around the holidays" all count. A completely open timeframe ("whenever", no mention at all) requires asking. Use this exact phrasing: "Was there a timeframe or specific dates you had in mind?"
 
 If BOTH are missing, ask them together in one question: "How many people are traveling, and did you have a timeframe in mind?"
