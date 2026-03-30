@@ -5725,6 +5725,24 @@ const ComponentRow = ({ label, value, detail, points, card, checkIn, checkOut, n
           </div>
         );
       })()}
+      {/* Affiliate links — hotel and flight booking shortcuts */}
+      {label && label.toLowerCase().includes('hotel') && detail && (
+        <a href={buildBookingLink(detail.split('·')[0]?.trim(), detail.split('·')[1]?.trim() || '', checkIn || '', checkOut || '', 2)}
+          target="_blank" rel="noopener noreferrer"
+          style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#6a6460", fontSize: "11px", textDecoration: "none", marginTop: "8px", borderBottom: "1px solid rgba(106,100,96,0.3)" }}>
+          Book this hotel →
+        </a>
+      )}
+      {label && (label === 'Flight' || label === 'Return Flight') && detail && (() => {
+        const fc = extractFlightCodes(detail);
+        const url = fc.origin ? buildGoogleFlightsLink(fc.origin, fc.dest, fc.airline, checkIn || '', 2) : null;
+        return url ? (
+          <a href={url} target="_blank" rel="noopener noreferrer"
+            style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#6a6460", fontSize: "11px", textDecoration: "none", marginTop: "8px", borderBottom: "1px solid rgba(106,100,96,0.3)" }}>
+            Confirm flight details →
+          </a>
+        ) : null;
+      })()}
     </div>
   );
 };
@@ -6239,24 +6257,6 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userPr
             </div>
           </div>
         );
-      })()}
-      {/* Affiliate link — below card pill, within ComponentRow */}
-      {label && label.toLowerCase().includes('hotel') && detail && (
-        <a href={buildBookingLink(detail.split('·')[0]?.trim(), detail.split('·')[1]?.trim() || '', checkIn || '', checkOut || '', 2)}
-          target="_blank" rel="noopener noreferrer"
-          style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#6a6460", fontSize: "11px", textDecoration: "none", marginTop: "8px", borderBottom: "1px solid rgba(106,100,96,0.3)" }}>
-          Book this hotel →
-        </a>
-      )}
-      {label && (label === 'Flight' || label === 'Return Flight') && detail && (() => {
-        const fc = extractFlightCodes(detail);
-        const url = fc.origin ? buildGoogleFlightsLink(fc.origin, fc.dest, fc.airline, checkIn || '', 2) : null;
-        return url ? (
-          <a href={url} target="_blank" rel="noopener noreferrer"
-            style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#6a6460", fontSize: "11px", textDecoration: "none", marginTop: "8px", borderBottom: "1px solid rgba(106,100,96,0.3)" }}>
-            Confirm flight details →
-          </a>
-        ) : null;
       })()}
     </div>
   );
