@@ -5712,6 +5712,24 @@ const ComponentRow = ({ label, value, detail, points, card }) => {
       ) : (
         <div style={{ color: "#c0b8ae", fontSize: "13px", marginBottom: "6px" }}>{fmtNums(detail)}</div>
       )}
+      {/* Affiliate link — hotel gets Booking.com, flight gets Google Flights */}
+      {label && label.toLowerCase().includes('hotel') && detail && (
+        <a href={buildBookingLink(detail.split('·')[0]?.trim(), detail.split('·')[1]?.trim() || '', '', '', 2)}
+          target="_blank" rel="noopener noreferrer"
+          style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#6a6460", fontSize: "11px", textDecoration: "none", marginBottom: "6px", borderBottom: "1px solid rgba(106,100,96,0.3)" }}>
+          Book this hotel →
+        </a>
+      )}
+      {label && (label === 'Flight' || label === 'Return Flight') && detail && (() => {
+        const fc = extractFlightCodes(detail);
+        const url = fc.origin ? buildGoogleFlightsLink(fc.origin, fc.dest, '', '', 2) : null;
+        return url ? (
+          <a href={url} target="_blank" rel="noopener noreferrer"
+            style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#6a6460", fontSize: "11px", textDecoration: "none", marginBottom: "6px", borderBottom: "1px solid rgba(106,100,96,0.3)" }}>
+            Confirm flight details →
+          </a>
+        ) : null;
+      })()}
       {card && (() => {
         // Extract multiplier from card string if present — e.g. "Chase Sapphire Reserve · 3x travel"
         const cardParts = card.split(/·|—|-(?=\s*\d)/);
@@ -5945,6 +5963,104 @@ const WhyThisExpanded = ({ option, userProfile }) => {
   );
 };
 
+// ── Affiliate link builders ───────────────────────────────────────────────────
+const BOOKING_AFFILIATE_ID = "YOUR_BOOKING_AFFILIATE_ID"; // Replace after registration
+
+const buildBookingLink = (hotelName, destination, checkIn, checkOut, adults) => {
+  // Parse check-in/check-out from dates string like "April 7-12" or "June 15-20, 2025"
+  const parseCheckInOut = (datesStr, hotelDetail) => {
+    if (!datesStr) return { ci: '', co: '' };
+    // Try to extract nights from hotel detail: "Four Seasons · Santa Fe · 3 nights"
+    const nightsMatch = hotelDetail && hotelDetail.match(/(\d+)\s*night/i);
+    const nights = nightsMatch ? parseInt(nightsMatch[1]) : 3;
+    // Try ISO date
+    const isoMatch = datesStr.match(/(\d{4}-\d{2}-\d{2})/);
+    if (isoMatch) {
+      const d = new Date(isoMatch[1]);
+      const co = new Date(d); co.setDate(co.getDate() + nights);
+      return { ci: isoMatch[1], co: co.toISOString().split('T')[0] };
+    }
+    // Try "Month Day-Day" like "April 7-12"
+    const rangeMatch = datesStr.match(/(\w+)\s+(\d+)[–\-](\d+)/i);
+    if (rangeMatch) {
+      const year = new Date().getFullYear();
+      const ciStr = `${rangeMatch[1]} ${rangeMatch[2]}, ${year}`;
+      const coStr = `${rangeMatch[1]} ${rangeMatch[3]}, ${year}`;
+      const ci = new Date(ciStr); const co = new Date(coStr);
+      if (co < ci) co.setFullYear(year + 1);
+      const fmt = (d) => d.toISOString().split('T')[0];
+      return { ci: fmt(ci), co: fmt(co) };
+    }
+    // Try "Month Day" start + nights duration
+    const startMatch = datesStr.match(/(\w+\s+\d+)/);
+    if (startMatch) {
+      const ci = new Date(startMatch[1] + ', ' + new Date().getFullYear());
+      const co = new Date(ci); co.setDate(co.getDate() + nights);
+      const fmt = (d) => d.toISOString().split('T')[0];
+      return { ci: fmt(ci), co: fmt(co) };
+    }
+    return { ci: '', co: '' };
+  };
+
+  const hotelDetail = hotelName || '';
+  const { ci, co } = parseCheckInOut(checkIn, hotelDetail);
+  const cleanName = hotelName ? hotelName.split('·')[0].trim() : '';
+  const cleanDest = destination || '';
+  const numAdults = adults || 2;
+
+  // Build Booking.com search URL (property search — deep link to specific property)
+  const searchQuery = encodeURIComponent(`${cleanName} ${cleanDest}`.trim());
+  const params = new URLSearchParams({
+    ss: `${cleanName} ${cleanDest}`.trim(),
+    ...(ci && { checkin: ci }),
+    ...(co && { checkout: co }),
+    group_adults: numAdults,
+    no_rooms: 1,
+    aid: BOOKING_AFFILIATE_ID,
+  });
+  return `https://www.booking.com/searchresults.html?${params.toString()}`;
+};
+
+const buildGoogleFlightsLink = (origin, destination, departDate, returnDate, adults) => {
+  // Google Flights URL with pre-populated search
+  // Format: https://www.google.com/travel/flights?q=Flights+from+SEA+to+SBA
+  const from = (origin || '').replace(/[^A-Z]/g, '').slice(0, 3);
+  const to = (destination || '').replace(/[^A-Z]/g, '').slice(0, 3);
+  if (!from || !to) {
+    const dest = destination || '';
+    return `https://www.google.com/travel/flights?q=${encodeURIComponent(`flights to ${dest}`)}`;
+  }
+  const query = `Flights from ${from} to ${to}`;
+  return `https://www.google.com/travel/flights?q=${encodeURIComponent(query)}`;
+};
+
+const extractPartySize = (option, tripSummary) => {
+  // Try to extract party size from option subhead or trip summary
+  const sources = [option?.subhead || '', tripSummary?.preferences?.join(' ') || ''];
+  for (const s of sources) {
+    const m = s.match(/(\d+)\s*(?:people|adults|guests|travelers|pax)/i);
+    if (m) return parseInt(m[1]);
+    if (/solo/i.test(s)) return 1;
+    if (/couple|two|2/i.test(s)) return 2;
+    if (/family/i.test(s)) return 4;
+  }
+  return 2; // default
+};
+
+const extractFlightCodes = (flightDetail) => {
+  // Parse "Delta · SEA-SBA · 8:00am..." → { airline: "Delta", origin: "SEA", dest: "SBA" }
+  if (!flightDetail) return {};
+  const parts = flightDetail.split('·').map(p => p.trim());
+  const routePart = parts.find(p => /[A-Z]{3}-[A-Z]{3}/.test(p)) || '';
+  const routeMatch = routePart.match(/([A-Z]{3})-([A-Z]{3})/);
+  return {
+    airline: parts[0] || '',
+    origin: routeMatch ? routeMatch[1] : '',
+    dest: routeMatch ? routeMatch[2] : '',
+  };
+};
+
+
 const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userProfile, isMobile }) => {
   const isRec = option.id === 1;
   const [showDisclosure, setShowDisclosure] = React.useState(false);
@@ -6049,23 +6165,82 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userPr
         </div>
       )}
 
-      {/* Pricing disclosure modal */}
-      {showDisclosure && (
-        <div onClick={e => e.stopPropagation()} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
-          <div style={{ background: "#1a1814", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "16px", padding: "28px 24px", maxWidth: "380px", width: "100%" }}>
-            <div style={{ color: "#C9A84C", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Before You Book</div>
-            <div style={{ color: "#e8e4dc", fontSize: "15px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.4", marginBottom: "10px" }}>{option.headline}</div>
-            <div style={{ color: "#9a9088", fontSize: "13px", lineHeight: "1.7", marginBottom: "20px" }}>
-              Prices shown are estimates to help you compare options — not live quotes. Actual rates will vary by date, availability, and booking channel. Always verify before completing your reservation.
+      {/* Book This Trip modal — affiliate links with pre-populated context */}
+      {showDisclosure && (() => {
+        const hotelComp = (option.components || []).find(c => c && c.label && (c.label.toLowerCase().includes('hotel') || c.label.toLowerCase().includes('resort') || c.label.toLowerCase().includes('lodge') || c.label.toLowerCase().includes('inn')));
+        const flightComp = (option.components || []).find(c => c && c.label === 'Flight');
+        const returnComp = (option.components || []).find(c => c && c.label === 'Return Flight');
+        const hotelName = hotelComp ? hotelComp.detail?.split('·')[0]?.trim() : null;
+        const flightCodes = extractFlightCodes(flightComp?.detail);
+        const returnCodes = extractFlightCodes(returnComp?.detail);
+        const partySize = extractPartySize(option, userProfile?.travelProfile);
+        const dates = userProfile?.travelProfile?.dates || option.subhead || '';
+        const bookingUrl = hotelName ? buildBookingLink(hotelName, option.subhead, dates, dates, partySize) : null;
+        const flightUrl = flightCodes.origin ? buildGoogleFlightsLink(flightCodes.origin, flightCodes.dest, dates, dates, partySize) : buildGoogleFlightsLink(userProfile?.travelProfile?.homeAirport, option.subhead, dates, dates, partySize);
+
+        return (
+          <div onClick={e => e.stopPropagation()} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.82)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+            <div style={{ background: "#1a1814", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: "28px 24px", maxWidth: "400px", width: "100%" }}>
+              {/* Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
+                <div>
+                  <div style={{ color: "#C9A84C", fontSize: "10px", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>Book This Trip</div>
+                  <div style={{ color: "#e8e4dc", fontSize: "14px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.35" }}>{option.headline}</div>
+                </div>
+                <button onClick={() => setShowDisclosure(false)} style={{ background: "none", border: "none", color: "#666", fontSize: "18px", cursor: "pointer", padding: "0 0 0 12px", lineHeight: 1 }}>✕</button>
+              </div>
+
+              {/* Disclaimer */}
+              <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: "8px", padding: "10px 12px", marginBottom: "20px" }}>
+                <div style={{ color: "#6a6460", fontSize: "11px", lineHeight: "1.5" }}>Prices shown are estimates. Verify live rates before booking.</div>
+              </div>
+
+              {/* Booking links */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {/* Hotel link */}
+                {bookingUrl && (
+                  <a href={bookingUrl} target="_blank" rel="noopener noreferrer" onClick={() => { mp.track("affiliate_click", { type: "hotel", hotel: hotelName, destination: option.subhead }); }}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: option.tagColor + "15", border: `1px solid ${option.tagColor}40`, borderRadius: "12px", padding: "14px 16px", textDecoration: "none", cursor: "pointer" }}>
+                    <div>
+                      <div style={{ color: "#e8e4dc", fontSize: "13px", fontWeight: "600", marginBottom: "2px" }}>🏨 {hotelName || "Hotel"}</div>
+                      <div style={{ color: "#9a9088", fontSize: "11px" }}>Check live rates &amp; availability</div>
+                    </div>
+                    <div style={{ color: option.tagColor, fontSize: "16px" }}>→</div>
+                  </a>
+                )}
+
+                {/* Flight link */}
+                {flightUrl && (
+                  <a href={flightUrl} target="_blank" rel="noopener noreferrer" onClick={() => { mp.track("affiliate_click", { type: "flight", route: `${flightCodes.origin}-${flightCodes.dest}` }); }}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", padding: "14px 16px", textDecoration: "none", cursor: "pointer" }}>
+                    <div>
+                      <div style={{ color: "#e8e4dc", fontSize: "13px", fontWeight: "600", marginBottom: "2px" }}>✈ {flightCodes.origin && flightCodes.dest ? `${flightCodes.origin} → ${flightCodes.dest}` : "Flights"}</div>
+                      <div style={{ color: "#9a9088", fontSize: "11px" }}>Confirm flight details &amp; times</div>
+                    </div>
+                    <div style={{ color: "#9a9088", fontSize: "16px" }}>→</div>
+                  </a>
+                )}
+
+                {/* Return flight if different destination */}
+                {returnCodes.origin && returnCodes.origin !== flightCodes.dest && (
+                  <a href={buildGoogleFlightsLink(returnCodes.origin, returnCodes.dest, dates, dates, partySize)} target="_blank" rel="noopener noreferrer"
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", padding: "14px 16px", textDecoration: "none", cursor: "pointer" }}>
+                    <div>
+                      <div style={{ color: "#e8e4dc", fontSize: "13px", fontWeight: "600", marginBottom: "2px" }}>✈ Return: {returnCodes.origin} → {returnCodes.dest}</div>
+                      <div style={{ color: "#9a9088", fontSize: "11px" }}>Confirm flight details &amp; times</div>
+                    </div>
+                    <div style={{ color: "#9a9088", fontSize: "16px" }}>→</div>
+                  </a>
+                )}
+              </div>
+
+              <div style={{ color: "#444", fontSize: "10px", textAlign: "center", marginTop: "16px", lineHeight: "1.5" }}>
+                Links open with your trip details pre-filled for quick booking
+              </div>
             </div>
-            <div style={{ display: "flex", gap: "10px" }}>
-              <button onClick={() => setShowDisclosure(false)} style={{ flex: 1, padding: "11px", background: "transparent", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "10px", color: "#9a9088", fontSize: "12px", cursor: "pointer" }}>Go Back</button>
-              <button onClick={() => { setShowDisclosure(false); window.open("https://www.google.com/travel/hotels?q=" + encodeURIComponent(option.subhead || option.headline), "_blank"); }} style={{ flex: 2, padding: "11px", background: option.tagColor, border: "none", borderRadius: "10px", color: "#0a0908", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "'Playfair Display',Georgia,serif" }}>Search Live Rates →</button>
-            </div>
-            <div style={{ color: "#555", fontSize: "10px", textAlign: "center", marginTop: "12px", letterSpacing: "0.04em" }}>Opens Google Hotels in a new tab</div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };
