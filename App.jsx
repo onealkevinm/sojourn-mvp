@@ -5844,7 +5844,7 @@ const WhyThisExpanded = ({ option, userProfile }) => {
     .catch(function() { if (!cancelled) setDone(true); });
 
     return function() { cancelled = true; };
-  }, [option ? option.id : null]);
+  }, [option?.id ?? null]);
 
   var display = text || (option && option.whyThis) || '';
   var isExpanded = text && text.length > 100;
@@ -6130,7 +6130,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userPr
           {/* Trip Components */}
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", marginTop: "4px", paddingTop: "14px", marginBottom: "6px" }}>
             <div style={{ color: "#666", fontSize: "10px", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>Trip Components</div>
-            {(option.components||[]).map(c => <ComponentRow key={c.label + c.value} {...c} checkIn={tripSummary?.checkIn || ''} checkOut={tripSummary?.checkOut || ''} nights={tripSummary?.nights || 0} />)}
+            {(option.components||[]).map(c => <ComponentRow key={(c.label || '') + (c.value || '')} {...c} checkIn={tripSummary?.checkIn || ''} checkOut={tripSummary?.checkOut || ''} nights={tripSummary?.nights || 0} />)}
           </div>
           {option.loyaltyHighlight && (
             <div style={{ marginTop: "12px", padding: "12px 16px", background: option.tagColor + "0e", borderRadius: "12px", border: `1px solid ${option.tagColor}22` }}>
@@ -6156,7 +6156,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userPr
       )}
 
       {/* Book This Trip modal — affiliate links with pre-populated context */}
-      {showDisclosure && (() => {
+      {showDisclosure && option && (() => {
         const hotelComp = (option.components || []).find(c => c && c.label && (c.label.toLowerCase().includes('hotel') || c.label.toLowerCase().includes('resort') || c.label.toLowerCase().includes('lodge') || c.label.toLowerCase().includes('inn')));
         const flightComp = (option.components || []).find(c => c && c.label === 'Flight');
         const returnComp = (option.components || []).find(c => c && c.label === 'Return Flight');
@@ -6240,7 +6240,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userPr
           </div>
         );
       })()}
-      {/* Affiliate link — below card pill, separate row */}
+      {/* Affiliate link — below card pill, within ComponentRow */}
       {label && label.toLowerCase().includes('hotel') && detail && (
         <a href={buildBookingLink(detail.split('·')[0]?.trim(), detail.split('·')[1]?.trim() || '', checkIn || '', checkOut || '', 2)}
           target="_blank" rel="noopener noreferrer"
