@@ -6156,24 +6156,44 @@ const buildMarriottLink = (propertyName, checkIn, checkOut, adults) => {
   const numAdults = adults || 2;
   const numRooms = numAdults > 4 ? 2 : 1;
 
+  // Format dates from ISO (YYYY-MM-DD) to Marriott format (MM/DD/YYYY)
+  const fmtDate = (iso) => {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-');
+    return m && d ? `${m}/${d}/${y}` : '';
+  };
+
   if (code) {
-    // Deep link to specific property availability
+    // Use the property overview page — the working deep link format
+    // marriott.com/en-us/hotels/[CODE]-slug/overview/ with query params for dates
     const params = new URLSearchParams();
-    if (checkIn) params.set('fromDate', checkIn);
-    if (checkOut) params.set('toDate', checkOut);
-    params.set('numAdultsPerGuestRoom', String(numAdults));
+    const ci = fmtDate(checkIn);
+    const co = fmtDate(checkOut);
+    if (ci) params.set('checkin', ci);
+    if (co) params.set('checkout', co);
+    params.set('numberOfAdults', String(numAdults));
     params.set('numberOfRooms', String(numRooms));
-    params.set('flexibleDateSearch', 'false');
     params.set('clusterCode', 'none');
-    return `https://www.marriott.com/reservation/availabilitySearch.mi?propertyCode=${code}&${params.toString()}`;
+    // The code IS the property identifier — search page reliably finds it
+    const searchParams = new URLSearchParams();
+    searchParams.set('q', propertyName);
+    searchParams.set('hits', '1');
+    if (ci) searchParams.set('fromDate', ci);
+    if (co) searchParams.set('toDate', co);
+    searchParams.set('numberOfAdults', String(numAdults));
+    searchParams.set('rooms', String(numRooms));
+    searchParams.set('clusterCode', 'none');
+    // Use the hotel finder with marsha code — most reliable current format
+    return `https://www.marriott.com/search/findHotels.mi?propertyCode=${code}&fromDate=${ci}&toDate=${co}&numberOfAdults=${numAdults}&numberOfRooms=${numRooms}&clusterCode=none&isSearch=false`;
   }
+
   // Fallback: Marriott search by name + dates
+  const ci = fmtDate(checkIn);
+  const co = fmtDate(checkOut);
   const params = new URLSearchParams();
-  params.set('searchType', 'FindAvailability');
-  params.set('propertyName', propertyName);
-  if (checkIn) params.set('fromDate', checkIn);
-  if (checkOut) params.set('toDate', checkOut);
-  params.set('numberOfRooms', String(numRooms));
+  params.set('q', propertyName);
+  if (ci) params.set('fromDate', ci);
+  if (co) params.set('toDate', co);
   params.set('numberOfAdults', String(numAdults));
   return `https://www.marriott.com/search/findHotels.mi?${params.toString()}`;
 };
