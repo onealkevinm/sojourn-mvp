@@ -1,3 +1,94 @@
+// Marriott/RC/St.Regis — full property URL slugs for reliable deep links
+const MARRIOTT_PROPERTY_URLS = {
+  "JW Marriott Austin": "https://www.marriott.com/en-us/hotels/ausjw-jw-marriott-austin/overview/",
+  "JW Marriott Essex House New York": "https://www.marriott.com/en-us/hotels/nycex-jw-marriott-essex-house-new-york/overview/",
+  "JW Marriott Orlando Grande Lakes": "https://www.marriott.com/en-us/hotels/mcojw-jw-marriott-orlando-grande-lakes/overview/",
+  "JW Marriott Phoenix Desert Ridge": "https://www.marriott.com/en-us/hotels/phxdr-jw-marriott-phoenix-desert-ridge-resort-and-spa/overview/",
+  "JW Marriott Scottsdale Camelback Inn": "https://www.marriott.com/en-us/hotels/phxcb-jw-marriott-scottsdale-camelback-inn-resort-and-spa/overview/",
+  "Marriott Marquis San Francisco": "https://www.marriott.com/en-us/hotels/sfodt-san-francisco-marriott-marquis/overview/",
+  "Marriott Waterfront Seattle": "https://www.marriott.com/en-us/hotels/seawf-seattle-marriott-waterfront/overview/",
+  "Moana Surfrider": "https://www.marriott.com/en-us/hotels/hnlwi-moana-surfrider-a-westin-resort-and-spa-waikiki-beach/overview/",
+  "Muir Halifax": "https://www.marriott.com/en-us/hotels/yhzlc-muir-a-luxury-collection-hotel-halifax/overview/",
+  "Ritz-Carlton Chicago": "https://www.ritzcarlton.com/en/hotels/chirz-the-ritz-carlton-chicago/overview/",
+  "Ritz-Carlton Georgetown": "https://www.ritzcarlton.com/en/hotels/wasgo-the-ritz-carlton-georgetown-washington-d-c/overview/",
+  "Ritz-Carlton Half Moon Bay": "https://www.ritzcarlton.com/en/hotels/hafrz-the-ritz-carlton-half-moon-bay/overview/",
+  "Ritz-Carlton Kapalua": "https://www.ritzcarlton.com/en/hotels/jhmrz-the-ritz-carlton-maui-kapalua/overview/",
+  "SLS Beverly Hills": "https://www.marriott.com/en-us/hotels/laxls-sls-hotel-a-luxury-collection-hotel-beverly-hills/overview/",
+  "Sheraton Grand at Wild Horse Pass": "https://www.marriott.com/en-us/hotels/phxwp-sheraton-grand-at-wild-horse-pass/overview/",
+  "Solaz Los Cabos": "https://www.marriott.com/en-us/hotels/sjdlc-solaz-a-luxury-collection-resort-los-cabos/overview/",
+  "St. Regis Aspen": "https://www.marriott.com/en-us/hotels/asexr-the-st-regis-aspen-resort/overview/",
+  "St. Regis Deer Valley": "https://www.marriott.com/en-us/hotels/slcxr-the-st-regis-deer-valley/overview/",
+  "St. Regis New York": "https://www.marriott.com/en-us/hotels/nycxr-the-st-regis-new-york/overview/",
+  "St. Regis Punta Mita Resort": "https://www.marriott.com/en-us/hotels/pvrxr-the-st-regis-punta-mita-resort/overview/",
+  "St. Regis San Francisco": "https://www.marriott.com/en-us/hotels/sfoxr-the-st-regis-san-francisco/overview/",
+  "St. Regis Washington DC": "https://www.marriott.com/en-us/hotels/wassx-the-st-regis-washington-dc/overview/",
+  "The Brown Palace Hotel and Spa": "https://www.marriott.com/en-us/hotels/denak-the-brown-palace-hotel-and-spa-autograph-collection/overview/",
+  "The Houston Grand Hotel": "https://www.marriott.com/en-us/hotels/houlx-houston-grand-hotel-river-oaks/overview/",
+  "The Joseph Nashville": "https://www.marriott.com/en-us/hotels/bnalj-the-joseph-a-luxury-collection-hotel-nashville/overview/",
+  "The Los Angeles EDITION": "https://www.marriott.com/en-us/hotels/laxeb-the-west-hollywood-edition/overview/",
+  "The Mayflower Hotel": "https://www.marriott.com/en-us/hotels/wasak-the-mayflower-hotel-autograph-collection/overview/",
+  "The Miami Beach EDITION": "https://www.marriott.com/en-us/hotels/miaeb-the-miami-beach-edition/overview/",
+  "The Phoenician": "https://www.marriott.com/en-us/hotels/phxlc-the-phoenician-a-luxury-collection-resort-scottsdale/overview/",
+  "The Ritz-Carlton Amelia Island": "https://www.ritzcarlton.com/en/hotels/jaxam-the-ritz-carlton-amelia-island/overview/",
+  "The Ritz-Carlton Atlanta": "https://www.ritzcarlton.com/en/hotels/atlrz-the-ritz-carlton-atlanta/overview/",
+  "The Ritz-Carlton Bachelor Gulch": "https://www.ritzcarlton.com/en/hotels/whrrz-the-ritz-carlton-bachelor-gulch/overview/",
+  "The Ritz-Carlton Bal Harbour": "https://www.ritzcarlton.com/en/hotels/miazl-the-ritz-carlton-bal-harbour-miami/overview/",
+  "The Ritz-Carlton Boston": "https://www.ritzcarlton.com/en/hotels/bosrt-the-ritz-carlton-boston/overview/",
+  "The Ritz-Carlton Charlotte": "https://www.ritzcarlton.com/en/hotels/cltrz-the-ritz-carlton-charlotte/overview/",
+  "The Ritz-Carlton Chicago": "https://www.ritzcarlton.com/en/hotels/chirz-the-ritz-carlton-chicago/overview/",
+  "The Ritz-Carlton Dallas": "https://www.ritzcarlton.com/en/hotels/dalrz-the-ritz-carlton-dallas/overview/",
+  "The Ritz-Carlton Denver": "https://www.ritzcarlton.com/en/hotels/denrz-the-ritz-carlton-denver/overview/",
+  "The Ritz-Carlton Dove Mountain": "https://www.ritzcarlton.com/en/hotels/tusrz-the-ritz-carlton-dove-mountain/overview/",
+  "The Ritz-Carlton Fort Lauderdale": "https://www.ritzcarlton.com/en/hotels/fllrz-the-ritz-carlton-fort-lauderdale/overview/",
+  "The Ritz-Carlton Georgetown": "https://www.ritzcarlton.com/en/hotels/wasgo-the-ritz-carlton-georgetown-washington-d-c/overview/",
+  "The Ritz-Carlton Grand Cayman": "https://www.ritzcarlton.com/en/hotels/gcmrz-the-ritz-carlton-grand-cayman/overview/",
+  "The Ritz-Carlton Half Moon Bay": "https://www.ritzcarlton.com/en/hotels/hafrz-the-ritz-carlton-half-moon-bay/overview/",
+  "The Ritz-Carlton Kapalua": "https://www.ritzcarlton.com/en/hotels/jhmrz-the-ritz-carlton-maui-kapalua/overview/",
+  "The Ritz-Carlton Key Biscayne": "https://www.ritzcarlton.com/en/hotels/miakb-the-ritz-carlton-key-biscayne-miami/overview/",
+  "The Ritz-Carlton Laguna Niguel": "https://www.ritzcarlton.com/en/hotels/snarz-the-ritz-carlton-laguna-niguel/overview/",
+  "The Ritz-Carlton Lake Tahoe": "https://www.ritzcarlton.com/en/hotels/rnorz-the-ritz-carlton-lake-tahoe/overview/",
+  "The Ritz-Carlton Los Angeles": "https://www.ritzcarlton.com/en/hotels/laxlz-the-ritz-carlton-los-angeles/overview/",
+  "The Ritz-Carlton Marina del Rey": "https://www.ritzcarlton.com/en/hotels/laxmd-the-ritz-carlton-marina-del-rey/overview/",
+  "The Ritz-Carlton Maui Kapalua": "https://www.ritzcarlton.com/en/hotels/jhmrz-the-ritz-carlton-maui-kapalua/overview/",
+  "The Ritz-Carlton Mexico City": "https://www.ritzcarlton.com/en/hotels/mexrz-the-ritz-carlton-mexico-city/overview/",
+  "The Ritz-Carlton Montreal": "https://www.ritzcarlton.com/en/hotels/yulrm-the-ritz-carlton-montreal/overview/",
+  "The Ritz-Carlton Naples": "https://www.ritzcarlton.com/en/hotels/rswrz-the-ritz-carlton-naples/overview/",
+  "The Ritz-Carlton Naples Tiburon": "https://www.ritzcarlton.com/en/hotels/rswgr-the-ritz-carlton-naples-tiburon/overview/",
+  "The Ritz-Carlton New Orleans": "https://www.ritzcarlton.com/en/hotels/msyrz-the-ritz-carlton-new-orleans/overview/",
+  "The Ritz-Carlton New York Central Park": "https://www.ritzcarlton.com/en/hotels/nyccp-the-ritz-carlton-new-york-central-park/overview/",
+  "The Ritz-Carlton New York NoMad": "https://www.ritzcarlton.com/en/hotels/nycro-the-ritz-carlton-new-york-nomad/overview/",
+  "The Ritz-Carlton Orlando Grande Lakes": "https://www.ritzcarlton.com/en/hotels/mcorz-the-ritz-carlton-orlando-grande-lakes/overview/",
+  "The Ritz-Carlton Philadelphia": "https://www.ritzcarlton.com/en/hotels/phlrt-the-ritz-carlton-philadelphia/overview/",
+  "The Ritz-Carlton Rancho Mirage": "https://www.ritzcarlton.com/en/hotels/pspps-the-ritz-carlton-rancho-mirage/overview/",
+  "The Ritz-Carlton Reynolds Lake Oconee": "https://www.ritzcarlton.com/en/hotels/ahnrz-the-ritz-carlton-reynolds-lake-oconee/overview/",
+  "The Ritz-Carlton San Francisco": "https://www.ritzcarlton.com/en/hotels/sforz-the-ritz-carlton-san-francisco/overview/",
+  "The Ritz-Carlton Sarasota": "https://www.ritzcarlton.com/en/hotels/srqrz-the-ritz-carlton-sarasota/overview/",
+  "The Ritz-Carlton South Beach": "https://www.ritzcarlton.com/en/hotels/miasb-the-ritz-carlton-south-beach/overview/",
+  "The Ritz-Carlton St. Louis": "https://www.ritzcarlton.com/en/hotels/stlrz-the-ritz-carlton-st-louis/overview/",
+  "The Ritz-Carlton Toronto": "https://www.ritzcarlton.com/en/hotels/yyzrz-the-ritz-carlton-toronto/overview/",
+  "The Ritz-Carlton Tysons Corner": "https://www.ritzcarlton.com/en/hotels/wasty-the-ritz-carlton-tysons-corner/overview/",
+  "The Sky Hotel Aspen": "https://www.marriott.com/en-us/hotels/asewr-the-sky-residences-at-w-aspen/overview/",
+  "The St. Regis Aspen": "https://www.marriott.com/en-us/hotels/asexr-the-st-regis-aspen-resort/overview/",
+  "The St. Regis Aspen Resort": "https://www.marriott.com/en-us/hotels/asexr-the-st-regis-aspen-resort/overview/",
+  "The St. Regis Atlanta": "https://www.marriott.com/en-us/hotels/atlxr-the-st-regis-atlanta/overview/",
+  "The St. Regis Chicago": "https://www.marriott.com/en-us/hotels/chixr-the-st-regis-chicago/overview/",
+  "The St. Regis Deer Valley": "https://www.marriott.com/en-us/hotels/slcxr-the-st-regis-deer-valley/overview/",
+  "The St. Regis Kanai Resort": "https://www.marriott.com/en-us/hotels/cunxr-the-st-regis-kanai-resort-riviera-maya/overview/",
+  "The St. Regis Mexico City": "https://www.marriott.com/en-us/hotels/mexxr-the-st-regis-mexico-city/overview/",
+  "The St. Regis New York": "https://www.marriott.com/en-us/hotels/nycxr-the-st-regis-new-york/overview/",
+  "The St. Regis Punta Mita Resort": "https://www.marriott.com/en-us/hotels/pvrxr-the-st-regis-punta-mita-resort/overview/",
+  "The St. Regis San Francisco": "https://www.marriott.com/en-us/hotels/sfoxr-the-st-regis-san-francisco/overview/",
+  "The St. Regis Toronto": "https://www.marriott.com/en-us/hotels/yyzxr-the-st-regis-toronto/overview/",
+  "The St. Regis Washington DC": "https://www.marriott.com/en-us/hotels/wassx-the-st-regis-washington-dc/overview/",
+  "The Times Square EDITION": "https://www.marriott.com/en-us/hotels/nycte-the-times-square-edition/overview/",
+  "The Vinoy Golf Resort & Spa": "https://www.marriott.com/en-us/hotels/tpapk-the-vinoy-resort-and-golf-club-autograph-collection/overview/",
+  "The West Hollywood EDITION": "https://www.marriott.com/en-us/hotels/laxeb-the-west-hollywood-edition/overview/",
+  "The Westin Poinsett": "https://www.marriott.com/en-us/hotels/gspwi-the-westin-poinsett-greenville/overview/",
+  "W Hollywood": "https://www.marriott.com/en-us/hotels/laxwh-w-hollywood/overview/",
+  "Williamsburg Lodge": "https://www.marriott.com/en-us/hotels/phfak-williamsburg-lodge-autograph-collection/overview/",
+  "Zadun, a Ritz-Carlton Reserve": "https://www.ritzcarlton.com/en/hotels/sjdzr-zadun-los-cabos-a-ritz-carlton-reserve/overview/",
+};
+
 import React, { useState, useRef, useEffect } from "react";
 
 // ── Analytics ──────────────────────────────────────────────────────────────────
@@ -6152,39 +6243,28 @@ const MARRIOTT_CLOSED = new Set(["The Ritz-Carlton Cancun", "The Nashville EDITI
 
 const buildMarriottLink = (propertyName, checkIn, checkOut, adults) => {
   if (MARRIOTT_CLOSED && MARRIOTT_CLOSED.has(propertyName)) return null;
-  const code = MARRIOTT_PROPERTY_CODES[propertyName];
+  const baseUrl = MARRIOTT_PROPERTY_URLS[propertyName];
   const numAdults = adults || 2;
   const numRooms = numAdults > 4 ? 2 : 1;
 
   // Format dates from ISO (YYYY-MM-DD) to Marriott format (MM/DD/YYYY)
   const fmtDate = (iso) => {
-    if (!iso) return '';
+    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return '';
     const [y, m, d] = iso.split('-');
-    return m && d ? `${m}/${d}/${y}` : '';
+    return `${m}/${d}/${y}`;
   };
 
-  if (code) {
-    // Use the property overview page — the working deep link format
-    // marriott.com/en-us/hotels/[CODE]-slug/overview/ with query params for dates
+  if (baseUrl) {
+    // Direct property page with dates pre-filled — guaranteed to work
     const params = new URLSearchParams();
     const ci = fmtDate(checkIn);
     const co = fmtDate(checkOut);
-    if (ci) params.set('checkin', ci);
-    if (co) params.set('checkout', co);
+    if (ci) params.set('fromDate', ci);
+    if (co) params.set('toDate', co);
     params.set('numberOfAdults', String(numAdults));
     params.set('numberOfRooms', String(numRooms));
     params.set('clusterCode', 'none');
-    // The code IS the property identifier — search page reliably finds it
-    const searchParams = new URLSearchParams();
-    searchParams.set('q', propertyName);
-    searchParams.set('hits', '1');
-    if (ci) searchParams.set('fromDate', ci);
-    if (co) searchParams.set('toDate', co);
-    searchParams.set('numberOfAdults', String(numAdults));
-    searchParams.set('rooms', String(numRooms));
-    searchParams.set('clusterCode', 'none');
-    // Use the hotel finder with marsha code — most reliable current format
-    return `https://www.marriott.com/search/findHotels.mi?propertyCode=${code}&fromDate=${ci}&toDate=${co}&numberOfAdults=${numAdults}&numberOfRooms=${numRooms}&clusterCode=none&isSearch=false`;
+    return `${baseUrl}?${params.toString()}`;
   }
 
   // Fallback: Marriott search by name + dates
@@ -6195,44 +6275,8 @@ const buildMarriottLink = (propertyName, checkIn, checkOut, adults) => {
   if (ci) params.set('fromDate', ci);
   if (co) params.set('toDate', co);
   params.set('numberOfAdults', String(numAdults));
-  return `https://www.marriott.com/search/findHotels.mi?${params.toString()}`;
+  return `https://www.marriott.com/search/default.mi?${params.toString()}`;
 };
-
-// Hyatt property codes — verified direct booking links
-const HYATT_PROPERTY_CODES = {
-  "Alila Marea Beach": "SANEN",
-  "Alila Marea Beach Resort Encinitas": "SANEN",
-  "Alila Mayakoba": "CUNAM",
-  "Andaz Mayakoba": "CUNAM",
-  "Alila Napa Valley": "APCAL",
-  "Alila Ventana Big Sur": "SJCAL",
-  "Ventana Big Sur": "SJCAL",
-  "Andaz 5th Avenue": "NYCAM",
-  "Andaz Maui at Wailea": "OGGAW",
-  "Andaz Scottsdale Resort": "PHXAZ",
-  "Grand Hyatt Kauai": "KAUAI",
-  "Grand Hyatt Kauai Resort": "KAUAI",
-  "Hyatt Regency Maui": "OGGRM",
-  "Hyatt Regency Maui Resort": "OGGRM",
-  "Mission Pacific Beach Resort": "SANJO",
-  "Park Hyatt Aviara": "SANPA",
-  "Park Hyatt Beaver Creek": "BEAVE",
-  "Park Hyatt Chicago": "CHIPH",
-  "Park Hyatt New York": "NYCPH",
-  "Park Hyatt St. Kitts Christophe Harbour": "SKBPH",
-  "Park Hyatt Washington": "WASPH",
-  "Park Hyatt Washington DC": "WASPH",
-  "Grand Hyatt Washington": "WASGH",
-  "Thompson Nashville": "BNATH",
-  "Thompson Washington DC": "WASDH",
-  "Park Hyatt Toronto": "TORPH",
-  "The Cape Los Cabos": "CSLTH",
-  "The Cape, a Thompson Hotel": "CSLTH",
-  "Hyatt Regency Kauai": "KAUHR",
-  "Hyatt Regency Kauai Resort": "KAUHR",
-};
-
-const HYATT_CLOSED = new Set(["Calistoga Ranch"]);
 
 const buildHyattLink = (propertyName, checkIn, checkOut, adults) => {
   if (HYATT_CLOSED.has(propertyName)) return null;
