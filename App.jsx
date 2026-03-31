@@ -6171,16 +6171,16 @@ const buildMarriottLink = (propertyName, checkIn, checkOut, adults) => {
   };
 
   if (baseUrl) {
-    // Direct property page with dates pre-filled — guaranteed to work
-    const params = new URLSearchParams();
+    // Direct property page — build query string manually to avoid encoding slashes in dates
     const ci = fmtDate(checkIn);
     const co = fmtDate(checkOut);
-    if (ci) params.set('fromDate', ci);
-    if (co) params.set('toDate', co);
-    params.set('numberOfAdults', String(numAdults));
-    params.set('numberOfRooms', String(numRooms));
-    params.set('clusterCode', 'none');
-    return `${baseUrl}?${params.toString()}`;
+    const parts = [];
+    if (ci) parts.push(`fromDate=${ci}`);
+    if (co) parts.push(`toDate=${co}`);
+    parts.push(`numberOfAdults=${numAdults}`);
+    parts.push(`numberOfRooms=${numRooms}`);
+    parts.push('clusterCode=none');
+    return `${baseUrl}?${parts.join('&')}`;
   }
 
   // Fallback: Marriott search by name + dates
@@ -6193,6 +6193,42 @@ const buildMarriottLink = (propertyName, checkIn, checkOut, adults) => {
   params.set('numberOfAdults', String(numAdults));
   return `https://www.marriott.com/search/default.mi?${params.toString()}`;
 };
+
+// Hyatt property codes — verified direct booking links
+const HYATT_PROPERTY_CODES = {
+  "Alila Marea Beach": "SANEN",
+  "Alila Marea Beach Resort Encinitas": "SANEN",
+  "Alila Mayakoba": "CUNAM",
+  "Andaz Mayakoba": "CUNAM",
+  "Alila Napa Valley": "APCAL",
+  "Alila Ventana Big Sur": "SJCAL",
+  "Ventana Big Sur": "SJCAL",
+  "Andaz 5th Avenue": "NYCAM",
+  "Andaz Maui at Wailea": "OGGAW",
+  "Andaz Scottsdale Resort": "PHXAZ",
+  "Grand Hyatt Kauai": "KAUAI",
+  "Grand Hyatt Kauai Resort": "KAUAI",
+  "Grand Hyatt Washington": "WASGH",
+  "Hyatt Regency Kauai": "KAUHR",
+  "Hyatt Regency Kauai Resort": "KAUHR",
+  "Hyatt Regency Maui": "OGGRM",
+  "Hyatt Regency Maui Resort": "OGGRM",
+  "Mission Pacific Beach Resort": "SANJO",
+  "Park Hyatt Aviara": "SANPA",
+  "Park Hyatt Beaver Creek": "BEAVE",
+  "Park Hyatt Chicago": "CHIPH",
+  "Park Hyatt New York": "NYCPH",
+  "Park Hyatt St. Kitts Christophe Harbour": "SKBPH",
+  "Park Hyatt Toronto": "TORPH",
+  "Park Hyatt Washington": "WASPH",
+  "Park Hyatt Washington DC": "WASPH",
+  "The Cape Los Cabos": "CSLTH",
+  "The Cape, a Thompson Hotel": "CSLTH",
+  "Thompson Nashville": "BNATH",
+  "Thompson Washington DC": "WASDH",
+};
+
+const HYATT_CLOSED = new Set(["Calistoga Ranch"]);
 
 const buildHyattLink = (propertyName, checkIn, checkOut, adults) => {
   if (HYATT_CLOSED.has(propertyName)) return null;
