@@ -6106,7 +6106,7 @@ const HILTON_CLOSED = new Set(["Conrad Chicago", "Conrad New York Midtown"]);
 
 const buildHiltonLink = (propertyName, checkIn, checkOut, adults) => {
   if (HILTON_CLOSED.has(propertyName)) return null;
-  const code = HILTON_PROPERTY_CODES[propertyName];
+  const code = tryNameVariants(propertyName, HILTON_PROPERTY_CODES);
   const numAdults = adults || 2;
   const numRooms = numAdults > 4 ? 2 : 1;
   if (code) {
@@ -6129,121 +6129,37 @@ const buildHiltonLink = (propertyName, checkIn, checkOut, adults) => {
 };
 
 // Marriott/Ritz-Carlton/St.Regis property codes — 5-letter codes from marriott.com URLs
-const MARRIOTT_PROPERTY_CODES = {
-  "Dorado Beach, a Ritz-Carlton Reserve": "SJUDR",
-  "JW Marriott Essex House New York": "NYCEX",
-  "JW Marriott Orlando Grande Lakes": "MCOJW",
-  "JW Marriott Phoenix Desert Ridge": "PHXDR",
-  "JW Marriott Scottsdale Camelback Inn": "PHXCB",
-  "JW Marriott Austin": "AUSJW",
-  "JW Marriott Savannah Plant Riverside District": "SAVJW",
-  "Marriott Marquis San Francisco": "SFOMQ",
-  "Marriott Waterfront Seattle": "SEAWF",
-  "Moana Surfrider": "HNLWI",
-  "Muir Halifax": "YHZLC",
-  "Ritz-Carlton Georgetown": "WASGO",
-  "The Ritz-Carlton Georgetown": "WASGO",
-  "Ritz-Carlton Half Moon Bay": "HAFRZ",
-  "The Ritz-Carlton Half Moon Bay": "HAFRZ",
-  "Ritz-Carlton Kapalua": "JHMRZ",
-  "The Ritz-Carlton Kapalua": "JHMRZ",
-  "The Ritz-Carlton Maui Kapalua": "JHMRZ",
-  "The Ritz-Carlton New York Central Park": "NYCCP",
-  "The Ritz-Carlton New York NoMad": "NYCNR",
-  "SLS Beverly Hills": "LAXLS",
-  "Sheraton Grand at Wild Horse Pass": "PHXWP",
-  "The Canyon Suites at the Phoenician": "PHXPC",
-  "The Phoenician": "PHXPH",
-  "The St. Regis Aspen": "ASNXR",
-  "St. Regis Aspen": "ASNXR",
-  "The St. Regis Aspen Resort": "ASNXR",
-  "The St. Regis Bal Harbour Resort": "MIAXR",
-  "The St. Regis Atlanta": "ATLXR",
-  "The St. Regis Chicago": "CHIXR",
-  "The St. Regis Houston": "HOUXR",
-  "The St. Regis Kanai Resort": "CUNXR",
-  "The St. Regis Los Cabos at Quivira": "SJDXR",
-  "The St. Regis Mexico City": "MEXSR",
-  "St. Regis Mexico City": "MEXSR",
-  "The St. Regis New York": "NYCXR",
-  "St. Regis New York": "NYCXR",
-  "The St. Regis Punta Mita Resort": "PVRXR",
-  "St. Regis Punta Mita Resort": "PVRXR",
-  "The St. Regis San Francisco": "SFOXR",
-  "St. Regis San Francisco": "SFOXR",
-  "The St. Regis Toronto": "YYZTG",
-  "St. Regis Washington DC": "WASXR",
-  "The St. Regis Washington DC": "WASXR",
-  "Zadun, a Ritz-Carlton Reserve": "SJDZR",
-  // Additional verified codes from full property lookup
-  "JW Marriott Austin": "AUSJW",
-  "Marriott Marquis San Francisco": "SFODT",
-  "Marriott Waterfront Seattle": "SEAWF",
-  "Solaz Los Cabos": "SJDLC",
-  "St. Regis Aspen": "ASEXR",
-  "The St. Regis Aspen Resort": "ASEXR",
-  "St. Regis Deer Valley": "SLCXR",
-  "The St. Regis Deer Valley": "SLCXR",
-  "St. Regis Washington DC": "WASSX",
-  "The St. Regis Washington DC": "WASSX",
-  "The Brown Palace Hotel and Spa": "DENAK",
-  "The Houston Grand Hotel": "HOULX",
-  "The Joseph Nashville": "BNALJ",
-  "The Los Angeles EDITION": "LAXED",
-  "The West Hollywood EDITION": "LAXEB",
-  "The Mayflower Hotel": "WASAK",
-  "The Miami Beach EDITION": "MIAEB",
-  "The Phoenician": "PHXLC",
-  "The Ritz-Carlton Amelia Island": "JAXAM",
-  "The Ritz-Carlton Atlanta": "ATLRZ",
-  "The Ritz-Carlton Bachelor Gulch": "WHRRZ",
-  "The Ritz-Carlton Bal Harbour": "MIAZL",
-  "The Ritz-Carlton Boston": "BOSRT",
-  "The Ritz-Carlton Charlotte": "CLTRZ",
-  "The Ritz-Carlton Chicago": "CHIRZ",
-  "The Ritz-Carlton Dallas": "DALRZ",
-  "The Ritz-Carlton Denver": "DENRZ",
-  "The Ritz-Carlton Dove Mountain": "TUSRZ",
-  "The Ritz-Carlton Fort Lauderdale": "FLLRZ",
-  "The Ritz-Carlton Grand Cayman": "GCMRZ",
-  "The Ritz-Carlton Key Biscayne": "MIAKB",
-  "The Ritz-Carlton Laguna Niguel": "SNARZ",
-  "The Ritz-Carlton Lake Tahoe": "RNORZ",
-  "The Ritz-Carlton Los Angeles": "LAXLZ",
-  "The Ritz-Carlton Marina del Rey": "LAXMD",
-  "The Ritz-Carlton Mexico City": "MEXRZ",
-  "The Ritz-Carlton Montreal": "YULRM",
-  "The Ritz-Carlton Naples": "RSWRZ",
-  "The Ritz-Carlton Naples Tiburon": "RSWGR",
-  "The Ritz-Carlton New Orleans": "MSYRZ",
-  "The Ritz-Carlton New York NoMad": "NYCRO",
-  "The Ritz-Carlton Orlando Grande Lakes": "MCORZ",
-  "The Ritz-Carlton Philadelphia": "PHLRT",
-  "The Ritz-Carlton Rancho Mirage": "PSPPS",
-  "The Ritz-Carlton Reynolds Lake Oconee": "AHNRZ",
-  "The Ritz-Carlton San Francisco": "SFORZ",
-  "The Ritz-Carlton Sarasota": "SRQRZ",
-  "The Ritz-Carlton South Beach": "MIASB",
-  "The Ritz-Carlton St. Louis": "STLRZ",
-  "The Ritz-Carlton Toronto": "YYZRZ",
-  "The Ritz-Carlton Tysons Corner": "WASTY",
-  "The Sky Hotel Aspen": "ASEWR",
-  "The St. Regis Atlanta": "ATLXR",
-  "The St. Regis Mexico City": "MEXXR",
-  "The St. Regis Toronto": "YYZXR",
-  "The Times Square EDITION": "NYCTE",
-  "The Vinoy Golf Resort & Spa": "TPAPK",
-  "The Westin Poinsett": "GSPWI",
-  "W Hollywood": "LAXWH",
-  "Williamsburg Lodge": "PHFAK",
-};
+
 
 // Permanently closed Marriott properties
 const MARRIOTT_CLOSED = new Set(["The Ritz-Carlton Cancun", "The Nashville EDITION", "The Ritz-Carlton Houston"]);
 
+// Normalize hotel name for lookup — handles comma variants, missing "The", etc.
+const normalizeHotelName = (name) => {
+  if (!name) return '';
+  return name
+    .replace(/,\s*/g, ' ')        // "Ritz-Carlton, Chicago" → "Ritz-Carlton Chicago"
+    .replace(/\bSt\b\.?/g, 'St.') // "St Regis" or "St. Regis" → "St. Regis"
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+// Try all reasonable name variants for a lookup table
+const tryNameVariants = (name, table) => {
+  if (!name) return null;
+  const norm = normalizeHotelName(name);
+  const withThe = norm.startsWith('The ') ? norm : 'The ' + norm;
+  const withoutThe = norm.startsWith('The ') ? norm.slice(4) : norm;
+  return table[name] || table[norm] || table[withThe] || table[withoutThe] || null;
+};
+
+const lookupMarriottUrl = (propertyName) => {
+  return tryNameVariants(propertyName, MARRIOTT_PROPERTY_URLS);
+};
+
 const buildMarriottLink = (propertyName, checkIn, checkOut, adults) => {
   if (MARRIOTT_CLOSED && MARRIOTT_CLOSED.has(propertyName)) return null;
-  const baseUrl = MARRIOTT_PROPERTY_URLS[propertyName];
+  const baseUrl = lookupMarriottUrl(propertyName);
   const numAdults = adults || 2;
   const numRooms = numAdults > 4 ? 2 : 1;
 
@@ -6280,7 +6196,7 @@ const buildMarriottLink = (propertyName, checkIn, checkOut, adults) => {
 
 const buildHyattLink = (propertyName, checkIn, checkOut, adults) => {
   if (HYATT_CLOSED.has(propertyName)) return null;
-  const code = HYATT_PROPERTY_CODES[propertyName];
+  const code = tryNameVariants(propertyName, HYATT_PROPERTY_CODES);
   const numAdults = adults || 2;
   const numRooms = numAdults > 4 ? 2 : 1;
   if (code) {
@@ -6331,7 +6247,7 @@ const IHG_BRAND_URLS = {
 };
 
 const buildIHGLink = (propertyName, checkIn, checkOut, adults) => {
-  const code = IHG_PROPERTY_CODES[propertyName];
+  const code = tryNameVariants(propertyName, IHG_PROPERTY_CODES);
   const numAdults = adults || 2;
   const numRooms = numAdults > 4 ? 2 : 1;
 
