@@ -16,7 +16,6 @@ const MARRIOTT_PROPERTY_URLS = {
   "SLS Beverly Hills": "https://www.marriott.com/en-us/hotels/laxls-sls-hotel-a-luxury-collection-hotel-beverly-hills/overview/",
   "Sheraton Grand at Wild Horse Pass": "https://www.marriott.com/en-us/hotels/phxwp-sheraton-grand-at-wild-horse-pass/overview/",
   "Solaz Los Cabos": "https://www.marriott.com/en-us/hotels/sjdlc-solaz-a-luxury-collection-resort-los-cabos/overview/",
-  "St. Regis Aspen": "https://www.marriott.com/en-us/hotels/asexr-the-st-regis-aspen-resort/overview/",
   "St. Regis Deer Valley": "https://www.marriott.com/en-us/hotels/slcxr-the-st-regis-deer-valley/overview/",
   "St. Regis New York": "https://www.marriott.com/en-us/hotels/nycxr-the-st-regis-new-york/overview/",
   "St. Regis Punta Mita Resort": "https://www.marriott.com/en-us/hotels/pvrxr-the-st-regis-punta-mita-resort/overview/",
@@ -25,7 +24,6 @@ const MARRIOTT_PROPERTY_URLS = {
   "The Brown Palace Hotel and Spa": "https://www.marriott.com/en-us/hotels/denak-the-brown-palace-hotel-and-spa-autograph-collection/overview/",
   "The Houston Grand Hotel": "https://www.marriott.com/en-us/hotels/houlx-houston-grand-hotel-river-oaks/overview/",
   "The Joseph Nashville": "https://www.marriott.com/en-us/hotels/bnalj-the-joseph-a-luxury-collection-hotel-nashville/overview/",
-  "The Los Angeles EDITION": "https://www.marriott.com/en-us/hotels/laxeb-the-west-hollywood-edition/overview/",
   "The Mayflower Hotel": "https://www.marriott.com/en-us/hotels/wasak-the-mayflower-hotel-autograph-collection/overview/",
   "The Miami Beach EDITION": "https://www.marriott.com/en-us/hotels/miaeb-the-miami-beach-edition/overview/",
   "The Phoenician": "https://www.marriott.com/en-us/hotels/phxlc-the-phoenician-a-luxury-collection-resort-scottsdale/overview/",
@@ -6228,29 +6226,55 @@ const HYATT_PROPERTY_CODES = {
   "Thompson Washington DC": "WASDH",
 };
 
+// Hyatt property overview URLs — reliable landing pages like Marriott approach
+const HYATT_PROPERTY_URLS = {
+  "Alila Marea Beach": "https://www.hyatt.com/hotel/california/alila-marea-beach-resort-encinitas/sanen",
+  "Alila Marea Beach Resort Encinitas": "https://www.hyatt.com/hotel/california/alila-marea-beach-resort-encinitas/sanen",
+  "Alila Mayakoba": "https://www.hyatt.com/hotel/mexico/alila-mayakoba/cunam",
+  "Alila Napa Valley": "https://www.hyatt.com/hotel/california/alila-napa-valley/apcal",
+  "Alila Ventana Big Sur": "https://www.hyatt.com/hotel/california/alila-ventana-big-sur/sjcal",
+  "Andaz 5th Avenue": "https://www.hyatt.com/andaz/en-US/nycam-andaz-5th-avenue",
+  "Andaz Maui at Wailea": "https://www.hyatt.com/andaz/en-US/oggaw-andaz-maui-at-wailea-resort",
+  "Andaz Mayakoba": "https://www.hyatt.com/hotel/mexico/alila-mayakoba/cunam",
+  "Andaz Scottsdale Resort": "https://www.hyatt.com/andaz/en-US/phxaz-andaz-scottsdale-resort-and-bungalows",
+  "Grand Hyatt Kauai": "https://www.hyatt.com/grand-hyatt/en-US/kauai-grand-hyatt-kauai-resort-and-spa",
+  "Grand Hyatt Kauai Resort": "https://www.hyatt.com/grand-hyatt/en-US/kauai-grand-hyatt-kauai-resort-and-spa",
+  "Grand Hyatt Washington": "https://www.hyatt.com/grand-hyatt/en-US/wasgh-grand-hyatt-washington",
+  "Hyatt Regency Kauai": "https://www.hyatt.com/hyatt-regency/en-US/kauhr-hyatt-regency-kauai-resort-and-spa",
+  "Hyatt Regency Kauai Resort": "https://www.hyatt.com/hyatt-regency/en-US/kauhr-hyatt-regency-kauai-resort-and-spa",
+  "Hyatt Regency Maui": "https://www.hyatt.com/hyatt-regency/en-US/oggrm-hyatt-regency-maui-resort-and-spa",
+  "Hyatt Regency Maui Resort": "https://www.hyatt.com/hyatt-regency/en-US/oggrm-hyatt-regency-maui-resort-and-spa",
+  "Mission Pacific Beach Resort": "https://www.hyatt.com/hotel/california/mission-pacific-beach-resort/sanjo",
+  "Park Hyatt Aviara": "https://www.hyatt.com/park-hyatt/en-US/sanpa-park-hyatt-aviara-resort-golf-club-and-spa",
+  "Park Hyatt Beaver Creek": "https://www.hyatt.com/park-hyatt/en-US/beave-park-hyatt-beaver-creek-resort-and-spa",
+  "Park Hyatt Chicago": "https://www.hyatt.com/park-hyatt/en-US/chiph-park-hyatt-chicago",
+  "Park Hyatt New York": "https://www.hyatt.com/park-hyatt/en-US/nycph-park-hyatt-new-york",
+  "Park Hyatt St. Kitts Christophe Harbour": "https://www.hyatt.com/park-hyatt/en-US/skbph-park-hyatt-st-kitts-christophe-harbour",
+  "Park Hyatt Toronto": "https://www.hyatt.com/park-hyatt/en-US/torph-park-hyatt-toronto",
+  "Park Hyatt Washington": "https://www.hyatt.com/park-hyatt/en-US/wasph-park-hyatt-washington-dc",
+  "Park Hyatt Washington DC": "https://www.hyatt.com/park-hyatt/en-US/wasph-park-hyatt-washington-dc",
+  "The Cape Los Cabos": "https://www.hyatt.com/thompson-hotels/en-US/cslth-the-cape",
+  "The Cape, a Thompson Hotel": "https://www.hyatt.com/thompson-hotels/en-US/cslth-the-cape",
+  "Thompson Nashville": "https://www.hyatt.com/thompson-hotels/en-US/bnath-thompson-nashville",
+  "Thompson Washington DC": "https://www.hyatt.com/thompson-hotels/en-US/wasdh-thompson-washington-dc",
+  "Ventana Big Sur": "https://www.hyatt.com/hotel/california/alila-ventana-big-sur/sjcal",
+};
+
 const HYATT_CLOSED = new Set(["Calistoga Ranch"]);
 
 const buildHyattLink = (propertyName, checkIn, checkOut, adults) => {
   if (HYATT_CLOSED.has(propertyName)) return null;
-  const code = tryNameVariants(propertyName, HYATT_PROPERTY_CODES);
+  const baseUrl = tryNameVariants(propertyName, HYATT_PROPERTY_URLS);
   const numAdults = adults || 2;
-  const numRooms = numAdults > 4 ? 2 : 1;
-  if (code) {
-    const params = new URLSearchParams();
-    if (checkIn) params.set('checkinDate', checkIn);
-    if (checkOut) params.set('checkoutDate', checkOut);
-    params.set('rooms', String(numRooms));
-    params.set('adults', String(numAdults));
-    params.set('kids', '0');
-    params.set('rate', 'Standard');
-    return `https://www.hyatt.com/shop/rooms/${code.toLowerCase()}?${params.toString()}`;
+  if (baseUrl) {
+    // Link to property overview page — consistent with Marriott approach
+    return baseUrl;
   }
-  // Fallback: Hyatt search
+  // Fallback: Hyatt search by name
   const params = new URLSearchParams();
   params.set('location', propertyName);
   if (checkIn) params.set('checkinDate', checkIn);
   if (checkOut) params.set('checkoutDate', checkOut);
-  params.set('rooms', String(numRooms));
   params.set('adults', String(numAdults));
   return `https://www.hyatt.com/en-US/search?${params.toString()}`;
 };
@@ -6280,6 +6304,14 @@ const IHG_BRAND_URLS = {
   "SFOHA": "intercontinental",
   "WASHA": "intercontinental",
   "ATLFX": "hotelindigo",
+  "OMABS": "kimptonhotels",
+  "WDCHG": "kimptonhotels",
+  "ORDTG": "kimptonhotels",
+  "LAXWE": "kimptonhotels",
+  "PSPNP": "kimptonhotels",
+  "GCMSE": "kimptonhotels",
+  "MIASS": "kimptonhotels",
+  "ATLKM": "kimptonhotels",
 };
 
 const buildIHGLink = (propertyName, checkIn, checkOut, adults) => {
@@ -6298,17 +6330,18 @@ const buildIHGLink = (propertyName, checkIn, checkOut, adults) => {
     params.set('qAdlt', String(numAdults));
     params.set('qChld', '0');
     if (checkIn) {
-      const d = new Date(checkIn);
+      const d = new Date(checkIn + 'T12:00:00');
       if (!isNaN(d)) {
         params.set('qCiD', String(d.getDate()));
-        params.set('qCiMy', String(d.getMonth()).padStart(2,'0') + String(d.getFullYear()));
+        // IHG uses 2-digit month (1-indexed) + 4-digit year: "062026" for June 2026
+        params.set('qCiMy', String(d.getMonth() + 1).padStart(2,'0') + String(d.getFullYear()));
       }
     }
     if (checkOut) {
-      const d = new Date(checkOut);
+      const d = new Date(checkOut + 'T12:00:00');
       if (!isNaN(d)) {
         params.set('qCoD', String(d.getDate()));
-        params.set('qCoMy', String(d.getMonth()).padStart(2,'0') + String(d.getFullYear()));
+        params.set('qCoMy', String(d.getMonth() + 1).padStart(2,'0') + String(d.getFullYear()));
       }
     }
     params.set('setPMCookies', 'true');
