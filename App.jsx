@@ -1322,7 +1322,7 @@ const QUALITY_SIGNALS_DB = {
   "Conrad New York Downtown": { tier: "luxury", notes: "Battery Park NYC, Hilton Honors" },
   "Intercontinental Mark Hopkins": { tier: "luxury", notes: "Nob Hill SF, IHG" },
   "Intercontinental Chicago": { tier: "luxury", notes: "Magnificent Mile, IHG" },
-  "Kimpton Cottonwood": { tier: "premium", cn_hot_list: true, notes: "Boise ID, IHG/Kimpton" },
+  "Kimpton Cottonwood": { tier: "premium", cn_hot_list: true, notes: "Omaha NE, IHG/Kimpton" },
 
   // ── PREMIUM BRANDED ───────────────────────────────────────────────────────────
   "Grand Hyatt Washington": { tier: "premium", notes: "Downtown DC, World of Hyatt" },
@@ -6314,64 +6314,42 @@ const IHG_BRAND_URLS = {
   "ATLKM": "kimptonhotels",
 };
 
+// IHG / Kimpton direct hotel URLs
+const IHG_PROPERTY_URLS = {
+  "Hotel Indigo Atlanta Midtown": "https://www.ihg.com/hotelindigo/hotels/us/en/atlanta/atlfx/hoteldetail",
+  "Hotel Zena Washington DC": "https://www.viceroyhotelsandresorts.com/zena",
+  "InterContinental Chicago Magnificent Mile": "https://www.ihg.com/intercontinental/hotels/us/en/chicago/ordha/hoteldetail",
+  "InterContinental Mark Hopkins Hotel": "https://www.ihg.com/intercontinental/hotels/us/en/san-francisco/sfoha/hoteldetail",
+  "Intercontinental Chicago": "https://www.ihg.com/intercontinental/hotels/us/en/chicago/ordha/hoteldetail",
+  "Intercontinental Mark Hopkins": "https://www.ihg.com/intercontinental/hotels/us/en/san-francisco/sfoha/hoteldetail",
+  "Kimpton Cottonwood": "https://www.thecottonwoodhotel.com/",
+  "Kimpton George Hotel": "https://www.hotelgeorge.com/",
+  "Kimpton Gray Hotel": "https://www.grayhotelchicago.com/",
+  "Kimpton La Peer Hotel": "https://www.lapeerhotel.com/",
+  "Kimpton Rowan Palm Springs": "https://www.rowanpalmsprings.com/",
+  "Kimpton Seafire Resort + Spa": "https://www.seafireresortandspa.com/",
+  "Kimpton Surfcomber Hotel": "https://www.surfcomber.com/",
+  "Kimpton Sylvan Hotel": "https://www.thesylvanhotel.com/",
+  "Regent Santa Monica Beach": "https://santamonica.regenthotels.com/",
+  "The Willard InterContinental": "https://washington.intercontinental.com/",
+};
+
+
 const buildIHGLink = (propertyName, checkIn, checkOut, adults) => {
+  // Check direct URL table first (Kimpton own sites + IHG hoteldetail pages)
+  const directUrl = tryNameVariants(propertyName, IHG_PROPERTY_URLS);
+  if (directUrl) return directUrl;
+
+  // Fallback: construct hoteldetail URL from property code
   const code = tryNameVariants(propertyName, IHG_PROPERTY_CODES);
-  const numAdults = adults || 2;
-  const numRooms = numAdults > 4 ? 2 : 1;
-
   if (code) {
-    const brand = IHG_BRAND_URLS[code] || "kimptonhotels";
-    // Build IHG deep link with property code + dates
-    const params = new URLSearchParams();
-    params.set('fromRedirect', 'true');
-    params.set('qSrt', 'sBR');
-    params.set('qSlH', code);
-    params.set('qRms', String(numRooms));
-    params.set('qAdlt', String(numAdults));
-    params.set('qChld', '0');
-    if (checkIn) {
-      const d = new Date(checkIn + 'T12:00:00');
-      if (!isNaN(d)) {
-        params.set('qCiD', String(d.getDate()));
-        // IHG uses 2-digit month (1-indexed) + 4-digit year: "062026" for June 2026
-        params.set('qCiMy', String(d.getMonth() + 1).padStart(2,'0') + String(d.getFullYear()));
-      }
-    }
-    if (checkOut) {
-      const d = new Date(checkOut + 'T12:00:00');
-      if (!isNaN(d)) {
-        params.set('qCoD', String(d.getDate()));
-        params.set('qCoMy', String(d.getMonth() + 1).padStart(2,'0') + String(d.getFullYear()));
-      }
-    }
-    params.set('setPMCookies', 'true');
-    return `https://www.ihg.com/${brand}/hotels/us/en/find-hotels/select-roomrate?${params.toString()}`;
+    const brand = IHG_BRAND_URLS[code] || 'kimptonhotels';
+    return `https://www.ihg.com/${brand}/hotels/us/en/find-hotels/hotel/list?q=${encodeURIComponent(propertyName)}`;
   }
-  // Fallback
-  const params = new URLSearchParams();
-  params.set('query', propertyName);
-  if (checkIn) params.set('checkInDate', checkIn);
-  if (checkOut) params.set('checkOutDate', checkOut);
-  params.set('numberOfAdults', String(numAdults));
-  params.set('numberOfRooms', String(numRooms));
-  return `https://www.ihg.com/hotels/us/en/find-hotels/hotel/list?${params.toString()}`;
+  return `https://www.ihg.com/hotels/us/en/find-hotels/hotel/list?q=${encodeURIComponent(propertyName)}`;
 };
 
-// ── Hotel brand detection — which chain URL builder to use ─────────────────────
-const detectHotelBrand = (hotelName, hotelNotes) => {
-  const n = (hotelName || '').toLowerCase();
-  const notes = (hotelNotes || '').toLowerCase();
-  const combined = n + ' ' + notes;
 
-  if (/hilton|waldorf astoria|waldorf-astoria|doubletree|embassy suites|curio collection|tapestry|hampton inn|homewood suites|home2 suites|signia|canopy|tempo|graduate/.test(combined)) return 'hilton';
-  if (/marriott|westin|sheraton|w hotel|autograph collection|le meridien|renaissance|st\. regis|ritz.carlton|jw marriott|moxy|aloft|ac hotel|element|edition hotel|bulgari|four points|delta hotel/.test(combined)) return 'marriott';
-  if (/hyatt|andaz|park hyatt|grand hyatt|thompson hotel|alila|ventana|caption|centric|exhale|miraval|dreams|secrets|zoetry|sunscape|now|breathless/.test(combined)) return 'hyatt';
-  if (/ihg|intercontinental|kimpton|holiday inn|crowne plaza|hotel indigo|six senses|regent|avid|atwell|voco|staybridge|candlewood|even hotels/.test(combined)) return 'ihg';
-
-  return null; // independent — use Booking.com or Google Hotels
-};
-
-// ── Main hotel link builder — routes to chain site or Booking.com ─────────────
 const buildHotelLink = (hotelName, hotelNotes, checkIn, checkOut, adults) => {
   const brand = detectHotelBrand(hotelName, hotelNotes);
   const num = adults || 2;
