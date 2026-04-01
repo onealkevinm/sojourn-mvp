@@ -1455,7 +1455,7 @@ const QUALITY_SIGNALS_DB = {
   "The Times Square EDITION": { tier: "luxury", notes: "Midtown NYC, Ian Schrager/Marriott Bonvoy" },
   "The West Hollywood EDITION": { tier: "luxury", notes: "West Hollywood CA, Ian Schrager/Marriott Bonvoy" },
   "The Los Angeles EDITION": { tier: "luxury", notes: "Downtown LA, Ian Schrager/Marriott Bonvoy" },
-  "The Chicago EDITION": { tier: "luxury", notes: "Dearborn Street Chicago, Ian Schrager/Marriott Bonvoy" },
+  "The Chicago EDITION": { tier: "luxury", notes: "Dearborn Street Chicago, Marriott Bonvoy — not yet open" },
   "The Miami Beach EDITION": { tier: "luxury", notes: "Miami Beach FL, Ian Schrager/Marriott Bonvoy" },
   "The Nashville EDITION": { tier: "luxury", notes: "SoBro Nashville, Marriott Bonvoy" },
   "The Barcelona EDITION": { tier: "luxury", notes: "Passeig de Gracia Barcelona, Marriott Bonvoy" },
@@ -5755,6 +5755,419 @@ const fmtNums = (str) => {
   return String(str).replace(/(\d{4,})/g, n => parseInt(n).toLocaleString());
 };
 
+// ── Airline direct booking links ─────────────────────────────────────────────
+const AIRLINE_BASE_URLS = {
+  'delta':     'https://www.delta.com/us/en/flight-search/book-a-flight',
+  'united':    'https://www.united.com/en/us/fsr/choose-flights',
+  'american':  'https://www.aa.com/booking/find-flights',
+  'alaska':    'https://www.alaskaair.com/booking/choose-flights',
+  'southwest': 'https://www.southwest.com/air/booking/',
+  'jetblue':   'https://www.jetblue.com/booking/flights',
+  'lufthansa': 'https://www.lufthansa.com/us/en/homepage',
+  'british':   'https://www.britishairways.com/en-us/flights',
+  'air canada':'https://www.aircanada.com/us/en/aco/home.html',
+  'hawaiian':  'https://www.hawaiianairlines.com/book-a-flight',
+  'frontier':  'https://www.flyfrontier.com/',
+  'spirit':    'https://www.spirit.com/',
+};
+
+const buildAirlineLink = (airlineName, origin, dest, date) => {
+  if (!airlineName) return null;
+  const a = airlineName.toLowerCase();
+
+  // Match airline name to key
+  let key = null;
+  if (a.includes('delta')) key = 'delta';
+  else if (a.includes('united')) key = 'united';
+  else if (a.includes('american')) key = 'american';
+  else if (a.includes('alaska')) key = 'alaska';
+  else if (a.includes('southwest')) key = 'southwest';
+  else if (a.includes('jetblue')) key = 'jetblue';
+  else if (a.includes('lufthansa')) key = 'lufthansa';
+  else if (a.includes('british')) key = 'british';
+  else if (a.includes('air canada')) key = 'air canada';
+  else if (a.includes('hawaiian')) key = 'hawaiian';
+  else if (a.includes('frontier')) key = 'frontier';
+  else if (a.includes('spirit')) key = 'spirit';
+
+  if (key && AIRLINE_BASE_URLS[key]) return AIRLINE_BASE_URLS[key];
+
+  // Fallback: Google Flights with airline filter
+  const q = [airlineName, origin, dest].filter(Boolean).join(' ');
+  return `https://www.google.com/travel/flights?q=${encodeURIComponent(q)}`;
+};
+
+
+// Normalize hotel name for lookup — handles comma variants, missing "The", etc.
+const normalizeHotelName = (name) => {
+  if (!name) return '';
+  return name
+    .replace(/,\s*/g, ' ')        // "Ritz-Carlton, Chicago" → "Ritz-Carlton Chicago"
+    .replace(/\bSt\b\.?/g, 'St.') // "St Regis" or "St. Regis" → "St. Regis"
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+// Try all reasonable name variants for a lookup table
+const tryNameVariants = (name, table) => {
+  if (!name) return null;
+  const norm = normalizeHotelName(name);
+  const withThe = norm.startsWith('The ') ? norm : 'The ' + norm;
+  const withoutThe = norm.startsWith('The ') ? norm.slice(4) : norm;
+  return table[name] || table[norm] || table[withThe] || table[withoutThe] || null;
+};
+
+
+// Hilton property codes (ctyhocn) — verified direct booking links
+const HILTON_PROPERTY_CODES = {
+  "Cameo Beverly Hills": "LAXMCOL",
+  "Conrad Fort Lauderdale": "FLLCICI",
+  "Conrad Fort Lauderdale Beach": "FLLCICI",
+  "Conrad Los Angeles": "LAXAVCI",
+  "Conrad New York Downtown": "NYCCICI",
+  "Conrad Orlando": "ORLCICI",
+  "Conrad Punta de Mita": "PVRPMCI",
+  "Conrad Tulum Riviera Maya": "CUNCICI",
+  "Conrad Washington DC": "WASCI",
+  "Embassy Suites Portland Downtown": "PDXPSES",
+  "Hilton Los Cabos Beach & Golf Resort": "SJDLCHH",
+  "Hotel del Coronado": "SANQQQQ",
+  "La Quinta Resort & Club": "PSPLQQQ",
+  "Oceana Santa Monica": "SMOOLOL",
+  "The Boulders Resort & Spa": "PHXRSQQ",
+  "The Charter Hotel Seattle": "SEACUQQ",
+  "The Virginian Lynchburg": "LYHCUQQ",
+  "Waldorf Astoria Atlanta Buckhead": "ATLWAWA",
+  "Waldorf Astoria Beverly Hills": "LAXWAWA",
+  "Waldorf Astoria Chicago": "CHIWAWA",
+  "Waldorf Astoria Las Vegas": "LASWDWA",
+  "Waldorf Astoria Los Cabos Pedregal": "SJDWAWA",
+  "Waldorf Astoria Monarch Beach Resort": "SNAMOWA",
+  "Waldorf Astoria New York": "NYCWAWA",
+  "Waldorf Astoria Park City": "SLCDMWA",
+  "Waldorf Astoria Riviera Maya": "CUNWAWA",
+  "Waldorf Astoria Washington DC": "DCAWAWA",
+  "Arizona Biltmore": "PHXBMOL",
+};
+
+// Permanently closed Hilton properties — suppress booking link
+const HILTON_CLOSED = new Set(["Conrad Chicago", "Conrad New York Midtown"]);
+
+const buildHiltonLink = (propertyName, checkIn, checkOut, adults) => {
+  if (HILTON_CLOSED.has(propertyName)) return null;
+  const code = tryNameVariants(propertyName, HILTON_PROPERTY_CODES);
+  const numAdults = adults || 2;
+  const numRooms = numAdults > 4 ? 2 : 1;
+  if (code) {
+    // Deep link directly to this property's booking page
+    const params = new URLSearchParams();
+    if (checkIn) params.set('arrivalDate', checkIn);
+    if (checkOut) params.set('departureDate', checkOut);
+    params.set('room1NumAdults', String(numAdults));
+    params.set('numberOfRooms', String(numRooms));
+    return `https://www.hilton.com/en/book/reservation/rooms/?ctyhocn=${code}&${params.toString()}`;
+  }
+  // Fallback: Hilton search with name + dates
+  const params = new URLSearchParams();
+  params.set('q', propertyName);
+  if (checkIn) params.set('arrivalDate', checkIn);
+  if (checkOut) params.set('departureDate', checkOut);
+  params.set('numAdults', String(numAdults));
+  params.set('numRooms', String(numRooms));
+  return `https://www.hilton.com/en/search/?${params.toString()}`;
+};
+
+// Marriott/Ritz-Carlton/St.Regis property codes — 5-letter codes from marriott.com URLs
+
+
+// Permanently closed Marriott properties
+const MARRIOTT_CLOSED = new Set(["The Ritz-Carlton Cancun", "The Nashville EDITION", "The Ritz-Carlton Houston", "The Chicago EDITION"]);
+
+const lookupMarriottUrl = (propertyName) => {
+  return tryNameVariants(propertyName, MARRIOTT_PROPERTY_URLS);
+};
+
+const buildMarriottLink = (propertyName, checkIn, checkOut, adults) => {
+  if (MARRIOTT_CLOSED && MARRIOTT_CLOSED.has(propertyName)) return null;
+  const baseUrl = lookupMarriottUrl(propertyName);
+  const numAdults = adults || 2;
+  const numRooms = numAdults > 4 ? 2 : 1;
+
+  // Format dates from ISO (YYYY-MM-DD) to Marriott format (MM/DD/YYYY)
+  const fmtDate = (iso) => {
+    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return '';
+    const [y, m, d] = iso.split('-');
+    return `${m}/${d}/${y}`;
+  };
+
+  if (baseUrl) {
+    // Direct property page — build query string manually to avoid encoding slashes in dates
+    const ci = fmtDate(checkIn);
+    const co = fmtDate(checkOut);
+    const parts = [];
+    if (ci) parts.push(`fromDate=${ci}`);
+    if (co) parts.push(`toDate=${co}`);
+    parts.push(`numberOfAdults=${numAdults}`);
+    parts.push(`numberOfRooms=${numRooms}`);
+    parts.push('clusterCode=none');
+    return `${baseUrl}?${parts.join('&')}`;
+  }
+
+  // Fallback: Marriott search by name + dates
+  const ci = fmtDate(checkIn);
+  const co = fmtDate(checkOut);
+  const params = new URLSearchParams();
+  params.set('q', propertyName);
+  if (ci) params.set('fromDate', ci);
+  if (co) params.set('toDate', co);
+  params.set('numberOfAdults', String(numAdults));
+  return `https://www.marriott.com/search/default.mi?${params.toString()}`;
+};
+
+// Hyatt property codes — verified direct booking links
+const HYATT_PROPERTY_CODES = {
+  "Alila Marea Beach": "SANEN",
+  "Alila Marea Beach Resort Encinitas": "SANEN",
+  "Alila Mayakoba": "CUNAM",
+  "Andaz Mayakoba": "CUNAM",
+  "Alila Napa Valley": "APCAL",
+  "Alila Ventana Big Sur": "SJCAL",
+  "Ventana Big Sur": "SJCAL",
+  "Andaz 5th Avenue": "NYCAM",
+  "Andaz Maui at Wailea": "OGGAW",
+  "Andaz Scottsdale Resort": "PHXAZ",
+  "Grand Hyatt Kauai": "KAUAI",
+  "Grand Hyatt Kauai Resort": "KAUAI",
+  "Grand Hyatt Washington": "WASGH",
+  "Hyatt Regency Kauai": "KAUHR",
+  "Hyatt Regency Kauai Resort": "KAUHR",
+  "Hyatt Regency Maui": "OGGRM",
+  "Hyatt Regency Maui Resort": "OGGRM",
+  "Mission Pacific Beach Resort": "SANJO",
+  "Park Hyatt Aviara": "SANPA",
+  "Park Hyatt Beaver Creek": "BEAVE",
+  "Park Hyatt Chicago": "CHIPH",
+  "Park Hyatt New York": "NYCPH",
+  "Park Hyatt St. Kitts Christophe Harbour": "SKBPH",
+  "Park Hyatt Toronto": "TORPH",
+  "Park Hyatt Washington": "WASPH",
+  "Park Hyatt Washington DC": "WASPH",
+  "The Cape Los Cabos": "CSLTH",
+  "The Cape, a Thompson Hotel": "CSLTH",
+  "Thompson Nashville": "BNATH",
+  "Thompson Washington DC": "WASDH",
+};
+
+// Hyatt property overview URLs — reliable landing pages like Marriott approach
+const HYATT_PROPERTY_URLS = {
+  "Alila Marea Beach": "https://www.hyatt.com/hotel/california/alila-marea-beach-resort-encinitas/sanen",
+  "Alila Marea Beach Resort Encinitas": "https://www.hyatt.com/hotel/california/alila-marea-beach-resort-encinitas/sanen",
+  "Alila Mayakoba": "https://www.hyatt.com/hotel/mexico/alila-mayakoba/cunam",
+  "Alila Napa Valley": "https://www.hyatt.com/hotel/california/alila-napa-valley/apcal",
+  "Alila Ventana Big Sur": "https://www.hyatt.com/hotel/california/alila-ventana-big-sur/sjcal",
+  "Andaz 5th Avenue": "https://www.hyatt.com/andaz/en-US/nycam-andaz-5th-avenue",
+  "Andaz Maui at Wailea": "https://www.hyatt.com/andaz/en-US/oggaw-andaz-maui-at-wailea-resort",
+  "Andaz Mayakoba": "https://www.hyatt.com/hotel/mexico/alila-mayakoba/cunam",
+  "Andaz Scottsdale Resort": "https://www.hyatt.com/andaz/en-US/phxaz-andaz-scottsdale-resort-and-bungalows",
+  "Grand Hyatt Kauai": "https://www.hyatt.com/grand-hyatt/en-US/kauai-grand-hyatt-kauai-resort-and-spa",
+  "Grand Hyatt Kauai Resort": "https://www.hyatt.com/grand-hyatt/en-US/kauai-grand-hyatt-kauai-resort-and-spa",
+  "Grand Hyatt Washington": "https://www.hyatt.com/grand-hyatt/en-US/wasgh-grand-hyatt-washington",
+  "Hyatt Regency Kauai": "https://www.hyatt.com/hyatt-regency/en-US/kauhr-hyatt-regency-kauai-resort-and-spa",
+  "Hyatt Regency Kauai Resort": "https://www.hyatt.com/hyatt-regency/en-US/kauhr-hyatt-regency-kauai-resort-and-spa",
+  "Hyatt Regency Maui": "https://www.hyatt.com/hyatt-regency/en-US/oggrm-hyatt-regency-maui-resort-and-spa",
+  "Hyatt Regency Maui Resort": "https://www.hyatt.com/hyatt-regency/en-US/oggrm-hyatt-regency-maui-resort-and-spa",
+  "Mission Pacific Beach Resort": "https://www.hyatt.com/hotel/california/mission-pacific-beach-resort/sanjo",
+  "Park Hyatt Aviara": "https://www.hyatt.com/park-hyatt/en-US/sanpa-park-hyatt-aviara-resort-golf-club-and-spa",
+  "Park Hyatt Beaver Creek": "https://www.hyatt.com/park-hyatt/en-US/beave-park-hyatt-beaver-creek-resort-and-spa",
+  "Park Hyatt Chicago": "https://www.hyatt.com/park-hyatt/en-US/chiph-park-hyatt-chicago",
+  "Park Hyatt New York": "https://www.hyatt.com/park-hyatt/en-US/nycph-park-hyatt-new-york",
+  "Park Hyatt St. Kitts Christophe Harbour": "https://www.hyatt.com/park-hyatt/en-US/skbph-park-hyatt-st-kitts-christophe-harbour",
+  "Park Hyatt Toronto": "https://www.hyatt.com/park-hyatt/en-US/torph-park-hyatt-toronto",
+  "Park Hyatt Washington": "https://www.hyatt.com/park-hyatt/en-US/wasph-park-hyatt-washington-dc",
+  "Park Hyatt Washington DC": "https://www.hyatt.com/park-hyatt/en-US/wasph-park-hyatt-washington-dc",
+  "The Cape Los Cabos": "https://www.hyatt.com/thompson-hotels/en-US/cslth-the-cape",
+  "The Cape, a Thompson Hotel": "https://www.hyatt.com/thompson-hotels/en-US/cslth-the-cape",
+  "Thompson Nashville": "https://www.hyatt.com/thompson-hotels/en-US/bnath-thompson-nashville",
+  "Thompson Washington DC": "https://www.hyatt.com/thompson-hotels/en-US/wasdh-thompson-washington-dc",
+  "Ventana Big Sur": "https://www.hyatt.com/hotel/california/alila-ventana-big-sur/sjcal",
+};
+
+const HYATT_CLOSED = new Set(["Calistoga Ranch"]);
+
+const buildHyattLink = (propertyName, checkIn, checkOut, adults) => {
+  if (HYATT_CLOSED.has(propertyName)) return null;
+  const baseUrl = tryNameVariants(propertyName, HYATT_PROPERTY_URLS);
+  const numAdults = adults || 2;
+  if (baseUrl) {
+    // Link to property overview page — consistent with Marriott approach
+    return baseUrl;
+  }
+  // Fallback: Hyatt search by name
+  const params = new URLSearchParams();
+  params.set('location', propertyName);
+  if (checkIn) params.set('checkinDate', checkIn);
+  if (checkOut) params.set('checkoutDate', checkOut);
+  params.set('adults', String(numAdults));
+  return `https://www.hyatt.com/en-US/search?${params.toString()}`;
+};
+
+// IHG property codes (qSlH parameter)
+const IHG_PROPERTY_CODES = {
+  "Regent Santa Monica Beach": "SMOOA",
+  "InterContinental Chicago Magnificent Mile": "ORDHA",
+  "Intercontinental Chicago": "ORDHA",
+  "InterContinental Mark Hopkins Hotel": "SFOHA",
+  "Intercontinental Mark Hopkins": "SFOHA",
+  "Kimpton George Hotel": "WDCHG",
+  "Kimpton Gray Hotel": "ORDTG",
+  "Kimpton La Peer Hotel": "LAXWE",
+  "Kimpton Rowan Palm Springs": "PSPNP",
+  "Kimpton Seafire Resort + Spa": "GCMSE",
+  "Kimpton Surfcomber Hotel": "MIASS",
+  "Kimpton Sylvan Hotel": "ATLKM",
+  "The Willard InterContinental": "WASHA",
+  "Hotel Indigo Atlanta Midtown": "ATLFX",
+};
+
+// IHG brand URL prefixes by property type
+const IHG_BRAND_URLS = {
+  "SMOOA": "regent",
+  "ORDHA": "intercontinental",
+  "SFOHA": "intercontinental",
+  "WASHA": "intercontinental",
+  "ATLFX": "hotelindigo",
+  "OMABS": "kimptonhotels",
+  "WDCHG": "kimptonhotels",
+  "ORDTG": "kimptonhotels",
+  "LAXWE": "kimptonhotels",
+  "PSPNP": "kimptonhotels",
+  "GCMSE": "kimptonhotels",
+  "MIASS": "kimptonhotels",
+  "ATLKM": "kimptonhotels",
+};
+
+// IHG / Kimpton direct hotel URLs
+const IHG_PROPERTY_URLS = {
+  "Hotel Indigo Atlanta Midtown": "https://www.ihg.com/hotelindigo/hotels/us/en/atlanta/atlfx/hoteldetail",
+  "Hotel Zena Washington DC": "https://www.viceroyhotelsandresorts.com/zena",
+  "InterContinental Chicago Magnificent Mile": "https://www.ihg.com/intercontinental/hotels/us/en/chicago/ordha/hoteldetail",
+  "InterContinental Mark Hopkins Hotel": "https://www.ihg.com/intercontinental/hotels/us/en/san-francisco/sfoha/hoteldetail",
+  "Intercontinental Chicago": "https://www.ihg.com/intercontinental/hotels/us/en/chicago/ordha/hoteldetail",
+  "Intercontinental Mark Hopkins": "https://www.ihg.com/intercontinental/hotels/us/en/san-francisco/sfoha/hoteldetail",
+  "Kimpton Cottonwood": "https://www.thecottonwoodhotel.com/",
+  "Kimpton George Hotel": "https://www.hotelgeorge.com/",
+  "Kimpton Gray Hotel": "https://www.grayhotelchicago.com/",
+  "Kimpton La Peer Hotel": "https://www.lapeerhotel.com/",
+  "Kimpton Rowan Palm Springs": "https://www.rowanpalmsprings.com/",
+  "Kimpton Seafire Resort + Spa": "https://www.seafireresortandspa.com/",
+  "Kimpton Surfcomber Hotel": "https://www.surfcomber.com/",
+  "Kimpton Sylvan Hotel": "https://www.thesylvanhotel.com/",
+  "Regent Santa Monica Beach": "https://santamonica.regenthotels.com/",
+  "The Willard InterContinental": "https://washington.intercontinental.com/",
+};
+
+
+const buildIHGLink = (propertyName, checkIn, checkOut, adults) => {
+  // Check direct URL table first (Kimpton own sites + IHG hoteldetail pages)
+  const directUrl = tryNameVariants(propertyName, IHG_PROPERTY_URLS);
+  if (directUrl) return directUrl;
+
+  // Fallback: construct hoteldetail URL from property code
+  const code = tryNameVariants(propertyName, IHG_PROPERTY_CODES);
+  if (code) {
+    const brand = IHG_BRAND_URLS[code] || 'kimptonhotels';
+    return `https://www.ihg.com/${brand}/hotels/us/en/find-hotels/hotel/list?q=${encodeURIComponent(propertyName)}`;
+  }
+  return `https://www.ihg.com/hotels/us/en/find-hotels/hotel/list?q=${encodeURIComponent(propertyName)}`;
+};
+
+
+
+const buildBookingLink = (hotelName, destination, checkIn, checkOut, adults) => {
+  // checkIn/checkOut can be ISO dates (YYYY-MM-DD) from tripSummary, or fallback to date string parsing
+  const isISO = (s) => s && /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+  let ci = isISO(checkIn) ? checkIn : '';
+  let co = isISO(checkOut) ? checkOut : '';
+
+  // Fallback: parse from human-readable date string if ISO not available
+  if (!ci && checkIn) {
+    const rangeMatch = checkIn.match(/(\w+)\s+(\d+)[–\-](\d+)/i);
+    if (rangeMatch) {
+      const year = new Date().getFullYear();
+      const d1 = new Date(`${rangeMatch[1]} ${rangeMatch[2]}, ${year}`);
+      const d2 = new Date(`${rangeMatch[1]} ${rangeMatch[3]}, ${year}`);
+      if (d2 < d1) d2.setFullYear(year + 1);
+      ci = d1.toISOString().split('T')[0];
+      co = d2.toISOString().split('T')[0];
+    } else {
+      // Extract nights from hotel detail if available
+      const nightsMatch = (hotelName || '').match(/(\d+)\s*night/i);
+      const nights = nightsMatch ? parseInt(nightsMatch[1]) : 0;
+      const startMatch = checkIn.match(/(\w+\s+\d+)/);
+      if (startMatch) {
+        const d = new Date(startMatch[1] + ', ' + new Date().getFullYear());
+        if (!isNaN(d)) {
+          ci = d.toISOString().split('T')[0];
+          if (nights > 0) {
+            const d2 = new Date(d); d2.setDate(d2.getDate() + nights);
+            co = d2.toISOString().split('T')[0];
+          }
+        }
+      }
+    }
+  }
+
+  const cleanName = hotelName ? hotelName.split('·')[0].trim() : '';
+  const cleanDest = destination || '';
+  const numAdults = adults || 2;
+
+  // Use hotel name only as search — adding destination confuses Booking.com's matcher
+  const searchTerm = cleanName;
+  const params = new URLSearchParams();
+  params.set('ss', searchTerm);
+  if (ci) params.set('checkin', ci);
+  if (co) params.set('checkout', co);
+  params.set('group_adults', String(numAdults));
+  params.set('no_rooms', '1');
+  params.set('sb_travel_purpose', 'leisure');
+  if (BOOKING_AFFILIATE_ID && BOOKING_AFFILIATE_ID !== 'YOUR_BOOKING_AFFILIATE_ID') {
+    params.set('aid', BOOKING_AFFILIATE_ID);
+  }
+  return `https://www.booking.com/searchresults.html?${params.toString()}`;
+};
+
+const detectHotelBrand = (hotelName, hotelNotes) => {
+  const n = (hotelName || '').toLowerCase();
+  const notes = (hotelNotes || '').toLowerCase();
+  const combined = n + ' ' + notes;
+  if (/hilton|waldorf astoria|waldorf-astoria|doubletree|embassy suites|curio collection|tapestry|hampton inn|homewood suites|home2 suites|signia|canopy|lxr hotels/.test(combined)) return 'hilton';
+  if (/marriott|westin|sheraton|w hotel|autograph collection|le meridien|renaissance|st\.\s*regis|ritz.?carlton|jw marriott|moxy|aloft|ac hotel|element|edition hotel|luxury collection|pendry/.test(combined)) return 'marriott';
+  if (/hyatt|andaz|park hyatt|grand hyatt|thompson hotel|alila|hyatt regency|hyatt centric|miraval|ventana/.test(combined)) return 'hyatt';
+  if (/\bihg\b|intercontinental|kimpton|crowne plaza|hotel indigo|six senses|regent hotel/.test(combined)) return 'ihg';
+  return null;
+};
+
+const buildHotelLink = (hotelName, hotelNotes, checkIn, checkOut, adults) => {
+  const brand = detectHotelBrand(hotelName, hotelNotes);
+  const num = adults || 2;
+  let url = null;
+
+  switch (brand) {
+    case 'hilton':   url = buildHiltonLink(hotelName, checkIn, checkOut, num); break;
+    case 'marriott': url = buildMarriottLink(hotelName, checkIn, checkOut, num); break;
+    case 'hyatt':    url = buildHyattLink(hotelName, checkIn, checkOut, num); break;
+    case 'ihg':      url = buildIHGLink(hotelName, checkIn, checkOut, num); break;
+    default: break;
+  }
+
+  // If chain returned null (permanently closed) or no brand — return null
+  // Caller will show "Book directly — coming soon" placeholder
+  return url || null;
+};
+
+
+
 const ComponentRow = ({ label, value, detail, points, card, checkIn, checkOut, nights }) => {
   const isFlight = label === "Flight" || label === "Return Flight";
   const parts = isFlight ? detail.split(" · ") : [];
@@ -6076,408 +6489,10 @@ const WhyThisExpanded = ({ option, userProfile }) => {
 
 // ── Affiliate link builders ───────────────────────────────────────────────────
 
-// ── Airline direct booking links ─────────────────────────────────────────────
-const AIRLINE_BASE_URLS = {
-  'delta':     'https://www.delta.com/us/en/flight-search/book-a-flight',
-  'united':    'https://www.united.com/en/us/fsr/choose-flights',
-  'american':  'https://www.aa.com/booking/find-flights',
-  'alaska':    'https://www.alaskaair.com/booking/choose-flights',
-  'southwest': 'https://www.southwest.com/air/booking/',
-  'jetblue':   'https://www.jetblue.com/booking/flights',
-  'lufthansa': 'https://www.lufthansa.com/us/en/homepage',
-  'british':   'https://www.britishairways.com/en-us/flights',
-  'air canada':'https://www.aircanada.com/us/en/aco/home.html',
-  'hawaiian':  'https://www.hawaiianairlines.com/book-a-flight',
-  'frontier':  'https://www.flyfrontier.com/',
-  'spirit':    'https://www.spirit.com/',
-};
-
-const buildAirlineLink = (airlineName, origin, dest, date) => {
-  if (!airlineName) return null;
-  const a = airlineName.toLowerCase();
-
-  // Match airline name to key
-  let key = null;
-  if (a.includes('delta')) key = 'delta';
-  else if (a.includes('united')) key = 'united';
-  else if (a.includes('american')) key = 'american';
-  else if (a.includes('alaska')) key = 'alaska';
-  else if (a.includes('southwest')) key = 'southwest';
-  else if (a.includes('jetblue')) key = 'jetblue';
-  else if (a.includes('lufthansa')) key = 'lufthansa';
-  else if (a.includes('british')) key = 'british';
-  else if (a.includes('air canada')) key = 'air canada';
-  else if (a.includes('hawaiian')) key = 'hawaiian';
-  else if (a.includes('frontier')) key = 'frontier';
-  else if (a.includes('spirit')) key = 'spirit';
-
-  if (key && AIRLINE_BASE_URLS[key]) return AIRLINE_BASE_URLS[key];
-
-  // Fallback: Google Flights with airline filter
-  const q = [airlineName, origin, dest].filter(Boolean).join(' ');
-  return `https://www.google.com/travel/flights?q=${encodeURIComponent(q)}`;
-};
-
 const BOOKING_AFFILIATE_ID = "YOUR_BOOKING_AFFILIATE_ID"; // Replace after registration
 
 // ── Chain hotel direct booking URL constructors ───────────────────────────────
 // Each chain supports deep links to specific properties with pre-filled dates
-
-// Hilton property codes (ctyhocn) — verified direct booking links
-const HILTON_PROPERTY_CODES = {
-  "Cameo Beverly Hills": "LAXMCOL",
-  "Conrad Fort Lauderdale": "FLLCICI",
-  "Conrad Fort Lauderdale Beach": "FLLCICI",
-  "Conrad Los Angeles": "LAXAVCI",
-  "Conrad New York Downtown": "NYCCICI",
-  "Conrad Orlando": "ORLCICI",
-  "Conrad Punta de Mita": "PVRPMCI",
-  "Conrad Tulum Riviera Maya": "CUNCICI",
-  "Conrad Washington DC": "WASCI",
-  "Embassy Suites Portland Downtown": "PDXPSES",
-  "Hilton Los Cabos Beach & Golf Resort": "SJDLCHH",
-  "Hotel del Coronado": "SANQQQQ",
-  "La Quinta Resort & Club": "PSPLQQQ",
-  "Oceana Santa Monica": "SMOOLOL",
-  "The Boulders Resort & Spa": "PHXRSQQ",
-  "The Charter Hotel Seattle": "SEACUQQ",
-  "The Virginian Lynchburg": "LYHCUQQ",
-  "Waldorf Astoria Atlanta Buckhead": "ATLWAWA",
-  "Waldorf Astoria Beverly Hills": "LAXWAWA",
-  "Waldorf Astoria Chicago": "CHIWAWA",
-  "Waldorf Astoria Las Vegas": "LASWDWA",
-  "Waldorf Astoria Los Cabos Pedregal": "SJDWAWA",
-  "Waldorf Astoria Monarch Beach Resort": "SNAMOWA",
-  "Waldorf Astoria New York": "NYCWAWA",
-  "Waldorf Astoria Park City": "SLCDMWA",
-  "Waldorf Astoria Riviera Maya": "CUNWAWA",
-  "Waldorf Astoria Washington DC": "DCAWAWA",
-  "Arizona Biltmore": "PHXBMOL",
-};
-
-// Permanently closed Hilton properties — suppress booking link
-const HILTON_CLOSED = new Set(["Conrad Chicago", "Conrad New York Midtown"]);
-
-const buildHiltonLink = (propertyName, checkIn, checkOut, adults) => {
-  if (HILTON_CLOSED.has(propertyName)) return null;
-  const code = tryNameVariants(propertyName, HILTON_PROPERTY_CODES);
-  const numAdults = adults || 2;
-  const numRooms = numAdults > 4 ? 2 : 1;
-  if (code) {
-    // Deep link directly to this property's booking page
-    const params = new URLSearchParams();
-    if (checkIn) params.set('arrivalDate', checkIn);
-    if (checkOut) params.set('departureDate', checkOut);
-    params.set('room1NumAdults', String(numAdults));
-    params.set('numberOfRooms', String(numRooms));
-    return `https://www.hilton.com/en/book/reservation/rooms/?ctyhocn=${code}&${params.toString()}`;
-  }
-  // Fallback: Hilton search with name + dates
-  const params = new URLSearchParams();
-  params.set('q', propertyName);
-  if (checkIn) params.set('arrivalDate', checkIn);
-  if (checkOut) params.set('departureDate', checkOut);
-  params.set('numAdults', String(numAdults));
-  params.set('numRooms', String(numRooms));
-  return `https://www.hilton.com/en/search/?${params.toString()}`;
-};
-
-// Marriott/Ritz-Carlton/St.Regis property codes — 5-letter codes from marriott.com URLs
-
-
-// Permanently closed Marriott properties
-const MARRIOTT_CLOSED = new Set(["The Ritz-Carlton Cancun", "The Nashville EDITION", "The Ritz-Carlton Houston"]);
-
-// Normalize hotel name for lookup — handles comma variants, missing "The", etc.
-const normalizeHotelName = (name) => {
-  if (!name) return '';
-  return name
-    .replace(/,\s*/g, ' ')        // "Ritz-Carlton, Chicago" → "Ritz-Carlton Chicago"
-    .replace(/\bSt\b\.?/g, 'St.') // "St Regis" or "St. Regis" → "St. Regis"
-    .replace(/\s+/g, ' ')
-    .trim();
-};
-
-// Try all reasonable name variants for a lookup table
-const tryNameVariants = (name, table) => {
-  if (!name) return null;
-  const norm = normalizeHotelName(name);
-  const withThe = norm.startsWith('The ') ? norm : 'The ' + norm;
-  const withoutThe = norm.startsWith('The ') ? norm.slice(4) : norm;
-  return table[name] || table[norm] || table[withThe] || table[withoutThe] || null;
-};
-
-const lookupMarriottUrl = (propertyName) => {
-  return tryNameVariants(propertyName, MARRIOTT_PROPERTY_URLS);
-};
-
-const buildMarriottLink = (propertyName, checkIn, checkOut, adults) => {
-  if (MARRIOTT_CLOSED && MARRIOTT_CLOSED.has(propertyName)) return null;
-  const baseUrl = lookupMarriottUrl(propertyName);
-  const numAdults = adults || 2;
-  const numRooms = numAdults > 4 ? 2 : 1;
-
-  // Format dates from ISO (YYYY-MM-DD) to Marriott format (MM/DD/YYYY)
-  const fmtDate = (iso) => {
-    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return '';
-    const [y, m, d] = iso.split('-');
-    return `${m}/${d}/${y}`;
-  };
-
-  if (baseUrl) {
-    // Direct property page — build query string manually to avoid encoding slashes in dates
-    const ci = fmtDate(checkIn);
-    const co = fmtDate(checkOut);
-    const parts = [];
-    if (ci) parts.push(`fromDate=${ci}`);
-    if (co) parts.push(`toDate=${co}`);
-    parts.push(`numberOfAdults=${numAdults}`);
-    parts.push(`numberOfRooms=${numRooms}`);
-    parts.push('clusterCode=none');
-    return `${baseUrl}?${parts.join('&')}`;
-  }
-
-  // Fallback: Marriott search by name + dates
-  const ci = fmtDate(checkIn);
-  const co = fmtDate(checkOut);
-  const params = new URLSearchParams();
-  params.set('q', propertyName);
-  if (ci) params.set('fromDate', ci);
-  if (co) params.set('toDate', co);
-  params.set('numberOfAdults', String(numAdults));
-  return `https://www.marriott.com/search/default.mi?${params.toString()}`;
-};
-
-// Hyatt property codes — verified direct booking links
-const HYATT_PROPERTY_CODES = {
-  "Alila Marea Beach": "SANEN",
-  "Alila Marea Beach Resort Encinitas": "SANEN",
-  "Alila Mayakoba": "CUNAM",
-  "Andaz Mayakoba": "CUNAM",
-  "Alila Napa Valley": "APCAL",
-  "Alila Ventana Big Sur": "SJCAL",
-  "Ventana Big Sur": "SJCAL",
-  "Andaz 5th Avenue": "NYCAM",
-  "Andaz Maui at Wailea": "OGGAW",
-  "Andaz Scottsdale Resort": "PHXAZ",
-  "Grand Hyatt Kauai": "KAUAI",
-  "Grand Hyatt Kauai Resort": "KAUAI",
-  "Grand Hyatt Washington": "WASGH",
-  "Hyatt Regency Kauai": "KAUHR",
-  "Hyatt Regency Kauai Resort": "KAUHR",
-  "Hyatt Regency Maui": "OGGRM",
-  "Hyatt Regency Maui Resort": "OGGRM",
-  "Mission Pacific Beach Resort": "SANJO",
-  "Park Hyatt Aviara": "SANPA",
-  "Park Hyatt Beaver Creek": "BEAVE",
-  "Park Hyatt Chicago": "CHIPH",
-  "Park Hyatt New York": "NYCPH",
-  "Park Hyatt St. Kitts Christophe Harbour": "SKBPH",
-  "Park Hyatt Toronto": "TORPH",
-  "Park Hyatt Washington": "WASPH",
-  "Park Hyatt Washington DC": "WASPH",
-  "The Cape Los Cabos": "CSLTH",
-  "The Cape, a Thompson Hotel": "CSLTH",
-  "Thompson Nashville": "BNATH",
-  "Thompson Washington DC": "WASDH",
-};
-
-// Hyatt property overview URLs — reliable landing pages like Marriott approach
-const HYATT_PROPERTY_URLS = {
-  "Alila Marea Beach": "https://www.hyatt.com/hotel/california/alila-marea-beach-resort-encinitas/sanen",
-  "Alila Marea Beach Resort Encinitas": "https://www.hyatt.com/hotel/california/alila-marea-beach-resort-encinitas/sanen",
-  "Alila Mayakoba": "https://www.hyatt.com/hotel/mexico/alila-mayakoba/cunam",
-  "Alila Napa Valley": "https://www.hyatt.com/hotel/california/alila-napa-valley/apcal",
-  "Alila Ventana Big Sur": "https://www.hyatt.com/hotel/california/alila-ventana-big-sur/sjcal",
-  "Andaz 5th Avenue": "https://www.hyatt.com/andaz/en-US/nycam-andaz-5th-avenue",
-  "Andaz Maui at Wailea": "https://www.hyatt.com/andaz/en-US/oggaw-andaz-maui-at-wailea-resort",
-  "Andaz Mayakoba": "https://www.hyatt.com/hotel/mexico/alila-mayakoba/cunam",
-  "Andaz Scottsdale Resort": "https://www.hyatt.com/andaz/en-US/phxaz-andaz-scottsdale-resort-and-bungalows",
-  "Grand Hyatt Kauai": "https://www.hyatt.com/grand-hyatt/en-US/kauai-grand-hyatt-kauai-resort-and-spa",
-  "Grand Hyatt Kauai Resort": "https://www.hyatt.com/grand-hyatt/en-US/kauai-grand-hyatt-kauai-resort-and-spa",
-  "Grand Hyatt Washington": "https://www.hyatt.com/grand-hyatt/en-US/wasgh-grand-hyatt-washington",
-  "Hyatt Regency Kauai": "https://www.hyatt.com/hyatt-regency/en-US/kauhr-hyatt-regency-kauai-resort-and-spa",
-  "Hyatt Regency Kauai Resort": "https://www.hyatt.com/hyatt-regency/en-US/kauhr-hyatt-regency-kauai-resort-and-spa",
-  "Hyatt Regency Maui": "https://www.hyatt.com/hyatt-regency/en-US/oggrm-hyatt-regency-maui-resort-and-spa",
-  "Hyatt Regency Maui Resort": "https://www.hyatt.com/hyatt-regency/en-US/oggrm-hyatt-regency-maui-resort-and-spa",
-  "Mission Pacific Beach Resort": "https://www.hyatt.com/hotel/california/mission-pacific-beach-resort/sanjo",
-  "Park Hyatt Aviara": "https://www.hyatt.com/park-hyatt/en-US/sanpa-park-hyatt-aviara-resort-golf-club-and-spa",
-  "Park Hyatt Beaver Creek": "https://www.hyatt.com/park-hyatt/en-US/beave-park-hyatt-beaver-creek-resort-and-spa",
-  "Park Hyatt Chicago": "https://www.hyatt.com/park-hyatt/en-US/chiph-park-hyatt-chicago",
-  "Park Hyatt New York": "https://www.hyatt.com/park-hyatt/en-US/nycph-park-hyatt-new-york",
-  "Park Hyatt St. Kitts Christophe Harbour": "https://www.hyatt.com/park-hyatt/en-US/skbph-park-hyatt-st-kitts-christophe-harbour",
-  "Park Hyatt Toronto": "https://www.hyatt.com/park-hyatt/en-US/torph-park-hyatt-toronto",
-  "Park Hyatt Washington": "https://www.hyatt.com/park-hyatt/en-US/wasph-park-hyatt-washington-dc",
-  "Park Hyatt Washington DC": "https://www.hyatt.com/park-hyatt/en-US/wasph-park-hyatt-washington-dc",
-  "The Cape Los Cabos": "https://www.hyatt.com/thompson-hotels/en-US/cslth-the-cape",
-  "The Cape, a Thompson Hotel": "https://www.hyatt.com/thompson-hotels/en-US/cslth-the-cape",
-  "Thompson Nashville": "https://www.hyatt.com/thompson-hotels/en-US/bnath-thompson-nashville",
-  "Thompson Washington DC": "https://www.hyatt.com/thompson-hotels/en-US/wasdh-thompson-washington-dc",
-  "Ventana Big Sur": "https://www.hyatt.com/hotel/california/alila-ventana-big-sur/sjcal",
-};
-
-const HYATT_CLOSED = new Set(["Calistoga Ranch"]);
-
-const buildHyattLink = (propertyName, checkIn, checkOut, adults) => {
-  if (HYATT_CLOSED.has(propertyName)) return null;
-  const baseUrl = tryNameVariants(propertyName, HYATT_PROPERTY_URLS);
-  const numAdults = adults || 2;
-  if (baseUrl) {
-    // Link to property overview page — consistent with Marriott approach
-    return baseUrl;
-  }
-  // Fallback: Hyatt search by name
-  const params = new URLSearchParams();
-  params.set('location', propertyName);
-  if (checkIn) params.set('checkinDate', checkIn);
-  if (checkOut) params.set('checkoutDate', checkOut);
-  params.set('adults', String(numAdults));
-  return `https://www.hyatt.com/en-US/search?${params.toString()}`;
-};
-
-// IHG property codes (qSlH parameter)
-const IHG_PROPERTY_CODES = {
-  "Regent Santa Monica Beach": "SMOOA",
-  "InterContinental Chicago Magnificent Mile": "ORDHA",
-  "Intercontinental Chicago": "ORDHA",
-  "InterContinental Mark Hopkins Hotel": "SFOHA",
-  "Intercontinental Mark Hopkins": "SFOHA",
-  "Kimpton George Hotel": "WDCHG",
-  "Kimpton Gray Hotel": "ORDTG",
-  "Kimpton La Peer Hotel": "LAXWE",
-  "Kimpton Rowan Palm Springs": "PSPNP",
-  "Kimpton Seafire Resort + Spa": "GCMSE",
-  "Kimpton Surfcomber Hotel": "MIASS",
-  "Kimpton Sylvan Hotel": "ATLKM",
-  "The Willard InterContinental": "WASHA",
-  "Hotel Indigo Atlanta Midtown": "ATLFX",
-};
-
-// IHG brand URL prefixes by property type
-const IHG_BRAND_URLS = {
-  "SMOOA": "regent",
-  "ORDHA": "intercontinental",
-  "SFOHA": "intercontinental",
-  "WASHA": "intercontinental",
-  "ATLFX": "hotelindigo",
-  "OMABS": "kimptonhotels",
-  "WDCHG": "kimptonhotels",
-  "ORDTG": "kimptonhotels",
-  "LAXWE": "kimptonhotels",
-  "PSPNP": "kimptonhotels",
-  "GCMSE": "kimptonhotels",
-  "MIASS": "kimptonhotels",
-  "ATLKM": "kimptonhotels",
-};
-
-// IHG / Kimpton direct hotel URLs
-const IHG_PROPERTY_URLS = {
-  "Hotel Indigo Atlanta Midtown": "https://www.ihg.com/hotelindigo/hotels/us/en/atlanta/atlfx/hoteldetail",
-  "Hotel Zena Washington DC": "https://www.viceroyhotelsandresorts.com/zena",
-  "InterContinental Chicago Magnificent Mile": "https://www.ihg.com/intercontinental/hotels/us/en/chicago/ordha/hoteldetail",
-  "InterContinental Mark Hopkins Hotel": "https://www.ihg.com/intercontinental/hotels/us/en/san-francisco/sfoha/hoteldetail",
-  "Intercontinental Chicago": "https://www.ihg.com/intercontinental/hotels/us/en/chicago/ordha/hoteldetail",
-  "Intercontinental Mark Hopkins": "https://www.ihg.com/intercontinental/hotels/us/en/san-francisco/sfoha/hoteldetail",
-  "Kimpton Cottonwood": "https://www.thecottonwoodhotel.com/",
-  "Kimpton George Hotel": "https://www.hotelgeorge.com/",
-  "Kimpton Gray Hotel": "https://www.grayhotelchicago.com/",
-  "Kimpton La Peer Hotel": "https://www.lapeerhotel.com/",
-  "Kimpton Rowan Palm Springs": "https://www.rowanpalmsprings.com/",
-  "Kimpton Seafire Resort + Spa": "https://www.seafireresortandspa.com/",
-  "Kimpton Surfcomber Hotel": "https://www.surfcomber.com/",
-  "Kimpton Sylvan Hotel": "https://www.thesylvanhotel.com/",
-  "Regent Santa Monica Beach": "https://santamonica.regenthotels.com/",
-  "The Willard InterContinental": "https://washington.intercontinental.com/",
-};
-
-
-const buildIHGLink = (propertyName, checkIn, checkOut, adults) => {
-  // Check direct URL table first (Kimpton own sites + IHG hoteldetail pages)
-  const directUrl = tryNameVariants(propertyName, IHG_PROPERTY_URLS);
-  if (directUrl) return directUrl;
-
-  // Fallback: construct hoteldetail URL from property code
-  const code = tryNameVariants(propertyName, IHG_PROPERTY_CODES);
-  if (code) {
-    const brand = IHG_BRAND_URLS[code] || 'kimptonhotels';
-    return `https://www.ihg.com/${brand}/hotels/us/en/find-hotels/hotel/list?q=${encodeURIComponent(propertyName)}`;
-  }
-  return `https://www.ihg.com/hotels/us/en/find-hotels/hotel/list?q=${encodeURIComponent(propertyName)}`;
-};
-
-
-const buildHotelLink = (hotelName, hotelNotes, checkIn, checkOut, adults) => {
-  const brand = detectHotelBrand(hotelName, hotelNotes);
-  const num = adults || 2;
-  let url = null;
-
-  switch (brand) {
-    case 'hilton':   url = buildHiltonLink(hotelName, checkIn, checkOut, num); break;
-    case 'marriott': url = buildMarriottLink(hotelName, checkIn, checkOut, num); break;
-    case 'hyatt':    url = buildHyattLink(hotelName, checkIn, checkOut, num); break;
-    case 'ihg':      url = buildIHGLink(hotelName, checkIn, checkOut, num); break;
-    default: break;
-  }
-
-  // If chain returned null (permanently closed) or no brand — return null
-  // Caller will show "Book directly — coming soon" placeholder
-  return url || null;
-};
-
-
-const buildBookingLink = (hotelName, destination, checkIn, checkOut, adults) => {
-  // checkIn/checkOut can be ISO dates (YYYY-MM-DD) from tripSummary, or fallback to date string parsing
-  const isISO = (s) => s && /^\d{4}-\d{2}-\d{2}$/.test(s);
-
-  let ci = isISO(checkIn) ? checkIn : '';
-  let co = isISO(checkOut) ? checkOut : '';
-
-  // Fallback: parse from human-readable date string if ISO not available
-  if (!ci && checkIn) {
-    const rangeMatch = checkIn.match(/(\w+)\s+(\d+)[–\-](\d+)/i);
-    if (rangeMatch) {
-      const year = new Date().getFullYear();
-      const d1 = new Date(`${rangeMatch[1]} ${rangeMatch[2]}, ${year}`);
-      const d2 = new Date(`${rangeMatch[1]} ${rangeMatch[3]}, ${year}`);
-      if (d2 < d1) d2.setFullYear(year + 1);
-      ci = d1.toISOString().split('T')[0];
-      co = d2.toISOString().split('T')[0];
-    } else {
-      // Extract nights from hotel detail if available
-      const nightsMatch = (hotelName || '').match(/(\d+)\s*night/i);
-      const nights = nightsMatch ? parseInt(nightsMatch[1]) : 0;
-      const startMatch = checkIn.match(/(\w+\s+\d+)/);
-      if (startMatch) {
-        const d = new Date(startMatch[1] + ', ' + new Date().getFullYear());
-        if (!isNaN(d)) {
-          ci = d.toISOString().split('T')[0];
-          if (nights > 0) {
-            const d2 = new Date(d); d2.setDate(d2.getDate() + nights);
-            co = d2.toISOString().split('T')[0];
-          }
-        }
-      }
-    }
-  }
-
-  const cleanName = hotelName ? hotelName.split('·')[0].trim() : '';
-  const cleanDest = destination || '';
-  const numAdults = adults || 2;
-
-  // Use hotel name only as search — adding destination confuses Booking.com's matcher
-  const searchTerm = cleanName;
-  const params = new URLSearchParams();
-  params.set('ss', searchTerm);
-  if (ci) params.set('checkin', ci);
-  if (co) params.set('checkout', co);
-  params.set('group_adults', String(numAdults));
-  params.set('no_rooms', '1');
-  params.set('sb_travel_purpose', 'leisure');
-  if (BOOKING_AFFILIATE_ID && BOOKING_AFFILIATE_ID !== 'YOUR_BOOKING_AFFILIATE_ID') {
-    params.set('aid', BOOKING_AFFILIATE_ID);
-  }
-  return `https://www.booking.com/searchresults.html?${params.toString()}`;
-};
 
 const buildGoogleFlightsLink = (origin, destination, airline, departDate, adults) => {
   // Google Flights deep link with airline, route, and date pre-populated
