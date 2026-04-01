@@ -85,6 +85,10 @@ const MARRIOTT_PROPERTY_URLS = {
   "W Hollywood": "https://www.marriott.com/en-us/hotels/laxwh-w-hollywood/overview/",
   "Williamsburg Lodge": "https://www.marriott.com/en-us/hotels/phfak-williamsburg-lodge-autograph-collection/overview/",
   "Zadun, a Ritz-Carlton Reserve": "https://www.ritzcarlton.com/en/hotels/sjdzr-zadun-los-cabos-a-ritz-carlton-reserve/overview/",
+  "Palace Hotel San Francisco": "https://www.marriott.com/en-us/hotels/sfolc-palace-hotel-a-luxury-collection-hotel-san-francisco/overview/",
+  "The Royal Hawaiian": "https://www.marriott.com/en-us/hotels/hnllc-the-royal-hawaiian-a-luxury-collection-resort-waikiki/overview/",
+  "The Royal Hawaiian, a Luxury Collection Resort": "https://www.marriott.com/en-us/hotels/hnllc-the-royal-hawaiian-a-luxury-collection-resort-waikiki/overview/",
+  "The US Grant": "https://www.marriott.com/en-us/hotels/sanug-the-us-grant-a-luxury-collection-hotel-san-diego/overview/",
 };
 
 import React, { useState, useRef, useEffect } from "react";
@@ -2106,7 +2110,7 @@ const QUALITY_SIGNALS_DB = {
   "Inn at Perry Cabin": { tier: "luxury", forbes_stars: 4, michelin_keys: 1, notes: "St. Michaels MD, Eastern Shore, Pendry/Marriott" },
   // Massachusetts
   "The Inn at Hastings Park": { tier: "luxury", forbes_stars: 4, notes: "Lexington MA, independent boutique" },
-  "The Newbury Boston": { tier: "luxury", forbes_stars: 4, notes: "Back Bay Boston, Luxury Collection/Marriott, historic 1927" },
+  "The Newbury Boston": { tier: "luxury", forbes_stars: 4, notes: "Back Bay Boston, est. 1927, formerly Ritz-Carlton Boston. INDEPENDENT — thenewburyboston.com" },
   "The Ritz-Carlton Boston": { tier: "luxury", forbes_stars: 4, notes: "Avery Street Boston, Marriott Bonvoy" },
   "Mirbeau Inn & Spa Plymouth": { tier: "luxury", forbes_stars: 4, notes: "Plymouth MA, independent spa resort" },
   "The Wauwinet": { tier: "luxury", forbes_stars: 4, michelin_keys: 1, relais_chateaux: true, notes: "Nantucket MA, independent" },
@@ -5823,21 +5827,30 @@ const ComponentRow = ({ label, value, detail, points, card, checkIn, checkOut, n
         const hotelNotes = qualityEntry.notes || hotelCity;
         const hotelUrl = buildHotelLink(hotelNameRaw, hotelNotes, checkIn || '', checkOut || '', 2);
         const isChain = detectHotelBrand(hotelNameRaw, hotelNotes) !== null;
-        const linkLabel = isChain ? 'Check rates & book →' : 'Search this hotel →';
+        if (hotelUrl) {
+          const linkLabel = isChain ? 'Check rates & book →' : 'View hotel →';
+          return (
+            <a href={hotelUrl} target="_blank" rel="noopener noreferrer"
+              style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#6a6460", fontSize: "11px", textDecoration: "none", marginTop: "8px", borderBottom: "1px solid rgba(106,100,96,0.3)" }}>
+              {linkLabel}
+            </a>
+          );
+        }
         return (
-          <a href={hotelUrl} target="_blank" rel="noopener noreferrer"
-            style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#6a6460", fontSize: "11px", textDecoration: "none", marginTop: "8px", borderBottom: "1px solid rgba(106,100,96,0.3)" }}>
-            {linkLabel}
-          </a>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#555", fontSize: "11px", marginTop: "8px", fontStyle: "italic" }}>
+            Book directly — coming soon
+          </span>
         );
       })()}
       {label && (label === 'Flight' || label === 'Return Flight') && detail && (() => {
         const fc = extractFlightCodes(detail);
-        const url = fc.origin ? buildGoogleFlightsLink(fc.origin, fc.dest, fc.airline, checkIn || '', 2) : null;
+        const airlineUrl = fc.airline ? buildAirlineLink(fc.airline, fc.origin, fc.dest, checkIn || '') : null;
+        const fallbackUrl = fc.origin ? buildGoogleFlightsLink(fc.origin, fc.dest, fc.airline, checkIn || '', 2) : null;
+        const url = airlineUrl || fallbackUrl;
         return url ? (
           <a href={url} target="_blank" rel="noopener noreferrer"
             style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#6a6460", fontSize: "11px", textDecoration: "none", marginTop: "8px", borderBottom: "1px solid rgba(106,100,96,0.3)" }}>
-            Confirm flight details →
+            Book this flight →
           </a>
         ) : null;
       })()}
@@ -6062,6 +6075,49 @@ const WhyThisExpanded = ({ option, userProfile }) => {
 };
 
 // ── Affiliate link builders ───────────────────────────────────────────────────
+
+// ── Airline direct booking links ─────────────────────────────────────────────
+const AIRLINE_BASE_URLS = {
+  'delta':     'https://www.delta.com/us/en/flight-search/book-a-flight',
+  'united':    'https://www.united.com/en/us/fsr/choose-flights',
+  'american':  'https://www.aa.com/booking/find-flights',
+  'alaska':    'https://www.alaskaair.com/booking/choose-flights',
+  'southwest': 'https://www.southwest.com/air/booking/',
+  'jetblue':   'https://www.jetblue.com/booking/flights',
+  'lufthansa': 'https://www.lufthansa.com/us/en/homepage',
+  'british':   'https://www.britishairways.com/en-us/flights',
+  'air canada':'https://www.aircanada.com/us/en/aco/home.html',
+  'hawaiian':  'https://www.hawaiianairlines.com/book-a-flight',
+  'frontier':  'https://www.flyfrontier.com/',
+  'spirit':    'https://www.spirit.com/',
+};
+
+const buildAirlineLink = (airlineName, origin, dest, date) => {
+  if (!airlineName) return null;
+  const a = airlineName.toLowerCase();
+
+  // Match airline name to key
+  let key = null;
+  if (a.includes('delta')) key = 'delta';
+  else if (a.includes('united')) key = 'united';
+  else if (a.includes('american')) key = 'american';
+  else if (a.includes('alaska')) key = 'alaska';
+  else if (a.includes('southwest')) key = 'southwest';
+  else if (a.includes('jetblue')) key = 'jetblue';
+  else if (a.includes('lufthansa')) key = 'lufthansa';
+  else if (a.includes('british')) key = 'british';
+  else if (a.includes('air canada')) key = 'air canada';
+  else if (a.includes('hawaiian')) key = 'hawaiian';
+  else if (a.includes('frontier')) key = 'frontier';
+  else if (a.includes('spirit')) key = 'spirit';
+
+  if (key && AIRLINE_BASE_URLS[key]) return AIRLINE_BASE_URLS[key];
+
+  // Fallback: Google Flights with airline filter
+  const q = [airlineName, origin, dest].filter(Boolean).join(' ');
+  return `https://www.google.com/travel/flights?q=${encodeURIComponent(q)}`;
+};
+
 const BOOKING_AFFILIATE_ID = "YOUR_BOOKING_AFFILIATE_ID"; // Replace after registration
 
 // ── Chain hotel direct booking URL constructors ───────────────────────────────
@@ -6363,13 +6419,9 @@ const buildHotelLink = (hotelName, hotelNotes, checkIn, checkOut, adults) => {
     default: break;
   }
 
-  // If chain returned null (permanently closed) or no brand, use Google Hotels
-  if (!url) {
-    const city = (hotelNotes || '').split(',')[0].trim();
-    const searchQ = city ? `${hotelName} ${city}` : hotelName;
-    url = `https://www.google.com/travel/hotels?q=${encodeURIComponent(searchQ)}&dates=${checkIn || ''}%2C${checkOut || ''}&adults=${num}`;
-  }
-  return url;
+  // If chain returned null (permanently closed) or no brand — return null
+  // Caller will show "Book directly — coming soon" placeholder
+  return url || null;
 };
 
 
@@ -6633,7 +6685,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userPr
                     style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: option.tagColor + "15", border: `1px solid ${option.tagColor}40`, borderRadius: "12px", padding: "14px 16px", textDecoration: "none", cursor: "pointer" }}>
                     <div>
                       <div style={{ color: "#e8e4dc", fontSize: "13px", fontWeight: "600", marginBottom: "2px" }}>🏨 {hotelName || "Hotel"}</div>
-                      <div style={{ color: "#9a9088", fontSize: "11px" }}>Check rates on {hotelLinkLabel || 'booking site'}</div>
+                      <div style={{ color: "#9a9088", fontSize: "11px" }}>{bookingUrl ? `View on ${hotelLinkLabel || 'hotel site'}` : 'Direct booking coming soon'}</div>
                     </div>
                     <div style={{ color: option.tagColor, fontSize: "16px" }}>→</div>
                   </a>
