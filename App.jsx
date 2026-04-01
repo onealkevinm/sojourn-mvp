@@ -83,6 +83,25 @@ const MARRIOTT_PROPERTY_URLS = {
   "The West Hollywood EDITION": "https://www.marriott.com/en-us/hotels/laxeb-the-west-hollywood-edition/overview/",
   "The Westin Poinsett": "https://www.marriott.com/en-us/hotels/gspwi-the-westin-poinsett-greenville/overview/",
   "W Hollywood": "https://www.marriott.com/en-us/hotels/laxwh-w-hollywood/overview/",
+  "W Hotel Hollywood": "https://www.marriott.com/en-us/hotels/laxwh-w-hollywood/overview/",
+  "W New York - Times Square": "https://www.marriott.com/en-us/hotels/nycwt-w-new-york-times-square/overview/",
+  "W New York Downtown": "https://www.marriott.com/en-us/hotels/nycwd-w-new-york-downtown/overview/",
+  "W Chicago - Lakeshore": "https://www.marriott.com/en-us/hotels/chiwl-w-chicago-lakeshore/overview/",
+  "W Chicago - City Center": "https://www.marriott.com/en-us/hotels/chiwc-w-chicago-city-center/overview/",
+  "W Atlanta Downtown": "https://www.marriott.com/en-us/hotels/atlaw-w-atlanta-downtown/overview/",
+  "W Miami": "https://www.marriott.com/en-us/hotels/miawh-w-miami/overview/",
+  "W Seattle": "https://www.marriott.com/en-us/hotels/seawh-w-seattle/overview/",
+  "W San Francisco": "https://www.marriott.com/en-us/hotels/sfowh-w-san-francisco/overview/",
+  "W Washington DC": "https://www.marriott.com/en-us/hotels/waswh-w-washington-dc/overview/",
+  "W Aspen": "https://www.marriott.com/en-us/hotels/asewh-w-aspen/overview/",
+  "W Scottsdale": "https://www.marriott.com/en-us/hotels/phxws-w-scottsdale/overview/",
+  "W Nashville": "https://www.marriott.com/en-us/hotels/bnawh-w-nashville/overview/",
+  "W Austin": "https://www.marriott.com/en-us/hotels/auswh-w-austin/overview/",
+  "W Hoboken": "https://www.marriott.com/en-us/hotels/ewrwh-w-hoboken/overview/",
+  "W Fort Lauderdale": "https://www.marriott.com/en-us/hotels/fllwh-w-fort-lauderdale/overview/",
+  "W South Beach": "https://www.marriott.com/en-us/hotels/miawb-w-south-beach/overview/",
+  "W Bali": "https://www.marriott.com/en-us/hotels/dpswh-w-bali-seminyak/overview/",
+  "Aloft Miami Brickell": "https://www.marriott.com/en-us/hotels/miaaf-aloft-miami-brickell/overview/",
   "Williamsburg Lodge": "https://www.marriott.com/en-us/hotels/phfak-williamsburg-lodge-autograph-collection/overview/",
   "Zadun, a Ritz-Carlton Reserve": "https://www.ritzcarlton.com/en/hotels/sjdzr-zadun-los-cabos-a-ritz-carlton-reserve/overview/",
   "Palace Hotel San Francisco": "https://www.marriott.com/en-us/hotels/sfolc-palace-hotel-a-luxury-collection-hotel-san-francisco/overview/",
@@ -5757,7 +5776,7 @@ const fmtNums = (str) => {
 
 // ── Airline direct booking links ─────────────────────────────────────────────
 const AIRLINE_BASE_URLS = {
-  'delta':     'https://www.delta.com/us/en/flight-search/book-a-flight',
+  'delta':     'https://www.delta.com/flightsearch/book-a-flight',
   'united':    'https://www.united.com/en/us/fsr/choose-flights',
   'american':  'https://www.aa.com/booking/find-flights',
   'alaska':    'https://www.alaskaair.com/booking/choose-flights',
@@ -5867,14 +5886,8 @@ const buildHiltonLink = (propertyName, checkIn, checkOut, adults) => {
     params.set('numberOfRooms', String(numRooms));
     return `https://www.hilton.com/en/book/reservation/rooms/?ctyhocn=${code}&${params.toString()}`;
   }
-  // Fallback: Hilton search with name + dates
-  const params = new URLSearchParams();
-  params.set('q', propertyName);
-  if (checkIn) params.set('arrivalDate', checkIn);
-  if (checkOut) params.set('departureDate', checkOut);
-  params.set('numAdults', String(numAdults));
-  params.set('numRooms', String(numRooms));
-  return `https://www.hilton.com/en/search/?${params.toString()}`;
+  // No verified ctyhocn code — return null → 'coming soon'
+  return null;
 };
 
 // Marriott/Ritz-Carlton/St.Regis property codes — 5-letter codes from marriott.com URLs
@@ -5913,15 +5926,8 @@ const buildMarriottLink = (propertyName, checkIn, checkOut, adults) => {
     return `${baseUrl}?${parts.join('&')}`;
   }
 
-  // Fallback: Marriott search by name + dates
-  const ci = fmtDate(checkIn);
-  const co = fmtDate(checkOut);
-  const params = new URLSearchParams();
-  params.set('q', propertyName);
-  if (ci) params.set('fromDate', ci);
-  if (co) params.set('toDate', co);
-  params.set('numberOfAdults', String(numAdults));
-  return `https://www.marriott.com/search/default.mi?${params.toString()}`;
+  // No verified URL for this property — return null → "coming soon" placeholder
+  return null;
 };
 
 // Hyatt property codes — verified direct booking links
@@ -5989,6 +5995,8 @@ const HYATT_PROPERTY_URLS = {
   "The Cape, a Thompson Hotel": "https://www.hyatt.com/thompson-hotels/en-US/cslth-the-cape",
   "Thompson Nashville": "https://www.hyatt.com/thompson-hotels/en-US/bnath-thompson-nashville",
   "Thompson Washington DC": "https://www.hyatt.com/thompson-hotels/en-US/wasdh-thompson-washington-dc",
+  "Thompson Hotel Washington DC": "https://www.hyatt.com/thompson-hotels/en-US/wasdh-thompson-washington-dc",
+  "Thompson Hotel Nashville": "https://www.hyatt.com/thompson-hotels/en-US/bnath-thompson-nashville",
   "Ventana Big Sur": "https://www.hyatt.com/hotel/california/alila-ventana-big-sur/sjcal",
 };
 
@@ -6002,13 +6010,8 @@ const buildHyattLink = (propertyName, checkIn, checkOut, adults) => {
     // Link to property overview page — consistent with Marriott approach
     return baseUrl;
   }
-  // Fallback: Hyatt search by name
-  const params = new URLSearchParams();
-  params.set('location', propertyName);
-  if (checkIn) params.set('checkinDate', checkIn);
-  if (checkOut) params.set('checkoutDate', checkOut);
-  params.set('adults', String(numAdults));
-  return `https://www.hyatt.com/en-US/search?${params.toString()}`;
+  // No verified URL — return null → "coming soon"
+  return null;
 };
 
 // IHG property codes (qSlH parameter)
@@ -6061,6 +6064,8 @@ const IHG_PROPERTY_URLS = {
   "Kimpton Rowan Palm Springs": "https://www.rowanpalmsprings.com/",
   "Kimpton Seafire Resort + Spa": "https://www.seafireresortandspa.com/",
   "Kimpton Surfcomber Hotel": "https://www.surfcomber.com/",
+  "Surfcomber": "https://www.surfcomber.com/",
+  "Kimpton Surfcomber": "https://www.surfcomber.com/",
   "Kimpton Sylvan Hotel": "https://www.thesylvanhotel.com/",
   "Regent Santa Monica Beach": "https://santamonica.regenthotels.com/",
   "The Willard InterContinental": "https://washington.intercontinental.com/",
@@ -6078,7 +6083,7 @@ const buildIHGLink = (propertyName, checkIn, checkOut, adults) => {
     const brand = IHG_BRAND_URLS[code] || 'kimptonhotels';
     return `https://www.ihg.com/${brand}/hotels/us/en/find-hotels/hotel/list?q=${encodeURIComponent(propertyName)}`;
   }
-  return `https://www.ihg.com/hotels/us/en/find-hotels/hotel/list?q=${encodeURIComponent(propertyName)}`;
+  return null; // No verified URL — show 'coming soon'
 };
 
 
