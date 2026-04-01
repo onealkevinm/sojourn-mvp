@@ -1640,9 +1640,7 @@ const QUALITY_SIGNALS_DB = {
   "Amanpulo": { tier: "ultra_luxury", aman: true, notes: "Palawan Philippines, Aman" },
   "Aman Venice": { tier: "ultra_luxury", aman: true, notes: "Grand Canal Venice, Aman" },
   "Amanfayun": { tier: "ultra_luxury", aman: true, notes: "Hangzhou China, Aman" },
-  "Aman Summer Palace": { tier: "ultra_luxury", aman: true, notes: "Beijing, Summer Palace grounds, Aman" },
-  "Aman at The Summer Palace": { tier: "ultra_luxury", aman: true, notes: "Beijing, Aman" },
-  "Amanyara": { tier: "ultra_luxury", aman: true, tl_gold: true, notes: "Turks and Caicos, Aman" },
+      "Amanyara": { tier: "ultra_luxury", aman: true, tl_gold: true, notes: "Turks and Caicos, Aman" },
   "Amanera": { tier: "ultra_luxury", aman: true, notes: "Playa Grande Dominican Republic, Aman" },
   "Amangalla": { tier: "ultra_luxury", aman: true, notes: "Galle Sri Lanka, historic fort, Aman" },
   "Amanwella": { tier: "ultra_luxury", aman: true, notes: "Tangalle Sri Lanka, Aman" },
@@ -5995,8 +5993,6 @@ const HYATT_PROPERTY_URLS = {
   "The Cape, a Thompson Hotel": "https://www.hyatt.com/thompson-hotels/en-US/cslth-the-cape",
   "Thompson Nashville": "https://www.hyatt.com/thompson-hotels/en-US/bnath-thompson-nashville",
   "Thompson Washington DC": "https://www.hyatt.com/thompson-hotels/en-US/wasdh-thompson-washington-dc",
-  "Thompson Hotel Washington DC": "https://www.hyatt.com/thompson-hotels/en-US/wasdh-thompson-washington-dc",
-  "Thompson Hotel Nashville": "https://www.hyatt.com/thompson-hotels/en-US/bnath-thompson-nashville",
   "Ventana Big Sur": "https://www.hyatt.com/hotel/california/alila-ventana-big-sur/sjcal",
 };
 
@@ -6064,8 +6060,6 @@ const IHG_PROPERTY_URLS = {
   "Kimpton Rowan Palm Springs": "https://www.rowanpalmsprings.com/",
   "Kimpton Seafire Resort + Spa": "https://www.seafireresortandspa.com/",
   "Kimpton Surfcomber Hotel": "https://www.surfcomber.com/",
-  "Surfcomber": "https://www.surfcomber.com/",
-  "Kimpton Surfcomber": "https://www.surfcomber.com/",
   "Kimpton Sylvan Hotel": "https://www.thesylvanhotel.com/",
   "Regent Santa Monica Beach": "https://santamonica.regenthotels.com/",
   "The Willard InterContinental": "https://washington.intercontinental.com/",
@@ -6153,10 +6147,56 @@ const detectHotelBrand = (hotelName, hotelNotes) => {
   return null;
 };
 
+// Independent & boutique hotel direct URLs — canonical name → canonical website
+const INDEPENDENT_HOTEL_URLS = {
+  "Aman Kyoto": "https://www.aman.com/resorts/aman-kyoto",
+  "Aman Le Melezin": "https://www.aman.com/resorts/aman-le-melezin",
+  "Aman Nai Lert Bangkok": "https://www.aman.com/hotels/aman-nai-lert-bangkok",
+  "Aman New York": "https://www.aman.com/resorts/aman-new-york",
+  "Aman Rosa Alpina": "https://www.aman.com/resorts/aman-rosa-alpina",
+  "Aman Sveti Stefan": "https://www.aman.com/resorts/aman-sveti-stefan",
+  "Aman Tokyo": "https://www.aman.com/hotels/aman-tokyo",
+  "Aman Venice": "https://www.aman.com/resorts/aman-venice",
+  "Aman Villas at Nusa Dua": "https://www.aman.com/villas/aman-villas-at-nusa-dua",
+  "Aman-i-Khas": "https://www.aman.com/resorts/aman-i-khas",
+  "Amanbagh": "https://www.aman.com/resorts/amanbagh",
+  "Amandari": "https://www.aman.com/resorts/amandari",
+  "Amandayan": "https://www.aman.com/resorts/amandayan",
+  "Amandira": "https://www.aman.com/amandira",
+  "Amanemu": "https://www.aman.com/resorts/amanemu",
+  "Amanera": "https://www.aman.com/resorts/amanera",
+  "Amanfayun": "https://www.aman.com/resorts/amanfayun",
+  "Amangalla": "https://www.aman.com/resorts/amangalla",
+  "Amangani": "https://www.aman.com/resorts/amangani",
+  "Amangiri": "https://www.aman.com/resorts/amangiri",
+  "Amanjena": "https://www.aman.com/resorts/amanjena",
+  "Amanjiwo": "https://www.aman.com/resorts/amanjiwo",
+  "Amankila": "https://www.aman.com/resorts/amankila",
+  "Amankora": "https://www.aman.com/resorts/amankora",
+  "Amanoi": "https://www.aman.com/resorts/amanoi",
+  "Amanpulo": "https://www.aman.com/resorts/amanpulo",
+  "Amanpuri": "https://www.aman.com/resorts/amanpuri",
+  "Amanruya": "https://www.aman.com/resorts/amanruya",
+  "Amansara": "https://www.aman.com/resorts/amansara",
+  "Amantaka": "https://www.aman.com/resorts/amantaka",
+  "Amanwana": "https://www.aman.com/resorts/amanwana",
+  "Amanwella": "https://www.aman.com/resorts/amanwella",
+  "Amanyangyun": "https://www.aman.com/resorts/amanyangyun",
+  "Amanyara": "https://www.aman.com/resorts/amanyara",
+  "Amanzoe": "https://www.aman.com/resorts/amanzoe",
+
+};
+
+
 const buildHotelLink = (hotelName, hotelNotes, checkIn, checkOut, adults) => {
-  const brand = detectHotelBrand(hotelName, hotelNotes);
   const num = adults || 2;
   let url = null;
+
+  // Check independent hotel URLs first (exact canonical name match)
+  const indepUrl = tryNameVariants(hotelName, INDEPENDENT_HOTEL_URLS);
+  if (indepUrl) return indepUrl;
+
+  const brand = detectHotelBrand(hotelName, hotelNotes);
 
   switch (brand) {
     case 'hilton':   url = buildHiltonLink(hotelName, checkIn, checkOut, num); break;
@@ -6166,8 +6206,12 @@ const buildHotelLink = (hotelName, hotelNotes, checkIn, checkOut, adults) => {
     default: break;
   }
 
-  // If chain returned null (permanently closed) or no brand — return null
-  // Caller will show "Book directly — coming soon" placeholder
+  // Check independent hotel lookup table (Aman, Four Seasons, Rosewood, etc.)
+  if (!url) {
+    url = tryNameVariants(hotelName, INDEPENDENT_HOTEL_URLS) || null;
+  }
+
+  // Return url or null → caller shows "Book directly — coming soon"
   return url || null;
 };
 
@@ -7764,7 +7808,7 @@ INTELLIGENCE RULES:
 - Room configs must use fewest rooms for party size (2 travelers = 1 king room, not adjoining rooms) using the FEWEST rooms possible: 2 people = 1 king room (never "two adjoining rooms" for a couple). Only suggest multiple rooms if party size genuinely requires it (3+ people who need separate sleeping). Never split a couple or 2-person party into adjoining rooms.
 - Flight details format: "AA 123 · SEA→MIA · Departs 7:45am → Arrives 4:02pm · 5h 17m nonstop" — duration MUST always be the last segment so it displays prominently next to flight times
 - Hotel: ALWAYS use a real, specific named property (e.g. "Mokara Hotel & Spa" not "boutique hotel" or "historic inn"). Never invent placeholder names. If you cannot name a real property in the destination, use a nearby city with real inventory.
-- Hotel detail: property name · exact room config matching party size (e.g. "Two adjoining Kings" or "3BR villa sleeps 6") · nights · neighborhood. Never just "suite" — always specify beds and how the party fits.
+- Hotel detail: property name · exact room config matching party size (e.g. "Two adjoining Kings" or "3BR villa sleeps 6") · nights · neighborhood. Never just "suite" — always specify beds and how the party fits. CANONICAL NAME RULE: the property name in the detail field MUST be the exact official name of the hotel — the same name that would appear on the hotel's own website and in our quality signals database. Do not abbreviate, paraphrase, or add descriptors. "The Ritz-Carlton Chicago" not "Ritz Chicago" or "Ritz-Carlton, Chicago". "Kimpton Surfcomber Hotel" not "Surfcomber" or "the Surfcomber". "Thompson Nashville" not "Thompson Hotel Nashville". "W Hollywood" not "W Hotel Hollywood". Use the precise, official property name every time.
 - Flight detail field MUST use this EXACT format with · separators and spaces: "[Airline] · [ORIGIN-DEST] [nonstop/1-stop] · [departure time range] · [~Xh duration]" e.g. "Alaska Airlines · SEA-LIH nonstop · morning ~8-10am · ~6h30m" or "Delta · SEA-HNL nonstop · afternoon ~1-3pm · ~5h45m". CRITICAL: always put spaces around the · separator. Never concatenate airline and route without a separator (never "DeltaSEA-HNL"). Departure time should be a realistic range, not a specific invented flight number.
 - FLIGHT COST RULE: Each leg (Flight and Return Flight) must show its own cash value — never $0 unless it is genuinely a free redemption ticket. For a roundtrip fare of $800 total for 2 people, show Flight value = 400 and Return Flight value = 400 (split evenly).
 - MILES PER LEG: Each flight leg must show miles earned independently in its points field. Format: "2 tickets · est. X miles earned" for outbound, "2 tickets · est. X miles earned" for return. NEVER use "Included in roundtrip" or "included in outbound" — every leg shows its own earning. Miles per leg should reflect actual flight distance (e.g. SEA-LAX ~1136 miles, JFK-LAX ~2475 miles).
