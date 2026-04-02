@@ -6452,6 +6452,80 @@ const ComponentRow = ({ label, value, detail, points, card, checkIn, checkOut, n
 // Cache for expanded whyThis text — persists within session
 const _whyThisCache = {};
 
+// ── Deal Intelligence Card ────────────────────────────────────────────────
+const DealIntelligenceCard = ({ dealData, onBuildTrip }) => {
+  const typeColors = {
+    airline: { bg: 'rgba(74,158,255,0.08)', border: 'rgba(74,158,255,0.2)', label: 'FLIGHT DEAL' },
+    hotel:   { bg: 'rgba(201,168,76,0.08)', border: 'rgba(201,168,76,0.2)', label: 'HOTEL DEAL' },
+    stacked: { bg: 'rgba(78,203,122,0.08)', border: 'rgba(78,203,122,0.2)', label: 'STACKED VALUE' },
+    loyalty: { bg: 'rgba(180,100,255,0.08)', border: 'rgba(180,100,255,0.2)', label: 'LOYALTY OFFER' },
+  };
+
+  return (
+    <div style={{ maxWidth: '680px', width: '100%' }}>
+      {/* Intro */}
+      <div style={{ color: '#c8c0b4', fontSize: '14px', lineHeight: '1.6', marginBottom: '16px' }}>
+        {dealData.intro}
+      </div>
+
+      {/* Deal cards */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+        {(dealData.deals || []).map((deal, i) => {
+          const style = typeColors[deal.type] || typeColors.hotel;
+          return (
+            <div key={i} onClick={() => onBuildTrip && onBuildTrip(deal.cta)}
+              style={{
+                background: style.bg, border: `1px solid ${style.border}`,
+                borderRadius: '12px', padding: '12px 16px', cursor: 'pointer',
+                transition: 'opacity 0.15s', display: 'flex', gap: '12px', alignItems: 'flex-start'
+              }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            >
+              <span style={{ fontSize: '18px', lineHeight: '1', marginTop: '2px', flexShrink: 0 }}>{deal.icon}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '11px', fontWeight: '600', letterSpacing: '0.08em',
+                    color: style.border.replace('0.2', '0.9'), textTransform: 'uppercase' }}>
+                    {style.label}
+                  </span>
+                </div>
+                <div style={{ color: '#e8e4dc', fontSize: '13px', fontWeight: '500', marginBottom: '3px' }}>
+                  {deal.headline}
+                </div>
+                <div style={{ color: '#9a9088', fontSize: '12px', lineHeight: '1.5' }}>
+                  {deal.detail}
+                </div>
+              </div>
+              <div style={{ color: '#555', fontSize: '11px', flexShrink: 0, alignSelf: 'center' }}>→</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Feature preview + pivot */}
+      <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: '12px', padding: '14px 16px', marginBottom: '14px' }}>
+        <div style={{ color: '#6a6460', fontSize: '12px', lineHeight: '1.6', marginBottom: '8px' }}>
+          <span style={{ color: '#C9A84C', fontSize: '11px', fontWeight: '600',
+            letterSpacing: '0.08em', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
+            Coming soon
+          </span>
+          Soon, Sojourn will automatically scan your travel and card‑related emails, synthesize the best offers,
+          and surface only the ones that matter — no more digging through inboxes or missing targeted promos.
+          You'll get a clean, personalized summary like this anytime something valuable appears.
+        </div>
+      </div>
+
+      {/* Closing / pivot */}
+      <div style={{ color: '#c8c0b4', fontSize: '13px', lineHeight: '1.6' }}>
+        {dealData.closing}
+      </div>
+    </div>
+  );
+};
+
+
 // Reusable dancing dots loading indicator
 const DancingDots = () => React.createElement('div', {
   style: { display: 'flex', gap: '5px', alignItems: 'center', padding: '10px 0' }
@@ -7296,9 +7370,9 @@ const PointsDashboardDrawer = ({ profile, optimizeRecs, optimizeLoading, onOptim
         <div style={{ position: "absolute", bottom: "100%", left: 0, right: 0, background: "#0e0d0c", border: "1px solid rgba(255,255,255,0.07)", borderBottom: "none", borderRadius: "12px 12px 0 0", zIndex: 10, maxHeight: "320px", overflowY: "auto" }}>
           {/* Tabs */}
           <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "0 14px" }}>
-            {["points", "cards", "optimize"].map(tab => (
+            {["points", "cards", "deals", "optimize"].map(tab => (
               <button key={tab} onClick={() => { setActiveTab(tab); if (tab === "optimize" && onOptimizeClick) onOptimizeClick(); }} style={{ padding: "10px 14px", background: "none", border: "none", borderBottom: activeTab === tab ? "2px solid #C9A84C" : "2px solid transparent", color: activeTab === tab ? "#C9A84C" : "#444", fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif", cursor: "pointer" }}>
-                {tab === "points" ? "Loyalty Points" : tab === "cards" ? "Credit Cards" : "Optimize ✦"}
+                {tab === "points" ? "Loyalty Points" : tab === "cards" ? "Credit Cards" : tab === "deals" ? "Active Deals ✦" : "Optimize ✦"}
               </button>
             ))}
           </div>
@@ -7335,6 +7409,103 @@ const PointsDashboardDrawer = ({ profile, optimizeRecs, optimizeLoading, onOptim
                     <div style={{ color: "#555", fontSize: "11px" }}>{c.multipliers || "Rewards card"}</div>
                   </div>
                 ))}
+              </div>
+            )}
+            {activeTab === "deals" && (
+              <div>
+                <div style={{ color: "#9a9088", fontSize: "11px", letterSpacing: "0.08em",
+                  textTransform: "uppercase", marginBottom: "10px" }}>Active Deals & Offers</div>
+
+                {/* Curated deal items — static preview */}
+                {[
+                  { icon: "✈️", type: "FLIGHT DEAL", text: "Delta — SkyMiles flash sale, select routes 30–40% off", color: "rgba(74,158,255,0.7)" },
+                  { icon: "✈️", type: "FLIGHT DEAL", text: "Alaska — Double miles on flights booked this week", color: "rgba(74,158,255,0.7)" },
+                  { icon: "🏨", type: "HOTEL DEAL", text: "Hyatt — 3rd night free at select Category 4–6 properties", color: "rgba(201,168,76,0.7)" },
+                  { icon: "🏨", type: "HOTEL DEAL", text: "Hilton — Honors points sale, buy at 50% off list price", color: "rgba(201,168,76,0.7)" },
+                  { icon: "🏨", type: "HOTEL DEAL", text: "Marriott — Rate promotion at Autograph Collection properties", color: "rgba(201,168,76,0.7)" },
+                  { icon: "⚡", type: "STACKED VALUE", text: "Nashville long weekend — Delta + Hyatt combo maximizes both programs", color: "rgba(78,203,122,0.7)" },
+                  { icon: "💳", type: "LOYALTY OFFER", text: "Chase → Hyatt transfer bonus ends soon — 30% extra points", color: "rgba(180,100,255,0.7)" },
+                ].map((deal, i) => (
+                  <div key={i} style={{
+                    display: "flex", gap: "8px", alignItems: "flex-start",
+                    padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.04)"
+                  }}>
+                    <span style={{ fontSize: "13px", flexShrink: 0, marginTop: "1px" }}>{deal.icon}</span>
+                    <div>
+                      <div style={{ fontSize: "9px", fontWeight: "600", letterSpacing: "0.08em",
+                        color: deal.color, textTransform: "uppercase", marginBottom: "2px" }}>
+                        {deal.type}
+                      </div>
+                      <div style={{ fontSize: "11px", color: "#9a9088", lineHeight: "1.4" }}>{deal.text}</div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* CTA bridge to NLQ */}
+                <button onClick={() => {
+                  if (onOptimizeClick) onOptimizeClick();
+                  setTimeout(() => {
+                    const el = document.querySelector('textarea');
+                    if (el) {
+                      el.value = "Show me trips that maximize these offers";
+                      el.dispatchEvent(new Event('input', { bubbles: true }));
+                      el.focus();
+                    }
+                  }, 100);
+                }} style={{
+                  width: "100%", marginTop: "14px", padding: "10px",
+                  background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.25)",
+                  borderRadius: "10px", color: "#C9A84C", fontSize: "11px", fontWeight: "600",
+                  letterSpacing: "0.05em", cursor: "pointer", textAlign: "center"
+                }}>
+                  Show Me Trips That Maximize These Offers →
+                </button>
+
+                <div style={{ marginTop: "10px", color: "#444", fontSize: "10px",
+                  lineHeight: "1.5", textAlign: "center" }}>
+                  Live deal sync coming soon — Sojourn will scan your travel emails and surface only what's genuinely worth acting on.
+                </div>
+              </div>
+            )}
+            {activeTab === "deals" && (
+              <div>
+                <div style={{ color: "#555", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>
+                  Curated for you
+                </div>
+                <div style={{ color: "#6a6460", fontSize: "11px", lineHeight: "1.6", marginBottom: "14px" }}>
+                  Deals and offers worth knowing about — filtered through your loyalty programs and travel style.
+                </div>
+                {/* Compact deal rows */}
+                {[
+                  { icon: "✈️", type: "Flight", label: "Deals from your airlines" },
+                  { icon: "🏨", type: "Hotel", label: "Offers from your brands" },
+                  { icon: "⚡", type: "Stacked", label: "Points + cash combinations" },
+                  { icon: "🎯", type: "Loyalty", label: "Program offers expiring soon" },
+                ].map((row, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                    <span style={{ fontSize: "14px" }}>{row.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: "#9a9088", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.08em" }}>{row.type}</div>
+                      <div style={{ color: "#6a6460", fontSize: "11px" }}>{row.label}</div>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  onClick={() => {
+                    callClaude("Show me the best deals from brands I love");
+                  }}
+                  style={{
+                    width: "100%", marginTop: "14px", padding: "10px",
+                    background: "linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.08))",
+                    border: "1px solid rgba(201,168,76,0.3)", borderRadius: "10px",
+                    color: "#C9A84C", fontSize: "11px", fontWeight: "600",
+                    letterSpacing: "0.06em", cursor: "pointer", textAlign: "center"
+                  }}>
+                  Show Me Trips That Maximize These Offers →
+                </button>
+                <div style={{ color: "#444", fontSize: "10px", textAlign: "center", marginTop: "8px", lineHeight: "1.5" }}>
+                  Full deal intelligence — scanning your travel emails — coming soon
+                </div>
               </div>
             )}
             {activeTab === "optimize" && (
@@ -8074,6 +8245,133 @@ DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these ru
   };
 
 
+  // ── Handle Deal Intelligence queries ──────────────────────────────────────
+  const handleDealIntelligence = async (userMessage) => {
+    setLoading(true);
+
+    // Build profile context for personalization
+    const profileCtx = userProfile ? `
+User loyalty programs: ${(userProfile.loyaltyPrograms || []).join(', ') || 'none set'}
+Credit cards: ${(userProfile.creditCards || []).join(', ') || 'none set'}
+Home airport: ${userProfile.homeAirport || 'not set'}
+Travel style: ${(userProfile.travelTypes || []).join(', ') || 'not set'}
+Favorite brands: ${(userProfile.favoriteBrands || []).join(', ') || 'none set'}
+` : 'No profile set — using general travel preferences.';
+
+    const homeAirport = userProfile?.homeAirport || 'a major US hub';
+    const programs = (userProfile?.loyaltyPrograms || []).join(', ') || 'Delta SkyMiles, World of Hyatt';
+    const cards = (userProfile?.creditCards || []).join(', ') || 'Amex Platinum, Chase Sapphire Reserve';
+    const brands = (userProfile?.favoriteBrands || []).join(', ') || 'Hyatt, Four Seasons, Aman';
+    const travelStyle = (userProfile?.travelTypes || []).join(', ') || 'luxury, experiential';
+
+    const dealPrompt = `You are Sojourn, a luxury travel concierge. Generate a curated personal deal briefing — not the cheapest deals available, but the 7 things THIS person would wish they knew. The bar: would this deal make them more likely to actually take a trip, either because it unlocks something they already wanted to do, or because it's compelling enough to push them from "thinking about it" to "booking it"?
+
+USER PROFILE:
+- Home airport: ${homeAirport}
+- Loyalty programs: ${programs}
+- Credit cards: ${cards}
+- Favorite hotel brands: ${brands}
+- Travel style: ${travelStyle}
+
+Use the profile to personalize every deal — airline routes should depart from their home airport, hotels should come from their preferred brands, loyalty items should reference their actual programs. If a program isn't listed, don't invent membership — instead suggest the most natural fit.
+
+Return ONLY this JSON (no markdown, no explanation):
+{
+  "intro": "One sentence that feels personal — reference their home airport or a specific program they have. Warm, specific, not generic.",
+  "deals": [
+    {
+      "type": "airline",
+      "icon": "✈️",
+      "headline": "Airline + route from their home airport — specific timing and value (e.g. 'Delta Saver awards to Cabo opened up — 35k miles roundtrip from [home airport], flying June')",
+      "detail": "Why this matters to them: miles value context, sweet spot redemption, or how it compares to cash. One sentence, specific.",
+      "cta": "Short trip seed for follow-up — e.g. 'Cabo long weekend on Delta miles'"
+    },
+    {
+      "type": "airline",
+      "icon": "✈️",
+      "headline": "Second airline deal — different type of value (if first was miles, this is a compelling cash fare or upgrade opportunity)",
+      "detail": "Specific value framing tied to their programs",
+      "cta": "Short trip seed"
+    },
+    {
+      "type": "hotel",
+      "icon": "🏨",
+      "headline": "Specific property from their brands — points rate, category sweet spot, or rate drop worth acting on now",
+      "detail": "Why act now vs later — availability window, seasonal timing, or unusually strong points value",
+      "cta": "Short trip seed — e.g. 'Park Hyatt Chicago, Memorial Day weekend'"
+    },
+    {
+      "type": "hotel",
+      "icon": "🏨",
+      "headline": "Second hotel deal from their brands — different property type or geography",
+      "detail": "Specific value framing",
+      "cta": "Short trip seed"
+    },
+    {
+      "type": "hotel",
+      "icon": "🏨",
+      "headline": "Third hotel — aspirational property where the timing is unusually good (shoulder season, new property soft launch rates, or redemption sweet spot opening)",
+      "detail": "What makes this specific moment right for this property",
+      "cta": "Short trip seed"
+    },
+    {
+      "type": "stacked",
+      "icon": "⚡",
+      "headline": "A complete trip combining their airline + hotel programs where the stack creates disproportionate value — name the destination, the programs, the combination",
+      "detail": "Walk through the logic: 'Fly Delta to X, stay at [brand property] on points — your [card] covers the hotel resort fee and earns bonus miles, net cost is roughly Y for what would normally be Z.' Make the math feel real even if approximate.",
+      "cta": "Full trip seed — e.g. 'Nashville long weekend — Delta + Hyatt points stack'"
+    },
+    {
+      "type": "loyalty",
+      "icon": "🎯",
+      "headline": "One loyalty program move worth making this week — transfer bonus window, status challenge, sweet spot route availability, or expiring currency. Loyalty program focus (not card benefits)",
+      "detail": "Specific and actionable: what to do, roughly by when, what they get. Reference one of their actual programs.",
+      "cta": "Action seed — e.g. 'Move Chase points to Hyatt before transfer bonus closes'"
+    }
+  ],
+  "closing": "Would you like me to build a trip around one of these? Tap any deal above or just tell me which one caught your eye — I can put options in front of you in seconds."
+}
+Return ONLY valid JSON.`;
+
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1500,
+          system: dealPrompt,
+          messages: [{ role: "user", content: "Generate my personalized deal briefing." }]
+        })
+      });
+      const data = await response.json();
+      const raw = (data.content?.[0]?.text || "").replace(/```json|```/g, "").trim();
+
+      let deals;
+      try { deals = JSON.parse(raw); } catch(e) { deals = null; }
+
+      if (deals && deals.deals) {
+        setMessages(prev => [...prev, {
+          role: "assistant",
+          type: "deal_intelligence",
+          dealData: deals
+        }]);
+      } else {
+        setMessages(prev => [...prev, {
+          role: "assistant",
+          text: "I wasn't able to generate your deal briefing right now — try again in a moment."
+        }]);
+      }
+    } catch(err) {
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        text: "Something went wrong fetching deals. Please try again."
+      }]);
+    }
+    setLoading(false);
+  };
+
+
   const callClaude = async (userMessage) => {
     conversationRef.current = [...conversationRef.current, { role: "user", content: userMessage }];
     setLoading(true);
@@ -8081,6 +8379,12 @@ DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these ru
     if (!ANTHROPIC_KEY) {
       setMessages(prev => [...prev, { role: "assistant", text: "Configuration error: API key not found." }]);
       setLoading(false);
+      return;
+    }
+
+    // ── DEAL INTELLIGENCE: intercept deal queries ──────────────────────────
+    if (isDealIntelligenceQuery(userMessage)) {
+      await handleDealIntelligence(userMessage);
       return;
     }
 
@@ -8292,10 +8596,19 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
     }
   };
 
-    const handleSend = () => {
-      mp.track("query_submitted", { query_length: input.length });
-    if (!input.trim() || loading) return;
-    const msg = input.trim();
+    
+// ── DEAL INTELLIGENCE detection ───────────────────────────────────────────
+const isDealIntelligenceQuery = (msg) => {
+  const m = (msg || '').toLowerCase();
+  return m.includes('best deals') || m.includes('deals from brands') ||
+         m.includes('show me deals') || m.includes('deal intelligence') ||
+         m.includes('travel deals') || m.includes('deals and offers');
+};
+
+const handleSend = (overrideMsg) => {
+      const msg = overrideMsg || input.trim();
+      if (!msg || loading) return;
+      mp.track("query_submitted", { query_length: msg.length });
     setInput("");
     setMessages(prev => [...prev, { role: "user", text: msg }]);
     callClaude(msg);
@@ -9177,7 +9490,20 @@ Please respond now.`,
                     fontSize: "13px", lineHeight: "1.5",
                     fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit",
                     fontStyle: msg.role === "assistant" ? "italic" : "normal",
-                  }}>{msg.role === "assistant" ? (msg.text || "").split(/\s*[\[{](?=\s*"[a-zA-Z])/)[0].trim() || msg.text : msg.text}</div>
+                  }>
+                    {msg.type === "deal_intelligence" && msg.dealData
+                      ? <DealIntelligenceCard
+                          dealData={msg.dealData}
+                          onBuildTrip={(cta) => {
+                            const query = `Build me a trip around this deal: ${cta}`;
+                            setInput(query);
+                          }}
+                        />
+                      : msg.role === "assistant"
+                        ? (msg.text || "").split(/\s*[\[{](?=\s*"[a-zA-Z])/)[0].trim() || msg.text
+                        : msg.text
+                    }
+                    </div>
                   {msg.text?.includes("Your trip is set") && focusedOptionId && (() => {
                     const opt = tripOptions.find(o => o.id === focusedOptionId);
                     return (
@@ -9463,6 +9789,22 @@ Please respond now.`,
             <div style={{ color: "#6a6460", fontSize: "15px", lineHeight: "1.7", maxWidth: "580px", margin: "0 auto" }}>Tell me about your trip — or start with an idea. Explore destinations, discover events and dining, build an itinerary, and book your trip — all in one conversation. Every recommendation shaped by your loyalty programs, credit cards, and travel style — working together.</div>
           </div>
           <div style={{ width: "100%", maxWidth: "860px" }}>
+            {/* ── Deal Intelligence standing pill ── */}
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: "14px" }}>
+              <button onClick={() => {
+                callClaude("Show me the best deals from brands I love");
+              }} style={{
+                display: "inline-flex", alignItems: "center", gap: "8px",
+                background: "linear-gradient(135deg, rgba(201,168,76,0.12), rgba(201,168,76,0.06))",
+                border: "1px solid rgba(201,168,76,0.4)",
+                color: "#C9A84C", borderRadius: "24px", padding: "10px 22px",
+                cursor: "pointer", fontSize: "13px", fontWeight: "500",
+                letterSpacing: "0.02em", transition: "all 0.2s"
+              }}>
+                <span style={{ fontSize: "15px" }}>✦</span>
+                Show me the best deals from brands I love
+              </button>
+            </div>
             <div style={{ background: "rgba(255,255,255,0.04)", border: "2px solid rgba(255,255,255,0.14)", outline: "1px solid rgba(255,255,255,0.05)", outlineOffset: "3px", borderRadius: "20px", padding: "6px 6px 6px 22px", display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "18px", position: "relative" }}>
               <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
                 placeholder={`Where to? e.g. "4 days in Japan in October, two adults" · "surprise me with a long weekend under $1,500" · "best use of my Hyatt points this winter"`}
@@ -9495,7 +9837,12 @@ Please respond now.`,
         <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px 0", display: "flex", flexDirection: "column", gap: "14px" }}>
           {messages.slice(1).map((msg, i) => (
             <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start", animation: "fadeUp 0.3s ease forwards" }}>
-              <div style={{ maxWidth: "80%", padding: "12px 16px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.role === "user" ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)", border: msg.role === "user" ? "1px solid rgba(201,168,76,0.25)" : "1px solid rgba(255,255,255,0.07)", color: msg.isOptionsUpdate ? "#C9A84C" : msg.role === "user" ? "#e8e4dc" : "#b0a898", fontSize: "14px", lineHeight: "1.6", fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit", fontStyle: msg.role === "assistant" ? "italic" : "normal" }}>{msg.text}</div>
+              <div style={{ maxWidth: msg.type === "deal_intelligence" ? "720px" : "80%", padding: msg.type === "deal_intelligence" ? "16px 20px" : "12px 16px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.role === "user" ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)", border: msg.role === "user" ? "1px solid rgba(201,168,76,0.25)" : "1px solid rgba(255,255,255,0.07)", color: msg.isOptionsUpdate ? "#C9A84C" : msg.role === "user" ? "#e8e4dc" : "#b0a898", fontSize: "14px", lineHeight: "1.6", fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit", fontStyle: msg.role === "assistant" ? "italic" : "normal" }}>
+                {msg.type === "deal_intelligence" && msg.dealData
+                  ? <DealIntelligenceCard dealData={msg.dealData} onBuildTrip={(cta) => { setInput(`Build me a trip around this: ${cta}`);
+                setTimeout(() => document.querySelector('textarea')?.focus(), 50); }} />
+                  : msg.text}
+              </div>
               {msg.isReadyPrompt && (
                 <button onClick={() => { setConciergeMode(false); callClaude("Generate my options now based on everything discussed: " + conversationRef.current.filter(m=>m.role==="user").map(m=>m.content).join(" ")); }} style={{ marginTop: "10px", padding: "11px 22px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "20px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.06em", fontFamily: "'Playfair Display',Georgia,serif" }}>
                   Show Me What's Possible →
