@@ -9847,7 +9847,8 @@ Please respond now.`,
           const hasAccessibility = (userProfile?.travelConsiderations || []).some(c => c.includes("Wheelchair") || c.includes("Mobility"));
           const hasHoneymoon = (userProfile?.travelConsiderations || []).includes("Honeymoon");
           const hasCelebration = (userProfile?.travelConsiderations || []).includes("Anniversary or celebration");
-          const topProgram = programs.length > 0 ? programs[0] : null;
+          const pillPrograms = loyalty.map(a => a.program).filter(Boolean);
+          const topProgram = pillPrograms.length > 0 ? pillPrograms[0] : null;
           const topCard = cards.length > 0 ? cards[0].name : null;
 
           // ── 5 Pill Buckets ────────────────────────────────────────────────────
