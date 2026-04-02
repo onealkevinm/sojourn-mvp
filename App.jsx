@@ -7890,6 +7890,49 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
               </div>
             </div>
           )}
+          {activePanel === "profile" && (
+            <div>
+              <div style={{ color: "#C9A84C", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Travel Style</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "16px" }}>
+                {["Domestic", "International", "Business", "Urban / City", "Vacation — Beach", "Vacation — Ski", "Vacation — Other", "Family / Relatives", "Youth Athletics"].map(label => {
+                  const active = (profile?.travelProfile?.travelTypes || []).includes(label);
+                  return (
+                    <button key={label} onClick={() => {
+                      const current = profile?.travelProfile?.travelTypes || [];
+                      const updated = active ? current.filter(t => t !== label) : [...current, label];
+                      setProfile({ ...profile, travelProfile: { ...(profile?.travelProfile || {}), travelTypes: updated } });
+                    }} style={{ background: active ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.03)", border: `1px solid ${active ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.08)"}`, color: active ? "#C9A84C" : "#6a6460", borderRadius: "20px", padding: "5px 10px", cursor: "pointer", fontSize: "10px" }}>
+                      {active ? "✓ " : ""}{label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ color: "#C9A84C", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "8px" }}>Travel Considerations</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
+                {[
+                  { label: "Traveling with children", icon: "👶" },
+                  { label: "Traveling with pets", icon: "🐾" },
+                  { label: "Wheelchair accessible", icon: "♿" },
+                  { label: "Mobility assistance needed", icon: "🦽" },
+                  { label: "Dietary restrictions", icon: "🥗" },
+                  { label: "Anniversary or celebration", icon: "🥂" },
+                  { label: "Honeymoon", icon: "💍" },
+                ].map(({ label, icon }) => {
+                  const active = (profile?.travelConsiderations || []).includes(label);
+                  return (
+                    <button key={label} onClick={() => {
+                      const current = profile?.travelConsiderations || [];
+                      const updated = active ? current.filter(t => t !== label) : [...current, label];
+                      setProfile({ ...profile, travelConsiderations: updated });
+                    }} style={{ background: active ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.03)", border: `1px solid ${active ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.08)"}`, color: active ? "#C9A84C" : "#6a6460", borderRadius: "20px", padding: "5px 10px", cursor: "pointer", fontSize: "10px", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <span>{icon}</span>{active ? "✓ " : ""}{label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ color: "#444", fontSize: "10px", lineHeight: "1.5" }}>Changes apply immediately to your next query.</div>
+            </div>
+          )}
           {activePanel === "brands" && (
             <div>
               <div style={{ color: "#C9A84C", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Preferred Brands · {brands.length} selected</div>
@@ -7960,6 +8003,10 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
             <button onClick={() => toggle("cards")} style={pillStyle(activePanel === "cards")}>
               Cards {cards.length > 0 ? `· ${cards.length}` : ""}
               <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "cards" ? "▴" : "▾"}</span>
+            </button>
+            <button onClick={() => toggle("profile")} style={pillStyle(activePanel === "profile")}>
+              My Profile
+              <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "profile" ? "▴" : "▾"}</span>
             </button>
             <button onClick={() => toggle("brands")} style={pillStyle(activePanel === "brands")}>
               Brands {brands.length > 0 ? `· ${brands.length}` : ""}
@@ -9932,12 +9979,12 @@ Please respond now.`,
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 24px 12px", animation: "fadeUp 0.5s ease forwards" }}>
           <div style={{ marginBottom: "24px", textAlign: "center", width: "100%", maxWidth: "860px" }}>
             <div style={{ fontSize: "clamp(22px, 5vw, 34px)", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic", color: "#e8e4dc", lineHeight: "1.2", marginBottom: "16px" }}>Every great trip begins with a conversation.</div>
-            <div style={{ color: "#6a6460", fontSize: "15px", lineHeight: "1.7", maxWidth: "580px", margin: "0 auto" }}>Tell me about your trip — or start with an idea. Explore destinations, discover events and dining, build an itinerary, and book your trip — all in one conversation. Every recommendation shaped by your loyalty programs, credit cards, and travel style — working together.</div>
+            <div style={{ color: "#6a6460", fontSize: "15px", lineHeight: "1.7", maxWidth: "580px", margin: "0 auto" }}>Tell me about your trip — or start with an idea. Explore destinations, discover events and dining, build an itinerary, and book your trip — all in one conversation. Every recommendation shaped by your travel style, loyalty programs, and credit cards — working together.</div>
           </div>
           <div style={{ width: "100%", maxWidth: "860px" }}>
             <div style={{ background: "rgba(255,255,255,0.04)", border: "2px solid rgba(255,255,255,0.14)", outline: "1px solid rgba(255,255,255,0.05)", outlineOffset: "3px", borderRadius: "20px", padding: "6px 6px 6px 22px", display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "18px", position: "relative" }}>
               <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
-                placeholder={`Where to? e.g. "4 days in Japan in October, two adults" · "surprise me with a long weekend under $1,500" · "best use of my Hyatt points this winter"`}
+                placeholder="✏︎"
                 rows={4} style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "15px", lineHeight: "1.7", padding: "14px 50px 14px 0", fontFamily: "'DM Sans',system-ui,sans-serif", resize: "none" }} />
               {/* Mic floats top-right inside box */}
               <button onClick={listening ? () => { recognitionRef.current?.stop(); setListening(false); } : startListening} style={{ position: "absolute", top: "8px", right: "8px", width: "30px", height: "30px", borderRadius: "8px", border: "none", cursor: "pointer", background: listening ? "rgba(201,76,76,0.2)" : "transparent", color: listening ? "#C94C4C" : "#555", fontSize: "14px", animation: listening ? "pulse 1.2s infinite" : "none", display: "flex", alignItems: "center", justifyContent: "center" }}>&#127908;</button>
