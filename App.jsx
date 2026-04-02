@@ -5438,22 +5438,44 @@ const OnboardingFlow = ({ onComplete }) => {
             <div style={{ marginBottom: "6px", color: "#C9A84C", fontSize: "11px", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "serif" }}>Step 2 of 4</div>
             <div style={{ fontSize: "26px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "6px" }}>Which cards do you carry?</div>
             <div style={{ color: "#555", fontSize: "13px", marginBottom: "18px", lineHeight: "1.6" }}>Select all that apply. Sojourn routes each component to the card that earns the most rewards.</div>
-            <input value={cardSearch} onChange={e => setCardSearch(e.target.value)} placeholder="Search cards..." style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "9px 14px", color: "#e8e4dc", fontSize: "13px", marginBottom: "14px", boxSizing: "border-box", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "7px", marginBottom: "14px", maxHeight: "340px", overflowY: "auto" }}>
-              {filteredCards.map(({ name }) => <Chip key={name} label={name} active={selectedCards.includes(name)} onClick={() => toggleCard(name)} />)}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "7px", marginBottom: "14px", maxHeight: "300px", overflowY: "auto" }}>
+              {CARD_OPTIONS.map(({ name }) => <Chip key={name} label={name} active={selectedCards.includes(name)} onClick={() => toggleCard(name)} />)}
             </div>
 
-            {/* Custom card add */}
-            {showCustomCard ? (
-              <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
-                <input value={customCard} onChange={e => setCustomCard(e.target.value)} onKeyDown={e => e.key === "Enter" && addCustomCard()} placeholder="Card name (e.g. Chase Ink Business Unlimited)" autoFocus
-                  style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: "10px", padding: "9px 14px", color: "#e8e4dc", fontSize: "13px", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
-                <button onClick={addCustomCard} style={{ background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "10px", padding: "9px 16px", cursor: "pointer", fontSize: "12px", fontWeight: "700" }}>Add</button>
-                <button onClick={() => setShowCustomCard(false)} style={{ background: "rgba(255,255,255,0.04)", color: "#666", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "9px 14px", cursor: "pointer", fontSize: "12px" }}>✕</button>
-              </div>
-            ) : (
-              <button onClick={() => setShowCustomCard(true)} style={{ background: "none", border: "1px dashed rgba(255,255,255,0.12)", color: "#555", borderRadius: "20px", padding: "7px 14px", cursor: "pointer", fontSize: "12px", marginBottom: "12px", alignSelf: "flex-start", transition: "all 0.2s" }}>+ Add another card</button>
-            )}
+            {/* Autocomplete card add */}
+            <div style={{ position: "relative", marginBottom: "12px" }}>
+              <input value={customCard} onChange={e => { setCustomCard(e.target.value); setShowCustomCard(e.target.value.length > 0); }}
+                onKeyDown={e => {
+                  if (e.key === "Enter" && customCard.trim()) { addCustomCard(); setShowCustomCard(false); }
+                  if (e.key === "Escape") { setCustomCard(""); setShowCustomCard(false); }
+                }}
+                placeholder="Don't see your card? Type to search or add..."
+                style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "9px 14px", color: "#e8e4dc", fontSize: "12px", boxSizing: "border-box", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
+              {showCustomCard && customCard.length > 0 && (() => {
+                const matches = CARD_OPTIONS.filter(c => c.name.toLowerCase().includes(customCard.toLowerCase()) && !selectedCards.includes(c.name)).slice(0, 6);
+                if (matches.length === 0 && customCard.length < 3) return null;
+                return (
+                  <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#1a1814", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", marginTop: "4px", zIndex: 50, overflow: "hidden" }}>
+                    {matches.map(({ name }) => (
+                      <div key={name} onClick={() => { toggleCard(name); setCustomCard(""); setShowCustomCard(false); }}
+                        style={{ padding: "9px 14px", cursor: "pointer", fontSize: "12px", color: "#b0a898", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+                        onMouseEnter={e => e.currentTarget.style.background = "rgba(201,168,76,0.08)"}
+                        onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                        {name}
+                      </div>
+                    ))}
+                    {customCard.length >= 3 && !CARD_OPTIONS.find(c => c.name.toLowerCase() === customCard.toLowerCase()) && (
+                      <div onClick={addCustomCard}
+                        style={{ padding: "9px 14px", cursor: "pointer", fontSize: "12px", color: "#C9A84C", fontStyle: "italic" }}
+                        onMouseEnter={e => e.currentTarget.style.background = "rgba(201,168,76,0.08)"}
+                        onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                        + Add "{customCard}"
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
 
             {selectedCards.length > 0 && (
               <div style={{ marginBottom: "12px" }}>
@@ -7517,7 +7539,7 @@ const PointsDashboardDrawer = ({ profile, optimizeRecs, optimizeLoading, onOptim
                 ))}
                 <button
                   onClick={() => {
-                    sendMessage("Personalized travel deals for me");
+                    sendMessage("Personalized travel deals for you — show me personalized deals");
                   }}
                   style={{
                     width: "100%", marginTop: "14px", padding: "10px",
@@ -8337,6 +8359,13 @@ Travel considerations: ${(userProfile.travelConsiderations || []).join(', ') || 
     const brands = (userProfile?.favoriteBrands || []).join(', ') || 'Hyatt, Four Seasons, Aman';
     const travelStyle = (userProfile?.travelTypes || []).join(', ') || 'luxury, experiential';
 
+    const today = new Date();
+    const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const currentMonth = monthNames[today.getMonth()];
+    const currentYear = today.getFullYear();
+    const nextMonth = monthNames[(today.getMonth() + 1) % 12];
+    const monthAfter = monthNames[(today.getMonth() + 2) % 12];
+
     const dealPrompt = `You are Sojourn, a luxury travel concierge. Generate a curated personal deal briefing — not the cheapest deals available, but the 7 things THIS person would wish they knew. The bar: would this deal make them more likely to actually take a trip, either because it unlocks something they already wanted to do, or because it's compelling enough to push them from "thinking about it" to "booking it"?
 
 USER PROFILE:
@@ -8345,6 +8374,8 @@ USER PROFILE:
 - Credit cards: ${cards}
 - Favorite hotel brands: ${brands}
 - Travel style: ${travelStyle}
+
+Today's date: ${currentMonth} ${currentYear}. ALL deals must be forward-looking — upcoming travel opportunities, not past ones. Reference travel windows like ${nextMonth}, ${monthAfter}, or "this summer" as appropriate. Never suggest a deal or window that has already passed.
 
 Use the profile to personalize every deal — airline routes should depart from their home airport, hotels should come from their preferred brands, loyalty items should reference their actual programs. If a program isn't listed, don't invent membership — instead suggest the most natural fit.
 
@@ -9811,61 +9842,92 @@ Please respond now.`,
         // Full pool of inspirational pills — mix of trip planning and on-trip discovery
         // Rotates by 1 each session using a persisted index in localStorage
         // so the user never sees the same set twice in a row
-        const PILL_POOL = [
-          // Trip planning
-          `Best long weekend from ${airportCity} I haven't thought of yet`,
-          `I need a reset. Somewhere warm, late April — surprise me.`,
-          "Anniversary trip — somewhere unforgettable, open budget",
-          "First time in Japan — 10 days, two adults, where to start?",
-          "Plan a trip that makes the most of my points and credit cards",
-          "A week in Italy — where beyond Rome and Florence?",
-          "Best beach within 6 hours of Seattle for early June",
-          "Safari trip — where to start and how to use points well",
-          "Long weekend ski trip — best mountains for spring snow",
-          "Family trip with kids under 10 — somewhere that works for everyone",
-          "National park road trip this summer — where to stay inside the parks?",
-          "Best national park lodges to book now before they sell out",
-          "I want to stay somewhere historic and full of character — not a chain hotel",
-          "Old West experience — dude ranch or historic western hotel",
-          "Parkitecture lodges — Old Faithful, Timberline, Ahwahnee, which should I do?",
-          "Solo trip — somewhere I can explore freely and meet people",
-          "Road trip through the American West — 10 days, two people",
-          "Where would my Hyatt points go furthest right now?",
-          "A city I've never been to that would genuinely surprise me",
-          "Best use of my Alaska miles for a long weekend",
-          // On-trip discovery
-          "I'm on my business trip in Austin — any must-try BBQ while I'm here?",
-          "I'm in NYC for the weekend — what neighborhoods should I explore today?",
-          "Just landed in Tokyo — what should I do on my first evening?",
-          "I'm in New Orleans — where do locals actually eat?",
-          "On a layover in London — what can I do in 4 hours near Heathrow?",
-          "I'm in Miami for a conference — any great Cuban food nearby?",
-          "In San Francisco this week — best spots for a casual dinner alone?",
-          "Visiting Portland OR — what's worth doing beyond Powell's and Voodoo Doughnut?",
-          "I'm in Chicago — best deep dish and jazz in the same neighborhood?",
-          "In Nashville for work — where do locals go for live music?",
-        ];
+        const hasPets = (userProfile?.travelConsiderations || []).includes("Traveling with pets");
+          const hasKids = (userProfile?.travelConsiderations || []).includes("Traveling with children");
+          const hasAccessibility = (userProfile?.travelConsiderations || []).some(c => c.includes("Wheelchair") || c.includes("Mobility"));
+          const hasHoneymoon = (userProfile?.travelConsiderations || []).includes("Honeymoon");
+          const hasCelebration = (userProfile?.travelConsiderations || []).includes("Anniversary or celebration");
+          const topProgram = programs.length > 0 ? programs[0] : null;
+          const topCard = cards.length > 0 ? cards[0].name : null;
 
-        // Build final 5 prompts: up to 2 loyalty pills + 3 from rotating pool
-        const allPrompts = [];
-        // Alternate loyalty pill order each session
-        if (pillIdx % 2 === 1) loyaltyPills.reverse();
-        loyaltyPills.slice(0, 2).forEach(p => allPrompts.push(p.text));
+          // ── 5 Pill Buckets ────────────────────────────────────────────────────
+          // Bucket 1: Program / points / status
+          const programPills = [
+            topProgram ? `Where would my ${topProgram} points go furthest right now?` : "Where would my points go furthest for a long weekend?",
+            topProgram ? `What's the best way to hit top-tier status in ${topProgram} this year?` : "What's the fastest path to elite status right now?",
+            topCard ? `Am I getting the most out of my ${topCard}?` : "Am I using my travel cards as well as I could be?",
+            "Best sweet spot redemptions available in the next 90 days",
+            "Walk me through how to stack my points and cards for maximum value",
+          ];
 
-        // Pull 3 consecutive pills from the pool starting at current index
-        for (let i = 0; i < 3; i++) {
-          allPrompts.push(PILL_POOL[(pillIdx + i) % PILL_POOL.length]);
-        }
+          // Bucket 2: Unstructured discovery (occasions live here — occasion drives the trip)
+          const discoveryPills = [
+            `Best long weekend from ${airportCity} I haven't thought of yet`,
+            "A city I've never been to that would genuinely surprise me",
+            "Somewhere that feels completely different from where I live",
+            "I want to stay somewhere historic and full of character — not a chain hotel",
+            hasHoneymoon ? "Our honeymoon — somewhere extraordinary, we're open to anywhere in the world" : "Most underrated places to travel right now",
+            hasCelebration ? "Our anniversary is coming up — somewhere genuinely special, open to any destination" : "A place that feels like a real escape — not just a vacation",
+            "What destination should I go to that I've never considered?",
+            "A milestone birthday trip — somewhere that actually feels worthy of the occasion",
+          ];
 
-        // Trim to 5
-        const finalPrompts = allPrompts.slice(0, 5);
+          // Bucket 3: Structured exploration
+          const explorationPills = [
+            `Best beach within 5 hours of ${airportCity} — where should I go this summer?`,
+            "Long weekend ski trip — where's the best snow right now?",
+            "Safari trip — where to start and what to realistically budget",
+            hasKids ? "Best all-around family resort — kids love it, adults don't suffer" : "Best mountain resort for a long weekend — hiking, food, no crowds",
+            hasPets ? `Pet-friendly escape from ${airportCity} — somewhere worth the drive` : `National park road trip from ${airportCity} — best lodges inside the parks`,
+            "A week in Japan — first timer, two adults, where to start?",
+            "Best island in the Caribbean right now — not overrun, actually beautiful",
+            hasAccessibility ? "Best accessible luxury resorts — full amenities, no compromises" : "Road trip through the American Southwest — where to stay, what to see",
+          ];
 
-        // 2-2-1 prompt layout
-        const row1 = finalPrompts.slice(0, 2);
-        const row2 = finalPrompts.slice(2, 4);
-        const row3 = finalPrompts.slice(4, 5);
+          // Bucket 4: Localized / on-trip services
+          // Lead with on-trip reference to build intuition that Sojourn works mid-trip
+          const localPills = [
+            `I'm on my trip in Austin — what's the best BBQ I can't miss while I'm here?`,
+            `I'm in ${airportCity} — where do locals actually eat?`,
+            "I just landed — what's worth doing on my first evening here?",
+            "Best dinner within walking distance of my hotel tonight",
+            "What's happening this weekend worth building an evening around?",
+            "I have 3 hours between meetings — best thing to do near where I am",
+            "Where would a local take someone visiting for the first time?",
+            "I'm here for a conference — what's actually worth seeing beyond the hotel?",
+          ];
 
-        return (
+          // Bucket 5: Complex / stacked reasoning
+          const complexPills = [
+            topProgram
+              ? `5 days somewhere warm in the next 60 days — open to using ${topProgram} points, want real value not just cheap`
+              : "5 days somewhere warm in the next 60 days — mix of points and cash, want the best overall experience",
+            `Long weekend trip that stacks well — flight, hotel, and points working together from ${airportCity}`,
+            hasKids
+              ? "Family week away — somewhere the kids will remember, somewhere the adults won't dread, and ideally using points for part of it"
+              : "A trip that would actually push me to book — not too far, genuinely exciting, and makes smart use of what I have",
+            "Best trip I could take in the next 90 days given my exact points, cards, and schedule",
+            topCard
+              ? `Plan a long weekend that maximizes my ${topCard} benefits end to end — flights, hotel, dining`
+              : "Plan a long weekend that makes full use of my travel setup — flights, hotel, dining, all optimized",
+          ];
+
+          // Pick one from each bucket, rotating by session index
+          const pick = (arr, offset) => arr[(pillIdx + offset) % arr.length];
+          const finalPrompts = [
+            pick(programPills, 0),
+            pick(discoveryPills, 1),
+            pick(explorationPills, 2),
+            pick(localPills, 3),
+            pick(complexPills, 4),
+          ].slice(0, 4); // 4 rotating pills
+
+          // 2-2 layout (4 pills)
+          const row1 = finalPrompts.slice(0, 2);
+          const row2 = finalPrompts.slice(2, 4);
+          const row3 = [];
+
+          return (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 24px 12px", animation: "fadeUp 0.5s ease forwards" }}>
           <div style={{ marginBottom: "24px", textAlign: "center", width: "100%", maxWidth: "860px" }}>
             <div style={{ fontSize: "clamp(22px, 5vw, 34px)", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic", color: "#e8e4dc", lineHeight: "1.2", marginBottom: "16px" }}>Every great trip begins with a conversation.</div>
@@ -9882,7 +9944,7 @@ Please respond now.`,
                 <button onClick={handleSend} disabled={!input.trim() || loading} style={{ width: "40px", height: "40px", borderRadius: "12px", border: "none", cursor: input.trim() && !loading ? "pointer" : "default", background: input.trim() && !loading ? "#C9A84C" : "rgba(201,168,76,0.15)", color: input.trim() && !loading ? "#0a0908" : "#555", fontSize: "18px", fontWeight: "bold" }}>&#8593;</button>
               </div>
             </div>
-            {/* 2-2-1 prompt rows */}
+            {/* 2-2 prompt rows */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "center" }}>
               <div style={{ display: "flex", gap: "8px", justifyContent: "center", width: "100%" }}>
                 {row1.map(ex => <button key={ex} onClick={() => setInput(ex)} style={{ flex: 1, maxWidth: "420px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "#6a6460", borderRadius: "20px", padding: "9px 18px", cursor: "pointer", fontSize: "12px", textAlign: "center" }}>{ex}</button>)}
@@ -9890,9 +9952,7 @@ Please respond now.`,
               <div style={{ display: "flex", gap: "8px", justifyContent: "center", width: "100%" }}>
                 {row2.map(ex => <button key={ex} onClick={() => setInput(ex)} style={{ flex: 1, maxWidth: "420px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "#6a6460", borderRadius: "20px", padding: "9px 18px", cursor: "pointer", fontSize: "12px", textAlign: "center" }}>{ex}</button>)}
               </div>
-              <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
-                {row3.map(ex => <button key={ex} onClick={() => setInput(ex)} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "#6a6460", borderRadius: "20px", padding: "9px 24px", cursor: "pointer", fontSize: "12px" }}>{ex}</button>)}
-              </div>
+
               {/* ── Deal Intelligence standing pill ── */}
               <div style={{ display: "flex", justifyContent: "center", marginTop: "8px" }}>
                 <button onClick={() => sendMessage("Personalized travel deals for me")} style={{
