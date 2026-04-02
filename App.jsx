@@ -1560,7 +1560,7 @@ const QUALITY_SIGNALS_DB = {
   "Four Seasons Hotel Florence": { tier: "ultra_luxury", notes: "Borgo Pinti Florence, garden palazzo, independent" },
   "Four Seasons Hotel Ritz Lisbon": { tier: "ultra_luxury", notes: "Rua Rodrigo da Fonseca Lisbon, independent" },
   "Four Seasons Hotel Gresham Palace Budapest": { tier: "ultra_luxury", notes: "Chain Bridge Budapest, Art Nouveau, independent" },
-  "Four Seasons Safari Lodge Serengeti": { tier: "ultra_luxury", notes: "Serengeti Tanzania, independent" },
+  "Four Seasons Safari Lodge Serengeti": { tier: "ultra_luxury", notes: "Serengeti Tanzania, independent", ecotourism: true},
   "Four Seasons Resort Seychelles": { tier: "ultra_luxury", notes: "Mahe Seychelles, independent" },
   "Four Seasons Resort Maldives at Landaa Giraavaru": { tier: "ultra_luxury", tl_gold: true, notes: "Baa Atoll Maldives, independent" },
   "Four Seasons Resort Costa Rica at Peninsula Papagayo": { tier: "ultra_luxury", notes: "Guanacaste Costa Rica, independent" },
@@ -1651,13 +1651,13 @@ const QUALITY_SIGNALS_DB = {
 
   // ── NOTABLE INDEPENDENTS NOT PREVIOUSLY LISTED ────────────────────────────
   "The Wickaninnish Inn": { tier: "luxury", relais_chateaux: true, tl_gold: true, notes: "Tofino BC Canada, storm-watching, independent" },
-  "Clayoquot Wilderness Resort": { tier: "ultra_luxury", relais_chateaux: true, notes: "Tofino BC Canada, tented wilderness camp, independent" },
-  "Nimmo Bay Resort": { tier: "ultra_luxury", notes: "British Columbia wilderness, heli-accessed, independent" },
+  "Clayoquot Wilderness Resort": { tier: "ultra_luxury", relais_chateaux: true, notes: "Tofino BC Canada, tented wilderness camp, independent", ecotourism: true},
+  "Nimmo Bay Resort": { tier: "ultra_luxury", notes: "British Columbia wilderness, heli-accessed, independent", ecotourism: true},
   "The Brando": { tier: "ultra_luxury", tl_gold: true, notes: "Tetiaroa French Polynesia, Marlon Brando's private island, independent" },
   "North Island": { tier: "ultra_luxury", tl_gold: true, notes: "Seychelles, exclusive-use island, independent" },
   "Fregate Island Private": { tier: "ultra_luxury", notes: "Seychelles, exclusive island, independent" },
-  "Singita Kruger National Park": { tier: "ultra_luxury", tl_gold: true, notes: "South Africa safari, Singita" },
-  "Singita Grumeti": { tier: "ultra_luxury", tl_gold: true, notes: "Serengeti Tanzania safari, Singita" },
+  "Singita Kruger National Park": { tier: "ultra_luxury", tl_gold: true, notes: "South Africa safari, Singita", ecotourism: true},
+  "Singita Grumeti": { tier: "ultra_luxury", tl_gold: true, notes: "Serengeti Tanzania safari, Singita", ecotourism: true},
   "andBeyond Phinda Private Game Reserve": { tier: "ultra_luxury", notes: "KwaZulu-Natal South Africa, andBeyond" },
   "andBeyond Ngorongoro Crater Lodge": { tier: "ultra_luxury", tl_gold: true, notes: "Ngorongoro Tanzania, andBeyond" },
   "Explora Patagonia": { tier: "ultra_luxury", notes: "Torres del Paine Chile, independent" },
@@ -1683,7 +1683,7 @@ const QUALITY_SIGNALS_DB = {
   // ── CONDÉ NAST TRAVELER GOLD LIST (US) ────────────────────────────────────
   "Hermitage Bay": { tier: "luxury", cn_gold: true, relais_chateaux: true, notes: "Antigua, CN Gold List, all-inclusive boutique" },
   "The Beverly Hills Hotel": { tier: "luxury", forbes_stars: 5, cn_gold: true, notes: "Beverly Hills CA, Dorchester Collection, Polo Lounge" },
-  "Sheldon Chalet": { tier: "ultra_luxury", cn_gold: true, notes: "Denali Alaska, private wilderness chalet, helicopter access only, independent" },
+  "Sheldon Chalet": { tier: "ultra_luxury", cn_gold: true, notes: "Denali Alaska, private wilderness chalet, helicopter access only, independent", ecotourism: true},
   "The Gasparilla Inn & Club": { tier: "luxury", cn_gold: true, michelin_keys: 1, notes: "Boca Grande FL, historic 1913, independent" },
   "Wickaninnish Inn": { tier: "luxury", cn_gold: true, relais_chateaux: true, tl_gold: true, notes: "Tofino BC, storm-watching, independent" },
   "Coral Sands Inn & Cottages": { tier: "luxury", cn_gold: true, notes: "Harbour Island Bahamas, pink sand beach, independent" },
@@ -1926,7 +1926,7 @@ const QUALITY_SIGNALS_DB = {
   "Lennox Miami Beach": { tier: "luxury", slh: true, notes: "South Beach FL, Art Deco district, independent, Hyatt bookable" },
   "Longfellow Hotel": { tier: "luxury", slh: true, notes: "Portland ME, independent boutique, Hyatt bookable" },
   "Mirror Lake Inn Resort & Spa": { tier: "luxury", slh: true, notes: "Lake Placid NY, Adirondacks, independent, Hyatt bookable" },
-  "Rawah Ranch": { tier: "ultra_luxury", slh: true, notes: "Glendevey CO, remote wilderness dude ranch, all-inclusive, Hyatt bookable" },
+  "Rawah Ranch": { tier: "ultra_luxury", slh: true, notes: "Glendevey CO, remote wilderness dude ranch, all-inclusive, Hyatt bookable", ecotourism: true},
   "Refinery Hotel New York": { tier: "luxury", slh: true, notes: "Midtown Manhattan NYC, historic 1912 hat factory, independent, Hyatt bookable" },
   "Rusty Parrot Lodge & Spa": { tier: "luxury", slh: true, notes: "Jackson Hole WY, downtown Jackson, independent boutique, Hyatt bookable" },
   "Seal Cove Inn": { tier: "luxury", slh: true, notes: "Moss Beach CA, Half Moon Bay area, coastal boutique, independent, Hyatt bookable" },
@@ -1966,7 +1966,7 @@ const QUALITY_SIGNALS_DB = {
   "Lighthouse Hotel": { tier: "luxury", slh: true, notes: "Key West FL, boutique independent, Hyatt bookable" },
   "Maison Twenty Seven": { tier: "luxury", slh: true, notes: "Santa Monica CA, boutique independent, Hyatt bookable" },
   "Ridley House": { tier: "luxury", slh: true, notes: "Key West FL, historic boutique, independent, Hyatt bookable" },
-  "RiverView Ranch Retreat & Western Adventures": { tier: "luxury", slh: true, notes: "Alberton MT, Clark Fork River, wilderness ranch, independent, Hyatt bookable" },
+  "RiverView Ranch Retreat & Western Adventures": { tier: "luxury", slh: true, notes: "Alberton MT, Clark Fork River, wilderness ranch, independent, Hyatt bookable", ecotourism: true},
 
 
   // ── FORBES 5-STAR — CANADA ────────────────────────────────────────────────
@@ -2072,9 +2072,9 @@ const QUALITY_SIGNALS_DB = {
   "Hotel Xcaret Mexico": { tier: "luxury", forbes_stars: 4, region: "mexico", notes: "Playa del Carmen Mexico, all-inclusive" },
   "Conrad Punta de Mita": { tier: "luxury", forbes_stars: 4, region: "mexico", notes: "Punta de Mita Nayarit Mexico, Hilton Honors" },
   "Grand Velas Riviera Nayarit": { tier: "luxury", forbes_stars: 4, region: "mexico", notes: "Nuevo Vallarta Mexico, Grand Velas, all-inclusive" },
-  "One&Only Mandarina": { tier: "ultra_luxury", forbes_stars: 4, region: "mexico", notes: "Nayarit Mexico, One&Only Resorts, treehouse villas in 200-year-old jungle canopy and beach villas with access to a 50-meter infinity pool directly on the sand — one of the most extraordinary resort settings in Mexico" },
+  "One&Only Mandarina": { tier: "ultra_luxury", forbes_stars: 4, region: "mexico", notes: "Nayarit Mexico, One&Only Resorts, treehouse villas in 200-year-old jungle canopy and beach villas with access to a 50-meter infinity pool directly on the sand — one of the most extraordinary resort settings in Mexico", ecotourism: true},
   "The St. Regis Punta Mita Resort": { tier: "ultra_luxury", forbes_stars: 4, region: "mexico", notes: "Punta Mita Nayarit Mexico, Marriott Bonvoy" },
-  "Naviva, A Four Seasons Resort": { tier: "ultra_luxury", forbes_stars: 4, region: "mexico", notes: "Punta Mita Nayarit Mexico, adults-only tented camp, independent" },
+  "Naviva, A Four Seasons Resort": { tier: "ultra_luxury", forbes_stars: 4, region: "mexico", notes: "Punta Mita Nayarit Mexico, adults-only tented camp, independent", ecotourism: true},
   "Casa de Sierra Nevada": { tier: "ultra_luxury", forbes_stars: 4, region: "mexico", notes: "San Miguel de Allende Mexico, Belmond, historic colonial mansions" },
   "Live Aqua Urban Resort San Miguel de Allende": { tier: "luxury", forbes_stars: 4, region: "mexico", notes: "San Miguel de Allende Mexico, independent" },
 
@@ -2135,7 +2135,7 @@ const QUALITY_SIGNALS_DB = {
   "The Ritz-Carlton St. Louis": { tier: "luxury", forbes_stars: 4, notes: "Clayton MO, Marriott Bonvoy" },
   // Montana
   "Triple Creek Ranch": { tier: "ultra_luxury", forbes_stars: 4, tl_gold: true, relais_chateaux: true, notes: "Darby MT, all-inclusive luxury ranch, Relais & Chateaux" },
-  "GreenO": { tier: "ultra_luxury", forbes_stars: 4, notes: "Greenough MT, adults-only eco-luxury ranch, independent" },
+  "GreenO": { tier: "ultra_luxury", forbes_stars: 4, notes: "Greenough MT, adults-only eco-luxury ranch, independent", ecotourism: true},
   "Paws Up Montana": { tier: "ultra_luxury", forbes_stars: 4, notes: "Greenough MT, glamping and ranch resort, 37,000 acres, independent" },
   // Nevada
   "The Palazzo at The Venetian": { tier: "luxury", forbes_stars: 4, notes: "Las Vegas Strip, Las Vegas Sands" },
@@ -2256,12 +2256,12 @@ const QUALITY_SIGNALS_DB = {
 
   // ── NATIONAL PARK LODGES — IN-PARK LODGING (distinct signal category) ──────
   // Not luxury hotels — the signal is irreplaceable setting and historic character
-  "The Ahwahnee": { tier: "luxury", historic: true, notes: "Yosemite Valley CA, opened 1927, National Historic Landmark, Gilbert Stanley Underwood's granite and concrete Arts and Crafts/Art Deco masterpiece — sequoias outside the windows, 24-foot great hall, massive stone fireplaces. FDR, Churchill, JFK all stayed here. The building IS Yosemite." },
-  "Volcano House": { tier: "premium", historic: true, notes: "Hawaii Volcanoes National Park Big Island, only lodging on the rim of Kilauea caldera — lava glow at night, crater views from the dining room, steam vents outside. Remote and extraordinary. Most travelers don't know you can sleep inside the park." },
-  "Old Faithful Inn": { tier: "premium", historic: true, notes: "Yellowstone National Park WY, opened 1904, largest log structure in the world, National Historic Landmark — Old Faithful erupts 100 yards from the front porch. The log lobby with its volcanic rock fireplace is one of America's great interior spaces." },
-  "El Tovar": { tier: "luxury", historic: true, notes: "South Rim Grand Canyon AZ, opened 1905, National Historic Landmark — perched on the canyon rim, one of the great National Park lodges, rustic elegance with canyon views from the dining room." },
-  "Many Glacier Hotel": { tier: "premium", historic: true, notes: "Glacier National Park MT, opened 1915, Swiss chalet on Swiftcurrent Lake — one of the most dramatically situated hotels in America, surrounded by glaciers and wildlife." },
-  "Crater Lake Lodge": { tier: "premium", historic: true, notes: "Crater Lake National Park OR, opened 1915, rebuilt 1995 — on the rim of the deepest lake in the US, the bluest water you will ever see. Rooms on the rim side are extraordinary." },
+  "The Ahwahnee": { tier: "luxury", historic: true, notes: "Yosemite Valley CA, opened 1927, National Historic Landmark, Gilbert Stanley Underwood's granite and concrete Arts and Crafts/Art Deco masterpiece — sequoias outside the windows, 24-foot great hall, massive stone fireplaces. FDR, Churchill, JFK all stayed here. The building IS Yosemite.", ecotourism: true},
+  "Volcano House": { tier: "premium", historic: true, notes: "Hawaii Volcanoes National Park Big Island, only lodging on the rim of Kilauea caldera — lava glow at night, crater views from the dining room, steam vents outside. Remote and extraordinary. Most travelers don't know you can sleep inside the park.", ecotourism: true},
+  "Old Faithful Inn": { tier: "premium", historic: true, notes: "Yellowstone National Park WY, opened 1904, largest log structure in the world, National Historic Landmark — Old Faithful erupts 100 yards from the front porch. The log lobby with its volcanic rock fireplace is one of America's great interior spaces.", ecotourism: true},
+  "El Tovar": { tier: "luxury", historic: true, notes: "South Rim Grand Canyon AZ, opened 1905, National Historic Landmark — perched on the canyon rim, one of the great National Park lodges, rustic elegance with canyon views from the dining room.", ecotourism: true},
+  "Many Glacier Hotel": { tier: "premium", historic: true, notes: "Glacier National Park MT, opened 1915, Swiss chalet on Swiftcurrent Lake — one of the most dramatically situated hotels in America, surrounded by glaciers and wildlife.", ecotourism: true},
+  "Crater Lake Lodge": { tier: "premium", historic: true, notes: "Crater Lake National Park OR, opened 1915, rebuilt 1995 — on the rim of the deepest lake in the US, the bluest water you will ever see. Rooms on the rim side are extraordinary.", ecotourism: true},
   "Grand Hotel Mackinac Island": { tier: "luxury", historic: true, notes: "Mackinac Island MI, opened 1887, longest porch in the world, no cars on the island — horse-drawn carriages only. National Historic Landmark, genuinely frozen in a different era." },
   "The Grand Hotel Yellowstone": { tier: "premium", historic: true, notes: "Lake Village Yellowstone WY, opened 1891, on Yellowstone Lake — one of the oldest hotels in the park system." },
 
@@ -2301,7 +2301,7 @@ const QUALITY_SIGNALS_DB = {
   "Claremont Club & Spa": { tier: "luxury", historic: true, notes: "Berkeley/Oakland Hills CA, est. 1915, Tudor Revival. Panoramic views of San Francisco Bay from the hills. CN Gold List, T&L World's Best. 10 tennis courts, 3 pools. Farm-to-fork Limewood restaurant. 30 minutes to downtown SF, 15 minutes to Oakland." },
   "Omni La Costa Resort": { tier: "luxury", historic: true, notes: "Carlsbad CA, est. 1965 — first resort in the US to introduce a full-service spa. Championship golf, 17 tennis courts, 8 pools. Robert Trent Jones-caliber courses. Top luxury resort spa in San Diego. Near LEGOLAND, beaches, and San Diego Zoo." },
   "Hotel del Coronado": { tier: "luxury", historic: true, forbes_stars: 4, notes: "Coronado Island CA, est. 1888, National Historic Landmark, Queen Anne. 130+ years on the beach, 901 rooms across 5 neighborhoods. Marilyn Monroe filmed Some Like It Hot here. Original lobby restored from historic blueprints. Shore House oceanfront residences opened 2022. Sea-to-table dining at Serea." },
-  "The Inn at Death Valley": { tier: "luxury", historic: true, notes: "Death Valley National Park CA, est. 1927, built by the Pacific Coast Borax Company to attract visitors to its railroad. Spring-fed pool is an Oasis amid the desert. Hollywood elites including Marlon Brando, Clark Gable, and Carole Lombard escaped here. One of the most remote fine dining settings in the world. 120 miles from Las Vegas." },
+  "The Inn at Death Valley": { tier: "luxury", historic: true, notes: "Death Valley National Park CA, est. 1927, built by the Pacific Coast Borax Company to attract visitors to its railroad. Spring-fed pool is an Oasis amid the desert. Hollywood elites including Marlon Brando, Clark Gable, and Carole Lombard escaped here. One of the most remote fine dining settings in the world. 120 miles from Las Vegas.", ecotourism: true},
   "Benbow Historic Inn": { tier: "premium", historic: true, notes: "Garberville CA, est. 1926, Tudor Revival, 2018 Historic Hotels Best Small Inn winner. Built by the Benbow family — 9 siblings who also built the local dam and power company. Clark Gable, Spencer Tracy, Eleanor Roosevelt, and President Hoover all stayed here. Complimentary afternoon tea and scones daily. Minutes from Avenue of the Giants redwoods." },
   "La Valencia Hotel": { tier: "luxury", historic: true, notes: "La Jolla CA, est. 1926, Spanish Colonial Revival. Known as The Pink Lady — trademarked pastel rose buildings are a La Jolla landmark. 70% of rooms have ocean views. San Diego Historic Landmark since 1987. La Sala Lounge has Pacific views under hand-painted ceilings. Steps from La Jolla Cove." },
   "Surf & Sand Resort": { tier: "luxury", historic: true, notes: "Laguna Beach CA, est. 1948. All 167 rooms have ocean-view balconies directly above the Pacific. 500 feet of private beach. Laguna Beach arts hub — Festival of Arts and Sawdust Festival nearby. Splashes restaurant watches waves roll in through floor-to-ceiling windows." },
@@ -2480,7 +2480,7 @@ const QUALITY_SIGNALS_DB = {
 
   // ── MONTANA ──────────────────────────────────────────────────────────────
   "The Andrus Hotel": { tier: "premium", historic: true, notes: "Dillon MT, est. 1917, National Register, Renaissance Revival. Built by sheep rancher Harry Andrus who spared no expense. 12 suites with full kitchens. Pharaoh the Great Dane served as bellman for years. Rooftop garden for stargazing with mountain views. 2.5 hours from Yellowstone, deep in the Beaverhead Valley — true Montana." },
-  "Lake McDonald Lodge": { tier: "premium", historic: true, notes: "Glacier National Park MT, est. 1914, National Historic Landmark, Swiss Chalet. Finest example of Swiss Chalet-style hotels remaining in the US. Kootenai phrases incised in lobby floors translate as 'welcome' and 'new life to those who drink here.' Famed Montana cowboy artist Charles M. Russell told stories by the lobby fireplace. Rustic cabins and lodge rooms on Going-to-the-Sun Road." },
+  "Lake McDonald Lodge": { tier: "premium", historic: true, notes: "Glacier National Park MT, est. 1914, National Historic Landmark, Swiss Chalet. Finest example of Swiss Chalet-style hotels remaining in the US. Kootenai phrases incised in lobby floors translate as 'welcome' and 'new life to those who drink here.' Famed Montana cowboy artist Charles M. Russell told stories by the lobby fireplace. Rustic cabins and lodge rooms on Going-to-the-Sun Road.", ecotourism: true},
   "Many Glacier Hotel": { tier: "premium", historic: true, notes: "Glacier National Park MT, est. 1915, National Historic Landmark, Swiss Chalet. Great Northern Railway called it 'one of the most noteworthy tourist hotels in America' at opening. On shores of Swiftcurrent Lake in the most dramatic valley in Glacier. Double-helix spiral staircase restored 2017. Ptarmigan Dining Room with soaring views of peaks and lake. Boat rides on the historic Chief Two Guns." },
 
   // ── NEBRASKA ─────────────────────────────────────────────────────────────
@@ -2614,7 +2614,7 @@ const QUALITY_SIGNALS_DB = {
   "Omni La Mansion del Rio": { tier: "luxury", historic: true, notes: "San Antonio River Walk TX, est. 1852, Spanish Colonial Revival. Originally built by the Society of St. Mary's four brothers as St. Mary's School in 1852. On the banks of the River Walk in the Cultural Arts District. Beamed ceilings, exposed brick walls, marble baths. Across from the Majestic Theatre. Four Brothers restaurant with Texas Hill Country flavors." },
 
   // ── UTAH ─────────────────────────────────────────────────────────────────
-  "Zion Lodge": { tier: "luxury", historic: true, notes: "Inside Zion National Park UT, est. 1923, National Register, National Park Rustic. The only hotel property located within Zion National Park. Designed by Gilbert Stanley Underwood — rebuilt within 100 days after a 1966 fire, restored to original grandeur in 1990. Set against majestic red sandstone canyon walls amid cottonwood trees. Red Rock Grill with open terrace canyon views. Peak season requires shuttle access." },
+  "Zion Lodge": { tier: "luxury", historic: true, notes: "Inside Zion National Park UT, est. 1923, National Register, National Park Rustic. The only hotel property located within Zion National Park. Designed by Gilbert Stanley Underwood — rebuilt within 100 days after a 1966 fire, restored to original grandeur in 1990. Set against majestic red sandstone canyon walls amid cottonwood trees. Red Rock Grill with open terrace canyon views. Peak season requires shuttle access.", ecotourism: true},
 
   // ── VERMONT ──────────────────────────────────────────────────────────────
   "The Castle Hill Resort and Spa": { tier: "luxury", historic: true, notes: "Cavendish VT in the Green Mountains, est. 1905, Period Houses. Built by Vermont Governor Alan Fletcher — first home in Vermont fully wired for electricity. European craftsmen worked five years on elaborate details. California redwood carvings, Tiffany fixtures, original wallpaper, grand staircase. 30 rooms, Aveda spa. Okemo Valley skiing." },
@@ -2661,20 +2661,20 @@ const QUALITY_SIGNALS_DB = {
   // The parkitecture tradition — lodges that feel like they grew from the landscape
 
   "Mammoth Hot Springs Hotel and Cabins": { tier: "premium", historic: true, notes: "Yellowstone National Park WY near Mammoth Hot Springs and the park's north entrance. One of only two Yellowstone lodges open in winter — snowcoach and snowmobile access. Historic Map Room with rare maps made from different wood species. Cabins range from rustic to frontier. Walking distance to the extraordinary Mammoth Hot Spring terraces." },
-  "LeConte Lodge": { tier: "premium", historic: true, notes: "Great Smoky Mountains National Park TN near Gatlinburg. The highest guest lodge in the eastern US at 6,593 feet on Mount LeConte — accessible ONLY by foot trail (5 trails, 5-8 miles each). No electricity, no running water, kerosene lamps. Llamas carry supplies up the mountain. Dinner and breakfast included. One of the most unique lodging experiences in America — book a year in advance." },
-  "Far View Lodge": { tier: "premium", historic: true, notes: "Mesa Verde National Park CO at 8,160 feet elevation. The only in-park lodging at Mesa Verde. Sweeping views across four states from the mesa top. Metate Room restaurant serves Southwestern cuisine. Adjacent to some of the best preserved Ancestral Puebloan cliff dwellings in the world — Cliff Palace and Balcony House tours depart nearby." },
-  "Jenny Lake Lodge": { tier: "luxury", historic: true, notes: "Grand Teton National Park WY at Moose. The most intimate and refined lodge in Grand Teton — 37 cabins on the shores of Jenny Lake with direct Teton views. Full American Plan includes horseback riding and bicycle use. Acclaimed dining room serves six-course dinners. Original 1920s-30s dude ranch cabins. One of the most sought-after reservations in the national park system." },
+  "LeConte Lodge": { tier: "premium", historic: true, notes: "Great Smoky Mountains National Park TN near Gatlinburg. The highest guest lodge in the eastern US at 6,593 feet on Mount LeConte — accessible ONLY by foot trail (5 trails, 5-8 miles each). No electricity, no running water, kerosene lamps. Llamas carry supplies up the mountain. Dinner and breakfast included. One of the most unique lodging experiences in America — book a year in advance.", ecotourism: true},
+  "Far View Lodge": { tier: "premium", historic: true, notes: "Mesa Verde National Park CO at 8,160 feet elevation. The only in-park lodging at Mesa Verde. Sweeping views across four states from the mesa top. Metate Room restaurant serves Southwestern cuisine. Adjacent to some of the best preserved Ancestral Puebloan cliff dwellings in the world — Cliff Palace and Balcony House tours depart nearby.", ecotourism: true},
+  "Jenny Lake Lodge": { tier: "luxury", historic: true, notes: "Grand Teton National Park WY at Moose. The most intimate and refined lodge in Grand Teton — 37 cabins on the shores of Jenny Lake with direct Teton views. Full American Plan includes horseback riding and bicycle use. Acclaimed dining room serves six-course dinners. Original 1920s-30s dude ranch cabins. One of the most sought-after reservations in the national park system.", ecotourism: true},
   "Lake Crescent Lodge": { tier: "premium", historic: true, notes: "Olympic National Park WA in Port Angeles. On the glacially carved Lake Crescent — one of the deepest and clearest lakes in the US. President FDR stayed here in 1937, inspiring creation of Olympic National Park. Historic 1916 lodge plus cabins, Storm King Tavern. Rowboats, kayaks, and paddleboards on the lake. Surrounded by old-growth temperate rainforest." },
   "Asticou Inn": { tier: "luxury", historic: true, notes: "Mount Desert Island ME in Northeast Harbor near Acadia National Park. Classic New England summer inn operating since 1883. The social heart of Northeast Harbor — sweeping views of the harbor and Acadia mountains. Asticou Azalea Garden and Thuya Garden nearby are among the finest in New England. Lobster and seafood dining in a true Maine coastal setting." },
   "Timberline Lodge": { tier: "luxury", historic: true, notes: "Mount Hood OR at 6,000 feet elevation, est. 1937, National Historic Landmark. Hand-built as a WPA project during the Great Depression by 500 craftsmen — stonework, wood carving, ironwork, hooked rugs, all handmade on site. The exterior was used as the Overlook Hotel in Kubrick's The Shining. Year-round skiing on Mount Hood's Palmer snowfield. Cascade Dining Room with locally sourced Oregon cuisine." },
   "Skyland Resort": { tier: "premium", historic: true, notes: "Shenandoah National Park VA on Skyline Drive at 3,680 feet. Highest point on Skyline Drive — sweeping views of the Shenandoah Valley and Blue Ridge Mountains from the dining room and cabins. George Freeman Pollock's 1890s retreat that inspired creation of Shenandoah National Park. Hiking on the Appalachian Trail directly from the resort. Open April through November." },
-  "Paradise Inn": { tier: "luxury", historic: true, notes: "Mount Rainier National Park WA at Paradise, est. 1917, National Historic Landmark. At 5,400 feet in one of the snowiest places on earth — the inn typically opens in late May after clearing up to 50 feet of snow. Great Hall with hand-hewn cedar timbers and massive stone fireplaces. Wildflower meadows surround the inn in summer. Iconic views of Rainier's glaciated peak. Open late May through early October." },
-  "Sol Duc Hot Springs Resort": { tier: "premium", historic: true, notes: "Olympic National Park WA near Port Angeles. Deep in the Hoh Rain Forest valley — three natural hot spring pools fed by geothermal springs. Surrounded by one of the only temperate rainforests in North America. Cabins in old-growth forest. Sol Duc Falls — one of the most beautiful waterfalls in the Pacific Northwest — 1.5-mile trail from resort." },
-  "Kalaloch Lodge": { tier: "premium", historic: true, notes: "Olympic National Park WA near Forks on the Pacific Coast. The only ocean-front lodging in Olympic National Park — blufftop lodge above the wild Pacific coast. Accessible beach, tidepooling, whale watching in season. Bald eagle sightings common. The Kalaloch Tree of Life — a massive Sitka spruce suspended over an eroded bank — is steps away." },
+  "Paradise Inn": { tier: "luxury", historic: true, notes: "Mount Rainier National Park WA at Paradise, est. 1917, National Historic Landmark. At 5,400 feet in one of the snowiest places on earth — the inn typically opens in late May after clearing up to 50 feet of snow. Great Hall with hand-hewn cedar timbers and massive stone fireplaces. Wildflower meadows surround the inn in summer. Iconic views of Rainier's glaciated peak. Open late May through early October.", ecotourism: true},
+  "Sol Duc Hot Springs Resort": { tier: "premium", historic: true, notes: "Olympic National Park WA near Port Angeles. Deep in the Hoh Rain Forest valley — three natural hot spring pools fed by geothermal springs. Surrounded by one of the only temperate rainforests in North America. Cabins in old-growth forest. Sol Duc Falls — one of the most beautiful waterfalls in the Pacific Northwest — 1.5-mile trail from resort.", ecotourism: true},
+  "Kalaloch Lodge": { tier: "premium", historic: true, notes: "Olympic National Park WA near Forks on the Pacific Coast. The only ocean-front lodging in Olympic National Park — blufftop lodge above the wild Pacific coast. Accessible beach, tidepooling, whale watching in season. Bald eagle sightings common. The Kalaloch Tree of Life — a massive Sitka spruce suspended over an eroded bank — is steps away.", ecotourism: true},
   "Thunderbird Lodge": { tier: "premium", historic: true, notes: "Grand Canyon National Park AZ at Grand Canyon Village South Rim. Historic 1930s lodge with Native American-inspired architecture and Hopi murals. Walking distance to the canyon rim and Bright Angel Trailhead. Hopi House and Kolb Studio nearby. More intimate than El Tovar — a quieter canyon experience." },
   "Kettle Falls Hotel": { tier: "premium", historic: true, notes: "Voyageurs National Park MN near Kabetogama. Accessible only by boat — the only lodge in Voyageurs accessible without roads. On a narrow channel between two lakes. Built in 1913 when Kettle Falls was a booming logging and bootlegging outpost during Prohibition. Historic front porch leans noticeably — called the Tiltin' Hilton by locals. Walleye fishing, kayaking, loon sightings." },
-  "Colter Bay Village": { tier: "premium", historic: true, notes: "Grand Teton National Park WY on Jackson Lake. The most accessible Grand Teton lodging for families — cabins and tent cabins on Jackson Lake with Teton views. Marina with boat rentals, guided fishing, and lake cruises. Indian Arts Museum on site. More casual and affordable than Jenny Lake Lodge or Jackson Lake Lodge." },
-  "Jackson Lake Lodge": { tier: "luxury", historic: true, notes: "Grand Teton National Park WY at Moran. Grand Teton's premier lodge — 60-foot windows in the main lounge frame the Tetons and Willow Flats where moose feed at dawn. John D. Rockefeller Jr. commissioned the lodge, opened 1955. Pool, spa, horseback riding, wildlife safaris. Mural Room restaurant with legendary Teton views." },
+  "Colter Bay Village": { tier: "premium", historic: true, notes: "Grand Teton National Park WY on Jackson Lake. The most accessible Grand Teton lodging for families — cabins and tent cabins on Jackson Lake with Teton views. Marina with boat rentals, guided fishing, and lake cruises. Indian Arts Museum on site. More casual and affordable than Jenny Lake Lodge or Jackson Lake Lodge.", ecotourism: true},
+  "Jackson Lake Lodge": { tier: "luxury", historic: true, notes: "Grand Teton National Park WY at Moran. Grand Teton's premier lodge — 60-foot windows in the main lounge frame the Tetons and Willow Flats where moose feed at dawn. John D. Rockefeller Jr. commissioned the lodge, opened 1955. Pool, spa, horseback riding, wildlife safaris. Mural Room restaurant with legendary Teton views.", ecotourism: true},
   "National Park Inn": { tier: "premium", historic: true, notes: "Mount Rainier National Park WA at Longmire, open year-round. The only Mount Rainier lodge open in winter — at the historic Longmire complex where the park's first road was built. Cozy fireplace lounge, small dining room. Surrounded by old-growth Douglas fir. Starting point for Wonderland Trail circumnavigation of the mountain." },
   "Nisqually Lodge": { tier: "premium", historic: true, notes: "Mount Rainier WA near Ashford outside the Nisqually entrance. Just outside the national park boundary — the closest full-service lodge to the Nisqually entrance. Fireplace rooms, outdoor hot tub. Year-round access even when Paradise is snowed in. Good base for hiking, skiing, and snowshoeing." },
   "Mountain Meadows Inn": { tier: "premium", historic: true, notes: "Mount Rainier WA near Ashford. Intimate B&B-style inn on 11 acres in the shadow of Mount Rainier. Former superintendent's home for the historic Ashford sawmill. Surrounded by old-growth forest, adjacent to the Carbon River rainforest area. Among the most peaceful and personal base camps for a Rainier visit." },
@@ -5192,6 +5192,7 @@ const OnboardingFlow = ({ onComplete }) => {
     homeAirport: "",
     frequency: "",
     travelTypes: [],
+    travelConsiderations: [],
   });
 
   // Card → loyalty auto-populate mapping
@@ -5265,6 +5266,7 @@ const OnboardingFlow = ({ onComplete }) => {
 
     const profile = {
       travelProfile: travelProfile || {},
+      travelConsiderations: travelProfile.travelConsiderations || [],
       cards: (selectedCards || []).map(name => {
         const b = CARD_BENEFITS_DB[name];
         if (b) {
@@ -5391,10 +5393,33 @@ const OnboardingFlow = ({ onComplete }) => {
                   { label: "Vacation — Other", icon: "🌿" },
                   { label: "Family / Relatives", icon: "👨‍👩‍👧" },
                   { label: "Youth Athletics", icon: "🏆" },
+                  { label: "Ecotourism", icon: "🌱" },
                 ].map(({ label, icon }) => {
                   const active = travelProfile.travelTypes.includes(label);
                   return (
                     <button key={label} onClick={() => setTravelProfile(p => ({ ...p, travelTypes: active ? p.travelTypes.filter(t => t !== label) : [...p.travelTypes, label] }))}
+                      style={{ background: active ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.03)", border: `1px solid ${active ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.08)"}`, color: active ? "#C9A84C" : "#6a6460", borderRadius: "20px", padding: "8px 14px", cursor: "pointer", fontSize: "12px", transition: "all 0.15s", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span>{icon}</span>{active ? "✓ " : ""}{label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Travel Considerations */}
+            <div style={{ marginBottom: "20px" }}>
+              <div style={{ color: "#9a9088", fontSize: "12px", letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>Travel Considerations</div>
+              <div style={{ color: "#444", fontSize: "11px", marginBottom: "10px" }}>Select any that apply to your travel</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                {[
+                  { label: "Traveling with children", icon: "👶" },
+                  { label: "Traveling with pets", icon: "🐾" },
+                  { label: "Wheelchair accessible", icon: "♿" },
+                  { label: "Mobility assistance needed", icon: "🦽" },
+                ].map(({ label, icon }) => {
+                  const active = (travelProfile.travelConsiderations || []).includes(label);
+                  return (
+                    <button key={label} onClick={() => setTravelProfile(p => ({ ...p, travelConsiderations: active ? (p.travelConsiderations || []).filter(t => t !== label) : [...(p.travelConsiderations || []), label] }))}
                       style={{ background: active ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.03)", border: `1px solid ${active ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.08)"}`, color: active ? "#C9A84C" : "#6a6460", borderRadius: "20px", padding: "8px 14px", cursor: "pointer", fontSize: "12px", transition: "all 0.15s", display: "flex", alignItems: "center", gap: "6px" }}>
                       <span>{icon}</span>{active ? "✓ " : ""}{label}
                     </button>
@@ -6313,8 +6338,7 @@ const INDEPENDENT_HOTEL_URLS = {
   "The Cadogan": "https://www.belmond.com/hotels/europe/uk/london/belmond-cadogan-hotel/",
   "Villa Margherita": "https://www.belmond.com/hotels/europe/italy/amalfi-coast/belmond-villa-margherita/",
   "Villa San Michele": "https://www.belmond.com/hotels/europe/italy/florence/belmond-villa-san-michele/",
-  "Villa Sant'Andrea": "https://www.belmond.com/hotels/europe/italy/taormina/belmond-villa-sant-andrea/",
-};
+  "Villa Sant'Andrea": "https://www.belmond.com/hotels/europe/italy/taormina/belmond-villa-sant-andrea/",, ecotourism: true};
 
 
 const buildHotelLink = (hotelName, hotelNotes, checkIn, checkOut, adults) => {
@@ -7370,9 +7394,9 @@ const PointsDashboardDrawer = ({ profile, optimizeRecs, optimizeLoading, onOptim
         <div style={{ position: "absolute", bottom: "100%", left: 0, right: 0, background: "#0e0d0c", border: "1px solid rgba(255,255,255,0.07)", borderBottom: "none", borderRadius: "12px 12px 0 0", zIndex: 10, maxHeight: "320px", overflowY: "auto" }}>
           {/* Tabs */}
           <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "0 14px" }}>
-            {["points", "cards", "deals", "optimize"].map(tab => (
+            {["points", "cards", "deals", "profile", "optimize"].map(tab => (
               <button key={tab} onClick={() => { setActiveTab(tab); if (tab === "optimize" && onOptimizeClick) onOptimizeClick(); }} style={{ padding: "10px 14px", background: "none", border: "none", borderBottom: activeTab === tab ? "2px solid #C9A84C" : "2px solid transparent", color: activeTab === tab ? "#C9A84C" : "#444", fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif", cursor: "pointer" }}>
-                {tab === "points" ? "Loyalty Points" : tab === "cards" ? "Credit Cards" : tab === "deals" ? "Active Deals ✦" : "Optimize ✦"}
+                {tab === "points" ? "Loyalty Points" : tab === "cards" ? "Credit Cards" : tab === "deals" ? "Active Deals ✦" : tab === "profile" ? "My Profile" : "Optimize ✦"}
               </button>
             ))}
           </div>
@@ -7508,7 +7532,52 @@ const PointsDashboardDrawer = ({ profile, optimizeRecs, optimizeLoading, onOptim
                 </div>
               </div>
             )}
-            {activeTab === "optimize" && (
+            {activeTab === "profile" && (
+              <div>
+                <div style={{ color: "#555", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Travel Style</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "16px" }}>
+                  {["Domestic", "International", "Business", "Urban / City", "Vacation — Beach", "Vacation — Ski", "Vacation — Other", "Family / Relatives", "Youth Athletics"].map(label => {
+                    const active = (profile?.travelProfile?.travelTypes || []).includes(label);
+                    return (
+                      <button key={label} onClick={() => {
+                        const current = profile?.travelProfile?.travelTypes || [];
+                        const updated = active ? current.filter(t => t !== label) : [...current, label];
+                        setProfile({ ...profile, travelProfile: { ...(profile?.travelProfile || {}), travelTypes: updated } });
+                      }} style={{ background: active ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.03)", border: `1px solid ${active ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.08)"}`, color: active ? "#C9A84C" : "#555", borderRadius: "20px", padding: "5px 10px", cursor: "pointer", fontSize: "10px" }}>
+                        {active ? "✓ " : ""}{label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ color: "#555", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "8px" }}>Travel Considerations</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  {[
+                    { label: "Traveling with children", icon: "👶" },
+                    { label: "Traveling with pets", icon: "🐾" },
+                    { label: "Wheelchair accessible", icon: "♿" },
+                    { label: "Mobility assistance needed", icon: "🦽" },
+                    { label: "Dietary restrictions", icon: "🥗" },
+                    { label: "Anniversary or celebration", icon: "🥂" },
+                    { label: "Honeymoon", icon: "💍" },
+                  ].map(({ label, icon }) => {
+                    const active = (profile?.travelConsiderations || []).includes(label);
+                    return (
+                      <button key={label} onClick={() => {
+                        const current = profile?.travelConsiderations || [];
+                        const updated = active ? current.filter(t => t !== label) : [...current, label];
+                        setProfile({ ...profile, travelConsiderations: updated });
+                      }} style={{ background: active ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.03)", border: `1px solid ${active ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.08)"}`, color: active ? "#C9A84C" : "#555", borderRadius: "20px", padding: "5px 10px", cursor: "pointer", fontSize: "10px", display: "flex", alignItems: "center", gap: "4px" }}>
+                        <span style={{ fontSize: "11px" }}>{icon}</span>{active ? "✓ " : ""}{label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ color: "#444", fontSize: "10px", marginTop: "12px", lineHeight: "1.5" }}>
+                  Changes apply immediately to your next query.
+                </div>
+              </div>
+            )}
+                        {activeTab === "optimize" && (
               <div>
                 <div style={{ color: "#555", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>
                   Based on your current setup
@@ -8013,6 +8082,8 @@ TRAVELER PROFILE:
 - Home airport: ${tp.homeAirport||"unknown"}
 - Travel frequency: ${tp.frequency||"unknown"}
 - Travel types: ${(tp.travelTypes||[]).join(", ")}
+- Travel considerations: ${(userProfile.travelConsiderations||[]).join(", ")||"none"}
+- Travel types: ${(tp.travelTypes||[]).join(", ")}${(tp.travelTypes||[]).includes("Ecotourism") ? " — PRIORITIZE properties with nature immersion, sustainability credentials, wildlife access, or minimal-impact wilderness experiences. Safari lodges, national park lodges, tented camps, and eco-luxury resorts should surface prominently." : ""}
 - Credit cards: ${cardList}
 - Hotel loyalty: ${hotelLoyalty||"none"}
 - Airline miles: ${airlineLoyalty||"none"}
@@ -8256,6 +8327,7 @@ Credit cards: ${(userProfile.creditCards || []).join(', ') || 'none set'}
 Home airport: ${userProfile.homeAirport || 'not set'}
 Travel style: ${(userProfile.travelTypes || []).join(', ') || 'not set'}
 Favorite brands: ${(userProfile.favoriteBrands || []).join(', ') || 'none set'}
+Travel considerations: ${(userProfile.travelConsiderations || []).join(', ') || 'none'}
 ` : 'No profile set — using general travel preferences.';
 
     const homeAirport = userProfile?.homeAirport || 'a major US hub';
@@ -8457,6 +8529,11 @@ POINTS CLARIFICATION: Only ask if intent is clearly to REDEEM points AND no spec
 Only ask ONE question total per conversation turn.
 NEVER ask about budget, hotel preference, or anything already in the profile.
 NEVER refuse a local discovery or dining question — always answer helpfully.
+
+TRAVEL CONSIDERATIONS — check user profile first:
+- If profile shows "Traveling with pets" or "Traveling with children" — you already know, factor it into recommendations silently.
+- If profile does NOT show these but the trip involves overnight stays and neither pets nor children have been mentioned, add one gentle line to your READY confirmation: "Just to make sure I get the details right — will you be traveling with any children or pets on this trip?" Only ask this ONCE and only if not already clear from context.
+- Accessibility: if profile shows "Wheelchair accessible" or "Mobility assistance needed" — always filter for accessible rooms and note this in your options.
 
 When ready to plan, respond with EXACTLY:
 READY: [one sentence reflecting back what you heard, including resolved dates] Ready for me to generate your options?
