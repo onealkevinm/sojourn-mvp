@@ -6338,7 +6338,8 @@ const INDEPENDENT_HOTEL_URLS = {
   "The Cadogan": "https://www.belmond.com/hotels/europe/uk/london/belmond-cadogan-hotel/",
   "Villa Margherita": "https://www.belmond.com/hotels/europe/italy/amalfi-coast/belmond-villa-margherita/",
   "Villa San Michele": "https://www.belmond.com/hotels/europe/italy/florence/belmond-villa-san-michele/",
-  "Villa Sant'Andrea": "https://www.belmond.com/hotels/europe/italy/taormina/belmond-villa-sant-andrea/",, ecotourism: true};
+  "Villa Sant'Andrea": "https://www.belmond.com/hotels/europe/italy/taormina/belmond-villa-sant-andrea/",
+};
 
 
 const buildHotelLink = (hotelName, hotelNotes, checkIn, checkOut, adults) => {
@@ -9871,21 +9872,6 @@ Please respond now.`,
             <div style={{ color: "#6a6460", fontSize: "15px", lineHeight: "1.7", maxWidth: "580px", margin: "0 auto" }}>Tell me about your trip — or start with an idea. Explore destinations, discover events and dining, build an itinerary, and book your trip — all in one conversation. Every recommendation shaped by your loyalty programs, credit cards, and travel style — working together.</div>
           </div>
           <div style={{ width: "100%", maxWidth: "860px" }}>
-            {/* ── Deal Intelligence standing pill ── */}
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: "14px" }}>
-              <button onClick={() => {
-                sendMessage("Personalized travel deals for me");
-              }} style={{
-                display: "inline-flex", alignItems: "center", gap: "6px",
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                color: "#6a6460", borderRadius: "20px", padding: "9px 18px",
-                cursor: "pointer", fontSize: "12px", textAlign: "center"
-              }}>
-                <span style={{ fontSize: "15px" }}>✦</span>
-                Show me the best deals from brands I love
-              </button>
-            </div>
             <div style={{ background: "rgba(255,255,255,0.04)", border: "2px solid rgba(255,255,255,0.14)", outline: "1px solid rgba(255,255,255,0.05)", outlineOffset: "3px", borderRadius: "20px", padding: "6px 6px 6px 22px", display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "18px", position: "relative" }}>
               <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
                 placeholder={`Where to? e.g. "4 days in Japan in October, two adults" · "surprise me with a long weekend under $1,500" · "best use of my Hyatt points this winter"`}
@@ -9970,11 +9956,6 @@ Please respond now.`,
         </div>
       )}
 
-      {/* Unified Optimizing For Bar */}
-      <OptimizingForBar profile={userProfile} optimizeRecs={optimizeRecs} optimizeLoading={optimizeLoading} onOptimizeClick={fetchOptimizeRecs} setProfile={(updated) => {
-        setUserProfile(updated);
-        try { localStorage.setItem("sojourn_profile", JSON.stringify(updated)); } catch(e) {}
-      }} />
       {/* Message thread — after first exchange */}
       {!isFirst && (
         <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px 0", display: "flex", flexDirection: "column", gap: "14px" }}>
