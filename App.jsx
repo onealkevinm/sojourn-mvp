@@ -10017,36 +10017,6 @@ Please respond now.`,
         </div>
       )}
 
-      {/* Message thread — after first exchange */}
-      {!isFirst && (
-        <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px 0", display: "flex", flexDirection: "column", gap: "14px" }}>
-          {messages.slice(1).map((msg, i) => (
-            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start", animation: "fadeUp 0.3s ease forwards" }}>
-              <div style={{ maxWidth: msg.type === "deal_intelligence" ? "720px" : "80%", padding: msg.type === "deal_intelligence" ? "16px 20px" : "12px 16px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.role === "user" ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)", border: msg.role === "user" ? "1px solid rgba(201,168,76,0.25)" : "1px solid rgba(255,255,255,0.07)", color: msg.isOptionsUpdate ? "#C9A84C" : msg.role === "user" ? "#e8e4dc" : "#b0a898", fontSize: "14px", lineHeight: "1.6", fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit", fontStyle: msg.role === "assistant" ? "italic" : "normal" }}>
-                {msg.type === "deal_intelligence" && msg.dealData
-                  ? <DealIntelligenceCard dealData={msg.dealData} onBuildTrip={(cta) => { setInput(`Build me a trip around this: ${cta}`);
-                setTimeout(() => document.querySelector('textarea')?.focus(), 50); }} />
-                  : msg.text}
-              </div>
-              {msg.isReadyPrompt && (
-                <button onClick={() => { setConciergeMode(false); callClaude("Generate my options now based on everything discussed: " + conversationRef.current.filter(m=>m.role==="user").map(m=>m.content).join(" ")); }} style={{ marginTop: "10px", padding: "11px 22px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "20px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.06em", fontFamily: "'Playfair Display',Georgia,serif" }}>
-                  Show Me What's Possible →
-                </button>
-              )}
-            </div>
-          ))}
-          {loading && (
-            <div style={{ display: "flex", justifyContent: "flex-start", flexDirection: "column", gap: "8px" }}>
-              <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "18px 18px 18px 4px" }}><TypingIndicator /></div>
-              {loadingMessage && (
-                <div style={{ color: "#C9A84C", fontSize: "12px", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic", paddingLeft: "4px", animation: "fadeUp 0.4s ease forwards", alignSelf: "flex-start" }}>{loadingMessage}</div>
-              )}
-            </div>
-          )}
-          <div ref={bottomRef} />
-        </div>
-      )}
-
       {/* Compact input — after first exchange */}
       {!isFirst && (
         <div style={{ padding: "12px 24px 16px" }}>
