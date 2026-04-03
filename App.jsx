@@ -7156,9 +7156,30 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
             })()}
             <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
               <div style={{ color: '#555', fontSize: '11px' }}>
-                {flightComp?.detail?.toLowerCase().includes('nonstop') ? 'Best nonstop routing for your group — minimizes travel time.' : 'Best available routing for your dates and group size.'}
+                {(() => {
+                  const d = (flightComp?.detail || '').toLowerCase();
+                  const nonstop = d.includes('nonstop');
+                  const morning = d.includes('morning') || d.includes('am');
+                  const evening = d.includes('evening') || d.includes('pm');
+                  if (nonstop && morning) return 'Nonstop with morning departure — shortest travel time, maximizes your first day.';
+                  if (nonstop) return 'Nonstop routing chosen — fewest connections for your group size.';
+                  if (morning) return 'Morning departure selected — best alignment with your travel preferences.';
+                  return 'Best available routing for your dates, group size, and home airport.';
+                })()}
               </div>
-              <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{seatPref()}</div>
+              <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>
+                {(() => {
+                  const partyM = (tripSummary?.preferences || []).join(' ').match(/(\d+)\s*(people|person|adult|traveler)/i)
+                    || (tripSummary?.constraints || []).join(' ').match(/(\d+)/);
+                  const size = partyM ? parseInt(partyM[1]) : 2;
+                  const types = (userProfile?.travelProfile?.travelTypes || []);
+                  const isBusiness = types.includes('Business');
+                  if (isBusiness) return 'Aisle seats selected — easy access for work travel.';
+                  if (size >= 4) return `Window block selected — keeps your group of ${size} together.`;
+                  if (size === 1) return 'Window seat selected — matches your solo travel preference.';
+                  return 'Window + middle seats selected — keeps your group together with a view.';
+                })()}
+              </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '6px', marginTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <div>
@@ -7180,7 +7201,43 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
             <div style={ls}>Hotel</div>
             <div style={{ color: '#e8e4dc', fontSize: '14px', fontWeight: '600', marginBottom: '3px' }}>{hotelComp.detail?.split(' · ')[0]?.trim()}</div>
             <div style={{ color: '#9a9088', fontSize: '12px', marginBottom: '3px' }}>{hotelComp.detail?.split(' · ')[1]?.trim() || 'Standard room'} · {tripSummary?.nights || 3} nights</div>
-            <div style={{ color: '#555', fontSize: '12px' }}>Best balance of space, view, and value for your party</div>
+            <div style={{ color: '#555', fontSize: '12px' }}>
+              {(() => {
+                const detail = hotelComp?.detail || '';
+                const parts = detail.split(' · ');
+                const roomType = parts[1]?.trim() || '';
+                const r = roomType.toLowerCase();
+                const considerations = (userProfile?.travelConsiderations || []).join(' ').toLowerCase();
+                const partyM = (tripSummary?.preferences || []).join(' ').match(/(\d+)\s*(people|person|adult|traveler)/i)
+                  || (tripSummary?.constraints || []).join(' ').match(/(\d+)/);
+                const size = partyM ? parseInt(partyM[1]) : 2;
+                const hasKids = considerations.includes('children');
+                const needsAccess = considerations.includes('wheelchair') || considerations.includes('mobility');
+                const hasPets = considerations.includes('pets');
+                // Read signals from room type string
+                const isAdjoining = r.includes('adjoin') || r.includes('connecting');
+                const isSuite = r.includes('suite') || r.includes('villa') || r.includes('bungalow');
+                const hasView = r.includes('ocean') || r.includes('view') || r.includes('mountain') || r.includes('pool') || r.includes('garden');
+                const isGroundFloor = r.includes('ground') || r.includes('garden level');
+                const kingCount = (r.match(/\d+\s*king/g) || []).length || (r.includes('king') ? 1 : 0);
+                const queenCount = (r.match(/\d+\s*queen/g) || []).length || (r.includes('queen') ? 1 : 0);
+                const bedCount = kingCount + queenCount;
+                // Build rationale from most relevant signals
+                if (needsAccess && isGroundFloor) return `${roomType} — ground floor selected for accessibility.`;
+                if (needsAccess) return `${roomType} — accessible room configuration for your needs.`;
+                if (hasPets && isGroundFloor) return `${roomType} — ground floor selected for easy outdoor access with pets.`;
+                if (hasKids && isAdjoining) return `${roomType} — adjoining rooms keep adults and kids separate while staying connected.`;
+                if (hasKids && bedCount >= 2) return `${roomType} — ${bedCount} beds configured for your family without splitting rooms.`;
+                if (size >= 5 && isAdjoining) return `${roomType} — adjoining layout fits ${size} comfortably across connected rooms.`;
+                if (size >= 4 && isSuite) return `${roomType} — suite layout fits ${size} in one space, no split rooms needed.`;
+                if (isSuite && hasView) return `${roomType} — best space and view available at this property.`;
+                if (isSuite) return `${roomType} — suite layout gives your group the space to spread out.`;
+                if (hasView) return `${roomType} — view room selected to match your trip intent.`;
+                if (bedCount >= 2) return `${roomType} — ${bedCount}-bed configuration fits your group without splitting rooms.`;
+                if (size === 2) return `${roomType} — right-sized for 2, best value at this property.`;
+                return `${roomType} — selected for best fit given your group size and preferences.`;
+              })()}
+            </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '6px', marginTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <div>
                 {hotelIsPoints
@@ -7210,7 +7267,21 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
                 return `${company} · ${carDetail}`;
               })()}
             </div>
-            <div style={{ color: '#555', fontSize: '12px' }}>Room for your group plus luggage — skip the insurance, covered by your card</div>
+            <div style={{ color: '#555', fontSize: '12px' }}>
+              {(() => {
+                const partyM = (tripSummary?.preferences || []).join(' ').match(/(\d+)\s*(people|person|adult|traveler)/i)
+                  || (tripSummary?.constraints || []).join(' ').match(/(\d+)/);
+                const size = partyM ? parseInt(partyM[1]) : 2;
+                const carDetail = (groundComp?.detail || '').toLowerCase();
+                const isSuv = carDetail.includes('suv');
+                const hasInsurance = (carCard?.name || '').toLowerCase().includes('sapphire') ||
+                  (carCard?.name || '').toLowerCase().includes('platinum');
+                const vehicleType = isSuv ? 'SUV' : 'rental car';
+                const insuranceLine = hasInsurance ? ` Insurance skipped — covered by your ${carCard?.name} card.` : '';
+                if (size >= 4) return `Full-size ${vehicleType} chosen for ${size} people plus luggage.${insuranceLine}`;
+                return `${isSuv ? 'SUV' : 'Midsize'} selected for your group size and destination.${insuranceLine}`;
+              })()}
+            </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '6px', marginTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <div>
                 <div style={{ color: '#e8e4dc', fontSize: '13px', fontWeight: '600' }}>${carCash.toLocaleString()}</div>
@@ -7232,13 +7303,13 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
         )}
 
         {/* Trip Total */}
-        <div style={{ background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: '14px', padding: '18px 20px', marginBottom: '20px' }}>
+        <div style={{ background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: '14px', padding: '14px 18px', marginBottom: '16px' }}>
           <div style={ls}>Trip Total</div>
-          {flightIsPoints && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: '#7a7060', fontSize: '13px' }}>Flights</span><span style={{ color: '#4CC97A', fontSize: '13px' }}>Points applied</span></div>}
-          {flightCash > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: '#7a7060', fontSize: '13px' }}>Flights</span><span style={{ color: '#b0a898', fontSize: '13px' }}>${flightCash.toLocaleString()}</span></div>}
-          {hotelIsPoints && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: '#7a7060', fontSize: '13px' }}>Hotel</span><span style={{ color: '#4CC97A', fontSize: '13px' }}>Points applied</span></div>}
-          {hotelCash > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: '#7a7060', fontSize: '13px' }}>Hotel</span><span style={{ color: '#b0a898', fontSize: '13px' }}>${hotelCash.toLocaleString()}</span></div>}
-          {carCash > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: '#7a7060', fontSize: '13px' }}>Car rental</span><span style={{ color: '#b0a898', fontSize: '13px' }}>${carCash.toLocaleString()}</span></div>}
+          {flightIsPoints && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}><span style={{ color: '#7a7060', fontSize: '13px' }}>Flights</span><span style={{ color: '#4CC97A', fontSize: '13px' }}>Points applied</span></div>}
+          {flightCash > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}><span style={{ color: '#7a7060', fontSize: '13px' }}>Flights</span><span style={{ color: '#b0a898', fontSize: '13px' }}>${flightCash.toLocaleString()}</span></div>}
+          {hotelIsPoints && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}><span style={{ color: '#7a7060', fontSize: '13px' }}>Hotel</span><span style={{ color: '#4CC97A', fontSize: '13px' }}>Points applied</span></div>}
+          {hotelCash > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}><span style={{ color: '#7a7060', fontSize: '13px' }}>Hotel</span><span style={{ color: '#b0a898', fontSize: '13px' }}>${hotelCash.toLocaleString()}</span></div>}
+          {carCash > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}><span style={{ color: '#7a7060', fontSize: '13px' }}>Car rental</span><span style={{ color: '#b0a898', fontSize: '13px' }}>${carCash.toLocaleString()}</span></div>}
           {taxes > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', paddingBottom: '10px' }}><span style={{ color: '#555', fontSize: '12px' }}>Est. taxes & fees</span><span style={{ color: '#555', fontSize: '12px', borderBottom: '1px solid rgba(255,255,255,0.35)', paddingBottom: '1px' }}>${taxes.toLocaleString()}</span></div>}
           <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '4px' }}>
             <span style={{ color: '#e8e4dc', fontSize: '15px', fontWeight: '600' }}>Total</span>
