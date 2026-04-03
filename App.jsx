@@ -7074,7 +7074,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.94)', zIndex: 2000, overflowY: 'auto' }}>
-      <div style={{ maxWidth: '620px', margin: '0 auto', padding: '28px 20px 60px', fontFamily: "'DM Sans',system-ui,sans-serif", color: '#e8e4dc' }}>
+      <div style={{ maxWidth: '620px', margin: '0 auto', padding: '28px 20px 60px', fontFamily: "'DM Sans',system-ui,sans-serif", color: '#e8e4dc', border: '2px solid rgba(255,255,255,0.18)', borderRadius: '20px', marginTop: '20px', marginBottom: '20px', outline: '1px solid rgba(255,255,255,0.07)', outlineOffset: '4px' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
           <div>
@@ -7120,8 +7120,8 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                     <span style={{ color: '#C9A84C', fontSize: '9px', letterSpacing: '0.12em',
                       textTransform: 'uppercase', fontFamily: 'serif' }}>{label}</span>
-                    <span style={{ color: '#555', fontSize: '11px' }}>{f.airline}</span>
-                    {f.flightNum && <span style={{ color: '#555', fontSize: '11px' }}>· {f.flightNum}</span>}
+                    <span style={{ color: '#9a9088', fontSize: '12px', fontWeight: '500' }}>{f.airline}</span>
+                    {f.flightNum && <span style={{ color: '#9a9088', fontSize: '12px', fontWeight: '500' }}>· {f.flightNum}</span>}
                   </div>
                   <div style={{ color: '#9a9088', fontSize: '12px', fontWeight: '500', marginBottom: '3px' }}>
                     {f.origin} → {f.dest}
@@ -7132,10 +7132,21 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
                   <div style={{ color: '#9a9088', fontSize: '12px' }}>
                     {f.timeInfo}{f.duration ? ` · ${f.duration}` : ''}
                   </div>
+                  <div style={{ marginTop: '5px', fontSize: '11px', color: '#555' }}>
+                    Seats {f.seats}
+                  </div>
                 </div>
               ) : null;
-              const out = parseFlight(flightComp, 1);
-              const ret = parseFlight(returnComp, 2);
+              // Party size for seat generation
+              const partyMatch2 = (tripSummary?.preferences || []).join(' ').match(/(\d+)\s*(people|person|adult|traveler|passenger)/i)
+                || (tripSummary?.constraints || []).join(' ').match(/(\d+)/);
+              const partySize2 = partyMatch2 ? parseInt(partyMatch2[1]) : 2;
+              const genSeats = (row, size) => {
+                const seats = ['A','B','C','D','E','F'].slice(0, Math.min(size, 6));
+                return seats.map((s,i) => `${parseInt(row) + Math.floor(i/3)}${s}`).join(', ');
+              };
+              const out = { ...parseFlight(flightComp, 1), seats: genSeats('14', partySize2) };
+              const ret = returnComp ? { ...parseFlight(returnComp, 2), seats: genSeats('28', partySize2) } : null;
               return (
                 <div>
                   <FlightRow f={out} label="Outbound" />
@@ -7144,24 +7155,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
               );
             })()}
             <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '8px', padding: '8px 10px', marginTop: '4px' }}>
-              {(() => {
-                // Derive party size from tripSummary or option components
-                const partyMatch = (tripSummary?.preferences || []).join(' ').match(/(\d+)\s*(people|person|adult|traveler|passenger)/i)
-                  || (tripSummary?.constraints || []).join(' ').match(/(\d+)/);
-                const partySize = partyMatch ? parseInt(partyMatch[1]) : 2;
-                // Generate plausible adjacent seat block based on party size
-                const rows = ['14','15','21','22'];
-                const row = rows[0];
-                const allSeats = ['A','B','C','D','E','F'];
-                const seatBlock = allSeats.slice(0, Math.min(partySize, 6));
-                const seatNums = seatBlock.map((s,i) => `${parseInt(row) + Math.floor(i/3)}${s}`).join(', ');
-                return (
-                  <div style={{ color: '#9a9088', fontSize: '12px', fontWeight: '500', marginBottom: '1px' }}>
-                    Seats {seatNums}
-                  </div>
-                );
-              })()}
-              <div style={{ color: '#555', fontSize: '11px' }}>{seatPref()}</div>
+              <div style={{ color: '#555', fontSize: '11px', marginTop: '6px' }}>{seatPref()}</div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '10px', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <div>
@@ -7202,7 +7196,17 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
         {hasRental && modifications.car !== 'skipped' && (
           <div style={ss}>
             <div style={ls}>Car Rental</div>
-            <div style={{ color: '#e8e4dc', fontSize: '14px', fontWeight: '600', marginBottom: '3px' }}>{groundComp?.detail?.split(' · ')[0]?.trim() || 'Midsize SUV'}</div>
+            <div style={{ color: '#e8e4dc', fontSize: '14px', fontWeight: '600', marginBottom: '3px' }}>
+              {(() => {
+                const carDetail = groundComp?.detail?.split(' · ')[0]?.trim() || 'Midsize SUV';
+                // Pick rental company based on card (Amex → National, CSR → Hertz, default Avis)
+                const cs = option.cardStrategy || '';
+                const company = cs.toLowerCase().includes('platinum') ? 'National'
+                  : cs.toLowerCase().includes('sapphire') ? 'Hertz'
+                  : 'Avis';
+                return `${company} · ${carDetail}`;
+              })()}
+            </div>
             <div style={{ color: '#555', fontSize: '12px' }}>Room for your group plus luggage — skip the insurance, covered by your card</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '10px', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <div>
@@ -7244,8 +7248,8 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
         <button onClick={() => setPhase('confirmed')} style={{ width: '100%', padding: '16px', background: '#C9A84C', color: '#0a0908', border: 'none', borderRadius: '14px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', letterSpacing: '0.08em', fontFamily: "'Playfair Display',Georgia,serif", marginBottom: '12px' }}>
           Confirm & Book This Trip &rarr;
         </button>
-        <button onClick={onClose} style={{ width: '100%', padding: '12px', background: 'none', border: '1px solid rgba(255,255,255,0.1)', color: '#555', borderRadius: '14px', fontSize: '13px', cursor: 'pointer' }}>
-          Back to options
+        <button onClick={onClose} style={{ width: '100%', padding: '12px', background: 'none', border: '1px solid rgba(255,255,255,0.25)', color: '#b0a898', borderRadius: '14px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>
+          ← Back to options
         </button>
       </div>
     </div>
