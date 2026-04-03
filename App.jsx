@@ -7132,7 +7132,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
                   <div style={{ color: '#9a9088', fontSize: '12px' }}>
                     {f.timeInfo}{f.duration ? ` · ${f.duration}` : ''}
                   </div>
-                  <div style={{ marginTop: '5px', fontSize: '11px', color: '#555' }}>
+                  <div style={{ marginTop: '2px', fontSize: '11px', color: '#555' }}>
                     Seats {f.seats}
                   </div>
                 </div>
@@ -7154,10 +7154,13 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
                 </div>
               );
             })()}
-            <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '8px', padding: '8px 10px', marginTop: '4px' }}>
-              <div style={{ color: '#555', fontSize: '11px', marginTop: '6px' }}>{seatPref()}</div>
+            <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+              <div style={{ color: '#555', fontSize: '11px' }}>{seatPref()}</div>
+              <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>
+                {flightComp?.detail?.toLowerCase().includes('nonstop') ? 'Best nonstop routing for your group — minimizes travel time.' : 'Best available routing for your dates and group size.'}
+              </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '10px', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '6px', marginTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <div>
                 {flightIsPoints
                   ? <div style={{ color: '#4CC97A', fontSize: '13px', fontWeight: '600' }}>{flightComp?.points?.replace(/redeemed/i, '').trim() || 'Points applied'}</div>
@@ -7178,7 +7181,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
             <div style={{ color: '#e8e4dc', fontSize: '14px', fontWeight: '600', marginBottom: '3px' }}>{hotelComp.detail?.split(' · ')[0]?.trim()}</div>
             <div style={{ color: '#9a9088', fontSize: '12px', marginBottom: '3px' }}>{hotelComp.detail?.split(' · ')[1]?.trim() || 'Standard room'} · {tripSummary?.nights || 3} nights</div>
             <div style={{ color: '#555', fontSize: '12px' }}>Best balance of space, view, and value for your party</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '10px', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '6px', marginTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <div>
                 {hotelIsPoints
                   ? <div style={{ color: '#4CC97A', fontSize: '13px', fontWeight: '600' }}>{hotelComp?.points?.replace(/redeemed/i, '').trim() || 'Points applied'}</div>
@@ -7208,7 +7211,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
               })()}
             </div>
             <div style={{ color: '#555', fontSize: '12px' }}>Room for your group plus luggage — skip the insurance, covered by your card</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '10px', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '6px', marginTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <div>
                 <div style={{ color: '#e8e4dc', fontSize: '15px', fontWeight: '600' }}>${carCash.toLocaleString()}</div>
                 {carCard?.name && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{carCard.name}</div>}
@@ -7236,8 +7239,8 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
           {hotelIsPoints && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: '#7a7060', fontSize: '13px' }}>Hotel</span><span style={{ color: '#4CC97A', fontSize: '13px' }}>Points applied</span></div>}
           {hotelCash > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: '#7a7060', fontSize: '13px' }}>Hotel</span><span style={{ color: '#b0a898', fontSize: '13px' }}>${hotelCash.toLocaleString()}</span></div>}
           {carCash > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: '#7a7060', fontSize: '13px' }}>Car rental</span><span style={{ color: '#b0a898', fontSize: '13px' }}>${carCash.toLocaleString()}</span></div>}
-          {taxes > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}><span style={{ color: '#555', fontSize: '12px' }}>Est. taxes & fees</span><span style={{ color: '#555', fontSize: '12px' }}>${taxes.toLocaleString()}</span></div>}
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          {taxes > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', paddingBottom: '10px' }}><span style={{ color: '#555', fontSize: '12px' }}>Est. taxes & fees</span><span style={{ color: '#555', fontSize: '12px', borderBottom: '1px solid rgba(255,255,255,0.35)', paddingBottom: '1px' }}>${taxes.toLocaleString()}</span></div>}
+          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '4px' }}>
             <span style={{ color: '#e8e4dc', fontSize: '15px', fontWeight: '600' }}>Total</span>
             <span style={{ color: '#C9A84C', fontSize: '17px', fontWeight: '700' }}>{total > 0 ? '$' + total.toLocaleString() : 'Points-covered'}</span>
           </div>
