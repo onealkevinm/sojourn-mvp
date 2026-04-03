@@ -6402,7 +6402,7 @@ const buildHotelLink = (hotelName, hotelNotes, checkIn, checkOut, adults) => {
     url = tryNameVariants(hotelName, INDEPENDENT_HOTEL_URLS) || null;
   }
 
-  // Return url or null → caller shows "Book directly — coming soon"
+  // Return url or null → caller shows "Explore property"
   return url || null;
 };
 
@@ -6481,7 +6481,7 @@ const ComponentRow = ({ label, value, detail, points, card, checkIn, checkOut, n
         const hotelUrl = buildHotelLink(hotelNameRaw, hotelNotes, checkIn || '', checkOut || '', 2);
         const isChain = detectHotelBrand(hotelNameRaw, hotelNotes) !== null;
         if (hotelUrl) {
-          const linkLabel = isChain ? 'Check rates & book →' : 'View hotel →';
+          const linkLabel = 'Explore more here →';
           return (
             <a href={hotelUrl} target="_blank" rel="noopener noreferrer"
               style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#6a6460", fontSize: "11px", textDecoration: "none", marginTop: "8px", borderBottom: "1px solid rgba(106,100,96,0.3)" }}>
@@ -6491,7 +6491,7 @@ const ComponentRow = ({ label, value, detail, points, card, checkIn, checkOut, n
         }
         return (
           <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#555", fontSize: "11px", marginTop: "8px", fontStyle: "italic" }}>
-            Book directly — coming soon
+            Explore property
           </span>
         );
       })()}
@@ -6787,9 +6787,8 @@ const extractFlightCodes = (flightDetail) => {
 };
 
 
-const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userProfile, isMobile, tripSummary }) => {
+const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, onBook, userProfile, isMobile, tripSummary }) => {
   const isRec = option.id === 1;
-  const [showDisclosure, setShowDisclosure] = React.useState(false);
   return (
     <div onClick={onToggle} style={{
       width: isExpanded ? "100%" : "300px", minWidth: isExpanded ? "unset" : "300px",
@@ -6884,7 +6883,7 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userPr
             <button onClick={() => onItinerary && onItinerary(option)} style={{ flex: 1, padding: "14px", background: "rgba(255,255,255,0.04)", color: "#b0a898", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", fontSize: "12px", fontWeight: "600", cursor: "pointer", letterSpacing: "0.06em", fontFamily: "'Playfair Display',Georgia,serif" }}>
               View as Itinerary ↗
             </button>
-            <button onClick={(e) => { e.stopPropagation(); mp.track("book_intent", { tag: option.tag, headline: option.headline, total_cost: option.totalCost, net_value: option.netValue, destination: option.subhead }); setShowDisclosure(true); }} style={{ flex: 2, padding: "14px", background: option.tagColor, color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>
+            <button onClick={(e) => { e.stopPropagation(); mp.track("book_intent", { tag: option.tag, headline: option.headline, total_cost: option.totalCost, net_value: option.netValue, destination: option.subhead }); if (onBook) onBook(option); }} style={{ flex: 2, padding: "14px", background: option.tagColor, color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>
               Book This Trip →
             </button>
           </div>
@@ -6892,100 +6891,287 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, userPr
       )}
 
       {/* Book This Trip modal — affiliate links with pre-populated context */}
-      {showDisclosure && option && (() => {
-        const hotelComp = (option.components || []).find(c => c && c.label && (c.label.toLowerCase().includes('hotel') || c.label.toLowerCase().includes('resort') || c.label.toLowerCase().includes('lodge') || c.label.toLowerCase().includes('inn')));
-        const flightComp = (option.components || []).find(c => c && c.label === 'Flight');
-        const returnComp = (option.components || []).find(c => c && c.label === 'Return Flight');
-        const hotelName = hotelComp ? hotelComp.detail?.split('·')[0]?.trim() : null;
-        const flightCodes = extractFlightCodes(flightComp?.detail);
-        const returnCodes = extractFlightCodes(returnComp?.detail);
-        const partySize = extractPartySize(option, userProfile?.travelProfile);
-        // Use resolved ISO dates from tripSummary if available, else fall back to human-readable dates string
-        const resolvedCheckIn = tripSummary?.checkIn || '';
-        const resolvedCheckOut = tripSummary?.checkOut || '';
-        const datesStr = userProfile?.travelProfile?.dates || option.subhead || '';
-        const qualityEntry = hotelName ? (QUALITY_SIGNALS_DB[hotelName] || {}) : {};
-        const hotelNotes = qualityEntry.notes || option.subhead || '';
-        const bookingUrl = hotelName ? buildHotelLink(
-          hotelName,
-          hotelNotes,
-          resolvedCheckIn || datesStr,
-          resolvedCheckOut || datesStr,
-          partySize
-        ) : null;
-        const hotelBrand = hotelName ? detectHotelBrand(hotelName, hotelNotes) : null;
-        const hotelLinkLabel = hotelBrand
-          ? { hilton: 'hilton.com', marriott: 'marriott.com', hyatt: 'hyatt.com', ihg: 'ihg.com' }[hotelBrand]
-          : 'Google Hotels';
-        const flightUrl = flightCodes.origin ? buildGoogleFlightsLink(flightCodes.origin, flightCodes.dest, flightCodes.airline, resolvedCheckIn || datesStr, partySize) : buildGoogleFlightsLink(userProfile?.travelProfile?.homeAirport, option.subhead, '', resolvedCheckIn || datesStr, partySize);
-
-        return (
-          <div onClick={e => e.stopPropagation()} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.82)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
-            <div style={{ background: "#1a1814", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: "28px 24px", maxWidth: "400px", width: "100%" }}>
-              {/* Header */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
-                <div>
-                  <div style={{ color: "#C9A84C", fontSize: "10px", letterSpacing: "0.14em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>Book This Trip</div>
-                  <div style={{ color: "#e8e4dc", fontSize: "14px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.35" }}>{option.headline}</div>
-                </div>
-                <button onClick={() => setShowDisclosure(false)} style={{ background: "none", border: "none", color: "#666", fontSize: "18px", cursor: "pointer", padding: "0 0 0 12px", lineHeight: 1 }}>✕</button>
-              </div>
-
-              {/* Disclaimer */}
-              <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: "8px", padding: "10px 12px", marginBottom: "20px" }}>
-                <div style={{ color: "#6a6460", fontSize: "11px", lineHeight: "1.5" }}>Prices shown are estimates. Verify live rates before booking.</div>
-              </div>
-
-              {/* Booking links */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {/* Hotel link */}
-                {bookingUrl && (
-                  <a href={bookingUrl} target="_blank" rel="noopener noreferrer" onClick={() => { mp.track("affiliate_click", { type: "hotel", hotel: hotelName, destination: option.subhead }); }}
-                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: option.tagColor + "15", border: `1px solid ${option.tagColor}40`, borderRadius: "12px", padding: "14px 16px", textDecoration: "none", cursor: "pointer" }}>
-                    <div>
-                      <div style={{ color: "#e8e4dc", fontSize: "13px", fontWeight: "600", marginBottom: "2px" }}>🏨 {hotelName || "Hotel"}</div>
-                      <div style={{ color: "#9a9088", fontSize: "11px" }}>{bookingUrl ? `View on ${hotelLinkLabel || 'hotel site'}` : 'Direct booking coming soon'}</div>
-                    </div>
-                    <div style={{ color: option.tagColor, fontSize: "16px" }}>→</div>
-                  </a>
-                )}
-
-                {/* Flight link */}
-                {flightUrl && (
-                  <a href={flightUrl} target="_blank" rel="noopener noreferrer" onClick={() => { mp.track("affiliate_click", { type: "flight", route: `${flightCodes.origin}-${flightCodes.dest}` }); }}
-                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", padding: "14px 16px", textDecoration: "none", cursor: "pointer" }}>
-                    <div>
-                      <div style={{ color: "#e8e4dc", fontSize: "13px", fontWeight: "600", marginBottom: "2px" }}>✈ {flightCodes.origin && flightCodes.dest ? `${flightCodes.origin} → ${flightCodes.dest}` : "Flights"}</div>
-                      <div style={{ color: "#9a9088", fontSize: "11px" }}>Confirm flight details &amp; times</div>
-                    </div>
-                    <div style={{ color: "#9a9088", fontSize: "16px" }}>→</div>
-                  </a>
-                )}
-
-                {/* Return flight if different destination */}
-                {returnCodes.origin && returnCodes.origin !== flightCodes.dest && (
-                  <a href={buildGoogleFlightsLink(returnCodes.origin, returnCodes.dest, returnCodes.airline, resolvedCheckOut || datesStr, partySize)} target="_blank" rel="noopener noreferrer"
-                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", padding: "14px 16px", textDecoration: "none", cursor: "pointer" }}>
-                    <div>
-                      <div style={{ color: "#e8e4dc", fontSize: "13px", fontWeight: "600", marginBottom: "2px" }}>✈ Return: {returnCodes.origin} → {returnCodes.dest}</div>
-                      <div style={{ color: "#9a9088", fontSize: "11px" }}>Confirm flight details &amp; times</div>
-                    </div>
-                    <div style={{ color: "#9a9088", fontSize: "16px" }}>→</div>
-                  </a>
-                )}
-              </div>
-
-              <div style={{ color: "#444", fontSize: "10px", textAlign: "center", marginTop: "16px", lineHeight: "1.5" }}>
-                Links open with your trip details pre-filled for quick booking
-              </div>
-            </div>
           </div>
-        );
-      })()}
-    </div>
   );
 };
 
+
+
+// BookingCheckout Component
+const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
+  const [phase, setPhase] = React.useState('checkout');
+  const [modifying, setModifying] = React.useState(null);
+  const [nlqOpen, setNlqOpen] = React.useState(false);
+  const [nlqValue, setNlqValue] = React.useState('');
+  const [modifications, setModifications] = React.useState({});
+
+  if (!option) return null;
+
+  const profile = userProfile || {};
+  const cards = profile.cards || [];
+  const loyalty = profile.loyaltyAccounts || [];
+  const tp = profile.travelProfile || {};
+  const components = option.components || [];
+
+  const flightComp = components.find(c => c.label === 'Flight');
+  const returnComp = components.find(c => c.label === 'Return Flight');
+  const hotelComp = components.find(c => c.label && (
+    c.label.toLowerCase().includes('hotel') || c.label.toLowerCase().includes('resort') ||
+    c.label.toLowerCase().includes('lodge') || c.label.toLowerCase().includes('inn') ||
+    c.label.toLowerCase().includes('ranch') || c.label.toLowerCase().includes('accommodation')
+  ));
+  const groundComp = components.find(c => c.label === 'Ground');
+
+  const isRoadTrip = !flightComp && !returnComp;
+  const hasRental = !isRoadTrip && groundComp && groundComp.detail &&
+    !groundComp.detail.toLowerCase().includes('own vehicle') &&
+    !groundComp.detail.toLowerCase().includes('gas');
+
+  const bestCard = (category) => {
+    if (!cards.length) return null;
+    if (category === 'flight') {
+      const amex = cards.find(c => c.name && c.name.includes('Platinum'));
+      if (amex) return { name: amex.name, reason: '5x on flights + travel protections' };
+      const csr = cards.find(c => c.name && c.name.includes('Sapphire Reserve'));
+      if (csr) return { name: csr.name, reason: '3x on travel + trip protection' };
+      const csp = cards.find(c => c.name && c.name.includes('Sapphire Preferred'));
+      if (csp) return { name: csp.name, reason: '2x on travel + trip protection' };
+    }
+    if (category === 'hotel') {
+      const hyatt = cards.find(c => c.name && c.name.toLowerCase().includes('hyatt'));
+      if (hyatt) return { name: hyatt.name, reason: '4x at Hyatt + elite night credit' };
+      const bonvoy = cards.find(c => c.name && (c.name.toLowerCase().includes('marriott') || c.name.toLowerCase().includes('bonvoy')));
+      if (bonvoy) return { name: bonvoy.name, reason: '6x at Marriott + elite night credit' };
+      const csr = cards.find(c => c.name && c.name.includes('Sapphire Reserve'));
+      if (csr) return { name: csr.name, reason: '3x on hotels + trip protection' };
+    }
+    if (category === 'car') {
+      const amex = cards.find(c => c.name && c.name.includes('Platinum'));
+      if (amex) return { name: amex.name, reason: 'Premium rental status + insurance' };
+      const csr = cards.find(c => c.name && c.name.includes('Sapphire Reserve'));
+      if (csr) return { name: csr.name, reason: 'Primary rental car insurance included' };
+    }
+    return cards[0] ? { name: cards[0].name, reason: 'Best available card' } : null;
+  };
+
+  const seatPref = () => {
+    const types = tp.travelTypes || [];
+    if (types.includes('Business')) return 'Aisle seats selected — easy access for meetings';
+    return 'Window + middle seats selected — best for your group';
+  };
+
+  const hotelIsPoints = !!(hotelComp?.points && (hotelComp.points.toLowerCase().includes('redeemed') || hotelComp.value === 0));
+  const flightIsPoints = !!(flightComp?.points && (flightComp.points.toLowerCase().includes('redeemed') || flightComp.value === 0));
+
+  const flightCash = flightIsPoints ? 0 : ((flightComp?.value || 0) + (returnComp?.value || 0));
+  const hotelCash = hotelIsPoints ? 0 : (hotelComp?.value || 0);
+  const carCash = (hasRental && modifications.car !== 'skipped') ? (groundComp?.value || 0) : 0;
+  const subtotal = flightCash + hotelCash + carCash;
+  const taxes = Math.round(subtotal * 0.12);
+  const total = subtotal + taxes;
+
+  const flightCard = bestCard('flight');
+  const hotelCard = bestCard('hotel');
+  const carCard = bestCard('car');
+
+  const ss = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '18px 20px', marginBottom: '12px' };
+  const ls = { fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: 'serif', color: '#C9A84C', marginBottom: '8px' };
+  const mbs = { background: 'none', border: '1px solid rgba(255,255,255,0.1)', color: '#555', borderRadius: '20px', padding: '5px 12px', fontSize: '11px', cursor: 'pointer', marginTop: '10px' };
+  const chip = (active) => ({ background: active ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.04)', border: `1px solid ${active ? 'rgba(201,168,76,0.4)' : 'rgba(255,255,255,0.1)'}`, color: active ? '#C9A84C' : '#7a7060', borderRadius: '20px', padding: '7px 14px', fontSize: '12px', cursor: 'pointer', textAlign: 'left' });
+
+  const ModifyPanel = ({ type, onClose: closePanel }) => {
+    const [sel, setSel] = React.useState(null);
+    const [localNlq, setLocalNlq] = React.useState(false);
+    const [localVal, setLocalVal] = React.useState('');
+    const opts = {
+      flight: [
+        { id: 'seats', label: 'Different seats' },
+        { id: 'times', label: 'Different times' },
+        { id: 'airline', label: 'Different airline' },
+        ...(!flightIsPoints ? [{ id: 'use_miles', label: 'Use miles instead' }] : [{ id: 'use_cash', label: 'Use cash instead' }]),
+        { id: 'other', label: 'Something else' },
+      ],
+      hotel: [
+        { id: 'room_type', label: 'A different room type' },
+        { id: 'view', label: 'A different view' },
+        { id: 'preference', label: 'Something closer to what I prefer' },
+        { id: 'cheaper', label: 'A cheaper option' },
+        { id: 'nicer', label: 'A nicer option' },
+        ...(!hotelIsPoints ? [{ id: 'use_points', label: 'Use points instead' }] : [{ id: 'use_cash', label: 'Use cash instead' }]),
+        { id: 'other', label: 'Something else' },
+      ],
+      car: [
+        { id: 'car_type', label: 'Different car type' },
+        { id: 'times', label: 'Pickup / dropoff time' },
+        { id: 'location', label: 'Pickup / dropoff location' },
+        { id: 'cheaper', label: 'A cheaper option' },
+        { id: 'nicer', label: 'A nicer option' },
+        { id: 'skip', label: 'Skip the car' },
+        { id: 'other', label: 'Something else' },
+      ],
+    };
+    return (
+      <div style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.18)', borderRadius: '12px', padding: '16px', marginTop: '10px' }}>
+        <div style={{ color: '#b0a898', fontSize: '13px', fontFamily: "'Playfair Display',Georgia,serif", fontStyle: 'italic', marginBottom: '12px' }}>What would you like to change?</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          {(opts[type] || []).map(opt => (
+            <button key={opt.id} onClick={() => {
+              if (opt.id === 'other') { setLocalNlq(true); return; }
+              setSel(opt.id);
+              if (opt.id === 'skip') { setModifications(p => ({...p, car: 'skipped'})); setTimeout(closePanel, 300); return; }
+              setTimeout(() => { setModifications(p => ({...p, [type]: opt.label})); closePanel(); }, 400);
+            }} style={chip(sel === opt.id)}>{opt.label}</button>
+          ))}
+        </div>
+        {localNlq && (
+          <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
+            <input value={localVal} onChange={e => setLocalVal(e.target.value)} placeholder="Describe what you'd like..." autoFocus
+              style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '10px', padding: '9px 14px', color: '#e8e4dc', fontSize: '12px', fontFamily: "'DM Sans',system-ui,sans-serif" }} />
+            <button onClick={() => { setModifications(p => ({...p, [type]: localVal})); setLocalNlq(false); setLocalVal(''); closePanel(); }}
+              style={{ background: '#C9A84C', color: '#0a0908', border: 'none', borderRadius: '10px', padding: '9px 16px', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}>Apply</button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  if (phase === 'confirmed') return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.94)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div style={{ background: '#0a0908', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '20px', maxWidth: '480px', width: '100%', padding: '40px 36px', textAlign: 'center' }}>
+        <div style={{ fontSize: '28px', marginBottom: '16px', color: '#C9A84C' }}>✦</div>
+        <div style={{ fontSize: '22px', fontFamily: "'Playfair Display',Georgia,serif", fontStyle: 'italic', color: '#e8e4dc', marginBottom: '12px' }}>Your trip is confirmed.</div>
+        <div style={{ color: '#7a7060', fontSize: '13px', lineHeight: '1.8', marginBottom: '24px' }}>
+          We'll send your full itinerary, travel reminders, and anything worth knowing before you go — including real-time updates if anything changes.
+        </div>
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px 18px', marginBottom: '20px', textAlign: 'left' }}>
+          <div style={{ color: '#555', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'serif', marginBottom: '6px' }}>Trip Summary</div>
+          <div style={{ color: '#b0a898', fontSize: '13px', marginBottom: '3px' }}>{tripSummary?.destination || option.headline?.split(' · ')[0]?.trim()}</div>
+          <div style={{ color: '#555', fontSize: '12px' }}>{tripSummary?.dates}</div>
+          {total > 0 && <div style={{ color: '#C9A84C', fontSize: '13px', marginTop: '6px', fontWeight: '600' }}>${total.toLocaleString()} total</div>}
+        </div>
+        <div style={{ color: '#3a3530', fontSize: '11px', lineHeight: '1.7', marginBottom: '24px' }}>
+          ✦ &nbsp;Sojourn will monitor for schedule changes, fare drops, and upgrade opportunities
+        </div>
+        <button onClick={onClose} style={{ background: '#C9A84C', color: '#0a0908', border: 'none', borderRadius: '12px', padding: '14px 32px', cursor: 'pointer', fontSize: '13px', fontWeight: '700', letterSpacing: '0.08em', fontFamily: "'Playfair Display',Georgia,serif" }}>
+          Back to My Trip
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.94)', zIndex: 2000, overflowY: 'auto' }}>
+      <div style={{ maxWidth: '620px', margin: '0 auto', padding: '28px 20px 60px', fontFamily: "'DM Sans',system-ui,sans-serif", color: '#e8e4dc' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+          <div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.3em', color: '#C9A84C', textTransform: 'uppercase', fontFamily: 'serif', marginBottom: '4px' }}>Sojourn · Checkout</div>
+            <div style={{ fontSize: '22px', fontFamily: "'Playfair Display',Georgia,serif", fontStyle: 'italic' }}>{tripSummary?.destination || 'Your Trip'}</div>
+            <div style={{ color: '#555', fontSize: '12px', marginTop: '2px' }}>{tripSummary?.dates} · {tripSummary?.nights || 3} nights</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#666', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', fontSize: '16px', flexShrink: 0 }}>✕</button>
+        </div>
+
+        {/* Intro */}
+        <div style={{ color: '#7a7060', fontSize: '13px', lineHeight: '1.7', marginBottom: '22px', fontStyle: 'italic', fontFamily: "'Playfair Display',Georgia,serif" }}>
+          Here's your trip — I've already handled the details. Book as-is or adjust anything below.
+        </div>
+
+        {/* Flights */}
+        {(flightComp || returnComp) && (
+          <div style={ss}>
+            <div style={ls}>Flights</div>
+            <div style={{ color: '#e8e4dc', fontSize: '14px', fontWeight: '600', marginBottom: '3px' }}>{flightComp?.detail?.split(' · ').slice(0, 2).join(' · ').trim() || 'Outbound'}</div>
+            {returnComp && <div style={{ color: '#9a9088', fontSize: '12px', marginBottom: '3px' }}>Return: {returnComp?.detail?.split(' · ').slice(0, 2).join(' · ').trim()}</div>}
+            <div style={{ color: '#555', fontSize: '12px', marginTop: '4px' }}>{seatPref()}</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '10px', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <div>
+                {flightIsPoints
+                  ? <div style={{ color: '#4CC97A', fontSize: '13px', fontWeight: '600' }}>{flightComp?.points?.replace(/redeemed/i, '').trim() || 'Points applied'}</div>
+                  : <div style={{ color: '#e8e4dc', fontSize: '15px', fontWeight: '600' }}>${flightCash.toLocaleString()}</div>}
+                {flightCard && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{flightCard.name} — {flightCard.reason}</div>}
+              </div>
+              {modifications.flight && <div style={{ color: '#C9A84C', fontSize: '11px', fontStyle: 'italic' }}>✓ {modifications.flight}</div>}
+            </div>
+            <button style={mbs} onClick={() => setModifying(modifying === 'flight' ? null : 'flight')}>{modifying === 'flight' ? '↑ Close' : 'Modify flights'}</button>
+            {modifying === 'flight' && <ModifyPanel type="flight" onClose={() => setModifying(null)} />}
+          </div>
+        )}
+
+        {/* Hotel */}
+        {hotelComp && (
+          <div style={ss}>
+            <div style={ls}>Hotel</div>
+            <div style={{ color: '#e8e4dc', fontSize: '14px', fontWeight: '600', marginBottom: '3px' }}>{hotelComp.detail?.split(' · ')[0]?.trim()}</div>
+            <div style={{ color: '#9a9088', fontSize: '12px', marginBottom: '3px' }}>{hotelComp.detail?.split(' · ')[1]?.trim() || 'Standard room'} · {tripSummary?.nights || 3} nights</div>
+            <div style={{ color: '#555', fontSize: '12px' }}>Best balance of space, view, and value for your party</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '10px', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <div>
+                {hotelIsPoints
+                  ? <div style={{ color: '#4CC97A', fontSize: '13px', fontWeight: '600' }}>{hotelComp?.points?.replace(/redeemed/i, '').trim() || 'Points applied'}</div>
+                  : <div style={{ color: '#e8e4dc', fontSize: '15px', fontWeight: '600' }}>${hotelCash.toLocaleString()} total</div>}
+                {hotelCard && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{hotelCard.name} — {hotelCard.reason}</div>}
+              </div>
+              {modifications.hotel && <div style={{ color: '#C9A84C', fontSize: '11px', fontStyle: 'italic' }}>✓ {modifications.hotel}</div>}
+            </div>
+            <button style={mbs} onClick={() => setModifying(modifying === 'hotel' ? null : 'hotel')}>{modifying === 'hotel' ? '↑ Close' : 'Modify hotel'}</button>
+            {modifying === 'hotel' && <ModifyPanel type="hotel" onClose={() => setModifying(null)} />}
+          </div>
+        )}
+
+        {/* Car — only for fly-drive, not road trips */}
+        {hasRental && modifications.car !== 'skipped' && (
+          <div style={ss}>
+            <div style={ls}>Car Rental</div>
+            <div style={{ color: '#e8e4dc', fontSize: '14px', fontWeight: '600', marginBottom: '3px' }}>{groundComp?.detail?.split(' · ')[0]?.trim() || 'Midsize SUV'}</div>
+            <div style={{ color: '#555', fontSize: '12px' }}>Room for your group plus luggage — skip the insurance, covered by your card</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '10px', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <div>
+                <div style={{ color: '#e8e4dc', fontSize: '15px', fontWeight: '600' }}>${carCash.toLocaleString()}</div>
+                {carCard && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{carCard.name} — {carCard.reason}</div>}
+              </div>
+              {modifications.car && <div style={{ color: '#C9A84C', fontSize: '11px', fontStyle: 'italic' }}>✓ {modifications.car}</div>}
+            </div>
+            <button style={mbs} onClick={() => setModifying(modifying === 'car' ? null : 'car')}>{modifying === 'car' ? '↑ Close' : 'Add / modify car'}</button>
+            {modifying === 'car' && <ModifyPanel type="car" onClose={() => setModifying(null)} />}
+          </div>
+        )}
+
+        {/* Road trip gas note */}
+        {isRoadTrip && groundComp && groundComp.value > 0 && (
+          <div style={{ ...ss, background: 'transparent', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={ls}>Ground</div>
+            <div style={{ color: '#555', fontSize: '12px' }}>{groundComp.detail || 'Own vehicle — gas cost varies by route'}</div>
+          </div>
+        )}
+
+        {/* Trip Total */}
+        <div style={{ background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: '14px', padding: '18px 20px', marginBottom: '20px' }}>
+          <div style={ls}>Trip Total</div>
+          {flightIsPoints && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: '#7a7060', fontSize: '13px' }}>Flights</span><span style={{ color: '#4CC97A', fontSize: '13px' }}>Points applied</span></div>}
+          {flightCash > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: '#7a7060', fontSize: '13px' }}>Flights</span><span style={{ color: '#b0a898', fontSize: '13px' }}>${flightCash.toLocaleString()}</span></div>}
+          {hotelIsPoints && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: '#7a7060', fontSize: '13px' }}>Hotel</span><span style={{ color: '#4CC97A', fontSize: '13px' }}>Points applied</span></div>}
+          {hotelCash > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: '#7a7060', fontSize: '13px' }}>Hotel</span><span style={{ color: '#b0a898', fontSize: '13px' }}>${hotelCash.toLocaleString()}</span></div>}
+          {carCash > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><span style={{ color: '#7a7060', fontSize: '13px' }}>Car rental</span><span style={{ color: '#b0a898', fontSize: '13px' }}>${carCash.toLocaleString()}</span></div>}
+          {taxes > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}><span style={{ color: '#555', fontSize: '12px' }}>Est. taxes & fees</span><span style={{ color: '#555', fontSize: '12px' }}>${taxes.toLocaleString()}</span></div>}
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ color: '#e8e4dc', fontSize: '15px', fontWeight: '600' }}>Total</span>
+            <span style={{ color: '#C9A84C', fontSize: '17px', fontWeight: '700' }}>{total > 0 ? '$' + total.toLocaleString() : 'Points-covered'}</span>
+          </div>
+          {option.pointsEarned && <div style={{ color: '#4C9AC9', fontSize: '11px', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>✦ Est. earned: {option.pointsEarned}</div>}
+        </div>
+
+        {/* Confirm CTA */}
+        <button onClick={() => setPhase('confirmed')} style={{ width: '100%', padding: '16px', background: '#C9A84C', color: '#0a0908', border: 'none', borderRadius: '14px', fontSize: '15px', fontWeight: '700', cursor: 'pointer', letterSpacing: '0.08em', fontFamily: "'Playfair Display',Georgia,serif", marginBottom: '12px' }}>
+          Confirm & Book This Trip &rarr;
+        </button>
+        <button onClick={onClose} style={{ width: '100%', padding: '12px', background: 'none', border: '1px solid rgba(255,255,255,0.1)', color: '#555', borderRadius: '14px', fontSize: '13px', cursor: 'pointer' }}>
+          Back to options
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const ItineraryOverlay = ({ option, tripSummary, userProfile, onClose }) => {
   if (!option) return null;
@@ -7995,6 +8181,7 @@ export default function SojournApp() {
   const [refineMessages, setRefineMessages] = useState([]);
   const [refineLoadingMessage, setRefineLoadingMessage] = useState("");
   const [itineraryOption, setItineraryOption] = useState(null);
+  const [bookingOption, setBookingOption] = useState(null);
   const [optimizeRecs, setOptimizeRecs] = useState(null);
   const [optimizeLoading, setOptimizeLoading] = useState(false);
   const [showOptimizeModal, setShowOptimizeModal] = useState(false);
@@ -9240,6 +9427,7 @@ Please respond now.`,
   if (phase === "results") {
     return (<>
       {itineraryOption && <ItineraryOverlay option={itineraryOption} tripSummary={tripSummary} userProfile={userProfile} onClose={() => setItineraryOption(null)} />}
+      {bookingOption && <BookingCheckout option={bookingOption} tripSummary={tripSummary} userProfile={userProfile} onClose={() => setBookingOption(null)} />}
 
       {/* Profile Quick-View Modal — Loyalty or Cards */}
       {showProfileModal && (
@@ -9413,7 +9601,7 @@ Please respond now.`,
           {expandedId ? (
             <div style={{ animation: "fadeUp 0.3s ease forwards" }}>
               <button onClick={() => setExpandedId(null)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", color: "#888", padding: "7px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "12px", marginBottom: "16px" }}>← Back to Grid</button>
-              <TripCard option={tripOptions.find(o => o.id === expandedId)} isExpanded={true} onToggle={() => setExpandedId(null)} onItinerary={(opt) => { mp.track("itinerary_viewed", { tag: opt.tag, headline: opt.headline }); setItineraryOption(opt); }} userProfile={userProfile} isMobile={isMobile} tripSummary={tripSummary} />
+              <TripCard option={tripOptions.find(o => o.id === expandedId)} isExpanded={true} onToggle={() => setExpandedId(null)} onItinerary={(opt) => { mp.track("itinerary_viewed", { tag: opt.tag, headline: opt.headline }); setItineraryOption(opt); }} onBook={(opt) => setBookingOption(opt)} userProfile={userProfile} isMobile={isMobile} tripSummary={tripSummary} />
               {/* Other options mini-strip */}
               <div style={{ marginTop: "20px" }}>
                 <div style={{ color: "#333", fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "10px" }}>Other Options</div>
