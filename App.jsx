@@ -5705,7 +5705,13 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                         </div>
                         <div style={{ color: "#d8d4cc", fontSize: "13px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.3", marginBottom: "4px" }}>{opt.headline}</div>
                         <div style={{ color: "#555", fontSize: "11px" }}>{opt.subhead}</div>
-                        {hotel && <div style={{ color: "#3a3a3a", fontSize: "10px", marginTop: "4px" }}>{hotel.detail?.split("·")[0]?.trim()}</div>}
+                        
+                        {(() => {
+                          const hotelComp = (opt.components||[]).find(c => c.label?.toLowerCase().includes("hotel") || c.label?.toLowerCase().includes("accommodation"));
+                          const flightComp = (opt.components||[]).find(c => c.label === "Flight");
+                          const propertyName = hotelComp?.detail?.split("·")[0]?.trim() || flightComp?.detail?.split("·")[0]?.trim();
+                          return propertyName ? <div style={{ color: "#555", fontSize: "10px", marginTop: "4px", fontStyle: "italic" }}>{propertyName}</div> : null;
+                        })()}
                         {!isOnHold && <div style={{ color: isHov ? "#C9A84C" : "#333", fontSize: "10px", marginTop: "5px", letterSpacing: "0.05em", transition: "color 0.15s" }}>View details →</div>}
                       </>
                     )}
@@ -6506,103 +6512,6 @@ const ComponentRow = ({ label, value, detail, points, card, checkIn, checkOut, n
 const _whyThisCache = {};
 
 // ── Deal Intelligence Card ────────────────────────────────────────────────
-const DealIntelligenceCard = ({ dealData, onBuildTrip }) => {
-  const typeColors = {
-    airline: { bg: 'rgba(74,158,255,0.08)', border: 'rgba(74,158,255,0.2)', label: 'FLIGHT DEAL' },
-    hotel:   { bg: 'rgba(201,168,76,0.08)', border: 'rgba(201,168,76,0.2)', label: 'HOTEL DEAL' },
-    stacked: { bg: 'rgba(78,203,122,0.08)', border: 'rgba(78,203,122,0.2)', label: 'STACKED VALUE' },
-    loyalty: { bg: 'rgba(180,100,255,0.08)', border: 'rgba(180,100,255,0.2)', label: 'LOYALTY OFFER' },
-  };
-
-  const deals = dealData.deals || [];
-
-  // Group deals for 2-column desktop layout
-  // Row 1: 2 airline deals | Row 2-3: hotel deals (2 per row) | Row 4: stacked + loyalty
-  const airlineDeals = deals.filter(d => d.type === 'airline');
-  const hotelDeals   = deals.filter(d => d.type === 'hotel');
-  const stackedDeals = deals.filter(d => d.type === 'stacked');
-  const loyaltyDeals = deals.filter(d => d.type === 'loyalty');
-
-  const DealCard = ({ deal }) => {
-    const style = typeColors[deal.type] || typeColors.hotel;
-    return (
-      <div onClick={() => onBuildTrip && onBuildTrip(deal.cta, deal.type)}
-        style={{
-          background: style.bg, border: `1px solid ${style.border}`,
-          borderRadius: '12px', padding: '12px 14px', cursor: 'pointer',
-          transition: 'opacity 0.15s', display: 'flex', gap: '10px', alignItems: 'flex-start',
-          flex: '1 1 calc(50% - 4px)', minWidth: '0'
-        }}
-        onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
-        onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-      >
-        <span style={{ fontSize: '16px', lineHeight: '1', marginTop: '2px', flexShrink: 0 }}>{deal.icon}</span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: '9px', fontWeight: '600', letterSpacing: '0.08em',
-            color: style.border.replace('0.2', '0.9'), textTransform: 'uppercase', marginBottom: '3px' }}>
-            {style.label}
-          </div>
-          <div style={{ color: '#e8e4dc', fontSize: '12px', fontWeight: '500', marginBottom: '3px', lineHeight: '1.4' }}>
-            {deal.headline}
-          </div>
-          <div style={{ color: '#9a9088', fontSize: '11px', lineHeight: '1.4' }}>
-            {deal.detail}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div style={{ width: '100%' }}>
-      {/* Header */}
-      <div style={{ color: '#9a9088', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase',
-        fontFamily: 'serif', marginBottom: '14px' }}>
-        Here are your personalized travel deals
-      </div>
-
-      {/* Airline row — 2 across */}
-      {airlineDeals.length > 0 && (
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
-          {airlineDeals.map((d, i) => <DealCard key={i} deal={d} />)}
-        </div>
-      )}
-
-      {/* Hotel rows — 2 across */}
-      {hotelDeals.length > 0 && (
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
-          {hotelDeals.map((d, i) => <DealCard key={i} deal={d} />)}
-        </div>
-      )}
-
-      {/* Stacked + Loyalty row — side by side */}
-      {(stackedDeals.length > 0 || loyaltyDeals.length > 0) && (
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
-          {[...stackedDeals, ...loyaltyDeals].map((d, i) => <DealCard key={i} deal={d} />)}
-        </div>
-      )}
-
-      {/* Coming soon — centered */}
-      <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: '12px', padding: '12px 16px', marginBottom: '12px', textAlign: 'center' }}>
-        <div style={{ color: '#C9A84C', fontSize: '9px', fontWeight: '600',
-          letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '4px' }}>
-          Coming soon
-        </div>
-        <div style={{ color: '#555', fontSize: '11px', lineHeight: '1.6' }}>
-          Soon, Sojourn will automatically scan your travel and card‑related emails, synthesize the best offers,
-          and surface only the ones that matter — no more digging through inboxes or missing targeted promos.
-          You'll get a clean, personalized summary like this anytime something valuable appears.
-        </div>
-      </div>
-
-      {/* Closing — left justified */}
-      <div style={{ color: '#c8c0b4', fontSize: '13px', lineHeight: '1.6' }}>
-        {dealData.closing}
-      </div>
-    </div>
-  );
-};
 
 
 
@@ -8145,6 +8054,7 @@ export default function SojournApp() {
   const recognitionRef = useRef(null);
   const bottomRef = useRef(null);
   const conversationRef = useRef([]);
+  const fromDealPillRef = useRef(false); // true when session started from deal pill
   const [conciergeMode, setConciergeMode] = useState(true); // true = conversational, false = generating cards
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
@@ -8235,8 +8145,8 @@ POINTS-LED QUERY DETECTION: Activate this mode when the user's intent is to rede
 
 When a points-led query is detected, map the 6 buckets as follows — destination rules still apply, these redefine how each bucket is expressed:
 1. RECOMMENDED (#C9A84C) — Best overall redemption of the stated program. Must achieve at least 1.5 cents per point to qualify — if no destination clears that threshold, pick the highest available and note it. Lead with the redemption story in whyThis, not the experience story. Format: "[X] miles used · estimated value $[Y] · [Z.Z] cents per mile — [rating]." Do not lead with hotel amenities or status perks — the miles value is the headline.
-2. BEST POINTS REDEMPTION (#4CC97A) — Highest cents-per-point efficiency from the stated program on its NATURAL component (airline miles → flights, hotel points → hotel). Never redirect airline miles to a hotel or hotel points to flights. HEADLINE: frame around the destination and cpp angle — never use the words "maximum value" or "best value" (those belong to the Value bucket). Good headline framing: "destination · property · [X.X]¢ Per Mile" or "destination · property · High-Efficiency Redemption". In whyThis, spell out the redemption clearly: "[X] miles used · estimated value $[Y] · [Z.Z] cents per mile — [excellent/strong/solid] value." For context: 2.0+ cents per mile = excellent, 1.4-2.0 = strong, below 1.4 = marginal. redemption field must be non-null. redemptions array must include one entry with pointsUsed, dollarsValue, centsPerPoint, component.
-3. BEST VALUE (#C9C94C) — Stack the stated program on its natural component PLUS secondary programs the traveler holds. RULE: if the stated program is an airline program, it MUST cover the flights (not pay cash for flights while using hotel points). Then layer hotel points on top to cover the accommodation. HEADLINE: frame around the stacking concept — e.g. "destination · property · Miles + Hotel Points Stack" or "destination · property · Combined Redemption". whyThis MUST open with the stacking framing in the first sentence — e.g. "This option combines your [airline] miles for flights and your [hotel] points for the hotel, covering both with redemptions." Then spell out the stack: "[X] miles on flights · estimated value $[Y] · [Z.Z] cents per mile. [A] hotel points · estimated value $[B]. Total cash out of pocket: $[C]." The opening line must immediately distinguish this from the Redemption option above it.
+2. BEST POINTS REDEMPTION (#4CC97A) — Highest cents-per-point efficiency from the stated program on its NATURAL component (airline miles → flights, hotel points → hotel). Never redirect airline miles to a hotel or hotel points to flights. HEADLINE: frame around the destination and cpp angle — never use the words "maximum value" or "best value" (those belong to the Value bucket). Good headline framing: "Lisbon · Park Hyatt Lisbon · 4.0¢ Per Mile" or "Kyoto · Hyatt Regency Kyoto · High-Efficiency Redemption". Always use the full canonical property name in headline (never just brand or city alone). In whyThis, spell out the redemption clearly: "[X] miles used · estimated value $[Y] · [Z.Z] cents per mile — [excellent/strong/solid] value." For context: 2.0+ cents per mile = excellent, 1.4-2.0 = strong, below 1.4 = marginal. redemption field must be non-null. redemptions array must include one entry with pointsUsed, dollarsValue, centsPerPoint, component.
+3. BEST VALUE (#C9C94C) — Stack the stated program on its natural component PLUS secondary programs the traveler holds. RULE: if the stated program is an airline program, it MUST cover the flights (not pay cash for flights while using hotel points). Then layer hotel points on top to cover the accommodation. HEADLINE: frame around the stacking concept — e.g. "Mexico City · Grand Hyatt Polanco · Delta + Hyatt Points Stack" or "Lisbon · Park Hyatt Lisbon · Combined Redemption". Always use the full canonical property name (never just brand or city alone). whyThis MUST open with the stacking framing in the first sentence — e.g. "This option combines your [airline] miles for flights and your [hotel] points for the hotel, covering both with redemptions." Then spell out the stack: "[X] miles on flights · estimated value $[Y] · [Z.Z] cents per mile. [A] hotel points · estimated value $[B]. Total cash out of pocket: $[C]." The opening line must immediately distinguish this from the Redemption option above it.
 4. QUALITY UPGRADE (#C94C8A) — Use stated miles for premium cabin (business/first) AND layer hotel loyalty points for a luxury property. Stack both programs. Show what each covers and the combined cpp across both.
 5. WILD CARD (#9A4CC9) — The aperture-widening option. Can be: (a) a surprisingly high-value redemption with the traveler's existing programs they wouldn't think of, (b) a different program that offers dramatically better value for this trip with the math shown, or (c) an independent or boutique property that fits the traveler's profile exceptionally well even if it earns no loyalty points. Wild Card is led by the property or experience — what makes it surprising, distinctive, or uniquely right for this traveler. NEVER frame Wild Card around loyalty portfolio strategy, program diversification, or "reducing concentration" — those are business-school concepts, not travel recommendations. If suggesting a property outside the traveler's existing programs, lead with why the property is exceptional for them, not with the loyalty angle. If it earns points in a program they don't hold, mention it briefly as context — never as the hook.
 6. FUTURE VALUE (#4C9AC9) — Strategic alternative: don't spend your miles on this trip at all. Pay cash, earn aggressively, and position for a bigger future redemption. Tag label should be "Future Value" not "Best Points Earned". In whyThis, make the case honestly but WITHOUT assuming specific future destinations the traveler hasn't mentioned — do not reference Tokyo, Europe, Maldives, or any specific aspirational destination unless the traveler has explicitly mentioned it earlier in conversation. Instead frame strategically: "Cash flights earn [X] miles via [card] + hotel earns [Y] points = [Z] total miles earned back. At your current balance of [N] miles, holding them positions you for a premium redemption when the right trip comes up — where you could get significantly more value per mile than this route offers." Let the math speak — the point is that their balance grows and they retain optionality, not that they should go somewhere specific. This option acknowledges the traveler's intent while offering a thoughtful strategic counterpoint.
@@ -8315,7 +8225,7 @@ INDEPENDENT HOTELS — these do NOT earn major loyalty points (no Bonvoy, Hyatt,
 CRITICAL: NEVER assign Marriott, Hyatt, or Hilton points to independent hotels. If suggesting an independent hotel, pointsEarned should reflect credit card earning only (e.g. "2x via Amex Platinum on hotels") not loyalty program points.
 CRITICAL: NEVER reference a hotel loyalty program the traveler does not hold. If the traveler has no IHG account, do not suggest Kimpton, InterContinental, or any IHG property as a points-earning option. Only suggest hotels whose loyalty program appears in the traveler's profile. If no matching hotel program exists for a given property, reference card earning only.
 
-MULTI-CITY TRIPS: If the query involves multiple destinations (e.g. Chicago + Park City, Paris + London), structure each option to cover ALL legs. Use additional components beyond the standard 4 — e.g. "Flight to Chicago", "Chicago Hotel", "Flight to SLC", "Park City Hotel", "Rental Car", etc. Keep each component detail concise to stay within token limits. The headline should reflect the full trip: "Chicago + Park City · Marriott + Deer Valley"
+MULTI-CITY TRIPS: If the query involves multiple destinations (e.g. Chicago + Park City, Paris + London), structure each option to cover ALL legs. Use additional components beyond the standard 4 — e.g. "Flight to Chicago", "Chicago Hotel", "Flight to SLC", "Park City Hotel", "Rental Car", etc. Keep each component detail concise to stay within token limits. The headline should reflect the full trip using SPECIFIC property names, not just brands: "Lisbon · Park Hyatt Lisbon" or "Chicago + Park City · Marriott Magnificent Mile + Stein Eriksen Lodge". Always use the full canonical property name (brand + location/name) — never just the brand alone (not "Park Hyatt", not "Marriott") and never just the city alone.
 
 DESTINATION DIVERSITY RULE:
 - When a query is open-ended or exploratory (mentions multiple destinations, says "open to ideas", or gives no single destination) — NEVER place more than 2 options in the same destination city or island
@@ -8413,80 +8323,6 @@ DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these ru
   };
 
 
-  // ── Handle Deal Intelligence queries ──────────────────────────────────────
-  const handleDealIntelligence = async (userMessage) => {
-    setLoading(true);
-
-    const today = new Date();
-    const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-    const currentMonth = monthNames[today.getMonth()];
-    const currentYear = today.getFullYear();
-    const nextMonth = monthNames[(today.getMonth() + 1) % 12];
-    const monthAfter = monthNames[(today.getMonth() + 2) % 12];
-
-    // Use buildSystemPrompt() — inherits ALL brand/program/balance constraints
-    // Same pattern as main generation. No new logic needed.
-    const sp = buildSystemPrompt();
-
-    const dealUserMessage = `Today is ${currentMonth} ${currentYear}. Generate a curated personal deal briefing — 7 deals this traveler would wish they knew about. ALL deals must be forward-looking from today (${currentMonth} ${currentYear}) — travel windows in ${nextMonth}, ${monthAfter}, or later. ONLY use loyalty programs and brands explicitly listed in the traveler's profile above. Do not invent program memberships.
-
-Return ONLY this JSON (no markdown):
-{
-  "intro": "One warm sentence referencing their home airport or a specific program they have.",
-  "deals": [
-    {"type":"airline","icon":"✈️","headline":"Specific airline deal from their home airport — route, timing, value","detail":"Why this matters through their loyalty lens. One sentence.","cta":"Short trip seed"},
-    {"type":"airline","icon":"✈️","headline":"Second airline deal — different type of value","detail":"Value framing.","cta":"Short trip seed"},
-    {"type":"hotel","icon":"🏨","headline":"Specific property from their brands — points rate or deal worth acting on now","detail":"Why act now.","cta":"Short trip seed"},
-    {"type":"hotel","icon":"🏨","headline":"Second hotel deal from their brands","detail":"Value framing.","cta":"Short trip seed"},
-    {"type":"hotel","icon":"🏨","headline":"Third hotel — aspirational timing for a property in their preferred brands","detail":"What makes this moment right.","cta":"Short trip seed"},
-    {"type":"stacked","icon":"⚡","headline":"One complete trip combining ONLY their listed airline + hotel programs — name the specific programs and destination","detail":"Walk the math: flight program + hotel program + card. Reference only programs they actually have.","cta":"Full trip seed"},
-    {"type":"loyalty","icon":"🎯","headline":"One loyalty program move this week — from their actual programs only","detail":"Specific, actionable, time-bound. Reference one of their actual programs.","cta":"Action seed"}
-  ],
-  "closing": "Would you like me to build a trip around one of these? Tap any deal above or just tell me which one caught your eye — I can put options in front of you in seconds."
-}`;
-
-    try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": ANTHROPIC_KEY,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true"
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1200,
-          system: sp,
-          messages: [{ role: "user", content: dealUserMessage }]
-        })
-      });
-      const data = await response.json();
-      const raw = (data.content?.[0]?.text || "").replace(/```json|```/g, "").trim();
-
-      let deals;
-      try { deals = JSON.parse(raw); } catch(e) { deals = null; }
-
-      if (deals && deals.deals) {
-        setMessages(prev => [...prev, {
-          role: "assistant",
-          type: "deal_intelligence",
-          dealData: deals
-        }]);
-      } else {
-        setMessages(prev => [...prev, {
-          role: "assistant",
-          text: "I wasn't able to generate your deal briefing right now — try again in a moment."
-        }]);
-      }
-    } catch(err) {
-      setMessages(prev => [...prev, {
-        role: "assistant",
-        text: "Something went wrong fetching deals. Please try again."
-      }]);
-    }
-    setLoading(false);
-  };
 
 
 
@@ -8500,13 +8336,7 @@ Return ONLY this JSON (no markdown):
       return;
     }
 
-    // ── DEAL INTELLIGENCE: intercept deal queries ──────────────────────────
-    if (isDealIntelligenceQuery(userMessage)) {
-      // Remove from conversationRef so it doesn't contaminate future generation calls
-      conversationRef.current = conversationRef.current.filter(m => !isDealIntelligenceQuery(m.content));
-      await handleDealIntelligence(userMessage);
-      return;
-    }
+
 
     // ── CONCIERGE MODE: clarify before generating ──────────────────────────
     // If user is confirming/agreeing while in concierge mode, skip to generation
@@ -8577,6 +8407,8 @@ TRAVEL CONSIDERATIONS — check user profile first:
 - If profile shows "Traveling with pets" or "Traveling with children" — you already know, factor it into recommendations silently.
 - If profile does NOT show these but the trip involves overnight stays and neither pets nor children have been mentioned, add one gentle line to your READY confirmation: "Just to make sure I get the details right — will you be traveling with any children or pets on this trip?" Only ask this ONCE and only if not already clear from context.
 - Accessibility: if profile shows "Wheelchair accessible" or "Mobility assistance needed" — always filter for accessible rooms and note this in your options.
+
+When the user's query starts with "Build a trip around this:", it came from a specific deal they tapped. The "Why This" explanation for the recommended option MUST reference the specific deal value (the miles rate, points saving, or cash discount) that made it compelling. Don't just describe the destination — connect it back to the deal.
 
 When ready to plan, respond with EXACTLY:
 READY: [one sentence reflecting back what you heard, including resolved dates] Ready for me to generate your options?
@@ -8698,6 +8530,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         setTripOptions(validateOptions(filteredOptions));
       setTripSummary(parsed.tripSummary);
       setPhase("results");
+      // preserve fromDealPillRef — reset only after results are shown
 
     } catch(e) {
       try {
@@ -8721,13 +8554,6 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
 
     
 // ── DEAL INTELLIGENCE detection ───────────────────────────────────────────
-const isDealIntelligenceQuery = (msg) => {
-  const m = (msg || '').toLowerCase();
-  return m.includes('best deals') || m.includes('deals from brands') ||
-         m.includes('show me deals') || m.includes('deal intelligence') ||
-         m.includes('travel deals') || m.includes('deals and offers') ||
-         m.includes('personalized travel deals') || m.includes('deals for me');
-};
 
 const handleSend = () => {
     if (!input.trim() || loading) return;
@@ -8742,9 +8568,7 @@ const handleSend = () => {
     if (!msg || loading) return;
     setInput("");
     // For deal intelligence queries, don't add a user bubble — the card IS the response
-    if (!isDealIntelligenceQuery(msg)) {
-      setMessages(prev => [...prev, { role: "user", text: msg }]);
-    }
+    setMessages(prev => [...prev, { role: "user", text: msg }]);
     callClaude(msg);
   };
 
@@ -9557,6 +9381,17 @@ Please respond now.`,
           </div>
         </div>
 
+        {/* Coming soon banner — only when session came from deal pill */}
+        {fromDealPillRef.current && !expandedId && (
+          <div style={{ margin: "0 28px 16px", background: "rgba(201,168,76,0.04)", border: "1px solid rgba(201,168,76,0.12)", borderRadius: "12px", padding: "12px 18px", display: "flex", alignItems: "center", gap: "12px" }}>
+            <span style={{ color: "#C9A84C", fontSize: "14px", flexShrink: 0 }}>✦</span>
+            <div>
+              <span style={{ color: "#C9A84C", fontSize: "9px", fontWeight: "600", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif", marginRight: "8px" }}>Coming soon</span>
+              <span style={{ color: "#555", fontSize: "11px", lineHeight: "1.6" }}>Sojourn will soon automatically scan your travel emails and surface deals like these before you even think to look — personalized to your programs, cards, and upcoming travel windows.</span>
+            </div>
+          </div>
+        )}
+
         <div style={{ padding: isMobile ? "0 8px 32px" : "0 28px 48px" }}>
           {expandedId ? (
             <div style={{ animation: "fadeUp 0.3s ease forwards" }}>
@@ -9972,7 +9807,18 @@ Please respond now.`,
 
               {/* ── Deal Intelligence standing pill ── */}
               <div style={{ display: "flex", justifyContent: "center", marginTop: "8px" }}>
-                <button onClick={() => sendMessage("Personalized travel deals for me")} style={{
+                <button onClick={() => {
+                  const airport = userProfile?.travelProfile?.homeAirport || "my home airport";
+                  const programs = (userProfile?.loyaltyAccounts||[]).map(a=>a.program).filter(Boolean).slice(0,2).join(" and ") || "my points";
+                  fromDealPillRef.current = true; // mark session as deal-pill-sourced
+                  const query = `Show me the best trips I can take right now using ${programs} — I'm open to destinations, surprise me with what's worth booking`;
+                  setInput(query);
+                  setTimeout(() => {
+                    const textarea = document.querySelector('textarea');
+                    if (textarea) { textarea.focus(); textarea.form?.requestSubmit?.() || handleSend(); }
+                    else handleSend();
+                  }, 50);
+                }} style={{
                   display: "inline-flex", alignItems: "center", gap: "6px",
                   background: "rgba(255,255,255,0.03)",
                   border: "1px solid rgba(255,255,255,0.08)",
@@ -9994,13 +9840,8 @@ Please respond now.`,
         <div data-messages-container style={{ flex: 1, overflowY: "auto", padding: "20px 24px 0", display: "flex", flexDirection: "column", gap: "14px" }}>
           {messages.slice(1).map((msg, i) => (
             <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "flex-end" : "flex-start", animation: "fadeUp 0.3s ease forwards" }}>
-              <div style={{ maxWidth: msg.type === "deal_intelligence" ? "100%" : "80%", width: msg.type === "deal_intelligence" ? "100%" : "auto", padding: msg.type === "deal_intelligence" ? "16px 4px" : "12px 16px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)", border: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "1px solid rgba(201,168,76,0.25)" : "1px solid rgba(255,255,255,0.07)", color: msg.isOptionsUpdate ? "#C9A84C" : msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "#e8e4dc" : "#b0a898", fontSize: "14px", lineHeight: "1.6", fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit", fontStyle: msg.role === "assistant" ? "italic" : "normal" }}>
-                {msg.type === "deal_intelligence" && msg.dealData
-                  ? <DealIntelligenceCard dealData={msg.dealData} onBuildTrip={(cta, dealType) => {
-                  setInput(`Build a trip around this: ${cta}`);
-                  setTimeout(() => document.querySelector('textarea')?.focus(), 50);
-                }} />
-                  : msg.text}
+              <div style={{ maxWidth: "80%", width: "auto", padding: "12px 16px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)", border: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "1px solid rgba(201,168,76,0.25)" : "1px solid rgba(255,255,255,0.07)", color: msg.isOptionsUpdate ? "#C9A84C" : msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "#e8e4dc" : "#b0a898", fontSize: "14px", lineHeight: "1.6", fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit", fontStyle: msg.role === "assistant" ? "italic" : "normal" }}>
+msg.text
               </div>
               {msg.isReadyPrompt && (
                 <button onClick={() => { setConciergeMode(false); callClaude("Generate my options now based on everything discussed: " + conversationRef.current.filter(m=>m.role==="user").map(m=>m.content).join(" ")); }} style={{ marginTop: "10px", padding: "11px 22px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "20px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.06em", fontFamily: "'Playfair Display',Georgia,serif" }}>
