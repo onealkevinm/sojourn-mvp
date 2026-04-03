@@ -6520,7 +6520,7 @@ const DealIntelligenceCard = ({ dealData, onBuildTrip }) => {
         {(dealData.deals || []).map((deal, i) => {
           const style = typeColors[deal.type] || typeColors.hotel;
           return (
-            <div key={i} onClick={() => onBuildTrip && onBuildTrip(deal.cta)}
+            <div key={i} onClick={() => onBuildTrip && onBuildTrip(deal.cta, deal.type)}
               style={{
                 background: style.bg, border: `1px solid ${style.border}`,
                 borderRadius: '12px', padding: '12px 16px', cursor: 'pointer',
@@ -7579,9 +7579,6 @@ const PointsDashboardDrawer = ({ profile, optimizeRecs, optimizeLoading, onOptim
                     { label: "Traveling with pets", icon: "🐾" },
                     { label: "Wheelchair accessible", icon: "♿" },
                     { label: "Mobility assistance needed", icon: "🦽" },
-                    { label: "Dietary restrictions", icon: "🥗" },
-                    { label: "Anniversary or celebration", icon: "🥂" },
-                    { label: "Honeymoon", icon: "💍" },
                   ].map(({ label, icon }) => {
                     const active = (profile?.travelConsiderations || []).includes(label);
                     return (
@@ -7914,9 +7911,6 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
                   { label: "Traveling with pets", icon: "🐾" },
                   { label: "Wheelchair accessible", icon: "♿" },
                   { label: "Mobility assistance needed", icon: "🦽" },
-                  { label: "Dietary restrictions", icon: "🥗" },
-                  { label: "Anniversary or celebration", icon: "🥂" },
-                  { label: "Honeymoon", icon: "💍" },
                 ].map(({ label, icon }) => {
                   const active = (profile?.travelConsiderations || []).includes(label);
                   return (
@@ -8544,6 +8538,30 @@ Return ONLY valid JSON.`;
       return;
     }
 
+    // ── SINGLE TRIP MODE: deal click → build one specific trip ──────────────
+    if (userMessage.startsWith('SINGLE_TRIP_MODE:')) {
+      const dealDesc = userMessage.replace('SINGLE_TRIP_MODE:', '').trim();
+      const singleTripPrompt = `The user clicked on a specific travel deal and wants you to build ONE complete trip around it — not multiple options. Skip the options format entirely. Build a single, specific, fully-detailed trip itinerary for: ${dealDesc}. Use their profile (home airport, loyalty programs, credit cards) to make it concrete. Include flights, hotel, rough dates, points strategy, and card routing. Present it conversationally as if you're a concierge who has done the work for them.`;
+      conversationRef.current = [...conversationRef.current, { role: "user", content: singleTripPrompt }];
+      // Build using deep dive prompt style, not options
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1200,
+          system: buildSystemPrompt(userProfile),
+          messages: [{ role: "user", content: singleTripPrompt }]
+        })
+      });
+      const data = await response.json();
+      const reply = data.content?.[0]?.text || "I wasn't able to build that trip right now — try describing it in your own words.";
+      setMessages(prev => [...prev, { role: "assistant", text: reply }]);
+      conversationRef.current = [...conversationRef.current, { role: "assistant", content: reply }];
+      setLoading(false);
+      return;
+    }
+
     // ── CONCIERGE MODE: clarify before generating ──────────────────────────
     // If user is confirming/agreeing while in concierge mode, skip to generation
     const isEarlyConfirmation = conciergeMode && /^(yes|yeah|yep|sure|ok|okay|go|generate|let's go|do it|sounds good|great|perfect)/i.test(userMessage.trim()) && userMessage.trim().split(' ').length < 8;
@@ -8608,6 +8626,8 @@ POINTS CLARIFICATION: Only ask if intent is clearly to REDEEM points AND no spec
 Only ask ONE question total per conversation turn.
 NEVER ask about budget, hotel preference, or anything already in the profile.
 NEVER refuse a local discovery or dining question — always answer helpfully.
+
+DEAL-DRIVEN DESTINATION CLARIFICATION: If the user's query comes from clicking a flight deal and references a broad region (e.g. "flights to Europe," "deals to Asia," "flights to the Caribbean") with no specific city or country mentioned, ask ONE succinct question: "Anywhere specific in mind, or would you like me to pick the best value destination?" Then generate immediately on their answer — do not ask anything else. If they say "France or Italy" or "anywhere warm" that is sufficient — go straight to READY.
 
 TRAVEL CONSIDERATIONS — check user profile first:
 - If profile shows "Traveling with pets" or "Traveling with children" — you already know, factor it into recommendations silently.
@@ -10027,8 +10047,17 @@ Please respond now.`,
             <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start", animation: "fadeUp 0.3s ease forwards" }}>
               <div style={{ maxWidth: msg.type === "deal_intelligence" ? "720px" : "80%", padding: msg.type === "deal_intelligence" ? "16px 20px" : "12px 16px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.role === "user" ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)", border: msg.role === "user" ? "1px solid rgba(201,168,76,0.25)" : "1px solid rgba(255,255,255,0.07)", color: msg.isOptionsUpdate ? "#C9A84C" : msg.role === "user" ? "#e8e4dc" : "#b0a898", fontSize: "14px", lineHeight: "1.6", fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit", fontStyle: msg.role === "assistant" ? "italic" : "normal" }}>
                 {msg.type === "deal_intelligence" && msg.dealData
-                  ? <DealIntelligenceCard dealData={msg.dealData} onBuildTrip={(cta) => { setInput(`Build me a trip around this: ${cta}`);
-                setTimeout(() => document.querySelector('textarea')?.focus(), 50); }} />
+                  ? <DealIntelligenceCard dealData={msg.dealData} onBuildTrip={(cta, dealType) => {
+                  if (dealType === 'hotel' || dealType === 'stacked') {
+                    // Specific deal — bypass options, build one trip directly
+                    setMessages(prev => [...prev, { role: "user", text: `Build me a trip around this: ${cta}` }]);
+                    callClaude(`SINGLE_TRIP_MODE: Build one complete, specific trip around this deal — do not show multiple options. The deal is the premise, just execute on it: ${cta}`);
+                  } else {
+                    // Flight/loyalty deal — destination still open, use normal options flow
+                    setInput(`Build me a trip around this: ${cta}`);
+                    setTimeout(() => document.querySelector('textarea')?.focus(), 50);
+                  }
+                }} />
                   : msg.text}
               </div>
               {msg.isReadyPrompt && (
