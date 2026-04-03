@@ -8573,6 +8573,8 @@ Return ONLY valid JSON.`;
 
     // ── DEAL INTELLIGENCE: intercept deal queries ──────────────────────────
     if (isDealIntelligenceQuery(userMessage)) {
+      // Remove from conversationRef so it doesn't contaminate future generation calls
+      conversationRef.current = conversationRef.current.filter(m => !isDealIntelligenceQuery(m.content));
       await handleDealIntelligence(userMessage);
       return;
     }
