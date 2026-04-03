@@ -283,7 +283,10 @@ const getHotelProgram = (hotelName) => {
 const validateOptions = (options) => {
   if (!options || !Array.isArray(options)) return options;
 
-  return options.map(opt => {
+  // Hard cap at 6 — the UI is designed for exactly 6 options
+  const capped = options.slice(0, 6);
+
+  return capped.map(opt => {
     let fixed = { ...opt };
 
     // Check hotel component vs redemption program alignment
@@ -8055,6 +8058,7 @@ export default function SojournApp() {
   const bottomRef = useRef(null);
   const conversationRef = useRef([]);
   const fromDealPillRef = useRef(false); // true when session started from deal pill
+  const pendingRefineOptions = useRef(null); // holds parsed options waiting for user to confirm
   const [conciergeMode, setConciergeMode] = useState(true); // true = conversational, false = generating cards
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
@@ -8112,7 +8116,7 @@ ${buildQualityContext(Object.keys(QUALITY_SIGNALS_DB).slice(0, 60))}
 - LEARNED FROM PAST TRIPS: ${learnedList}` : ""}
 - Preferred hotel brands: ${brandList}
 
-Generate exactly 6 options as raw JSON. Output ONLY JSON — no markdown, no explanation, start with { end with }.
+Generate EXACTLY 6 options as raw JSON — never 5, never 7, always exactly 6. Output ONLY JSON — no markdown, no explanation, start with { end with }. The options array must have exactly 6 elements.
 
 THE 6 OPTIONS (always in this order):
 CRITICAL RULE BEFORE GENERATING ANY OPTION: If the user named a specific destination, ALL 6 options must be AT that destination. Never substitute a different destination to optimize a bucket — find the best hotel/flight FOR THAT DESTINATION that fits the bucket criteria.
@@ -8191,7 +8195,7 @@ INTELLIGENCE RULES:
 - FLIGHT COST RULE: Each leg (Flight and Return Flight) must show its own cash value — never $0 unless it is genuinely a free redemption ticket. For a roundtrip fare of $800 total for 2 people, show Flight value = 400 and Return Flight value = 400 (split evenly).
 - MILES PER LEG: Each flight leg must show miles earned independently in its points field. Format: "2 tickets · est. X miles earned" for outbound, "2 tickets · est. X miles earned" for return. NEVER use "Included in roundtrip" or "included in outbound" — every leg shows its own earning. Miles per leg should reflect actual flight distance (e.g. SEA-LAX ~1136 miles, JFK-LAX ~2475 miles).
 - AIRLINE ALIGNMENT: The loyalty program earning, card benefits, and Sky Club/lounge access shown for a flight MUST match the actual airline on the ticket. If the flight is Alaska Airlines, show Alaska Mileage Plan earning — not Delta SkyMiles. If the flight is United, show MileagePlus. Never attribute Delta Sky Club access to an Alaska or United flight.
-- Rental car pricing: use realistic market rates. A full-size SUV in Hawaii runs $150-250/day in peak season, $80-150/day off-peak. A standard sedan runs $60-100/day. Never show rental car costs below $40/day — these are not realistic. Total rental cost = daily rate × number of days. Always show both daily rate and total: "$175/day · 5 days · $875 total".
+- Rental car pricing: use realistic market rates. A full-size SUV in Hawaii runs $150-250/day in peak season, $80-150/day off-peak. A standard sedan runs $60-100/day. Never show rental car costs below $40/day — these are not realistic. Total rental cost = daily rate × number of days. Always show both daily rate and total: "$175/day · 5 days · $875 total". ROAD TRIP EXCEPTION: if the query is a road trip (user is driving their own vehicle), never include a rental car component — show gas cost instead or omit Ground entirely.
 - Rental car cashback: USAA 1.5% cashback on a $875 rental = $13 — never show cashback exceeding 1.5% of the rental cost. Do not inflate cashback estimates.
 - Small/rural destinations: if the destination has fewer than 6 real bookable hotel options at the requested quality level, expand to the nearest metro area (e.g. Boerne TX → include San Antonio options 30 min away, label them clearly as "San Antonio · 30 min from Boerne"). Never fabricate hotel names.
 - headline: ALWAYS follow this format: "[Location] · [Brand] · [Distinctive Element]" — e.g. "Maui · Andaz · Overwater Suite" or "Key Biscayne · Ritz-Carlton · Family Suites" or "Turks & Caicos · Amanyara · Direct JetBlue". Location first, brand second, what makes this option unique third. Never lead with the brand alone.
@@ -8250,6 +8254,7 @@ STATE-LEVEL GEOGRAPHY CONSTRAINT:
 When a user specifies a state or region, apply this tiered rule:
 
 ROAD TRIP AND MULTI-STOP QUERY RULES:
+- OWN VEHICLE: When the user says "road trip", they are driving their own car. Do NOT add a rental car component. The Ground component should either be omitted entirely or shown as gas/tolls only (e.g. "Own vehicle · ~$X in gas"). Never suggest an SUV rental or any rental car for a stated road trip — this signals the system ignored the user.
 - GEOGRAPHY ACCURACY: If a user asks for a Utah road trip, all stops must be in Utah (or explicitly noted as just across a state border). Do not place Colorado stops in a Utah itinerary.
 - MULTI-HOTEL WHY THIS: When an option involves multiple hotels or a multi-stop road trip, the whyThis must speak to the OVERALL option and the journey arc, then briefly characterize each stop. Do not focus only on one property.
 - FLIGHT-FREE QUERIES: If a user says "road trip from Seattle" or "no flights", ALL options must be driveable from Seattle. Remove ALL flight components. A road trip from Seattle with flight components is wrong.
@@ -8616,7 +8621,7 @@ const handleSend = () => {
         }
         return prev;
       });
-    }, 30000);
+    }, 50000);
 
     // ── REGENERATION DETECTION — route through full callClaude if user wants new options
     const regenSignals = [
@@ -8632,7 +8637,8 @@ const handleSend = () => {
       /in\s+(montana|idaho|utah|colorado|arizona|nevada|oregon|washington|california|texas|florida|hawaii|alaska|vermont|maine|new\s+york|new\s+mexico|wyoming|canada|mexico|europe|japan|italy|france|spain|greece|bali|thailand|costa\s+rica)/i,
       // Explicit update requests
       /update.*option|revise.*option|redo|regenerate|show.*new|give.*me.*new|find.*me|look.*for/i,
-      /can\s+you\s+(show|find|give|get|make|create|generate|update|change|swap|switch)/i,
+      /add.*as.*option|add.*option|include.*option|add.*resort|add.*hotel|add.*ranch|add.*lodge/i,
+      /can\s+you\s+(show|find|give|get|make|create|generate|update|change|swap|switch|add|include|put|replace)/i,
       // Direct preference changes
       /i\s+(want|prefer|would\s+like|need|am\s+looking\s+for|only\s+want|don.t\s+want)/i,
       // Geographic refinements
@@ -8664,12 +8670,14 @@ const handleSend = () => {
       // Update conversation so callClaude regenerates with full context
       conversationRef.current = [{ role: 'user', content: regenMsg }];
       // Add confirmation to refine history so it's visible when user returns
-      const regenConfirm = msg.length < 120 ? msg : msg.slice(0, 100) + '...';
-      setRefineMessages(prev => [...prev, {
-        role: 'assistant',
-        text: `Refreshing your options based on: "${regenConfirm}" — scroll up to see the new results ↑`,
-        isOptionsUpdate: true
-      }]);
+      // Summarize what changed rather than echoing the raw message
+      const destMatch = msg.match(/bend|portland|ashland|sunriver|sisters|cannon beach|crater lake|hood river|[a-z]+(,?\s+or|,?\s+wa|,?\s+ca|,?\s+az)/i);
+      const destName = destMatch ? destMatch[0].trim() : null;
+      const regenSummary = destName
+        ? `Narrowing to ${destName.charAt(0).toUpperCase() + destName.slice(1)} — scroll up to see updated options ↑`
+        : msg.length < 60 ? `Updated based on: "${msg}" — scroll up ↑`
+        : `Refreshing your options — scroll up to see the new results ↑`;
+      setRefineMessages(prev => [...prev, { role: 'assistant', text: regenSummary, isOptionsUpdate: true }]);
       clearTimeout(refineTimeout);
       setRefineLoading(false);
       setRefineLoadingMessage('');
@@ -9078,7 +9086,13 @@ Please respond now.`,
         const confirmation = cleanPreamble.length > 10
           ? cleanPreamble
           : `I've updated your options based on "${msg.slice(0, 80)}${msg.length > 80 ? '...' : ''}"`;
-        setRefineMessages(prev => [...prev, { role: "assistant", text: confirmation + " ✦ Scroll up to see the new options ↑", isOptionsUpdate: true }]);
+        // Store options pending user confirmation — don't update grid yet
+        pendingRefineOptions.current = { options: refinedOptions, summary: parsed.summary };
+        setRefineMessages(prev => [...prev, {
+          role: "assistant",
+          text: confirmation,
+          isPendingRefine: true
+        }]);
         setRefineLoading(false);
         return;
       }
@@ -9118,7 +9132,8 @@ Please respond now.`,
             setExpandedId(null);
             setShowCompare(false);
             const forceConfirm = replyText.slice(0, 200).trim() || `Updated your options based on: "${msg.slice(0, 80)}${msg.length > 80 ? '...' : ''}"`;
-            setRefineMessages(prev => [...prev, { role: "assistant", text: forceConfirm + " ✦ Scroll up to see the new options ↑", isOptionsUpdate: true }]);
+            pendingRefineOptions.current = { options: validateOptions(refinedOptions), summary: forceParsed.summary };
+            setRefineMessages(prev => [...prev, { role: "assistant", text: forceConfirm || "Got it — here are your revised options.", isPendingRefine: true }]);
             clearInterval(refineInterval);
             setRefineLoading(false);
             return;
@@ -9371,7 +9386,7 @@ Please respond now.`,
           </div>
         )}
 
-        <div style={{ padding: "20px 28px 10px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <div data-results-top style={{ padding: "20px 28px 10px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <div style={{ flex: 1 }}>
             <div style={{ display: "flex", alignItems: "baseline", gap: "14px", marginBottom: "3px" }}>
               <div style={{ fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif" }}>
@@ -9475,6 +9490,26 @@ Please respond now.`,
                       </button>
                     );
                   })()}
+                  {msg.isPendingRefine && (
+                    <div style={{ marginTop: "10px" }}>
+                      <button onClick={() => {
+                        const pending = pendingRefineOptions.current;
+                        if (pending) {
+                          Object.keys(_whyThisCache).forEach(k => delete _whyThisCache[k]);
+                          setTripOptions(pending.options);
+                          if (pending.summary) setTripSummary(pending.summary);
+                          setExpandedId(null);
+                          setShowCompare(false);
+                          pendingRefineOptions.current = null;
+                          // Snap to top
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                          setTimeout(() => document.querySelector('[data-results-top]')?.scrollIntoView({ behavior: 'smooth' }), 100);
+                        }
+                      }} style={{ padding: "11px 22px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "20px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.06em", fontFamily: "'Playfair Display',Georgia,serif" }}>
+                        Show Me Revised Options →
+                      </button>
+                    </div>
+                  )}
                   {msg.isDeepDivePrompt && !deepDiveConfirmed && (
                     <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
                       <button onClick={() => {
