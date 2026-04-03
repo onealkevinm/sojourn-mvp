@@ -8718,7 +8718,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
     // Detect confirmation messages (user saying yes after READY prompt)
     // and substitute with a proper generation trigger using full conversation context
     const isConfirmation = /^(yes|yeah|yep|sure|ok|okay|go|generate|let's go|do it|please|sounds good|great|perfect|absolutely)/i.test(userMessage.trim()) && userMessage.trim().split(' ').length < 10;
-    const effectiveMessage = isConfirmation
+    effectiveMessage = isConfirmation
       ? `Generate my trip options based on everything we discussed: ${conversationRef.current.filter(m => m.role === 'user').map(m => m.content).join(' ')}`
       : userMessage;
 
@@ -8743,7 +8743,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
     const dealInstruction = dealSpecificRef.current
       ? " IMPORTANT: This query originated from a specific hotel or stacked deal the user clicked on. Generate exactly ONE option (not six) — the best possible trip built around that specific deal. Make it detailed and compelling. The user has already chosen the direction; your job is to execute on it."
       : "";
-    const generationTrigger = (typeof effectiveMessage !== 'undefined' ? effectiveMessage : userMessage);
+    const generationTrigger = effectiveMessage;
 
     const tryGenerate = async () => {
       const controller = new AbortController();
