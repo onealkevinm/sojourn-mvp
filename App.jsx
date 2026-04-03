@@ -6927,32 +6927,35 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
     !groundComp.detail.toLowerCase().includes('own vehicle') &&
     !groundComp.detail.toLowerCase().includes('gas');
 
-  const bestCard = (category) => {
-    if (!cards.length) return null;
-    if (category === 'flight') {
-      const amex = cards.find(c => c.name && c.name.includes('Platinum'));
-      if (amex) return { name: amex.name, reason: '5x on flights + travel protections' };
-      const csr = cards.find(c => c.name && c.name.includes('Sapphire Reserve'));
-      if (csr) return { name: csr.name, reason: '3x on travel + trip protection' };
-      const csp = cards.find(c => c.name && c.name.includes('Sapphire Preferred'));
-      if (csp) return { name: csp.name, reason: '2x on travel + trip protection' };
+  // Parse card strategy from option.cardStrategy — single source of truth
+  // Format: "Flights: [Card] (Nx) · Hotel: [Card] (Nx) · ..."
+  const parseCardStrategy = (category) => {
+    const cs = option.cardStrategy || '';
+    if (!cs) return null;
+    const segments = cs.split(/\s*·\s*/);
+    const keyword = category === 'flight' ? /flight/i : category === 'hotel' ? /hotel/i : /car|ground|rental/i;
+    const seg = segments.find(s => keyword.test(s));
+    if (!seg) {
+      // Fall back to first card for ground/car
+      if (category === 'car' && cards.length) {
+        const amex = cards.find(c => c.name && c.name.includes('Platinum'));
+        if (amex) return { name: amex.name, reason: 'Premium rental status + insurance' };
+        return { name: cards[0].name, reason: 'Best available card' };
+      }
+      return null;
     }
-    if (category === 'hotel') {
-      const hyatt = cards.find(c => c.name && c.name.toLowerCase().includes('hyatt'));
-      if (hyatt) return { name: hyatt.name, reason: '4x at Hyatt + elite night credit' };
-      const bonvoy = cards.find(c => c.name && (c.name.toLowerCase().includes('marriott') || c.name.toLowerCase().includes('bonvoy')));
-      if (bonvoy) return { name: bonvoy.name, reason: '6x at Marriott + elite night credit' };
-      const csr = cards.find(c => c.name && c.name.includes('Sapphire Reserve'));
-      if (csr) return { name: csr.name, reason: '3x on hotels + trip protection' };
+    // Extract card name — everything after the category label and before the multiplier
+    const cardMatch = seg.match(/:\s*(.+?)(?:\s*[\(\·]|$)/);
+    const reasonMatch = seg.match(/\(([^)]+)\)/);
+    if (cardMatch) {
+      return {
+        name: cardMatch[1].trim(),
+        reason: reasonMatch ? reasonMatch[1] : seg.replace(/^[^:]+:\s*/, '').trim()
+      };
     }
-    if (category === 'car') {
-      const amex = cards.find(c => c.name && c.name.includes('Platinum'));
-      if (amex) return { name: amex.name, reason: 'Premium rental status + insurance' };
-      const csr = cards.find(c => c.name && c.name.includes('Sapphire Reserve'));
-      if (csr) return { name: csr.name, reason: 'Primary rental car insurance included' };
-    }
-    return cards[0] ? { name: cards[0].name, reason: 'Best available card' } : null;
+    return null;
   };
+  const bestCard = (category) => parseCardStrategy(category);
 
   const seatPref = () => {
     const types = tp.travelTypes || [];
@@ -6980,9 +6983,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
   const chip = (active) => ({ background: active ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.04)', border: `1px solid ${active ? 'rgba(201,168,76,0.4)' : 'rgba(255,255,255,0.1)'}`, color: active ? '#C9A84C' : '#7a7060', borderRadius: '20px', padding: '7px 14px', fontSize: '12px', cursor: 'pointer', textAlign: 'left' });
 
   const ModifyPanel = ({ type, onClose: closePanel }) => {
-    const [sel, setSel] = React.useState(null);
-    const [localNlq, setLocalNlq] = React.useState(false);
-    const [localVal, setLocalVal] = React.useState('');
+    const [showComingSoon, setShowComingSoon] = React.useState(false);
     const opts = {
       flight: [
         { id: 'seats', label: 'Different seats' },
@@ -7013,22 +7014,24 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
     return (
       <div style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.18)', borderRadius: '12px', padding: '16px', marginTop: '10px' }}>
         <div style={{ color: '#b0a898', fontSize: '13px', fontFamily: "'Playfair Display',Georgia,serif", fontStyle: 'italic', marginBottom: '12px' }}>What would you like to change?</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-          {(opts[type] || []).map(opt => (
-            <button key={opt.id} onClick={() => {
-              if (opt.id === 'other') { setLocalNlq(true); return; }
-              setSel(opt.id);
-              if (opt.id === 'skip') { setModifications(p => ({...p, car: 'skipped'})); setTimeout(closePanel, 300); return; }
-              setTimeout(() => { setModifications(p => ({...p, [type]: opt.label})); closePanel(); }, 400);
-            }} style={chip(sel === opt.id)}>{opt.label}</button>
-          ))}
-        </div>
-        {localNlq && (
-          <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
-            <input value={localVal} onChange={e => setLocalVal(e.target.value)} placeholder="Describe what you'd like..." autoFocus
-              style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '10px', padding: '9px 14px', color: '#e8e4dc', fontSize: '12px', fontFamily: "'DM Sans',system-ui,sans-serif" }} />
-            <button onClick={() => { setModifications(p => ({...p, [type]: localVal})); setLocalNlq(false); setLocalVal(''); closePanel(); }}
-              style={{ background: '#C9A84C', color: '#0a0908', border: 'none', borderRadius: '10px', padding: '9px 16px', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}>Apply</button>
+        {showComingSoon ? (
+          <div style={{ textAlign: 'center', padding: '12px 8px' }}>
+            <div style={{ color: '#C9A84C', fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: 'serif', marginBottom: '6px' }}>Coming soon</div>
+            <div style={{ color: '#555', fontSize: '12px', lineHeight: '1.6', marginBottom: '12px' }}>
+              Dynamic modification is on the roadmap — full AI-assisted rebooking with live inventory, seat maps, and points recalculation.
+            </div>
+            <button onClick={() => { setShowComingSoon(false); closePanel(); }}
+              style={{ background: 'none', border: '1px solid rgba(255,255,255,0.1)', color: '#666', borderRadius: '20px', padding: '6px 16px', cursor: 'pointer', fontSize: '11px' }}>
+              Got it
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {(opts[type] || []).map(opt => (
+              <button key={opt.id} onClick={() => setShowComingSoon(true)}
+                style={chip(false)}>{opt.label}
+              </button>
+            ))}
           </div>
         )}
       </div>
@@ -7081,9 +7084,49 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
         {(flightComp || returnComp) && (
           <div style={ss}>
             <div style={ls}>Flights</div>
-            <div style={{ color: '#e8e4dc', fontSize: '14px', fontWeight: '600', marginBottom: '3px' }}>{flightComp?.detail?.split(' · ').slice(0, 2).join(' · ').trim() || 'Outbound'}</div>
-            {returnComp && <div style={{ color: '#9a9088', fontSize: '12px', marginBottom: '3px' }}>Return: {returnComp?.detail?.split(' · ').slice(0, 2).join(' · ').trim()}</div>}
-            <div style={{ color: '#555', fontSize: '12px', marginTop: '4px' }}>{seatPref()}</div>
+            {(() => {
+              const parseFlight = (comp) => {
+                if (!comp) return null;
+                const parts = (comp.detail || '').split(/\s*·\s*/);
+                const airline = parts[0] || '';
+                const route = parts[1] || '';
+                const timeInfo = parts[2] || '';
+                const duration = parts[3] || '';
+                // Extract route parts: "SEA-LIH nonstop" or "SEA-SFO 1-stop"
+                const routeMatch = route.match(/([A-Z]{3})-([A-Z]{3})\s*(.*)/);
+                const origin = routeMatch ? routeMatch[1] : '';
+                const dest = routeMatch ? routeMatch[2] : '';
+                const stops = routeMatch ? routeMatch[3].trim() : '';
+                return { airline, origin, dest, stops, timeInfo, duration };
+              };
+              const out = parseFlight(flightComp);
+              const ret = parseFlight(returnComp);
+              const FlightRow = ({ f, label }) => f ? (
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                    <span style={{ color: '#e8e4dc', fontSize: '13px', fontWeight: '600' }}>{label}</span>
+                    <span style={{ color: '#555', fontSize: '11px' }}>{f.airline}</span>
+                  </div>
+                  <div style={{ color: '#b0a898', fontSize: '13px', fontWeight: '500', marginBottom: '2px' }}>
+                    {f.origin} → {f.dest}
+                    {f.stops && <span style={{ color: '#555', fontSize: '11px', marginLeft: '8px' }}>({f.stops})</span>}
+                  </div>
+                  <div style={{ color: '#555', fontSize: '11px' }}>
+                    {f.timeInfo}{f.duration ? ` · ${f.duration}` : ''}
+                  </div>
+                </div>
+              ) : null;
+              return (
+                <div>
+                  <FlightRow f={out} label="Outbound" />
+                  {ret && <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px' }}><FlightRow f={ret} label="Return" /></div>}
+                </div>
+              );
+            })()}
+            <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '8px', padding: '8px 10px', marginTop: '4px' }}>
+              <div style={{ color: '#9a9088', fontSize: '12px', fontWeight: '500', marginBottom: '1px' }}>Seats 14A, 14B, 15A, 15B, 15C</div>
+              <div style={{ color: '#555', fontSize: '11px' }}>{seatPref()}</div>
+            </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '10px', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <div>
                 {flightIsPoints
@@ -8325,6 +8368,8 @@ Suppress or replace Redemption Opportunity when:
 
 Suppress or replace Future Value / Best Points Earned when:
 - The query is clearly a leisure/experiential trip with no earning intent (e.g. honeymoon, anniversary, "I want to splurge") — replace with a second Recommended or Unique Experience variant.
+- The query is a ROAD TRIP (user driving own vehicle, no flights) — Future Value and Best Points Earned on airline miles make no sense when there are no flights. Replace with a second Best Value or Wild Card variant. Also: do NOT show airline miles earning in any component of a road trip option — there are no flights to earn miles on. Card earning on hotel and ground spend only.
+- The query involves only ground transport (no flights in any component) — airline program earning must not appear anywhere in pointsEarned, components, or cardStrategy.
 
 The goal is 6 honest, genuinely useful options — not 6 slots mechanically filled regardless of fit.
 - REDEMPTION BUCKET REQUIRES CHAIN HOTEL: Never put an independent hotel (Four Seasons, Montage, Auberge, Rosewood, Aman, etc.) in the Redemption Opportunity bucket. Redemption requires a chain loyalty program. If no chain redemption is available, replace this bucket per the adaptive rule above.
