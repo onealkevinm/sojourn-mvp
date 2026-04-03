@@ -6514,64 +6514,96 @@ const DealIntelligenceCard = ({ dealData, onBuildTrip }) => {
     loyalty: { bg: 'rgba(180,100,255,0.08)', border: 'rgba(180,100,255,0.2)', label: 'LOYALTY OFFER' },
   };
 
+  const deals = dealData.deals || [];
+
+  // Group deals for 2-column desktop layout
+  // Row 1: 2 airline deals | Row 2-3: hotel deals (2 per row) | Row 4: stacked + loyalty
+  const airlineDeals = deals.filter(d => d.type === 'airline');
+  const hotelDeals   = deals.filter(d => d.type === 'hotel');
+  const stackedDeals = deals.filter(d => d.type === 'stacked');
+  const loyaltyDeals = deals.filter(d => d.type === 'loyalty');
+
+  const DealCard = ({ deal }) => {
+    const style = typeColors[deal.type] || typeColors.hotel;
+    return (
+      <div onClick={() => onBuildTrip && onBuildTrip(deal.cta, deal.type)}
+        style={{
+          background: style.bg, border: `1px solid ${style.border}`,
+          borderRadius: '12px', padding: '12px 14px', cursor: 'pointer',
+          transition: 'opacity 0.15s', display: 'flex', gap: '10px', alignItems: 'flex-start',
+          flex: '1 1 calc(50% - 4px)', minWidth: '220px'
+        }}
+        onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
+        onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+      >
+        <span style={{ fontSize: '16px', lineHeight: '1', marginTop: '2px', flexShrink: 0 }}>{deal.icon}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: '9px', fontWeight: '600', letterSpacing: '0.08em',
+            color: style.border.replace('0.2', '0.9'), textTransform: 'uppercase', marginBottom: '3px' }}>
+            {style.label}
+          </div>
+          <div style={{ color: '#e8e4dc', fontSize: '12px', fontWeight: '500', marginBottom: '3px', lineHeight: '1.4' }}>
+            {deal.headline}
+          </div>
+          <div style={{ color: '#9a9088', fontSize: '11px', lineHeight: '1.4' }}>
+            {deal.detail}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div style={{ maxWidth: '680px', width: '100%' }}>
-      {/* Deal cards */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-        {(dealData.deals || []).map((deal, i) => {
-          const style = typeColors[deal.type] || typeColors.hotel;
-          return (
-            <div key={i} onClick={() => onBuildTrip && onBuildTrip(deal.cta, deal.type)}
-              style={{
-                background: style.bg, border: `1px solid ${style.border}`,
-                borderRadius: '12px', padding: '12px 16px', cursor: 'pointer',
-                transition: 'opacity 0.15s', display: 'flex', gap: '12px', alignItems: 'flex-start'
-              }}
-              onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
-              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-            >
-              <span style={{ fontSize: '18px', lineHeight: '1', marginTop: '2px', flexShrink: 0 }}>{deal.icon}</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '11px', fontWeight: '600', letterSpacing: '0.08em',
-                    color: style.border.replace('0.2', '0.9'), textTransform: 'uppercase' }}>
-                    {style.label}
-                  </span>
-                </div>
-                <div style={{ color: '#e8e4dc', fontSize: '13px', fontWeight: '500', marginBottom: '3px' }}>
-                  {deal.headline}
-                </div>
-                <div style={{ color: '#9a9088', fontSize: '12px', lineHeight: '1.5' }}>
-                  {deal.detail}
-                </div>
-              </div>
-              <div style={{ color: '#555', fontSize: '11px', flexShrink: 0, alignSelf: 'center' }}>→</div>
-            </div>
-          );
-        })}
+    <div style={{ maxWidth: '720px', width: '100%' }}>
+      {/* Header */}
+      <div style={{ color: '#9a9088', fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase',
+        fontFamily: 'serif', marginBottom: '14px' }}>
+        Here are your personalized travel deals
       </div>
 
-      {/* Feature preview + pivot */}
+      {/* Airline row — 2 across */}
+      {airlineDeals.length > 0 && (
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+          {airlineDeals.map((d, i) => <DealCard key={i} deal={d} />)}
+        </div>
+      )}
+
+      {/* Hotel rows — 2 across */}
+      {hotelDeals.length > 0 && (
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+          {hotelDeals.map((d, i) => <DealCard key={i} deal={d} />)}
+        </div>
+      )}
+
+      {/* Stacked + Loyalty row — side by side */}
+      {(stackedDeals.length > 0 || loyaltyDeals.length > 0) && (
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
+          {[...stackedDeals, ...loyaltyDeals].map((d, i) => <DealCard key={i} deal={d} />)}
+        </div>
+      )}
+
+      {/* Coming soon — centered */}
       <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: '12px', padding: '14px 16px', marginBottom: '14px' }}>
-        <div style={{ color: '#6a6460', fontSize: '12px', lineHeight: '1.6', marginBottom: '8px' }}>
-          <span style={{ color: '#C9A84C', fontSize: '11px', fontWeight: '600',
-            letterSpacing: '0.08em', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
-            Coming soon
-          </span>
+        borderRadius: '12px', padding: '12px 16px', marginBottom: '12px', textAlign: 'center' }}>
+        <div style={{ color: '#C9A84C', fontSize: '9px', fontWeight: '600',
+          letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '4px' }}>
+          Coming soon
+        </div>
+        <div style={{ color: '#555', fontSize: '11px', lineHeight: '1.6' }}>
           Soon, Sojourn will automatically scan your travel and card‑related emails, synthesize the best offers,
           and surface only the ones that matter — no more digging through inboxes or missing targeted promos.
           You'll get a clean, personalized summary like this anytime something valuable appears.
         </div>
       </div>
 
-      {/* Closing / pivot */}
+      {/* Closing — left justified */}
       <div style={{ color: '#c8c0b4', fontSize: '13px', lineHeight: '1.6' }}>
         {dealData.closing}
       </div>
     </div>
   );
 };
+
 
 
 // Reusable dancing dots loading indicator
@@ -8113,6 +8145,7 @@ export default function SojournApp() {
   const recognitionRef = useRef(null);
   const bottomRef = useRef(null);
   const conversationRef = useRef([]);
+  const dealSpecificRef = useRef(false); // true when hotel/stacked deal clicked
   const [conciergeMode, setConciergeMode] = useState(true); // true = conversational, false = generating cards
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
@@ -8545,51 +8578,16 @@ Return ONLY valid JSON.`;
       return;
     }
 
-    // ── SINGLE TRIP MODE: deal click → build one specific trip ──────────────
-    if (userMessage.startsWith('SINGLE_TRIP_MODE:')) {
-      const dealDesc = userMessage.replace('SINGLE_TRIP_MODE:', '').trim();
-      const sp = buildSystemPrompt();
-
-      const singleTripPrompt = `A user clicked on a specific travel deal and wants ONE complete trip built around it. Generate a single trip option in the EXACT same JSON format as a normal trip option — it will render as a TripCard.
-
-The deal: ${dealDesc}
-
-Return a JSON object with this exact structure (one option only, id:1, tag:"Deal Option"):
-{"tripSummary":{"destination":"","dates":"","checkIn":"","checkOut":"","nights":0,"preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Deal Option","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","cardStrategy":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":4,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}
-
-Fill in every field with real, specific details. Use their home airport for flights. The hotel detail MUST use the exact canonical property name. whyThis should explain why this deal is compelling for them specifically. cardStrategy should reference their actual cards. Return ONLY valid JSON.`;
-
-      try {
-        const resp = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-          body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, system: sp, messages: [{ role: "user", content: singleTripPrompt }] })
-        });
-        const data = await resp.json();
-        const raw = (data.content?.[0]?.text || "").replace(/```json|```/g, "").trim();
-        let parsed;
-        try { parsed = JSON.parse(raw); } catch(e) { parsed = null; }
-
-        if (parsed?.options?.[0]) {
-          const opt = parsed.options[0];
-          opt.tag = "Deal Option";
-          opt.tagColor = "#C9A84C";
-          setTripOptions([opt]);
-          setFocusedOptionId(null);
-          setMessages(prev => [...prev, {
-            role: "assistant",
-            text: `Here's your trip built around the deal — tap to explore the details.`,
-            isOptionsUpdate: false
-          }]);
-          conversationRef.current = [...conversationRef.current, { role: "assistant", content: singleTripPrompt }];
-        } else {
-          setMessages(prev => [...prev, { role: "assistant", text: "I wasn't able to structure that trip — try describing it in your own words." }]);
-        }
-      } catch(e) {
-        setMessages(prev => [...prev, { role: "assistant", text: "Something went wrong building that trip. Please try again." }]);
-      }
-      setLoading(false);
-      return;
+    // ── DEAL FOCUS: deal card click — inject deal as constraint, use concierge flow ──
+    let activeDealConstraint = null;
+    let isDealSpecific = false; // hotel/stacked = true → single TripCard; flight = false → options grid
+    let effectiveMessage = userMessage;
+    if (userMessage.startsWith('DEAL_FOCUS_SPECIFIC:') || userMessage.startsWith('DEAL_FOCUS_FLIGHT:')) {
+      isDealSpecific = userMessage.startsWith('DEAL_FOCUS_SPECIFIC:');
+      dealSpecificRef.current = isDealSpecific; // persist across concierge turns
+      activeDealConstraint = userMessage.replace(/^DEAL_FOCUS_(SPECIFIC|FLIGHT):/, '').trim();
+      effectiveMessage = `I want to build a trip around this specific deal: ${activeDealConstraint}`;
+      conversationRef.current[conversationRef.current.length - 1].content = effectiveMessage;
     }
 
     // ── CONCIERGE MODE: clarify before generating ──────────────────────────
@@ -8664,6 +8662,9 @@ TRAVEL CONSIDERATIONS — check user profile first:
 - If profile does NOT show these but the trip involves overnight stays and neither pets nor children have been mentioned, add one gentle line to your READY confirmation: "Just to make sure I get the details right — will you be traveling with any children or pets on this trip?" Only ask this ONCE and only if not already clear from context.
 - Accessibility: if profile shows "Wheelchair accessible" or "Mobility assistance needed" — always filter for accessible rooms and note this in your options.
 
+
+
+DEAL-FOCUSED QUERY: If the user's message starts with "I want to build a trip around this specific deal:", treat this as a pill-assisted query where the deal is a hard constraint. Ask the SAME clarifying questions you would for any trip (party size if not known, rough timeframe if not given). If the deal has time sensitivity, mention it naturally: "Just so you know, these rates tend to be strongest in [window] — does that work for you?" Once you have party size and timeframe, generate options normally but weight them toward making the deal work. You do NOT need to generate only one option — generate the normal set but make the deal the centerpiece of the recommended option.
 When ready to plan, respond with EXACTLY:
 READY: [one sentence reflecting back what you heard, including resolved dates] Ready for me to generate your options?
 
@@ -8739,6 +8740,9 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
     const clearMessages = () => { clearInterval(messageInterval); setLoadingMessage(""); };
 
     const fullContext = conversationRef.current.map(m => m.content).join(" ");
+    const dealInstruction = dealSpecificRef.current
+      ? " IMPORTANT: This query originated from a specific hotel or stacked deal the user clicked on. Generate exactly ONE option (not six) — the best possible trip built around that specific deal. Make it detailed and compelling. The user has already chosen the direction; your job is to execute on it."
+      : "";
     const generationTrigger = (typeof effectiveMessage !== 'undefined' ? effectiveMessage : userMessage);
 
     const tryGenerate = async () => {
@@ -8754,7 +8758,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
             max_tokens: 6000,
             temperature: 0.5,
             system: buildSystemPrompt(),
-            messages: [{ role: "user", content: fullContext }],
+            messages: [{ role: "user", content: fullContext + dealInstruction }],
           })
         });
         clearTimeout(timeout);
@@ -8787,6 +8791,17 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         setTripOptions(validateOptions(filteredOptions));
       setTripSummary(parsed.tripSummary);
       setPhase("results");
+      // Hotel/stacked deal: auto-focus option 1 → skip options grid, go to detail view
+      if (dealSpecificRef.current) {
+        const firstOpt = validateOptions(filteredOptions)?.[0];
+        if (firstOpt) {
+          setTimeout(() => {
+            setFocusedOptionId(firstOpt.id);
+            setConciergeMode(false);
+          }, 150);
+        }
+        dealSpecificRef.current = false; // reset
+      }
     } catch(e) {
       try {
         const parsed = await tryGenerate();
@@ -10080,15 +10095,11 @@ Please respond now.`,
               <div style={{ maxWidth: msg.type === "deal_intelligence" ? "720px" : "80%", padding: msg.type === "deal_intelligence" ? "16px 20px" : "12px 16px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)", border: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "1px solid rgba(201,168,76,0.25)" : "1px solid rgba(255,255,255,0.07)", color: msg.isOptionsUpdate ? "#C9A84C" : msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "#e8e4dc" : "#b0a898", fontSize: "14px", lineHeight: "1.6", fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit", fontStyle: msg.role === "assistant" ? "italic" : "normal" }}>
                 {msg.type === "deal_intelligence" && msg.dealData
                   ? <DealIntelligenceCard dealData={msg.dealData} onBuildTrip={(cta, dealType) => {
-                  if (dealType === 'hotel' || dealType === 'stacked') {
-                    // Specific deal — bypass options, build one trip directly
-                    setMessages(prev => [...prev, { role: "user", text: `Build me a trip around this: ${cta}` }]);
-                    callClaude(`SINGLE_TRIP_MODE: Build one complete, specific trip around this deal — do not show multiple options. The deal is the premise, just execute on it: ${cta}`);
-                  } else {
-                    // Flight/loyalty deal — destination still open, use normal options flow
-                    setInput(`Build me a trip around this: ${cta}`);
-                    setTimeout(() => document.querySelector('textarea')?.focus(), 50);
-                  }
+                  const isSpecific = dealType === 'hotel' || dealType === 'stacked';
+                  const prefix = isSpecific ? 'DEAL_FOCUS_SPECIFIC' : 'DEAL_FOCUS_FLIGHT';
+                  const msg = `${prefix}: ${cta}`;
+                  setMessages(prev => [...prev, { role: "user", text: `Build a trip around this deal: ${cta}` }]);
+                  callClaude(msg);
                 }} />
                   : msg.text}
               </div>
