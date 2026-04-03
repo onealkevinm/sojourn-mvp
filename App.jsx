@@ -6935,30 +6935,33 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
   const hasRental = showGround && !groundIsOwnVehicle;
 
   // Parse card strategy from option.cardStrategy — single source of truth
-  // Format: "Flights: [Card] (Nx) · Hotel: [Card] (Nx) · ..."
+  // cardStrategy format: "Flights: Chase Sapphire Reserve · 3x travel · Hotel: Hyatt Card · 4x · Dining: Amex Gold · 4x"
+  // Also handles: "Flights: [Card] ([reason]) · Hotel: [Card] ([reason])"
   const parseCardStrategy = (category) => {
     const cs = option.cardStrategy || '';
     if (!cs) return null;
+    // Split on · and find segment matching the category
     const segments = cs.split(/\s*·\s*/);
-    const keyword = category === 'flight' ? /flight/i : category === 'hotel' ? /hotel/i : /car|ground|rental/i;
-    const seg = segments.find(s => keyword.test(s));
-    if (!seg) {
-      // Fall back to first card for ground/car
-      if (category === 'car' && cards.length) {
-        const amex = cards.find(c => c.name && c.name.includes('Platinum'));
-        if (amex) return { name: amex.name, reason: 'Premium rental status + insurance' };
-        return { name: cards[0].name, reason: 'Best available card' };
-      }
-      return null;
+    const kw = category === 'flight' ? /^flights?\s*:/i
+      : category === 'hotel' ? /^hotel\s*:/i
+      : /^(car|ground|rental)\s*:/i;
+    const seg = segments.find(s => kw.test(s.trim()));
+    if (seg) {
+      const value = seg.replace(/^[^:]+:\s*/, '').trim();
+      const cardName = value.replace(/\s*[\(·].*$/, '').trim();
+      const reasonMatch = value.match(/\(([^)]+)\)/);
+      const reason = reasonMatch ? reasonMatch[1] : value.replace(cardName, '').replace(/[·()]/g,'').trim();
+      if (cardName) return { name: cardName, reason };
     }
-    // Extract card name — everything after the category label and before the multiplier
-    const cardMatch = seg.match(/:\s*(.+?)(?:\s*[\(\·]|$)/);
-    const reasonMatch = seg.match(/\(([^)]+)\)/);
-    if (cardMatch) {
-      return {
-        name: cardMatch[1].trim(),
-        reason: reasonMatch ? reasonMatch[1] : seg.replace(/^[^:]+:\s*/, '').trim()
-      };
+    // Fallback: read card field directly from matching component
+    const compKw = category === 'flight' ? /flight/i
+      : category === 'hotel' ? /hotel|resort|lodge|inn|ranch/i
+      : /ground|car|rental/i;
+    const comp = components.find(c => compKw.test(c.label || ''));
+    if (comp?.card) {
+      const cardName = comp.card.replace(/\s*·.*$/, '').trim();
+      const reasonMatch = comp.card.match(/·\s*(.+)$/);
+      return { name: cardName, reason: reasonMatch ? reasonMatch[1].trim() : '' };
     }
     return null;
   };
@@ -6985,7 +6988,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
   const carCard = bestCard('car');
 
   const ss = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '18px 20px', marginBottom: '12px' };
-  const ls = { fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: 'serif', color: '#C9A84C', marginBottom: '8px' };
+  const ls = { fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: 'serif', color: '#C9A84C', marginBottom: '8px', textDecoration: 'underline', textUnderlineOffset: '3px' };
   const mbs = { background: 'none', border: '1px solid rgba(255,255,255,0.1)', color: '#555', borderRadius: '20px', padding: '5px 12px', fontSize: '11px', cursor: 'pointer', marginTop: '10px' };
   const chip = (active) => ({ background: active ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.04)', border: `1px solid ${active ? 'rgba(201,168,76,0.4)' : 'rgba(255,255,255,0.1)'}`, color: active ? '#C9A84C' : '#7a7060', borderRadius: '20px', padding: '7px 14px', fontSize: '12px', cursor: 'pointer', textAlign: 'left' });
 
@@ -7025,7 +7028,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
           <div style={{ textAlign: 'center', padding: '12px 8px' }}>
             <div style={{ color: '#C9A84C', fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: 'serif', marginBottom: '6px' }}>Coming soon</div>
             <div style={{ color: '#555', fontSize: '12px', lineHeight: '1.6', marginBottom: '12px' }}>
-              Dynamic modification is on the roadmap — full AI-assisted rebooking with live inventory, seat maps, and points recalculation.
+              Dynamic modification is on the roadmap — full AI-assisted rebooking with live inventory, cost, and points recalculation.
             </div>
             <button onClick={() => { setShowComingSoon(false); closePanel(); }}
               style={{ background: 'none', border: '1px solid rgba(255,255,255,0.1)', color: '#666', borderRadius: '20px', padding: '6px 16px', cursor: 'pointer', fontSize: '11px' }}>
@@ -7120,7 +7123,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
                     <span style={{ color: '#555', fontSize: '11px' }}>{f.airline}</span>
                     {f.flightNum && <span style={{ color: '#555', fontSize: '11px' }}>· {f.flightNum}</span>}
                   </div>
-                  <div style={{ color: '#e8e4dc', fontSize: '14px', fontWeight: '600', marginBottom: '3px' }}>
+                  <div style={{ color: '#9a9088', fontSize: '12px', fontWeight: '500', marginBottom: '3px' }}>
                     {f.origin} → {f.dest}
                     <span style={{ color: '#555', fontSize: '11px', fontWeight: '400', marginLeft: '8px' }}>
                       ({f.stops})
@@ -7165,7 +7168,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
                 {flightIsPoints
                   ? <div style={{ color: '#4CC97A', fontSize: '13px', fontWeight: '600' }}>{flightComp?.points?.replace(/redeemed/i, '').trim() || 'Points applied'}</div>
                   : <div style={{ color: '#e8e4dc', fontSize: '15px', fontWeight: '600' }}>${flightCash.toLocaleString()}</div>}
-                {flightCard && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{flightCard.name} — {flightCard.reason}</div>}
+                {flightCard?.name && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{flightCard.name}</div>}
               </div>
               {modifications.flight && <div style={{ color: '#C9A84C', fontSize: '11px', fontStyle: 'italic' }}>✓ {modifications.flight}</div>}
             </div>
@@ -7186,7 +7189,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
                 {hotelIsPoints
                   ? <div style={{ color: '#4CC97A', fontSize: '13px', fontWeight: '600' }}>{hotelComp?.points?.replace(/redeemed/i, '').trim() || 'Points applied'}</div>
                   : <div style={{ color: '#e8e4dc', fontSize: '15px', fontWeight: '600' }}>${hotelCash.toLocaleString()} total</div>}
-                {hotelCard && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{hotelCard.name} — {hotelCard.reason}</div>}
+                {hotelCard?.name && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{hotelCard.name}</div>}
               </div>
               {modifications.hotel && <div style={{ color: '#C9A84C', fontSize: '11px', fontStyle: 'italic' }}>✓ {modifications.hotel}</div>}
             </div>
@@ -7204,7 +7207,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '10px', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <div>
                 <div style={{ color: '#e8e4dc', fontSize: '15px', fontWeight: '600' }}>${carCash.toLocaleString()}</div>
-                {carCard && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{carCard.name} — {carCard.reason}</div>}
+                {carCard?.name && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{carCard.name}</div>}
               </div>
               {modifications.car && <div style={{ color: '#C9A84C', fontSize: '11px', fontStyle: 'italic' }}>✓ {modifications.car}</div>}
             </div>
