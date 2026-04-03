@@ -7936,21 +7936,21 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
               {totalValue > 0 ? <span style={{ color: "#C9A84C", marginLeft: "4px" }}>est. ${totalValue.toLocaleString()}</span> : ""}
               <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "loyalty" ? "▴" : "▾"}</span>
             </button>
-            <button onClick={() => toggle("cards")} style={pillStyle(activePanel === "cards")}>
-              Cards {cards.length > 0 ? `· ${cards.length}` : ""}
-              <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "cards" ? "▴" : "▾"}</span>
-            </button>
-            <button onClick={() => toggle("profile")} style={pillStyle(activePanel === "profile")}>
-              My Profile
-              <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "profile" ? "▴" : "▾"}</span>
-            </button>
             <button onClick={() => toggle("brands")} style={pillStyle(activePanel === "brands")}>
               Brands {brands.length > 0 ? `· ${brands.length}` : ""}
               <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "brands" ? "▴" : "▾"}</span>
             </button>
+            <button onClick={() => toggle("cards")} style={pillStyle(activePanel === "cards")}>
+              Cards {cards.length > 0 ? `· ${cards.length}` : ""}
+              <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "cards" ? "▴" : "▾"}</span>
+            </button>
             <button onClick={() => { toggle("optimize"); if (activePanel !== "optimize" && onOptimizeClick) onOptimizeClick(); }} style={{ ...pillStyle(activePanel === "optimize"), borderColor: activePanel === "optimize" ? "rgba(201,168,76,0.5)" : "rgba(201,168,76,0.15)", color: activePanel === "optimize" ? "#C9A84C" : "#8a7a5a" }}>
               ✦ My Setup
               <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "optimize" ? "▴" : "▾"}</span>
+            </button>
+            <button onClick={() => toggle("profile")} style={pillStyle(activePanel === "profile")}>
+              My Profile
+              <span style={{ marginLeft: "5px", fontSize: "9px", opacity: 0.5 }}>{activePanel === "profile" ? "▴" : "▾"}</span>
             </button>
           </div>
         </div>
@@ -8411,7 +8411,7 @@ TRAVEL CONSIDERATIONS — check user profile first:
 When the user's query starts with "Build a trip around this:", it came from a specific deal they tapped. The "Why This" explanation for the recommended option MUST reference the specific deal value (the miles rate, points saving, or cash discount) that made it compelling. Don't just describe the destination — connect it back to the deal.
 
 When ready to plan, respond with EXACTLY:
-READY: [one sentence reflecting back what you heard, including resolved dates] Ready for me to generate your options?
+READY: [one sentence reflecting back what you heard, including resolved dates] Ready for me to generate your options?\nIf the query mentions \"deals\", \"best deals\", or \"worth booking\", the READY line must reference deal-finding — e.g. \"Best deals for 4 people in Lisbon, April 15-19 — I'll surface the strongest value options available right now. Ready for me to generate your options?\"
 
 DATE RESOLUTION — resolve to specific dates before the READY line. Today is Monday, March 30, 2026.
 
