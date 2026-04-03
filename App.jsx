@@ -8588,6 +8588,8 @@ Return ONLY valid JSON.`;
       activeDealConstraint = userMessage.replace(/^DEAL_FOCUS_(SPECIFIC|FLIGHT):/, '').trim();
       effectiveMessage = `I want to build a trip around this specific deal: ${activeDealConstraint}`;
       conversationRef.current[conversationRef.current.length - 1].content = effectiveMessage;
+      // Remove deal card from messages so it doesn't re-show during concierge
+      setMessages(prev => prev.filter(m => m.type !== 'deal_intelligence'));
     }
 
     // ── CONCIERGE MODE: clarify before generating ──────────────────────────
@@ -8695,10 +8697,20 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
           // Split: everything before READY: is the answer, READY: onward is the confirmation
           const answerPart = reply.slice(0, readyIdx).trim();
           const readyPart = reply.slice(readyIdx).replace("READY:", "").trim();
-          // Show the answer text first (if any), then the READY prompt with the button
           const fullText = answerPart ? answerPart + (readyPart ? "\n\n" + readyPart : "") : readyPart;
-          setMessages(prev => [...prev, { role: "assistant", text: fullText, isReadyPrompt: true }]);
-          setConciergeMode(false);
+
+          if (dealSpecificRef.current) {
+            // Deal-specific flow: skip the button, auto-generate immediately
+            setMessages(prev => [...prev, { role: "assistant", text: answerPart || readyPart }]);
+            setConciergeMode(false);
+            const genMsg = "Generate my trip options based on everything we discussed: " +
+              conversationRef.current.filter(m => m.role === "user").map(m => m.content).join(" ");
+            await callClaude(genMsg);
+          } else {
+            // Normal flow: show READY prompt with button
+            setMessages(prev => [...prev, { role: "assistant", text: fullText, isReadyPrompt: true }]);
+            setConciergeMode(false);
+          }
         } else {
           // Need more info — show question
           setMessages(prev => [...prev, { role: "assistant", text: reply }]);
@@ -9715,7 +9727,7 @@ Please respond now.`,
           {refineMessages.length > 0 && (
             <div style={{ marginBottom: "12px", display: "flex", flexDirection: "column", gap: "8px", maxHeight: "340px", overflowY: "auto" }}>
               {refineMessages.map((msg, i) => (
-                <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") && !(msg.text||"").toLowerCase().includes("build a trip around this deal") ? "flex-end" : "flex-start" }}>
+                <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "flex-end" : "flex-start" }}>
                   <div style={{
                     maxWidth: "85%", padding: "10px 14px",
                     borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
@@ -9728,8 +9740,10 @@ Please respond now.`,
                   }}>
                     {msg.role === "assistant"
                       ? (msg.text || "").split(/\s*[\[{](?=\s*"[a-zA-Z])/)[0].trim() || msg.text
-                      : (msg.text || "").toLowerCase().includes("personalized travel deals") || (msg.text || "").toLowerCase().includes("build a trip around this deal")
+                      : (msg.text || "").toLowerCase().includes("personalized travel deals")
                         ? "Here are your personalized travel deals"
+                        : (msg.text || "").startsWith("Build a trip around this deal:")
+                        ? (msg.text || "").replace("Build a trip around this deal:", "").trim()
                         : msg.text
                     }
                     </div>
@@ -10092,8 +10106,8 @@ Please respond now.`,
       {!isFirst && (
         <div data-messages-container style={{ flex: 1, overflowY: "auto", padding: "20px 24px 0", display: "flex", flexDirection: "column", gap: "14px" }}>
           {messages.slice(1).map((msg, i) => (
-            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") && !(msg.text||"").toLowerCase().includes("build a trip around this deal") ? "flex-end" : "flex-start", animation: "fadeUp 0.3s ease forwards" }}>
-              <div style={{ maxWidth: msg.type === "deal_intelligence" ? "720px" : "80%", padding: msg.type === "deal_intelligence" ? "16px 20px" : "12px 16px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") && !(msg.text||"").toLowerCase().includes("build a trip around this deal") ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)", border: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") && !(msg.text||"").toLowerCase().includes("build a trip around this deal") ? "1px solid rgba(201,168,76,0.25)" : "1px solid rgba(255,255,255,0.07)", color: msg.isOptionsUpdate ? "#C9A84C" : msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") && !(msg.text||"").toLowerCase().includes("build a trip around this deal") ? "#e8e4dc" : "#b0a898", fontSize: "14px", lineHeight: "1.6", fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit", fontStyle: msg.role === "assistant" ? "italic" : "normal" }}>
+            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "flex-end" : "flex-start", animation: "fadeUp 0.3s ease forwards" }}>
+              <div style={{ maxWidth: msg.type === "deal_intelligence" ? "100%" : "80%", width: msg.type === "deal_intelligence" ? "100%" : "auto", padding: msg.type === "deal_intelligence" ? "16px 4px" : "12px 16px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)", border: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "1px solid rgba(201,168,76,0.25)" : "1px solid rgba(255,255,255,0.07)", color: msg.isOptionsUpdate ? "#C9A84C" : msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "#e8e4dc" : "#b0a898", fontSize: "14px", lineHeight: "1.6", fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit", fontStyle: msg.role === "assistant" ? "italic" : "normal" }}>
                 {msg.type === "deal_intelligence" && msg.dealData
                   ? <DealIntelligenceCard dealData={msg.dealData} onBuildTrip={(cta, dealType) => {
                   const isSpecific = dealType === 'hotel' || dealType === 'stacked';
