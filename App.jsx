@@ -5309,8 +5309,13 @@ const OnboardingFlow = ({ onComplete }) => {
 `}</style>
 
       {/* Header + Progress */}
-      <div style={{ padding: "24px 28px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ fontSize: "11px", letterSpacing: "0.3em", color: "#C9A84C", textTransform: "uppercase", fontFamily: "serif" }}>Sojourn · AI</div>
+      <div style={{ padding: "24px 28px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+        <div style={{ display: "flex", justifyContent: "center", width: "100%", position: "relative", alignItems: "center" }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: "11px", letterSpacing: "0.3em", color: "#C9A84C", textTransform: "uppercase", fontFamily: "serif", marginBottom: "2px" }}>Sojourn · AI</div>
+            {step === 0 && <div style={{ color: "#444", fontSize: "11px", letterSpacing: "0.08em" }}>Your travel, optimized.</div>}
+          </div>
+        </div>
         {step > 0 && (
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             {steps.slice(1).map((s, i) => (
@@ -5332,7 +5337,7 @@ const OnboardingFlow = ({ onComplete }) => {
         {step === 0 && (
           <div>
             <div style={{ fontSize: "36px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.15", marginBottom: "16px", textAlign: "center" }}>Travel the way<br />you were meant to.</div>
-            <div style={{ color: "#666", fontSize: "15px", lineHeight: "1.7", marginBottom: "32px", textAlign: "center" }}>Tell us where you want to go — or let us surprise you. Sojourn builds personalized trips around your loyalty programs, credit cards, and travel style, then helps you book them.</div>
+            <div style={{ color: "#666", fontSize: "15px", lineHeight: "1.7", marginBottom: "32px", textAlign: "center" }}>Tell us where you want to go — or let us surprise you. Sojourn builds personalized trips around your travel style, loyalty programs, and credit cards, and then helps you book them.</div>
             <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginBottom: "36px" }}>
               {["Discovers options you'd never find on your own", "Puts your points and cards to work on every trip", "Learns your preferences and remembers what you love"].map(t => (
                 <div key={t} style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
@@ -6511,11 +6516,6 @@ const DealIntelligenceCard = ({ dealData, onBuildTrip }) => {
 
   return (
     <div style={{ maxWidth: '680px', width: '100%' }}>
-      {/* Intro */}
-      <div style={{ color: '#c8c0b4', fontSize: '14px', lineHeight: '1.6', marginBottom: '16px' }}>
-        {dealData.intro}
-      </div>
-
       {/* Deal cards */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
         {(dealData.deals || []).map((deal, i) => {
@@ -8507,6 +8507,12 @@ Return ONLY valid JSON.`;
           type: "deal_intelligence",
           dealData: deals
         }]);
+        // Scroll to top so user sees deals from the beginning
+        setTimeout(() => {
+          const msgContainer = document.querySelector('[data-messages-container]');
+          if (msgContainer) msgContainer.scrollTop = 0;
+          else window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
       } else {
         setMessages(prev => [...prev, {
           role: "assistant",
@@ -8542,23 +8548,46 @@ Return ONLY valid JSON.`;
     // ── SINGLE TRIP MODE: deal click → build one specific trip ──────────────
     if (userMessage.startsWith('SINGLE_TRIP_MODE:')) {
       const dealDesc = userMessage.replace('SINGLE_TRIP_MODE:', '').trim();
-      const singleTripPrompt = `The user clicked on a specific travel deal and wants you to build ONE complete trip around it — not multiple options. Skip the options format entirely. Build a single, specific, fully-detailed trip itinerary for: ${dealDesc}. Use their profile (home airport, loyalty programs, credit cards) to make it concrete. Include flights, hotel, rough dates, points strategy, and card routing. Present it conversationally as if you're a concierge who has done the work for them.`;
-      conversationRef.current = [...conversationRef.current, { role: "user", content: singleTripPrompt }];
-      // Build using deep dive prompt style, not options
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1200,
-          system: buildSystemPrompt(userProfile),
-          messages: [{ role: "user", content: singleTripPrompt }]
-        })
-      });
-      const data = await response.json();
-      const reply = data.content?.[0]?.text || "I wasn't able to build that trip right now — try describing it in your own words.";
-      setMessages(prev => [...prev, { role: "assistant", text: reply }]);
-      conversationRef.current = [...conversationRef.current, { role: "assistant", content: reply }];
+      const sp = buildSystemPrompt();
+
+      const singleTripPrompt = `A user clicked on a specific travel deal and wants ONE complete trip built around it. Generate a single trip option in the EXACT same JSON format as a normal trip option — it will render as a TripCard.
+
+The deal: ${dealDesc}
+
+Return a JSON object with this exact structure (one option only, id:1, tag:"Deal Option"):
+{"tripSummary":{"destination":"","dates":"","checkIn":"","checkOut":"","nights":0,"preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Deal Option","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","cardStrategy":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":4,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}
+
+Fill in every field with real, specific details. Use their home airport for flights. The hotel detail MUST use the exact canonical property name. whyThis should explain why this deal is compelling for them specifically. cardStrategy should reference their actual cards. Return ONLY valid JSON.`;
+
+      try {
+        const resp = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+          body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, system: sp, messages: [{ role: "user", content: singleTripPrompt }] })
+        });
+        const data = await resp.json();
+        const raw = (data.content?.[0]?.text || "").replace(/```json|```/g, "").trim();
+        let parsed;
+        try { parsed = JSON.parse(raw); } catch(e) { parsed = null; }
+
+        if (parsed?.options?.[0]) {
+          const opt = parsed.options[0];
+          opt.tag = "Deal Option";
+          opt.tagColor = "#C9A84C";
+          setTripOptions([opt]);
+          setFocusedOptionId(null);
+          setMessages(prev => [...prev, {
+            role: "assistant",
+            text: `Here's your trip built around the deal — tap to explore the details.`,
+            isOptionsUpdate: false
+          }]);
+          conversationRef.current = [...conversationRef.current, { role: "assistant", content: singleTripPrompt }];
+        } else {
+          setMessages(prev => [...prev, { role: "assistant", text: "I wasn't able to structure that trip — try describing it in your own words." }]);
+        }
+      } catch(e) {
+        setMessages(prev => [...prev, { role: "assistant", text: "Something went wrong building that trip. Please try again." }]);
+      }
       setLoading(false);
       return;
     }
@@ -9670,7 +9699,7 @@ Please respond now.`,
           {refineMessages.length > 0 && (
             <div style={{ marginBottom: "12px", display: "flex", flexDirection: "column", gap: "8px", maxHeight: "340px", overflowY: "auto" }}>
               {refineMessages.map((msg, i) => (
-                <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
+                <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "flex-end" : "flex-start" }}>
                   <div style={{
                     maxWidth: "85%", padding: "10px 14px",
                     borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
@@ -9683,7 +9712,9 @@ Please respond now.`,
                   }}>
                     {msg.role === "assistant"
                       ? (msg.text || "").split(/\s*[\[{](?=\s*"[a-zA-Z])/)[0].trim() || msg.text
-                      : msg.text
+                      : (msg.text || "").toLowerCase().includes("personalized travel deals")
+                        ? "Travel deals tailored to you."
+                        : msg.text
                     }
                     </div>
                   {msg.text?.includes("Your trip is set") && focusedOptionId && (() => {
@@ -10043,10 +10074,10 @@ Please respond now.`,
 
       {/* Message thread — after first exchange */}
       {!isFirst && (
-        <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px 0", display: "flex", flexDirection: "column", gap: "14px" }}>
+        <div data-messages-container style={{ flex: 1, overflowY: "auto", padding: "20px 24px 0", display: "flex", flexDirection: "column", gap: "14px" }}>
           {messages.slice(1).map((msg, i) => (
-            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start", animation: "fadeUp 0.3s ease forwards" }}>
-              <div style={{ maxWidth: msg.type === "deal_intelligence" ? "720px" : "80%", padding: msg.type === "deal_intelligence" ? "16px 20px" : "12px 16px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.role === "user" ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)", border: msg.role === "user" ? "1px solid rgba(201,168,76,0.25)" : "1px solid rgba(255,255,255,0.07)", color: msg.isOptionsUpdate ? "#C9A84C" : msg.role === "user" ? "#e8e4dc" : "#b0a898", fontSize: "14px", lineHeight: "1.6", fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit", fontStyle: msg.role === "assistant" ? "italic" : "normal" }}>
+            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "flex-end" : "flex-start", animation: "fadeUp 0.3s ease forwards" }}>
+              <div style={{ maxWidth: msg.type === "deal_intelligence" ? "720px" : "80%", padding: msg.type === "deal_intelligence" ? "16px 20px" : "12px 16px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)", border: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "1px solid rgba(201,168,76,0.25)" : "1px solid rgba(255,255,255,0.07)", color: msg.isOptionsUpdate ? "#C9A84C" : msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "#e8e4dc" : "#b0a898", fontSize: "14px", lineHeight: "1.6", fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit", fontStyle: msg.role === "assistant" ? "italic" : "normal" }}>
                 {msg.type === "deal_intelligence" && msg.dealData
                   ? <DealIntelligenceCard dealData={msg.dealData} onBuildTrip={(cta, dealType) => {
                   if (dealType === 'hotel' || dealType === 'stacked') {
@@ -10077,20 +10108,6 @@ Please respond now.`,
             </div>
           )}
           <div ref={bottomRef} />
-        </div>
-      )}
-
-      {/* Compact input — after first exchange */}
-      {!isFirst && (
-        <div style={{ padding: "12px 24px 16px" }}>
-          <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", padding: "8px 8px 8px 16px", display: "flex", alignItems: "flex-end", gap: "8px" }}>
-            <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Refine these options, ask a question, or start a conversation..." rows={3}
-              style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "14px", lineHeight: "1.6", padding: "6px 0 4px", fontFamily: "'DM Sans',system-ui,sans-serif", resize: "none", minHeight: "60px" }} />
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px", paddingBottom: "4px", flexShrink: 0 }}>
-              <button onClick={listening ? () => { recognitionRef.current?.stop(); setListening(false); } : startListening} style={{ width: "34px", height: "34px", borderRadius: "10px", border: "none", cursor: "pointer", background: listening ? "rgba(201,76,76,0.2)" : "rgba(255,255,255,0.06)", color: listening ? "#C94C4C" : "#666", fontSize: "15px", animation: listening ? "pulse 1.2s infinite" : "none" }}>&#127908;</button>
-              <button onClick={handleSend} disabled={!input.trim() || loading} style={{ width: "34px", height: "34px", borderRadius: "10px", border: "none", cursor: input.trim() && !loading ? "pointer" : "default", background: input.trim() && !loading ? "#C9A84C" : "rgba(201,168,76,0.15)", color: input.trim() && !loading ? "#0a0908" : "#555", fontSize: "16px", fontWeight: "bold" }}>&#8593;</button>
-            </div>
-          </div>
         </div>
       )}
 
