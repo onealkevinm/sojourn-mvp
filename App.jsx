@@ -8145,7 +8145,6 @@ export default function SojournApp() {
   const recognitionRef = useRef(null);
   const bottomRef = useRef(null);
   const conversationRef = useRef([]);
-  const dealSpecificRef = useRef(false); // true when hotel/stacked deal clicked
   const [conciergeMode, setConciergeMode] = useState(true); // true = conversational, false = generating cards
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
@@ -8578,20 +8577,6 @@ Return ONLY valid JSON.`;
       return;
     }
 
-    // ── DEAL FOCUS: deal card click — inject deal as constraint, use concierge flow ──
-    let activeDealConstraint = null;
-    let isDealSpecific = false; // hotel/stacked = true → single TripCard; flight = false → options grid
-    let effectiveMessage = userMessage;
-    if (userMessage.startsWith('DEAL_FOCUS_SPECIFIC:') || userMessage.startsWith('DEAL_FOCUS_FLIGHT:')) {
-      isDealSpecific = userMessage.startsWith('DEAL_FOCUS_SPECIFIC:');
-      dealSpecificRef.current = isDealSpecific; // persist across concierge turns
-      activeDealConstraint = userMessage.replace(/^DEAL_FOCUS_(SPECIFIC|FLIGHT):/, '').trim();
-      effectiveMessage = `I want to build a trip around this specific deal: ${activeDealConstraint}`;
-      conversationRef.current[conversationRef.current.length - 1].content = effectiveMessage;
-      // Remove deal card from messages so it doesn't re-show during concierge
-      setMessages(prev => prev.filter(m => m.type !== 'deal_intelligence'));
-    }
-
     // ── CONCIERGE MODE: clarify before generating ──────────────────────────
     // If user is confirming/agreeing while in concierge mode, skip to generation
     const isEarlyConfirmation = conciergeMode && /^(yes|yeah|yep|sure|ok|okay|go|generate|let's go|do it|sounds good|great|perfect)/i.test(userMessage.trim()) && userMessage.trim().split(' ').length < 8;
@@ -8657,16 +8642,11 @@ Only ask ONE question total per conversation turn.
 NEVER ask about budget, hotel preference, or anything already in the profile.
 NEVER refuse a local discovery or dining question — always answer helpfully.
 
-DEAL-DRIVEN DESTINATION CLARIFICATION: If the user's query comes from clicking a flight deal and references a broad region (e.g. "flights to Europe," "deals to Asia," "flights to the Caribbean") with no specific city or country mentioned, ask ONE succinct question: "Anywhere specific in mind, or would you like me to pick the best value destination?" Then generate immediately on their answer — do not ask anything else. If they say "France or Italy" or "anywhere warm" that is sufficient — go straight to READY.
-
 TRAVEL CONSIDERATIONS — check user profile first:
 - If profile shows "Traveling with pets" or "Traveling with children" — you already know, factor it into recommendations silently.
 - If profile does NOT show these but the trip involves overnight stays and neither pets nor children have been mentioned, add one gentle line to your READY confirmation: "Just to make sure I get the details right — will you be traveling with any children or pets on this trip?" Only ask this ONCE and only if not already clear from context.
 - Accessibility: if profile shows "Wheelchair accessible" or "Mobility assistance needed" — always filter for accessible rooms and note this in your options.
 
-
-
-DEAL-FOCUSED QUERY: If the user's message starts with "I want to build a trip around this specific deal:", treat this as a pill-assisted query where the deal is a hard constraint. Ask the SAME clarifying questions you would for any trip (party size if not known, rough timeframe if not given). If the deal has time sensitivity, mention it naturally: "Just so you know, these rates tend to be strongest in [window] — does that work for you?" Once you have party size and timeframe, generate options normally but weight them toward making the deal work. You do NOT need to generate only one option — generate the normal set but make the deal the centerpiece of the recommended option.
 When ready to plan, respond with EXACTLY:
 READY: [one sentence reflecting back what you heard, including resolved dates] Ready for me to generate your options?
 
@@ -8699,18 +8679,9 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
           const readyPart = reply.slice(readyIdx).replace("READY:", "").trim();
           const fullText = answerPart ? answerPart + (readyPart ? "\n\n" + readyPart : "") : readyPart;
 
-          if (dealSpecificRef.current) {
-            // Deal-specific flow: skip the button, auto-generate immediately
-            setMessages(prev => [...prev, { role: "assistant", text: answerPart || readyPart }]);
-            setConciergeMode(false);
-            const genMsg = "Generate my trip options based on everything we discussed: " +
-              conversationRef.current.filter(m => m.role === "user").map(m => m.content).join(" ");
-            await callClaude(genMsg);
-          } else {
-            // Normal flow: show READY prompt with button
-            setMessages(prev => [...prev, { role: "assistant", text: fullText, isReadyPrompt: true }]);
-            setConciergeMode(false);
-          }
+          // Normal flow: show READY prompt with button
+          setMessages(prev => [...prev, { role: "assistant", text: fullText, isReadyPrompt: true }]);
+          setConciergeMode(false);
         } else {
           // Need more info — show question
           setMessages(prev => [...prev, { role: "assistant", text: reply }]);
@@ -8730,10 +8701,6 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
     // Detect confirmation messages (user saying yes after READY prompt)
     // and substitute with a proper generation trigger using full conversation context
     const isConfirmation = /^(yes|yeah|yep|sure|ok|okay|go|generate|let's go|do it|please|sounds good|great|perfect|absolutely)/i.test(userMessage.trim()) && userMessage.trim().split(' ').length < 10;
-    effectiveMessage = isConfirmation
-      ? `Generate my trip options based on everything we discussed: ${conversationRef.current.filter(m => m.role === 'user').map(m => m.content).join(' ')}`
-      : userMessage;
-
     const loadingSteps = [
       "Reviewing your loyalty accounts...",
       "Checking points balances and tier status...",
@@ -8752,10 +8719,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
     const clearMessages = () => { clearInterval(messageInterval); setLoadingMessage(""); };
 
     const fullContext = conversationRef.current.map(m => m.content).join(" ");
-    const dealInstruction = dealSpecificRef.current
-      ? " IMPORTANT: This query originated from a specific hotel or stacked deal the user clicked on. Generate exactly ONE option (not six) — the best possible trip built around that specific deal. Make it detailed and compelling. The user has already chosen the direction; your job is to execute on it."
-      : "";
-    const generationTrigger = effectiveMessage;
+    const generationTrigger = isConfirmation ? `Generate my trip options based on everything we discussed: ${conversationRef.current.filter(m => m.role === 'user').map(m => m.content).join(' ')}` : userMessage;
 
     const tryGenerate = async () => {
       const controller = new AbortController();
@@ -8770,7 +8734,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
             max_tokens: 6000,
             temperature: 0.5,
             system: buildSystemPrompt(),
-            messages: [{ role: "user", content: fullContext + dealInstruction }],
+            messages: [{ role: "user", content: fullContext }],
           })
         });
         clearTimeout(timeout);
@@ -8803,18 +8767,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         setTripOptions(validateOptions(filteredOptions));
       setTripSummary(parsed.tripSummary);
       setPhase("results");
-      // Hotel/stacked deal: auto-expand option 1 → skip options grid, go to detail view
-      if (dealSpecificRef.current) {
-        const firstOpt = validateOptions(filteredOptions)?.[0];
-        if (firstOpt) {
-          setTimeout(() => {
-            setExpandedId(firstOpt.id);
-            setFocusedOptionId(firstOpt.id);
-            setConciergeMode(false);
-          }, 150);
-        }
-        dealSpecificRef.current = false; // reset
-      }
+
     } catch(e) {
       try {
         const parsed = await tryGenerate();
@@ -8857,7 +8810,10 @@ const handleSend = () => {
   const sendMessage = (msg) => {
     if (!msg || loading) return;
     setInput("");
-    setMessages(prev => [...prev, { role: "user", text: msg }]);
+    // For deal intelligence queries, don't add a user bubble — the card IS the response
+    if (!isDealIntelligenceQuery(msg)) {
+      setMessages(prev => [...prev, { role: "user", text: msg }]);
+    }
     callClaude(msg);
   };
 
@@ -10110,11 +10066,8 @@ Please respond now.`,
               <div style={{ maxWidth: msg.type === "deal_intelligence" ? "100%" : "80%", width: msg.type === "deal_intelligence" ? "100%" : "auto", padding: msg.type === "deal_intelligence" ? "16px 4px" : "12px 16px", borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)", border: msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "1px solid rgba(201,168,76,0.25)" : "1px solid rgba(255,255,255,0.07)", color: msg.isOptionsUpdate ? "#C9A84C" : msg.role === "user" && !(msg.text||"").toLowerCase().includes("personalized travel deals") ? "#e8e4dc" : "#b0a898", fontSize: "14px", lineHeight: "1.6", fontFamily: msg.role === "assistant" ? "'Playfair Display',Georgia,serif" : "inherit", fontStyle: msg.role === "assistant" ? "italic" : "normal" }}>
                 {msg.type === "deal_intelligence" && msg.dealData
                   ? <DealIntelligenceCard dealData={msg.dealData} onBuildTrip={(cta, dealType) => {
-                  const isSpecific = dealType === 'hotel' || dealType === 'stacked';
-                  const prefix = isSpecific ? 'DEAL_FOCUS_SPECIFIC' : 'DEAL_FOCUS_FLIGHT';
-                  const msg = `${prefix}: ${cta}`;
-                  setMessages(prev => [...prev, { role: "user", text: `Build a trip around this deal: ${cta}` }]);
-                  callClaude(msg);
+                  setInput(`Build a trip around this: ${cta}`);
+                  setTimeout(() => document.querySelector('textarea')?.focus(), 50);
                 }} />
                   : msg.text}
               </div>
