@@ -7155,17 +7155,17 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
               );
             })()}
             <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-              <div style={{ color: '#555', fontSize: '11px' }}>{seatPref()}</div>
-              <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>
+              <div style={{ color: '#555', fontSize: '11px' }}>
                 {flightComp?.detail?.toLowerCase().includes('nonstop') ? 'Best nonstop routing for your group — minimizes travel time.' : 'Best available routing for your dates and group size.'}
               </div>
+              <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{seatPref()}</div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '6px', marginTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <div>
                 {flightIsPoints
                   ? <div style={{ color: '#4CC97A', fontSize: '13px', fontWeight: '600' }}>{flightComp?.points?.replace(/redeemed/i, '').trim() || 'Points applied'}</div>
-                  : <div style={{ color: '#e8e4dc', fontSize: '15px', fontWeight: '600' }}>${flightCash.toLocaleString()}</div>}
-                {flightCard?.name && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{flightCard.name}</div>}
+                  : <div style={{ color: '#e8e4dc', fontSize: '13px', fontWeight: '600' }}>${flightCash.toLocaleString()}</div>}
+                {flightCard?.name && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{flightCard.name} card</div>}
               </div>
               {modifications.flight && <div style={{ color: '#C9A84C', fontSize: '11px', fontStyle: 'italic' }}>✓ {modifications.flight}</div>}
             </div>
@@ -7185,7 +7185,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
               <div>
                 {hotelIsPoints
                   ? <div style={{ color: '#4CC97A', fontSize: '13px', fontWeight: '600' }}>{hotelComp?.points?.replace(/redeemed/i, '').trim() || 'Points applied'}</div>
-                  : <div style={{ color: '#e8e4dc', fontSize: '15px', fontWeight: '600' }}>${hotelCash.toLocaleString()} total</div>}
+                  : <div style={{ color: '#e8e4dc', fontSize: '13px', fontWeight: '600' }}>${hotelCash.toLocaleString()} total</div>}
                 {hotelCard?.name && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{hotelCard.name}</div>}
               </div>
               {modifications.hotel && <div style={{ color: '#C9A84C', fontSize: '11px', fontStyle: 'italic' }}>✓ {modifications.hotel}</div>}
@@ -7213,7 +7213,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
             <div style={{ color: '#555', fontSize: '12px' }}>Room for your group plus luggage — skip the insurance, covered by your card</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '6px', marginTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <div>
-                <div style={{ color: '#e8e4dc', fontSize: '15px', fontWeight: '600' }}>${carCash.toLocaleString()}</div>
+                <div style={{ color: '#e8e4dc', fontSize: '13px', fontWeight: '600' }}>${carCash.toLocaleString()}</div>
                 {carCard?.name && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{carCard.name}</div>}
               </div>
               {modifications.car && <div style={{ color: '#C9A84C', fontSize: '11px', fontStyle: 'italic' }}>✓ {modifications.car}</div>}
