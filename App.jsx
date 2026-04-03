@@ -8417,22 +8417,6 @@ DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these ru
   const handleDealIntelligence = async (userMessage) => {
     setLoading(true);
 
-    // Build profile context for personalization
-    const profileCtx = userProfile ? `
-User loyalty programs: ${(userProfile.loyaltyPrograms || []).join(', ') || 'none set'}
-Credit cards: ${(userProfile.creditCards || []).join(', ') || 'none set'}
-Home airport: ${userProfile.homeAirport || 'not set'}
-Travel style: ${(userProfile.travelTypes || []).join(', ') || 'not set'}
-Favorite brands: ${(userProfile.favoriteBrands || []).join(', ') || 'none set'}
-Travel considerations: ${(userProfile.travelConsiderations || []).join(', ') || 'none'}
-` : 'No profile set — using general travel preferences.';
-
-    const homeAirport = userProfile?.homeAirport || 'a major US hub';
-    const programs = (userProfile?.loyaltyPrograms || []).join(', ') || 'Delta SkyMiles, World of Hyatt';
-    const cards = (userProfile?.creditCards || []).join(', ') || 'Amex Platinum, Chase Sapphire Reserve';
-    const brands = (userProfile?.favoriteBrands || []).join(', ') || 'Hyatt, Four Seasons, Aman';
-    const travelStyle = (userProfile?.travelTypes || []).join(', ') || 'luxury, experiential';
-
     const today = new Date();
     const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
     const currentMonth = monthNames[today.getMonth()];
@@ -8440,76 +8424,26 @@ Travel considerations: ${(userProfile.travelConsiderations || []).join(', ') || 
     const nextMonth = monthNames[(today.getMonth() + 1) % 12];
     const monthAfter = monthNames[(today.getMonth() + 2) % 12];
 
-    const dealPrompt = `You are Sojourn, a luxury travel concierge. Generate a curated personal deal briefing — not the cheapest deals available, but the 7 things THIS person would wish they knew. The bar: would this deal make them more likely to actually take a trip, either because it unlocks something they already wanted to do, or because it's compelling enough to push them from "thinking about it" to "booking it"?
+    // Use buildSystemPrompt() — inherits ALL brand/program/balance constraints
+    // Same pattern as main generation. No new logic needed.
+    const sp = buildSystemPrompt();
 
-USER PROFILE:
-- Home airport: ${homeAirport}
-- Loyalty programs: ${programs}
-- Credit cards: ${cards}
-- Favorite hotel brands: ${brands}
-- Travel style: ${travelStyle}
+    const dealUserMessage = `Today is ${currentMonth} ${currentYear}. Generate a curated personal deal briefing — 7 deals this traveler would wish they knew about. ALL deals must be forward-looking from today (${currentMonth} ${currentYear}) — travel windows in ${nextMonth}, ${monthAfter}, or later. ONLY use loyalty programs and brands explicitly listed in the traveler's profile above. Do not invent program memberships.
 
-Today's date: ${currentMonth} ${currentYear}. ALL deals must be forward-looking — upcoming travel opportunities, not past ones. Reference travel windows like ${nextMonth}, ${monthAfter}, or "this summer" as appropriate. Never suggest a deal or window that has already passed.
-
-Use the profile to personalize every deal — airline routes should depart from their home airport, hotels should come from their preferred brands, loyalty items should reference their actual programs. If a program isn't listed, don't invent membership — instead suggest the most natural fit.
-
-Return ONLY this JSON (no markdown, no explanation):
+Return ONLY this JSON (no markdown):
 {
-  "intro": "One sentence that feels personal — reference their home airport or a specific program they have. Warm, specific, not generic.",
+  "intro": "One warm sentence referencing their home airport or a specific program they have.",
   "deals": [
-    {
-      "type": "airline",
-      "icon": "✈️",
-      "headline": "Airline + route from their home airport — specific timing and value (e.g. 'Delta Saver awards to Cabo opened up — 35k miles roundtrip from [home airport], flying June')",
-      "detail": "Why this matters to them: miles value context, sweet spot redemption, or how it compares to cash. One sentence, specific.",
-      "cta": "Short trip seed for follow-up — e.g. 'Cabo long weekend on Delta miles'"
-    },
-    {
-      "type": "airline",
-      "icon": "✈️",
-      "headline": "Second airline deal — different type of value (if first was miles, this is a compelling cash fare or upgrade opportunity)",
-      "detail": "Specific value framing tied to their programs",
-      "cta": "Short trip seed"
-    },
-    {
-      "type": "hotel",
-      "icon": "🏨",
-      "headline": "Specific property from their brands — points rate, category sweet spot, or rate drop worth acting on now",
-      "detail": "Why act now vs later — availability window, seasonal timing, or unusually strong points value",
-      "cta": "Short trip seed — e.g. 'Park Hyatt Chicago, Memorial Day weekend'"
-    },
-    {
-      "type": "hotel",
-      "icon": "🏨",
-      "headline": "Second hotel deal from their brands — different property type or geography",
-      "detail": "Specific value framing",
-      "cta": "Short trip seed"
-    },
-    {
-      "type": "hotel",
-      "icon": "🏨",
-      "headline": "Third hotel — aspirational property where the timing is unusually good (shoulder season, new property soft launch rates, or redemption sweet spot opening)",
-      "detail": "What makes this specific moment right for this property",
-      "cta": "Short trip seed"
-    },
-    {
-      "type": "stacked",
-      "icon": "⚡",
-      "headline": "A complete trip combining their airline + hotel programs where the stack creates disproportionate value — name the destination, the programs, the combination",
-      "detail": "Walk through the logic: 'Fly Delta to X, stay at [brand property] on points — your [card] covers the hotel resort fee and earns bonus miles, net cost is roughly Y for what would normally be Z.' Make the math feel real even if approximate.",
-      "cta": "Full trip seed — e.g. 'Nashville long weekend — Delta + Hyatt points stack'"
-    },
-    {
-      "type": "loyalty",
-      "icon": "🎯",
-      "headline": "One loyalty program move worth making this week — transfer bonus window, status challenge, sweet spot route availability, or expiring currency. Loyalty program focus (not card benefits)",
-      "detail": "Specific and actionable: what to do, roughly by when, what they get. Reference one of their actual programs.",
-      "cta": "Action seed — e.g. 'Move Chase points to Hyatt before transfer bonus closes'"
-    }
+    {"type":"airline","icon":"✈️","headline":"Specific airline deal from their home airport — route, timing, value","detail":"Why this matters through their loyalty lens. One sentence.","cta":"Short trip seed"},
+    {"type":"airline","icon":"✈️","headline":"Second airline deal — different type of value","detail":"Value framing.","cta":"Short trip seed"},
+    {"type":"hotel","icon":"🏨","headline":"Specific property from their brands — points rate or deal worth acting on now","detail":"Why act now.","cta":"Short trip seed"},
+    {"type":"hotel","icon":"🏨","headline":"Second hotel deal from their brands","detail":"Value framing.","cta":"Short trip seed"},
+    {"type":"hotel","icon":"🏨","headline":"Third hotel — aspirational timing for a property in their preferred brands","detail":"What makes this moment right.","cta":"Short trip seed"},
+    {"type":"stacked","icon":"⚡","headline":"One complete trip combining ONLY their listed airline + hotel programs — name the specific programs and destination","detail":"Walk the math: flight program + hotel program + card. Reference only programs they actually have.","cta":"Full trip seed"},
+    {"type":"loyalty","icon":"🎯","headline":"One loyalty program move this week — from their actual programs only","detail":"Specific, actionable, time-bound. Reference one of their actual programs.","cta":"Action seed"}
   ],
   "closing": "Would you like me to build a trip around one of these? Tap any deal above or just tell me which one caught your eye — I can put options in front of you in seconds."
-}
-Return ONLY valid JSON.`;
+}`;
 
     try {
       const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -8522,9 +8456,9 @@ Return ONLY valid JSON.`;
         },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
-          max_tokens: 1500,
-          system: dealPrompt,
-          messages: [{ role: "user", content: "Generate my personalized deal briefing." }]
+          max_tokens: 1200,
+          system: sp,
+          messages: [{ role: "user", content: dealUserMessage }]
         })
       });
       const data = await response.json();
@@ -8539,12 +8473,6 @@ Return ONLY valid JSON.`;
           type: "deal_intelligence",
           dealData: deals
         }]);
-        // Scroll to top so user sees deals from the beginning
-        setTimeout(() => {
-          const msgContainer = document.querySelector('[data-messages-container]');
-          if (msgContainer) msgContainer.scrollTop = 0;
-          else window.scrollTo({ top: 0, behavior: 'smooth' });
-        }, 100);
       } else {
         setMessages(prev => [...prev, {
           role: "assistant",
@@ -8559,6 +8487,7 @@ Return ONLY valid JSON.`;
     }
     setLoading(false);
   };
+
 
 
   const callClaude = async (userMessage) => {
