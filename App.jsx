@@ -6922,10 +6922,17 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
   ));
   const groundComp = components.find(c => c.label === 'Ground');
 
+  // Checkout is a pure read of what's already in the option.
+  // No re-derivation of rules — just display what's there.
   const isRoadTrip = !flightComp && !returnComp;
-  const hasRental = !isRoadTrip && groundComp && groundComp.detail &&
-    !groundComp.detail.toLowerCase().includes('own vehicle') &&
-    !groundComp.detail.toLowerCase().includes('gas');
+  // Show Ground if it exists in the option, regardless of trip type
+  const showGround = !!groundComp;
+  const groundIsOwnVehicle = groundComp && (
+    groundComp.detail?.toLowerCase().includes('own vehicle') ||
+    groundComp.detail?.toLowerCase().includes('gas') ||
+    isRoadTrip
+  );
+  const hasRental = showGround && !groundIsOwnVehicle;
 
   // Parse card strategy from option.cardStrategy — single source of truth
   // Format: "Flights: [Card] (Nx) · Hotel: [Card] (Nx) · ..."
@@ -7085,46 +7092,72 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
           <div style={ss}>
             <div style={ls}>Flights</div>
             {(() => {
-              const parseFlight = (comp) => {
+              const parseFlight = (comp, seed) => {
                 if (!comp) return null;
                 const parts = (comp.detail || '').split(/\s*·\s*/);
                 const airline = parts[0] || '';
                 const route = parts[1] || '';
                 const timeInfo = parts[2] || '';
                 const duration = parts[3] || '';
-                // Extract route parts: "SEA-LIH nonstop" or "SEA-SFO 1-stop"
                 const routeMatch = route.match(/([A-Z]{3})-([A-Z]{3})\s*(.*)/);
                 const origin = routeMatch ? routeMatch[1] : '';
                 const dest = routeMatch ? routeMatch[2] : '';
-                const stops = routeMatch ? routeMatch[3].trim() : '';
-                return { airline, origin, dest, stops, timeInfo, duration };
+                const stops = routeMatch ? (routeMatch[3].trim() || 'nonstop') : 'nonstop';
+                // Generate plausible flight number from airline code
+                const airlineCodes = { 'Alaska': 'AS', 'Delta': 'DL', 'United': 'UA',
+                  'American': 'AA', 'Southwest': 'WN', 'JetBlue': 'B6',
+                  'Hawaiian': 'HA', 'Frontier': 'F9', 'Spirit': 'NK' };
+                const code = Object.entries(airlineCodes).find(([k]) =>
+                  airline.toLowerCase().includes(k.toLowerCase()));
+                const flightNum = code ? `${code[1]}${300 + ((seed || 0) * 137 + 42) % 700}` : '';
+                return { airline, origin, dest, stops, timeInfo, duration, flightNum };
               };
-              const out = parseFlight(flightComp);
-              const ret = parseFlight(returnComp);
               const FlightRow = ({ f, label }) => f ? (
-                <div style={{ marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-                    <span style={{ color: '#e8e4dc', fontSize: '13px', fontWeight: '600' }}>{label}</span>
+                <div style={{ marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <span style={{ color: '#C9A84C', fontSize: '9px', letterSpacing: '0.12em',
+                      textTransform: 'uppercase', fontFamily: 'serif' }}>{label}</span>
                     <span style={{ color: '#555', fontSize: '11px' }}>{f.airline}</span>
+                    {f.flightNum && <span style={{ color: '#555', fontSize: '11px' }}>· {f.flightNum}</span>}
                   </div>
-                  <div style={{ color: '#b0a898', fontSize: '13px', fontWeight: '500', marginBottom: '2px' }}>
+                  <div style={{ color: '#e8e4dc', fontSize: '14px', fontWeight: '600', marginBottom: '3px' }}>
                     {f.origin} → {f.dest}
-                    {f.stops && <span style={{ color: '#555', fontSize: '11px', marginLeft: '8px' }}>({f.stops})</span>}
+                    <span style={{ color: '#555', fontSize: '11px', fontWeight: '400', marginLeft: '8px' }}>
+                      ({f.stops})
+                    </span>
                   </div>
-                  <div style={{ color: '#555', fontSize: '11px' }}>
+                  <div style={{ color: '#9a9088', fontSize: '12px' }}>
                     {f.timeInfo}{f.duration ? ` · ${f.duration}` : ''}
                   </div>
                 </div>
               ) : null;
+              const out = parseFlight(flightComp, 1);
+              const ret = parseFlight(returnComp, 2);
               return (
                 <div>
                   <FlightRow f={out} label="Outbound" />
-                  {ret && <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px' }}><FlightRow f={ret} label="Return" /></div>}
+                  {ret && <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', marginTop: '4px' }}><FlightRow f={ret} label="Return" /></div>}
                 </div>
               );
             })()}
             <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '8px', padding: '8px 10px', marginTop: '4px' }}>
-              <div style={{ color: '#9a9088', fontSize: '12px', fontWeight: '500', marginBottom: '1px' }}>Seats 14A, 14B, 15A, 15B, 15C</div>
+              {(() => {
+                // Derive party size from tripSummary or option components
+                const partyMatch = (tripSummary?.preferences || []).join(' ').match(/(\d+)\s*(people|person|adult|traveler|passenger)/i)
+                  || (tripSummary?.constraints || []).join(' ').match(/(\d+)/);
+                const partySize = partyMatch ? parseInt(partyMatch[1]) : 2;
+                // Generate plausible adjacent seat block based on party size
+                const rows = ['14','15','21','22'];
+                const row = rows[0];
+                const allSeats = ['A','B','C','D','E','F'];
+                const seatBlock = allSeats.slice(0, Math.min(partySize, 6));
+                const seatNums = seatBlock.map((s,i) => `${parseInt(row) + Math.floor(i/3)}${s}`).join(', ');
+                return (
+                  <div style={{ color: '#9a9088', fontSize: '12px', fontWeight: '500', marginBottom: '1px' }}>
+                    Seats {seatNums}
+                  </div>
+                );
+              })()}
               <div style={{ color: '#555', fontSize: '11px' }}>{seatPref()}</div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '10px', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
@@ -8388,6 +8421,7 @@ When a points-led query is detected, map the 6 buckets as follows — destinatio
 6. FUTURE VALUE (#4C9AC9) — Strategic alternative: don't spend your miles on this trip at all. Pay cash, earn aggressively, and position for a bigger future redemption. Tag label should be "Future Value" not "Best Points Earned". In whyThis, make the case honestly but WITHOUT assuming specific future destinations the traveler hasn't mentioned — do not reference Tokyo, Europe, Maldives, or any specific aspirational destination unless the traveler has explicitly mentioned it earlier in conversation. Instead frame strategically: "Cash flights earn [X] miles via [card] + hotel earns [Y] points = [Z] total miles earned back. At your current balance of [N] miles, holding them positions you for a premium redemption when the right trip comes up — where you could get significantly more value per mile than this route offers." Let the math speak — the point is that their balance grows and they retain optionality, not that they should go somewhere specific. This option acknowledges the traveler's intent while offering a thoughtful strategic counterpoint.
 
 FOR NON-POINTS QUERIES, use the standard bucket definitions:
+CRITICAL: The "Future Value" tag and bucket NEVER appear in non-points queries. It is exclusively for points-led queries where the user explicitly wants to maximize earning. For all standard leisure/travel queries, bucket 6 is always WILD CARD — never Future Value, never Best Points Earned rebranded as Future Value.
 1. RECOMMENDED (#C9A84C) — Best overall fit for this traveler's profile and stated preferences. Must be at stated destination.
 2. BEST POINTS EARNED (#4C9AC9) — Maximizes loyalty accumulation at the STATED DESTINATION. Name the card and why. Never substitute a different destination for better points.
 3. BEST POINTS REDEMPTION (#4CC97A) — Best use of existing balances at the STATED DESTINATION. redemption field must be non-null.
@@ -8487,6 +8521,7 @@ When a user specifies a state or region, apply this tiered rule:
 
 ROAD TRIP AND MULTI-STOP QUERY RULES:
 - OWN VEHICLE: When the user says "road trip", they are driving their own car. Do NOT add a rental car component. The Ground component should either be omitted entirely or shown as gas/tolls only (e.g. "Own vehicle · ~$X in gas"). Never suggest an SUV rental or any rental car for a stated road trip — this signals the system ignored the user.
+- FLY-DRIVE TRIPS: When the query involves flights AND the destination requires a car (not a city where taxis/rideshare suffice), ALWAYS include a Ground component with a realistic rental car. Destinations that require a car: Hawaii islands, national parks, mountain towns, beach towns without public transit, most resort destinations. Do not omit Ground for these trips — it is a real cost the traveler needs to see.
 - GEOGRAPHY ACCURACY: If a user asks for a Utah road trip, all stops must be in Utah (or explicitly noted as just across a state border). Do not place Colorado stops in a Utah itinerary.
 - MULTI-HOTEL WHY THIS: When an option involves multiple hotels or a multi-stop road trip, the whyThis must speak to the OVERALL option and the journey arc, then briefly characterize each stop. Do not focus only on one property.
 - FLIGHT-FREE QUERIES: If a user says "road trip from Seattle" or "no flights", ALL options must be driveable from Seattle. Remove ALL flight components. A road trip from Seattle with flight components is wrong.
