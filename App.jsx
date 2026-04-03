@@ -8378,6 +8378,7 @@ ${(() => { try {
 MODE 2 — TRIP PLANNING (generate structured options):
 Use this when the user wants to plan a trip. Default to READY. Generate options unless a truly critical piece is missing.
 Go READY immediately if you have: any destination or travel theme, AND a party size (stated or clearly implied), AND a timeframe (even vague like "spring" or "summer" or "next month").
+CRITICAL: "Open to ideas", "open to location", "not sure where", "surprise me", "somewhere warm" — these are ALL sufficient as destination. NEVER respond conversationally with destination suggestions when party size and timeframe are present. The gridview is built to handle open destinations — the destination diversity rule spreads options across the geographic possibility space automatically. A conversational list of destination options before the gridview is NEVER the right response when you have party size + timeframe. Go READY immediately and let the grid do the work.
 IMPORTANT: Trip DURATION (e.g. "3 nights", "a week") is NOT a timeframe — it tells you how long but not when. A query with duration but no when (no season, month, or relative window) is missing timeframe and requires the question: "Was there a timeframe or specific dates you had in mind?"
 Exception: if user explicitly says they are flexible or have no dates in mind, proceed immediately.
 TWO REQUIRED CLARIFICATIONS — ask for both in one message if both are missing, otherwise ask for whichever is missing:
@@ -8402,6 +8403,7 @@ POINTS CLARIFICATION: Only ask if intent is clearly to REDEEM points AND no spec
 Only ask ONE question total per conversation turn.
 NEVER ask about budget, hotel preference, or anything already in the profile.
 NEVER refuse a local discovery or dining question — always answer helpfully.
+NEVER respond with a conversational list of destination options — that is the gridview's job. If someone says "road trip, open to ideas, 5 people, April 10-13" you have everything you need. Go READY.
 
 TRAVEL CONSIDERATIONS — check user profile first:
 - If profile shows "Traveling with pets" or "Traveling with children" — you already know, factor it into recommendations silently.
