@@ -348,6 +348,11 @@ const validateOptions = (options) => {
       fixed.tag = 'Best Value';
       fixed.tagColor = '#C9C94C';
     }
+    // Mutual exclusivity: Best Value should never have a redemption field populated
+    if (opt.tag === 'Best Value' && (fixed.redemption || (fixed.redemptions && fixed.redemptions.length > 0))) {
+      fixed.tag = 'Redemption Opportunity';
+      fixed.tagColor = '#4CC97A';
+    }
 
     return fixed;
   });
@@ -8509,8 +8514,11 @@ CRITICAL: "Future Value" and "Best Points Earned" NEVER appear in non-points que
 2. QUALITY UPGRADE (#C94C8A) — Same trip intent, meaningfully better experience. The delta in quality justifies the delta in cost — not just more expensive, but a genuinely different tier of experience. Frame around what the upgrade actually delivers emotionally or experientially, not just amenities.
 
 3. BEST VALUE (#C9C94C) — Same meaningful experience, smarter cost structure. The traveler doesn't sacrifice what they actually care about. Best experience per dollar given their profile and stated intent.
+CRITICAL: Best Value is a CASH option. It never involves points redemptions as the primary cost-reduction mechanism. Smart card routing, timing, or property selection — not points — is what makes it "value." If points are covering the stay or flight, that is Redemption Opportunity, not Best Value. A traveler using Hyatt points to cover the hotel is NOT in Best Value — they are in Redemption Opportunity. Never tag a points-redemption option as Best Value.
 
-4. REDEMPTION OPPORTUNITY (#4CC97A) — Same trip, but points change the economics entirely. Only include if a genuinely strong redemption exists (1.5+ cpp or meaningful cash savings). The experience matches the Recommended option; the currency is different. redemption field must be non-null.
+4. REDEMPTION OPPORTUNITY (#4CC97A) — Same trip, but points cover a major component (hotel or flights), changing the economics entirely. Only include if a genuinely strong redemption exists (1.5+ cpp or meaningful cash savings). The experience quality matches the Recommended option; the currency is different. redemption field must be non-null.
+CRITICAL: Redemption Opportunity is a POINTS option. It must have a non-null redemption field with actual points used. If no strong redemption exists, replace this slot with a second Best Value variant at a different property — do not fabricate a weak redemption to fill the slot. Never tag a cash option as Redemption Opportunity.
+MUTUAL EXCLUSIVITY: Best Value and Redemption Opportunity are mutually exclusive. An option cannot be both. If points are covering any major component, it is Redemption Opportunity. If it is purely cash with smart routing, it is Best Value. Never duplicate the same fundamental trip structure across both slots — they must be genuinely different options.
 
 5. WILD CARD — INTENT EXTENSION (#9A4CC9) — A different answer to the same underlying question. Reason from the traveler's query intent and ask: what were they REALLY asking for? The query is a placeholder for a feeling or experience goal. Find the destination, property, or trip format that better serves that real goal — even if it means challenging the stated destination, timeframe, or format. This is the "you asked for Bend but you were really asking for X" option.
 - The tag label should be descriptive and specific: "Wild Card · [What It Is]" e.g. "Wild Card · Sage Lodge, Montana" or "Wild Card · Ranch Experience" — never just "Wild Card"
