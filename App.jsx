@@ -8342,6 +8342,11 @@ export default function SojournApp() {
   const [refineLoading, setRefineLoading] = useState(false);
   const [refineMessages, setRefineMessages] = useState([]);
   const [refineLoadingMessage, setRefineLoadingMessage] = useState("");
+  const [keptOptionIds, setKeptOptionIds] = useState([]); // options user wants to keep
+  const [refinementWave, setRefinementWave] = useState(0); // which wave of refinement we're on
+  const [previousWaveOptions, setPreviousWaveOptions] = useState([]); // collapsed prior wave
+  const [shownOptionIds, setShownOptionIds] = useState([]); // all options ever shown — no repeats
+  const [pendingRefinement, setPendingRefinement] = useState(null); // confirmation-pending refinement
   const [itineraryOption, setItineraryOption] = useState(null);
   const [bookingOption, setBookingOption] = useState(null);
   const [optimizeRecs, setOptimizeRecs] = useState(null);
@@ -8901,8 +8906,13 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         ? parsed.options.map(o => o.tag === "Future Value" ? { ...o, tag: "Redemption Opportunity", tagColor: "#4CC97A" } : o)
         : parsed.options;
       Object.keys(_whyThisCache).forEach(k => delete _whyThisCache[k]);
-        setTripOptions(validateOptions(filteredOptions));
+        const validatedOpts = validateOptions(filteredOptions);
+      setTripOptions(validatedOpts);
       setTripSummary(parsed.tripSummary);
+      setShownOptionIds(validatedOpts.map(o => o.id)); // track all shown
+      setRefinementWave(0);
+      setPreviousWaveOptions([]);
+      setKeptOptionIds([]);
       setPhase("results");
       // preserve fromDealPillRef — reset only after results are shown
 
@@ -9014,8 +9024,14 @@ const handleSend = () => {
     const isRegenRequest = regenSignals.some(r => r.test(msg));
 
     // Never regenerate options once user has isolated/focused on one
-    // At that point all messages should be conversational about that option
     const userHasFocused = !!focusedOptionId || deepDiveConfirmed;
+
+    // NUDGE: detect implied refinement intent without explicit ask
+    // e.g. "the wild card was interesting but wanted something closer to Seattle"
+    // Acknowledge the positive signal + ask if they want options updated
+    const impliedRefinement = !isRegenRequest && !userHasFocused && !isDetailRequest &&
+      /interesting|love|like|appeals|but|however|except|wish|if only|closer|further|different|instead|prefer/i.test(msg) &&
+      /wild card|recommended|value|upgrade|redemption|option/i.test(msg);
 
     // Also detect if THIS message itself is a preference/selection signal
     // In that case, route to focus detection rather than regen
@@ -9071,11 +9087,12 @@ const handleSend = () => {
     }
 
     const refineSteps = [
-      "Thinking through your request...",
-      "Reviewing current options...",
-      "Checking your loyalty accounts...",
-      "Finding the best alternatives...",
-      "Refining your options...",
+      "Reviewing your refinement...",
+      "Checking what you've seen so far...",
+      "Reasoning about your profile and intent...",
+      "Finding options you haven't seen...",
+      "Applying your loyalty programs...",
+      "Finalizing your updated options...",
     ];
     let refineStepIdx = 0;
     setRefineLoadingMessage(refineSteps[0]);
@@ -9438,9 +9455,11 @@ Please respond now.`,
         const refinedOptions = isEarningRefine
           ? parsed.options.map(o => o.tag === "Future Value" ? { ...o, tag: "Redemption Opportunity", tagColor: "#4CC97A" } : o)
           : parsed.options;
-        setTripOptions(validateOptions(refinedOptions));
+        const validatedRefined = validateOptions(refinedOptions);
+        setTripOptions(validatedRefined);
+        // Track all new options as shown — no repeats in future waves
+        setShownOptionIds(prev => [...new Set([...prev, ...validatedRefined.map(o => o.id)])]);
         if (parsed.summary) setTripSummary(parsed.summary);
-        // Stay on the currently expanded card if it still exists in the new options
         setExpandedId(prev => {
           if (prev && parsed.options.find(o => o.id === prev)) return prev;
           return null;
@@ -9508,18 +9527,47 @@ Please respond now.`,
         } catch(forceErr) { /* fall through to show conversational */ }
       }
 
-      // Conversational response — strip any JSON that leaked into the text
+      // Conversational response — Option B pattern
+      // Show the AI's response + "Update My Options" button if it's a refinement intent
       replyText = replyText.replace(/```json/g, "").replace(/```/g, "").trim();
-      // Strip everything from first JSON-like structure onward
       const jsonMatch = replyText.search(/(\[\{|\{"[a-zA-Z])/);
       const cleanReply = jsonMatch > -1 ? replyText.slice(0, jsonMatch).trim() : replyText;
-      // If cleanReply is empty (pure JSON response with no preamble), show neutral confirmation
       const displayReply = cleanReply && cleanReply.length > 5
         ? cleanReply
-        : (replyText && !replyText.trim().startsWith('{') && !replyText.trim().startsWith('['))
+        : replyText && !replyText.trim().startsWith('{') && !replyText.trim().startsWith('[')
           ? replyText
-          : "I've reviewed your request — let me know if you'd like to adjust anything.";
-      setRefineMessages(prev => [...prev, { role: "assistant", text: displayReply }]);
+          : "I've reviewed your request — would you like me to update your options?";
+
+      // Detect if this is a refinement intent that needs confirmation
+      const isRefinementIntent = isRegenRequest || promisedUpdate ||
+        /show me|find me|look for|update|revise|different|more like|something else|what about/i.test(msg);
+
+      if (isRefinementIntent) {
+        // Option B: show conversational acknowledgment + Update button
+        // Detect which options the user wants to keep
+        const mentionedKept = [];
+        tripOptions.forEach(opt => {
+          const tagLower = (opt.tag || '').toLowerCase();
+          const headlineLower = (opt.headline || '').toLowerCase();
+          const msgLower = msg.toLowerCase();
+          if (msgLower.includes(tagLower) || 
+              (opt.headline && headlineLower.split(' · ').some(p => msgLower.includes(p.toLowerCase().trim().slice(0, 8))))) {
+            mentionedKept.push(opt.id);
+          }
+        });
+        setKeptOptionIds(mentionedKept);
+        setPendingRefinement({ msg, reply: displayReply, mentionedKept });
+        setRefineMessages(prev => [...prev, {
+          role: 'assistant',
+          text: displayReply,
+          isRefinementConfirm: true,
+          refinementMsg: msg,
+          keptIds: mentionedKept,
+        }]);
+      } else {
+        // Pure conversational — no update needed
+        setRefineMessages(prev => [...prev, { role: "assistant", text: displayReply }]);
+      }
     } catch (e) {
       console.error("Refine error:", e);
       try { setRefineMessages(prev => [...prev, { role: "assistant", text: "Something went wrong — please try again." }]); } catch(e2) {}
@@ -9549,6 +9597,9 @@ Please respond now.`,
     setConciergeMode(true);
     conversationRef.current = [];
     setRefineMessages([]);
+    setKeptOptionIds([]); setRefinementWave(0);
+    setPreviousWaveOptions([]); setShownOptionIds([]);
+    setPendingRefinement(null);
   };
 
   const clearProfile = () => {
@@ -9797,7 +9848,12 @@ Please respond now.`,
             </div>
           ) : (
             <GridView
-              options={tripOptions.filter(o => !dismissedIds.includes(o.id))}
+              options={[
+                // Kept options always float to top
+                ...tripOptions.filter(o => keptOptionIds.includes(o.id) && !dismissedIds.includes(o.id)),
+                // Then refined/new options
+                ...tripOptions.filter(o => !keptOptionIds.includes(o.id) && !dismissedIds.includes(o.id)),
+              ]}
               onSelectOption={(id) => { mp.track("card_expanded", { tag: tripOptions.find(o=>o.id===id)?.tag, headline: tripOptions.find(o=>o.id===id)?.headline }); setExpandedId(id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
               onDismiss={(id, restore) => {
                 if (restore) {
@@ -9878,6 +9934,42 @@ Please respond now.`,
                       </button>
                     </div>
                   )}
+                  {msg.isRefinementConfirm && (
+                    <div style={{ marginTop: "10px" }}>
+                      <button onClick={async () => {
+                        // User confirmed — trigger regeneration with kept options
+                        const keptIds = msg.keptIds || [];
+                        const keptOpts = tripOptions.filter(o => keptIds.includes(o.id));
+                        // Archive current wave before regenerating
+                        if (refinementWave > 0 || tripOptions.length > 0) {
+                          setPreviousWaveOptions(prev => [...prev, ...tripOptions.filter(o => !keptIds.includes(o.id))]);
+                        }
+                        setRefinementWave(w => w + 1);
+                        setKeptOptionIds(keptIds);
+                        // Mark this message as acted on
+                        setRefineMessages(prev => prev.map((m, mi) =>
+                          mi === i ? { ...m, isRefinementConfirm: false, acted: true } : m
+                        ));
+                        // Build regen message with kept context + no-repeat constraint
+                        const keptContext = keptOpts.length > 0
+                          ? `Keep these options exactly as-is (do not change them): ${keptOpts.map(o => `[${o.tag}] ${o.headline}`).join(', ')}. `
+                          : '';
+                        const shownContext = shownOptionIds.length > 0
+                          ? `Never suggest these options again (already shown): ${tripOptions.filter(o => !keptIds.includes(o.id)).map(o => o.headline).join(', ')}. `
+                          : '';
+                        const waveContext = `This is refinement wave ${refinementWave + 1}. `;
+                        const fullRegenMsg = `${waveContext}${keptContext}${shownContext}Refinement request: ${msg.refinementMsg}. Original trip: ${conversationRef.current[0]?.content || ''}. Generate ${6 - keptOpts.length} new options. Label new options as "Refined Option · [title]". Always include 2 AI-inferred options — one extending query intent, one extending traveler profile. Never repeat shown options.`;
+                        await handleRefine(fullRegenMsg);
+                      }} style={{ background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "20px", padding: "9px 20px", cursor: "pointer", fontSize: "12px", fontWeight: "700", fontFamily: "'Playfair Display',Georgia,serif", letterSpacing: "0.06em" }}>
+                        Update My Options →
+                      </button>
+                      <div style={{ color: "#444", fontSize: "11px", marginTop: "6px" }}>
+                        {msg.keptIds?.length > 0
+                          ? `Keeping ${msg.keptIds.length} option${msg.keptIds.length > 1 ? 's' : ''} · finding ${6 - msg.keptIds.length} new`
+                          : 'Replacing all options with new results'}
+                      </div>
+                    </div>
+                  )}
                   {msg.isDeepDivePrompt && !deepDiveConfirmed && (
                     <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
                       <button onClick={() => {
@@ -9900,13 +9992,40 @@ Please respond now.`,
             </div>
           )}
           {refineLoading && (
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "6px 4px", marginBottom: "4px" }}>
-              <TypingIndicator />
-              <span style={{ color: "#5a5040", fontSize: "11px", fontStyle: "italic", animation: "pulse 2s ease infinite" }}>
-                {refineLoadingMessage || "Working on it..."}
-              </span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", padding: "8px 4px", marginBottom: "4px", animation: "fadeUp 0.3s ease forwards" }}>
+              <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+                {[0,1,2].map(i => <div key={i} style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#C9A84C", animation: `sojourn-dot 1.2s ease ${i*0.2}s infinite` }} />)}
+              </div>
+              {refineLoadingMessage && (
+                <div style={{ color: "#C9A84C", fontSize: "11px", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic", animation: "fadeUp 0.4s ease forwards" }}>
+                  {refineLoadingMessage}
+                </div>
+              )}
             </div>
           )}
+          {/* Previous wave options — collapsed drawer */}
+          {previousWaveOptions.length > 0 && (() => {
+            const [showPrev, setShowPrev] = React.useState(false);
+            return (
+              <div style={{ marginBottom: "8px" }}>
+                <button onClick={() => setShowPrev(s => !s)}
+                  style={{ background: "none", border: "none", color: "#444", fontSize: "11px", cursor: "pointer", padding: "4px 0", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ fontSize: "9px" }}>{showPrev ? "▾" : "▸"}</span>
+                  Earlier options ({previousWaveOptions.length})
+                </button>
+                {showPrev && (
+                  <div style={{ marginTop: "8px", display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                    {previousWaveOptions.map(opt => (
+                      <div key={opt.id} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "6px 10px" }}>
+                        <div style={{ color: opt.tagColor, fontSize: "9px", letterSpacing: "0.08em", marginBottom: "2px" }}>{opt.tag}</div>
+                        <div style={{ color: "#555", fontSize: "11px" }}>{opt.headline?.split(" · ").slice(0,2).join(" · ")}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", marginTop: "4px", paddingTop: "16px" }}>
             <div style={{ background: "rgba(12,11,10,0.95)", border: "1px solid rgba(201,168,76,0.18)", borderRadius: "16px", padding: "14px 16px 12px" }}>
               {/* Header */}
