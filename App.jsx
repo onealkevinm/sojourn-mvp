@@ -283,8 +283,25 @@ const getHotelProgram = (hotelName) => {
 const validateOptions = (options) => {
   if (!options || !Array.isArray(options)) return options;
 
+  // Deduplicate by property name — strip "Belmond", "The", etc. and compare core name
+  const normalizePropertyName = (headline) => {
+    if (!headline) return '';
+    const parts = headline.split(' · ');
+    const propName = parts[1] || parts[0] || '';
+    return propName.toLowerCase()
+      .replace(/^(the |a |an |belmond |andaz |hyatt |marriott |hilton |westin |sheraton |four seasons |ritz.?carlton |st\.? regis |waldorf |conrad |kimpton )/gi, '')
+      .replace(/\s+/g, ' ').trim().slice(0, 20);
+  };
+  const seenProps = new Set();
+  const deduped = options.filter(opt => {
+    const norm = normalizePropertyName(opt.headline);
+    if (!norm || seenProps.has(norm)) return false;
+    seenProps.add(norm);
+    return true;
+  });
+
   // Hard cap at 6 — the UI is designed for exactly 6 options
-  const capped = options.slice(0, 6);
+  const capped = deduped.slice(0, 6);
 
   return capped.map(opt => {
     let fixed = { ...opt };
@@ -6130,6 +6147,14 @@ const IHG_PROPERTY_URLS = {
   "Kimpton Seafire Resort + Spa": "https://www.seafireresortandspa.com/",
   "Kimpton Surfcomber Hotel": "https://www.surfcomber.com/",
   "Kimpton Sylvan Hotel": "https://www.thesylvanhotel.com/",
+  "Kimpton Canary Hotel": "https://www.canarysantabarbara.com/",
+  "Kimpton Hotel Palomar": "https://www.hotelpalomar-philadelphia.com/",
+  "Kimpton Hotel Monaco": "https://www.monaco-seattle.com/",
+  "Kimpton Lorien Hotel": "https://www.lorienhotelandspa.com/",
+  "Kimpton Everly Hotel": "https://www.everlyhotelhollywood.com/",
+  "Kimpton Hotel Van Zandt": "https://www.hotelvanzandt.com/",
+  "Kimpton Aertson Hotel": "https://www.aertsonhotel.com/",
+  "Kimpton Hotel Theta": "https://www.hoteltheta.com/",
   "Regent Santa Monica Beach": "https://santamonica.regenthotels.com/",
   "The Willard InterContinental": "https://washington.intercontinental.com/",
 };
@@ -6146,7 +6171,9 @@ const buildIHGLink = (propertyName, checkIn, checkOut, adults) => {
     const brand = IHG_BRAND_URLS[code] || 'kimptonhotels';
     return `https://www.ihg.com/${brand}/hotels/us/en/find-hotels/hotel/list?q=${encodeURIComponent(propertyName)}`;
   }
-  return null; // No verified URL — show 'coming soon'
+  // Fallback: IHG search for the property
+  const searchQuery = encodeURIComponent(propertyName.split(' · ')[0].trim());
+  return `https://www.ihg.com/content/us/en/hotels/search?qDest=${searchQuery}`;
 };
 
 
@@ -6383,6 +6410,8 @@ const INDEPENDENT_HOTEL_URLS = {
   "Villa Margherita": "https://www.belmond.com/hotels/europe/italy/amalfi-coast/belmond-villa-margherita/",
   "Villa San Michele": "https://www.belmond.com/hotels/europe/italy/florence/belmond-villa-san-michele/",
   "Villa Sant'Andrea": "https://www.belmond.com/hotels/europe/italy/taormina/belmond-villa-sant-andrea/",
+  "El Encanto": "https://www.belmond.com/hotels/north-america/us/california/santa-barbara/belmond-el-encanto/",
+  "Belmond El Encanto": "https://www.belmond.com/hotels/north-america/us/california/santa-barbara/belmond-el-encanto/",
 };
 
 
@@ -9077,7 +9106,7 @@ const handleSend = () => {
       /switch.*to|change.*to|instead.*of|rather.*than|swap.*to|move.*to/i,
       // Budget / quality changes
       /more.*budget|cheaper|less.*expensive|more.*luxury|upgrade|step.*up|step.*down|more.*affordable/i,
-      /more.*like.*wild.?card|more.*like.*luxury|more.*points|use.*my.*points|redeem/i,
+      /more.*like.*luxury|more.*points|use.*my.*points|redeem/i,
       // Destination specifics
       /in\s+(montana|idaho|utah|colorado|arizona|nevada|oregon|washington|california|texas|florida|hawaii|alaska|vermont|maine|new\s+york|new\s+mexico|wyoming|canada|mexico|europe|japan|italy|france|spain|greece|bali|thailand|costa\s+rica)/i,
       // Explicit update requests
@@ -9091,7 +9120,7 @@ const handleSend = () => {
     ];
     // ADDITIVE requests — "any others like X" — should NOT trigger full regen
     // These are keep-and-expand requests, handled by Option B confirmation pattern
-    const isAdditiveRequest = /any (others?|more|additional|similar|like (those|that|these|them))|others? like|more like (those|that|them|this)|something similar|along (those|these|similar) lines|consider|what else/i.test(msg);
+    const isAdditiveRequest = /any (others?|more|additional|similar|like (those|that|these|them))|others? like|more like (those|that|them|this|the wild|the recommended|the value|the upgrade)|something similar|along (those|these|similar) lines|consider|what else|more options like|see more like|options like (the|those|that)|like the wild card/i.test(msg);
 
     const isRegenRequest = !isAdditiveRequest && regenSignals.some(r => r.test(msg));
 
@@ -9179,7 +9208,12 @@ const handleSend = () => {
         const propParts = (opt.headline || '').toLowerCase().split(' · ');
         const propName = propParts[1]?.trim() || '';
         const propShort = propName.split(' ')[0];
-        if (propShort && propShort.length > 3 && msgLower.includes(propShort.toLowerCase())) {
+        const tagLower = (opt.tag || '').toLowerCase();
+        // Match on property name OR tag mention (e.g. "wild card", "recommended", "upgrade")
+        const tagWords = tagLower.split(/[\s·]+/).filter(w => w.length > 3);
+        const matchesTag = tagWords.some(w => msgLower.includes(w));
+        const matchesProp = propShort && propShort.length > 3 && msgLower.includes(propShort.toLowerCase());
+        if (matchesProp || matchesTag) {
           mentionedIds.push(opt.id);
         }
       });
@@ -9188,7 +9222,11 @@ const handleSend = () => {
       if (reserveOptions.length > 0) {
         // Pull up to 2 reserves, preferring ones that match the spirit of mentioned options
         const mentionedTags = mentionedIds.map(id => tripOptions.find(o => o.id === id)?.tag).filter(Boolean);
-        const matchingReserves = mentionedTags.length > 0
+        // For wild card mentions, match reserves containing "Wild Card" in tag
+        const isWildCardRequest = /wild.?card/i.test(msg);
+        const matchingReserves = isWildCardRequest
+          ? reserveOptions.filter(r => (r.tag || '').toLowerCase().includes('wild card'))
+          : mentionedTags.length > 0
           ? reserveOptions.filter(r => mentionedTags.includes(r.tag))
           : [];
         const reservesToShow = matchingReserves.length > 0
@@ -9196,7 +9234,7 @@ const handleSend = () => {
           : reserveOptions.slice(0, Math.min(2, reserveOptions.length));
         const remainingReserves = reserveOptions.filter(r => !reservesToShow.find(s => s.id === r.id));
         // Add reserves to active options instantly
-        setTripOptions(prev => [...prev, ...reservesToShow.map(r => ({ ...r, _fromReserve: true }))]);
+        setTripOptions(prev => [...prev, ...reservesToShow.map(r => ({ ...r, _fromReserve: true, (() => { const t = r.tag || ''; if (t.toLowerCase().startsWith('wild card')) { const sub = t.replace(/^wild card\s*[·\-]\s*/i, '').trim(); const isReasoning = /^(intent|profile|extension|focus|reasoning|experience|based|local|boutique|design|architecture|adventure|cultural)/i.test(sub); const hasLocation = /,\s*[A-Z]|Montana|Oregon|California|Colorado|Arizona|Scottsdale|Seattle/i.test(sub); const isPlace = !isReasoning && (hasLocation || (sub.split(' ').length <= 2 && /^[A-Z][a-z]+$/.test((sub.split(' ')[0] || '')))); return isPlace ? 'Refined Option · Wild Card' : `Refined Option · Wild Card · ${sub}`; } return `Refined Option · ${t}`; })() }))]);
         setReserveOptions(remainingReserves);
         const reserveNames = reservesToShow.map(r => r.headline?.split(' · ')[1]?.trim() || r.headline?.split(' · ')[0]?.trim()).filter(Boolean);
         setRefineMessages(prev => [...prev, {
@@ -9967,7 +10005,7 @@ Please respond now.`,
                   // Swap: remove dismissed, add reserve — no need to track as dismissed
                   setTripOptions(prev => [
                     ...prev.filter(o => o.id !== id),
-                    { ...matchingReserve, _fromReserve: true, id: matchingReserve.id || (Date.now()) }
+                    { ...matchingReserve, _fromReserve: true, id: matchingReserve.id || (Date.now()), (() => { const t = matchingReserve.tag || ''; if (t.toLowerCase().startsWith('wild card')) { const sub = t.replace(/^wild card\s*[·\-]\s*/i, '').trim(); const isReasoning = /^(intent|profile|extension|focus|reasoning|experience|based|local|boutique|design|architecture|adventure|cultural)/i.test(sub); const hasLocation = /,\s*[A-Z]|Montana|Oregon|California|Colorado|Arizona|Scottsdale|Seattle/i.test(sub); const isPlace = !isReasoning && (hasLocation || (sub.split(' ').length <= 2 && /^[A-Z][a-z]+$/.test((sub.split(' ')[0] || '')))); return isPlace ? 'Refined Option · Wild Card' : `Refined Option · Wild Card · ${sub}`; } return `Refined Option · ${t}`; })() }
                   ]);
                   setReserveOptions(remainingReserves);
                   setRefineMessages(prev => [...prev, {
