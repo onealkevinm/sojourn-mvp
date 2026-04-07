@@ -6410,8 +6410,7 @@ const INDEPENDENT_HOTEL_URLS = {
   "Villa Margherita": "https://www.belmond.com/hotels/europe/italy/amalfi-coast/belmond-villa-margherita/",
   "Villa San Michele": "https://www.belmond.com/hotels/europe/italy/florence/belmond-villa-san-michele/",
   "Villa Sant'Andrea": "https://www.belmond.com/hotels/europe/italy/taormina/belmond-villa-sant-andrea/",
-  "El Encanto": "https://www.belmond.com/hotels/north-america/us/california/santa-barbara/belmond-el-encanto/",
-  "Belmond El Encanto": "https://www.belmond.com/hotels/north-america/us/california/santa-barbara/belmond-el-encanto/",
+  "El Encanto": "https://www.elencanto.com/",
 };
 
 
@@ -8374,7 +8373,12 @@ export default function SojournApp() {
   const [refineMessages, setRefineMessages] = useState([]);
   const [refineLoadingMessage, setRefineLoadingMessage] = useState("");
   const [keptOptionIds, setKeptOptionIds] = useState([]);
-  const [reserveOptions, setReserveOptions] = useState([]); // options 7-10, consumed on dismiss/refine // options user wants to keep
+  const [reserveOptions, setReserveOptions] = useState([]); // options 7-10, consumed on dismiss/refine
+  const reserveOptionsRef = React.useRef([]); // always-current ref to avoid stale closures
+  const updateReserves = (newReserves) => {
+    reserveOptionsRef.current = newReserves;
+    setReserveOptions(newReserves);
+  }; // options user wants to keep
   const [refinementWave, setRefinementWave] = useState(0); // which wave of refinement we're on
   const [previousWaveOptions, setPreviousWaveOptions] = useState([]); // collapsed prior wave
   const [shownOptionIds, setShownOptionIds] = useState([]); // all options ever shown — no repeats
@@ -8972,7 +8976,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
       // Parse and store reserve options (0-4) for instant refinement
       const rawReserves = parsed.reserve_options || [];
       const validatedReserves = rawReserves.length > 0 ? validateOptions(rawReserves) : [];
-      setReserveOptions(validatedReserves);
+      updateReserves(validatedReserves);
       console.log(`[Sojourn] ${validatedReserves.length} reserve options cached`);
       setPhase("results");
       // preserve fromDealPillRef — reset only after results are shown
@@ -9150,8 +9154,7 @@ const handleSend = () => {
         }
       });
       const keptForRegen = tripOptions.filter(o => mentionedInRegen.includes(o.id));
-      // Archive current non-kept options as previous wave
-      setPreviousWaveOptions(prev => [...prev, ...tripOptions.filter(o => !mentionedInRegen.includes(o.id))]);
+      // Reserve swaps are in-place — no archive needed
       setRefinementWave(w => w + 1);
       setKeptOptionIds(mentionedInRegen);
       const originalQuery = (conversationRef.current || []).filter(m => m.role === 'user').map(m => m.content).join(' ');
@@ -9219,23 +9222,24 @@ const handleSend = () => {
       });
 
       // Check reserves first — can we serve this without a Claude call?
-      if (reserveOptions.length > 0) {
+      const currentReservesAdd = reserveOptionsRef.current;
+      if (currentReservesAdd.length > 0) {
         // Pull up to 2 reserves, preferring ones that match the spirit of mentioned options
         const mentionedTags = mentionedIds.map(id => tripOptions.find(o => o.id === id)?.tag).filter(Boolean);
         // For wild card mentions, match reserves containing "Wild Card" in tag
         const isWildCardRequest = /wild.?card/i.test(msg);
         const matchingReserves = isWildCardRequest
-          ? reserveOptions.filter(r => (r.tag || '').toLowerCase().includes('wild card'))
+          ? currentReservesAdd.filter(r => (r.tag || '').toLowerCase().includes('wild card'))
           : mentionedTags.length > 0
-          ? reserveOptions.filter(r => mentionedTags.includes(r.tag))
+          ? currentReservesAdd.filter(r => mentionedTags.includes(r.tag))
           : [];
         const reservesToShow = matchingReserves.length > 0
           ? matchingReserves.slice(0, 2)
-          : reserveOptions.slice(0, Math.min(2, reserveOptions.length));
-        const remainingReserves = reserveOptions.filter(r => !reservesToShow.find(s => s.id === r.id));
+          : currentReservesAdd.slice(0, Math.min(2, currentReservesAdd.length));
+        const remainingReserves = currentReservesAdd.filter(r => !reservesToShow.find(s => s.id === r.id));
         // Add reserves to active options instantly
-        setTripOptions(prev => [...prev, ...reservesToShow.map(r => ({ ...r, _fromReserve: true, (() => { const t = r.tag || ''; if (t.toLowerCase().startsWith('wild card')) { const sub = t.replace(/^wild card\s*[·\-]\s*/i, '').trim(); const isReasoning = /^(intent|profile|extension|focus|reasoning|experience|based|local|boutique|design|architecture|adventure|cultural)/i.test(sub); const hasLocation = /,\s*[A-Z]|Montana|Oregon|California|Colorado|Arizona|Scottsdale|Seattle/i.test(sub); const isPlace = !isReasoning && (hasLocation || (sub.split(' ').length <= 2 && /^[A-Z][a-z]+$/.test((sub.split(' ')[0] || '')))); return isPlace ? 'Refined Option · Wild Card' : `Refined Option · Wild Card · ${sub}`; } return `Refined Option · ${t}`; })() }))]);
-        setReserveOptions(remainingReserves);
+        setTripOptions(prev => [...prev, ...reservesToShow.map(r => ({ ...r, _fromReserve: true, tag: (() => { const t = r.tag || ''; if (t.toLowerCase().startsWith('wild card')) { const sub = t.replace(/^wild card\s*[·\-]\s*/i, '').trim(); const isReasoning = /^(intent|profile|extension|focus|reasoning|experience|based|local|boutique|design|architecture|adventure|cultural)/i.test(sub); const hasLocation = /,\s*[A-Z]|Montana|Oregon|California|Colorado|Arizona|Scottsdale|Seattle/i.test(sub); const isPlace = !isReasoning && (hasLocation || (sub.split(' ').length <= 2 && /^[A-Z][a-z]+$/.test((sub.split(' ')[0] || '')))); return isPlace ? 'Refined Option · Wild Card' : `Refined Option · Wild Card · ${sub}`; } return `Refined Option · ${t}`; })() }))]);
+        updateReserves(remainingReserves);
         const reserveNames = reservesToShow.map(r => r.headline?.split(' · ')[1]?.trim() || r.headline?.split(' · ')[0]?.trim()).filter(Boolean);
         setRefineMessages(prev => [...prev, {
           role: 'assistant',
@@ -9734,7 +9738,7 @@ Please respond now.`,
     setRefineMessages([]);
     setKeptOptionIds([]); setRefinementWave(0);
     setPreviousWaveOptions([]); setShownOptionIds([]);
-    setPendingRefinement(null); setReserveOptions([]);
+    setPendingRefinement(null); updateReserves([]);
   };
 
   const clearProfile = () => {
@@ -9997,17 +10001,18 @@ Please respond now.`,
                 }
                 const opt = tripOptions.find(o => o.id === id);
                 mp.track("card_dismissed", { tag: opt?.tag, headline: opt?.headline });
-                // Pull from reserves instantly if available — no API call
-                if (reserveOptions.length > 0) {
-                  const matchingReserve = reserveOptions.find(r => r.tag === opt?.tag)
-                    || reserveOptions[0];
-                  const remainingReserves = reserveOptions.filter(r => r.id !== matchingReserve.id);
+                // Pull from reserves instantly — use ref to avoid stale closure
+                const currentReserves = reserveOptionsRef.current;
+                if (currentReserves.length > 0) {
+                  const matchingReserve = currentReserves.find(r => r.tag === opt?.tag)
+                    || currentReserves[0];
+                  const remainingReserves = currentReserves.filter(r => r.id !== matchingReserve.id);
                   // Swap: remove dismissed, add reserve — no need to track as dismissed
                   setTripOptions(prev => [
                     ...prev.filter(o => o.id !== id),
-                    { ...matchingReserve, _fromReserve: true, id: matchingReserve.id || (Date.now()), (() => { const t = matchingReserve.tag || ''; if (t.toLowerCase().startsWith('wild card')) { const sub = t.replace(/^wild card\s*[·\-]\s*/i, '').trim(); const isReasoning = /^(intent|profile|extension|focus|reasoning|experience|based|local|boutique|design|architecture|adventure|cultural)/i.test(sub); const hasLocation = /,\s*[A-Z]|Montana|Oregon|California|Colorado|Arizona|Scottsdale|Seattle/i.test(sub); const isPlace = !isReasoning && (hasLocation || (sub.split(' ').length <= 2 && /^[A-Z][a-z]+$/.test((sub.split(' ')[0] || '')))); return isPlace ? 'Refined Option · Wild Card' : `Refined Option · Wild Card · ${sub}`; } return `Refined Option · ${t}`; })() }
+                    { ...matchingReserve, _fromReserve: true, id: matchingReserve.id || (Date.now()), tag: (() => { const t = matchingReserve.tag || ''; if (t.toLowerCase().startsWith('wild card')) { const sub = t.replace(/^wild card\s*[·\-]\s*/i, '').trim(); const isReasoning = /^(intent|profile|extension|focus|reasoning|experience|based|local|boutique|design|architecture|adventure|cultural)/i.test(sub); const hasLocation = /,\s*[A-Z]|Montana|Oregon|California|Colorado|Arizona|Scottsdale|Seattle/i.test(sub); const isPlace = !isReasoning && (hasLocation || (sub.split(' ').length <= 2 && /^[A-Z][a-z]+$/.test((sub.split(' ')[0] || '')))); return isPlace ? 'Refined Option · Wild Card' : `Refined Option · Wild Card · ${sub}`; } return `Refined Option · ${t}`; })() }
                   ]);
-                  setReserveOptions(remainingReserves);
+                  updateReserves(remainingReserves);
                   setRefineMessages(prev => [...prev, {
                     role: 'assistant',
                     text: `Swapped in a new option — scroll up to see it.`,
@@ -10152,26 +10157,7 @@ Please respond now.`,
               )}
             </div>
           )}
-          {/* Previous wave options — collapsed drawer */}
-          {previousWaveOptions.length > 0 && (
-            <div style={{ marginBottom: "8px" }}>
-              <button onClick={() => setShowPrevWave(s => !s)}
-                style={{ background: "none", border: "none", color: "#444", fontSize: "11px", cursor: "pointer", padding: "4px 0", display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ fontSize: "9px" }}>{showPrevWave ? "▾" : "▸"}</span>
-                Earlier options ({previousWaveOptions.length})
-              </button>
-              {showPrevWave && (
-                <div style={{ marginTop: "8px", display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                  {previousWaveOptions.map(opt => (
-                    <div key={opt.id} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "6px 10px" }}>
-                      <div style={{ color: opt.tagColor, fontSize: "9px", letterSpacing: "0.08em", marginBottom: "2px" }}>{opt.tag}</div>
-                      <div style={{ color: "#555", fontSize: "11px" }}>{opt.headline?.split(" · ").slice(0,2).join(" · ")}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", marginTop: "4px", paddingTop: "16px" }}>
             <div style={{ background: "rgba(12,11,10,0.95)", border: "1px solid rgba(201,168,76,0.18)", borderRadius: "16px", padding: "14px 16px 12px" }}>
               {/* Header */}
