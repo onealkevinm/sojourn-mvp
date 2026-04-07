@@ -5829,9 +5829,9 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                       <button
                         onClick={e => { e.stopPropagation(); onDismiss(opt.id); }}
                         title="Not for me"
-                        style={{ background: "none", border: "none", color: "#2a2a2a", fontSize: "13px", cursor: "pointer", padding: "4px 6px", borderRadius: "6px", lineHeight: 1 }}
-                        onMouseEnter={e => e.currentTarget.style.color = "#666"}
-                        onMouseLeave={e => e.currentTarget.style.color = "#2a2a2a"}
+                        style={{ background: "none", border: "none", color: "#6a5a4a", fontSize: "13px", cursor: "pointer", padding: "4px 6px", borderRadius: "6px", lineHeight: 1 }}
+                        onMouseEnter={e => e.currentTarget.style.color = "#C9A84C"}
+                        onMouseLeave={e => e.currentTarget.style.color = "#6a5a4a"}
                       >✕</button>
                     )}
                   </td>}
@@ -8534,12 +8534,12 @@ CRITICAL: You MUST also generate exactly 4 RESERVE options in the "reserve_optio
 
 Reserve options MUST include all 4 slots:
 - reserve_options[0]: Next best overall — a strong alternative to the Recommended that didn't make the primary cut. Same destination, different property or approach. Tag: "Recommended" or the most fitting primary bucket tag.
-- reserve_options[1]: Next best quality/premium — a different premium property the traveler would enjoy. Tag: "Quality Upgrade".
+- reserve_options[1]: Next best quality/premium — a different premium property the traveler would enjoy. Tag: "Quality Upgrade". Headline format: "City · Actual Hotel Name · What Makes It Special" — the specific hotel name must be in position 2.
 - reserve_options[2]: Wild Card — Intent Extension — a different inference on what the traveler was really asking for. Must be genuinely different from Wild Card in primary 6. Tag: "Wild Card · [Reasoning Label]".
 - reserve_options[3]: Wild Card — Profile Extension — a different property inferred from traveler profile signals. Must be genuinely different from Wild Card in primary 6. Tag: "Wild Card · [Reasoning Label]".
 
 Even for smaller markets: almost every destination has at least 4 viable alternative properties beyond the primary 6. Fill all 4 reserve slots. Only leave a slot empty if the destination genuinely has fewer than 10 distinct quality hotel options total.
-Reserves use the exact same JSON schema as primary options. Output ONLY JSON — no markdown, no explanation, start with { end with }.
+Reserves use the exact same JSON schema as primary options. Headline format for ALL reserves: "City · Actual Hotel/Property Name · What Makes It Distinctive" — position 2 MUST be the specific hotel name (e.g. "The D Las Vegas" not "The Mob Museum Area"). Output ONLY JSON — no markdown, no explanation, start with { end with }.
 
 THE 6 OPTIONS (always in this order):
 CRITICAL RULE BEFORE GENERATING ANY OPTION: If the user named a specific destination, ALL 6 options must be AT that destination. Never substitute a different destination to optimize a bucket — find the best hotel/flight FOR THAT DESTINATION that fits the bucket criteria.
@@ -9264,7 +9264,7 @@ const handleSend = () => {
           : currentReservesAdd.slice(0, Math.min(2, currentReservesAdd.length));
         const remainingReserves = currentReservesAdd.filter(r => !reservesToShow.find(s => s.id === r.id));
         // Add reserves to active options instantly
-        setTripOptions(prev => [...prev, ...reservesToShow.map(r => ({ ...r, _fromReserve: true, tag: (() => { const t = r.tag || ''; if (t.toLowerCase().startsWith('wild card')) { const sub = t.replace(/^wild card\s*[·\-]\s*/i, '').trim(); const isReasoning = /^(intent|profile|extension|focus|reasoning|experience|based|local|boutique|design|architecture|adventure|cultural)/i.test(sub); const hasLocation = /,\s*[A-Z]|Montana|Oregon|California|Colorado|Arizona|Scottsdale|Seattle/i.test(sub); const isPlace = !isReasoning && (hasLocation || (sub.split(' ').length <= 2 && /^[A-Z][a-z]+$/.test((sub.split(' ')[0] || '')))); return isPlace ? 'Refined Option · Wild Card' : `Refined Option · Wild Card · ${sub}`; } return `Refined Option · ${t}`; })() }))]);
+        setTripOptions(prev => [...prev, ...reservesToShow.map(r => ({ ...r, _fromReserve: true, tag: (() => { const t = r.tag || ''; if (t.toLowerCase().startsWith('wild card')) { const sub = t.replace(/^wild card\\s*[·\\-]\\s*/i, '').trim(); const bad = /,\\s*[A-Z][a-z]|alaska|delta|united|marriott|hyatt|hilton|chase|amex|sapphire|mileage|skymile|bonvoy|connection|your profile|based on your/i.test(sub); return (sub && !bad) ? `Refined Option · Wild Card · ${sub}` : 'Refined Option · Wild Card'; } return `Refined Option · ${t}`; })() }))]);
         updateReserves(remainingReserves);
         const reserveNames = reservesToShow.map(r => r.headline?.split(' · ')[1]?.trim() || r.headline?.split(' · ')[0]?.trim()).filter(Boolean);
         setRefineMessages(prev => [...prev, {
@@ -10036,12 +10036,13 @@ Please respond now.`,
                   // Swap: remove dismissed, add reserve — no need to track as dismissed
                   setTripOptions(prev => [
                     ...prev.filter(o => o.id !== id),
-                    { ...matchingReserve, _fromReserve: true, id: matchingReserve.id || (Date.now()), tag: (() => { const t = matchingReserve.tag || ''; if (t.toLowerCase().startsWith('wild card')) { const sub = t.replace(/^wild card\s*[·\-]\s*/i, '').trim(); const isReasoning = /^(intent|profile|extension|focus|reasoning|experience|based|local|boutique|design|architecture|adventure|cultural)/i.test(sub); const hasLocation = /,\s*[A-Z]|Montana|Oregon|California|Colorado|Arizona|Scottsdale|Seattle/i.test(sub); const isPlace = !isReasoning && (hasLocation || (sub.split(' ').length <= 2 && /^[A-Z][a-z]+$/.test((sub.split(' ')[0] || '')))); return isPlace ? 'Refined Option · Wild Card' : `Refined Option · Wild Card · ${sub}`; } return `Refined Option · ${t}`; })() }
+                    { ...matchingReserve, _fromReserve: true, id: matchingReserve.id || (Date.now()), tag: (() => { const t = matchingReserve.tag || ''; if (t.toLowerCase().startsWith('wild card')) { const sub = t.replace(/^wild card\\s*[·\\-]\\s*/i, '').trim(); const bad = /,\\s*[A-Z][a-z]|alaska|delta|united|marriott|hyatt|hilton|chase|amex|sapphire|mileage|skymile|bonvoy|connection|your profile|based on your/i.test(sub); return (sub && !bad) ? `Refined Option · Wild Card · ${sub}` : 'Refined Option · Wild Card'; } return `Refined Option · ${t}`; })() }
                   ]);
                   updateReserves(remainingReserves);
+                  const swappedName = matchingReserve.headline?.split(' · ').slice(0, 2).join(' · ') || 'a new option';
                   setRefineMessages(prev => [...prev, {
                     role: 'assistant',
-                    text: `Swapped in a new option — scroll up to see it.`,
+                    text: `Swapped in ${swappedName} — scroll up to see it.`,
                     isOptionsUpdate: true
                   }]);
                   return;
@@ -10293,7 +10294,7 @@ Please respond now.`,
                   value={refineInput}
                   onChange={e => setRefineInput(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter") { e.stopPropagation(); handleRefine(); } }}
-                  placeholder={`${(conversationRef.current&&conversationRef.current[0]&&conversationRef.current[0].content||"").slice(0,80) || "Continue your search..."}...`}
+                  placeholder=""
                   style={{ flex: 1, background: "transparent", border: "none", color: "#e8e4dc", fontSize: "12px", padding: "9px 0", fontFamily: "'DM Sans',system-ui,sans-serif", outline: "none" }}
                 />
                 {refineLoading ? (
