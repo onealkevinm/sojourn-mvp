@@ -1333,6 +1333,11 @@ const QUALITY_SIGNALS_DB = {
   "Thompson Nashville": { tier: "luxury", cn_hot_list: true, notes: "Nashville, World of Hyatt" },
   "Thompson Washington DC": { tier: "luxury", notes: "Navy Yard DC, World of Hyatt" },
   "Alila Ventana Big Sur": { tier: "ultra_luxury", michelin_keys: 3, notes: "See Ventana Big Sur" },
+  "Andaz Scottsdale Resort and Bungalows": "https://www.hyatt.com/hotel/arizona/andaz-scottsdale-resort-and-bungalows/phxaz",
+  "Andaz Scottsdale": "https://www.hyatt.com/hotel/arizona/andaz-scottsdale-resort-and-bungalows/phxaz",
+  "Hyatt Regency Scottsdale Resort and Spa at Gainey Ranch": "https://www.hyatt.com/hotel/arizona/hyatt-regency-scottsdale-resort-and-spa-at-gainey-ranch/phxrs",
+  "Hyatt Regency Scottsdale": "https://www.hyatt.com/hotel/arizona/hyatt-regency-scottsdale-resort-and-spa-at-gainey-ranch/phxrs",
+  "Thompson Scottsdale": "https://www.hyatt.com/hotel/arizona/thompson-scottsdale/phxts",
   "Alila Marea Beach": { tier: "luxury", cn_hot_list: true, notes: "Encinitas CA, World of Hyatt" },
   "Hotel Jackson": { tier: "luxury", notes: "Jackson WY, Autograph Collection/Marriott" },
   "Hotel 43": { tier: "luxury", notes: "Boise ID, Autograph Collection/Marriott" },
@@ -6068,13 +6073,10 @@ const HYATT_CLOSED = new Set(["Calistoga Ranch"]);
 const buildHyattLink = (propertyName, checkIn, checkOut, adults) => {
   if (HYATT_CLOSED.has(propertyName)) return null;
   const baseUrl = tryNameVariants(propertyName, HYATT_PROPERTY_URLS);
-  const numAdults = adults || 2;
-  if (baseUrl) {
-    // Link to property overview page — consistent with Marriott approach
-    return baseUrl;
-  }
-  // No verified URL — return null → "coming soon"
-  return null;
+  if (baseUrl) return baseUrl;
+  // Fallback: search Hyatt.com for the property name
+  const searchQuery = encodeURIComponent(propertyName.replace(/^(The|A|An) /i, '').split(' · ')[0].trim());
+  return `https://www.hyatt.com/search?searchQuery=${searchQuery}`;
 };
 
 // IHG property codes (qSlH parameter)
@@ -8347,6 +8349,7 @@ export default function SojournApp() {
   const [previousWaveOptions, setPreviousWaveOptions] = useState([]); // collapsed prior wave
   const [shownOptionIds, setShownOptionIds] = useState([]); // all options ever shown — no repeats
   const [pendingRefinement, setPendingRefinement] = useState(null); // confirmation-pending refinement
+  const [showPrevWave, setShowPrevWave] = useState(false); // previous wave drawer
   const [itineraryOption, setItineraryOption] = useState(null);
   const [bookingOption, setBookingOption] = useState(null);
   const [optimizeRecs, setOptimizeRecs] = useState(null);
@@ -10042,28 +10045,25 @@ Please respond now.`,
             </div>
           )}
           {/* Previous wave options — collapsed drawer */}
-          {previousWaveOptions.length > 0 && (() => {
-            const [showPrev, setShowPrev] = React.useState(false);
-            return (
-              <div style={{ marginBottom: "8px" }}>
-                <button onClick={() => setShowPrev(s => !s)}
-                  style={{ background: "none", border: "none", color: "#444", fontSize: "11px", cursor: "pointer", padding: "4px 0", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "9px" }}>{showPrev ? "▾" : "▸"}</span>
-                  Earlier options ({previousWaveOptions.length})
-                </button>
-                {showPrev && (
-                  <div style={{ marginTop: "8px", display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                    {previousWaveOptions.map(opt => (
-                      <div key={opt.id} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "6px 10px" }}>
-                        <div style={{ color: opt.tagColor, fontSize: "9px", letterSpacing: "0.08em", marginBottom: "2px" }}>{opt.tag}</div>
-                        <div style={{ color: "#555", fontSize: "11px" }}>{opt.headline?.split(" · ").slice(0,2).join(" · ")}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
+          {previousWaveOptions.length > 0 && (
+            <div style={{ marginBottom: "8px" }}>
+              <button onClick={() => setShowPrevWave(s => !s)}
+                style={{ background: "none", border: "none", color: "#444", fontSize: "11px", cursor: "pointer", padding: "4px 0", display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ fontSize: "9px" }}>{showPrevWave ? "▾" : "▸"}</span>
+                Earlier options ({previousWaveOptions.length})
+              </button>
+              {showPrevWave && (
+                <div style={{ marginTop: "8px", display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  {previousWaveOptions.map(opt => (
+                    <div key={opt.id} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "8px", padding: "6px 10px" }}>
+                      <div style={{ color: opt.tagColor, fontSize: "9px", letterSpacing: "0.08em", marginBottom: "2px" }}>{opt.tag}</div>
+                      <div style={{ color: "#555", fontSize: "11px" }}>{opt.headline?.split(" · ").slice(0,2).join(" · ")}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", marginTop: "4px", paddingTop: "16px" }}>
             <div style={{ background: "rgba(12,11,10,0.95)", border: "1px solid rgba(201,168,76,0.18)", borderRadius: "16px", padding: "14px 16px 12px" }}>
               {/* Header */}
