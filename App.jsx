@@ -9011,6 +9011,29 @@ const handleSend = () => {
     return null;
   };
 
+
+  // Build a clean refinement prompt for callClaude
+  // keptOpts: options to preserve exactly
+  // replacedOpts: options being replaced (for no-repeat)  
+  // signal: verbal refinement from user (may be empty)
+  // slotsToFill: how many new options to generate
+  const buildRefinementPrompt = (keptOpts, replacedOpts, signal, slotsToFill) => {
+    const keptContext = keptOpts.length > 0
+      ? `Keep these options EXACTLY as-is — same tag, same headline, same all fields: ${keptOpts.map(o => `[${o.tag}] ${o.headline}`).join(', ')}. Do not relabel, restructure, or modify them in any way. `
+      : '';
+    const noRepeat = replacedOpts.length > 0
+      ? `Do NOT suggest these options again (already shown or dismissed): ${replacedOpts.map(o => o.headline).join(', ')}. `
+      : '';
+    const signalContext = signal
+      ? `Refinement signal from traveler: "${signal}". Use this to guide the new options — stay in the spirit of what they liked. `
+      : '';
+    const bucketHint = keptOpts.length > 0
+      ? `The traveler kept ${keptOpts.map(o => o.tag).join(' and ')} — generate options that are in the same spirit (similar quality tier, experience type, or value approach). `
+      : '';
+    const originalTrip = conversationRef.current[0]?.content || '';
+    return `${keptContext}${noRepeat}${signalContext}${bucketHint}Generate exactly ${slotsToFill} new option${slotsToFill !== 1 ? 's' : ''} to complete the set of 6. Label new options with tag "Refined Option" and tagColor "#9A7AC9". Original trip context: ${originalTrip}`;
+  };
+
   const handleRefine = async (directMsg) => {
     const msg = directMsg || refineInput.trim();
     if (!msg || refineLoading) return;
@@ -9141,38 +9164,40 @@ const handleSend = () => {
     // "Any others like those?" → acknowledge + show Update My Options button
     // No API call needed — we know what they're asking
     if (isAdditiveRequest && !userHasFocused) {
+      const msgLower = msg.toLowerCase();
+      const activeOpts = tripOptions.filter(o => !dismissedIds.includes(o.id));
+      // Find explicitly mentioned options user wants to keep
       const mentionedKept = [];
-      tripOptions.forEach(opt => {
-        const msgLower = msg.toLowerCase();
-        const tagLower = (opt.tag || '').toLowerCase();
+      activeOpts.forEach(opt => {
         const propParts = (opt.headline || '').toLowerCase().split(' · ');
-        const propName = propParts[1]?.trim().slice(0, 12) || propParts[0]?.trim().slice(0, 12);
-        if (msgLower.includes(tagLower) ||
-            (propName && propName.length > 4 && msgLower.includes(propName.slice(0, 8)))) {
+        const propName = propParts[1]?.trim() || '';
+        const propShort = propName.split(' ')[0];
+        if (propShort && propShort.length > 3 && msgLower.includes(propShort.toLowerCase())) {
           mentionedKept.push(opt.id);
         }
       });
-      setKeptOptionIds(mentionedKept);
-      const keptNames = mentionedKept.map(id => {
+      // Determine kept vs slots to fill
+      const keptIds = mentionedKept.length > 0 ? mentionedKept : activeOpts.map(o => o.id);
+      const slotsToFill = 6 - keptIds.length;
+      setKeptOptionIds(keptIds);
+      const keptNames = keptIds.slice(0,2).map(id => {
         const opt = tripOptions.find(o => o.id === id);
-        return opt ? opt.headline?.split(' · ')[0]?.trim() : null;
+        return opt?.headline?.split(' · ')[1]?.trim() || opt?.headline?.split(' · ')[0]?.trim();
       }).filter(Boolean);
-      // Build a warm acknowledgment restating what the user said
       const ack = mentionedKept.length > 0
-        ? `You're drawn to ${keptNames.join(' and ')} — and want to see more options in that spirit. I'll keep those and find ${6 - mentionedKept.length} more along those lines.`
-        : `You want to see more options like the ones that caught your eye — I'll keep what's working and find new directions to consider.`;
+        ? `Got it — I\'ll keep ${keptNames.join(' and ')} and find ${slotsToFill} more in that spirit.`
+        : dismissedIds.length > 0
+        ? `I\'ll replace the ${dismissedIds.length} option${dismissedIds.length > 1 ? 's' : ''} you dismissed with better fits.`
+        : `I\'ll find a few more options in that spirit alongside your current ones.`;
       setRefineMessages(prev => [...prev, {
         role: 'assistant',
         text: ack,
         isRefinementConfirm: true,
         refinementMsg: msg,
-        keptIds: mentionedKept,
+        keptIds,
+        slotsToFill,
       }]);
-      // Brief pause so loading dots are visible, then show confirmation
-      setTimeout(() => {
-        setRefineLoading(false);
-        setRefineLoadingMessage('');
-      }, 600);
+      setTimeout(() => { setRefineLoading(false); setRefineLoadingMessage(''); }, 600);
       clearTimeout(refineTimeout);
       return;
     }
@@ -9966,39 +9991,35 @@ Please respond now.`,
                       </button>
                     </div>
                   )}
-                  {msg.isRefinementConfirm && (
+                  {msg.isRefinementConfirm && !msg.acted && (
                     <div style={{ marginTop: "10px" }}>
-                      <button onClick={async () => {
-                        // User confirmed — trigger regeneration with kept options
+                      <button onClick={() => {
                         const keptIds = msg.keptIds || [];
+                        const slotsToFill = msg.slotsToFill ?? (6 - keptIds.length);
                         const keptOpts = tripOptions.filter(o => keptIds.includes(o.id));
-                        // Archive current wave before regenerating
-                        if (refinementWave > 0 || tripOptions.length > 0) {
-                          setPreviousWaveOptions(prev => [...prev, ...tripOptions.filter(o => !keptIds.includes(o.id))]);
-                        }
-                        setRefinementWave(w => w + 1);
-                        setKeptOptionIds(keptIds);
-                        // Mark this message as acted on
+                        const replacedOpts = tripOptions.filter(o => !keptIds.includes(o.id));
+                        // Mark as acted so button disappears
                         setRefineMessages(prev => prev.map((m, mi) =>
-                          mi === i ? { ...m, isRefinementConfirm: false, acted: true } : m
+                          mi === i ? { ...m, acted: true } : m
                         ));
-                        // Build regen message with kept context + no-repeat constraint
-                        const keptContext = keptOpts.length > 0
-                          ? `Keep these options exactly as-is (do not change them): ${keptOpts.map(o => `[${o.tag}] ${o.headline}`).join(', ')}. `
-                          : '';
-                        const shownContext = shownOptionIds.length > 0
-                          ? `Never suggest these options again (already shown): ${tripOptions.filter(o => !keptIds.includes(o.id)).map(o => o.headline).join(', ')}. `
-                          : '';
-                        const waveContext = `This is refinement wave ${refinementWave + 1}. `;
-                        const fullRegenMsg = `${waveContext}${keptContext}${shownContext}Refinement request: ${msg.refinementMsg}. Original trip: ${conversationRef.current[0]?.content || ''}. Generate ${6 - keptOpts.length} new options. Label new options as "Refined Option · [title]". Always include 2 AI-inferred options — one extending query intent, one extending traveler profile. Never repeat shown options.`;
-                        await handleRefine(fullRegenMsg);
+                        // Update state
+                        setKeptOptionIds(keptIds);
+                        // Build clean prompt via helper and call Claude directly
+                        const prompt = buildRefinementPrompt(keptOpts, replacedOpts, msg.refinementMsg, slotsToFill);
+                        conversationRef.current = [{ role: 'user', content: prompt }];
+                        setRefineMessages(prev => [...prev, {
+                          role: 'assistant',
+                          text: `Finding ${slotsToFill} new option${slotsToFill !== 1 ? 's' : ''} — scroll up in a moment ↑`,
+                          isOptionsUpdate: true
+                        }]);
+                        callClaude(prompt);
                       }} style={{ background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "20px", padding: "9px 20px", cursor: "pointer", fontSize: "12px", fontWeight: "700", fontFamily: "'Playfair Display',Georgia,serif", letterSpacing: "0.06em" }}>
                         Update My Options →
                       </button>
                       <div style={{ color: "#444", fontSize: "11px", marginTop: "6px" }}>
-                        {msg.keptIds?.length > 0
-                          ? `Keeping ${msg.keptIds.length} option${msg.keptIds.length > 1 ? 's' : ''} · finding ${6 - msg.keptIds.length} new`
-                          : 'Replacing all options with new results'}
+                        {(msg.slotsToFill ?? (6 - (msg.keptIds?.length || 0))) > 0
+                          ? `Keeping ${msg.keptIds?.length || 0} · finding ${msg.slotsToFill ?? (6 - (msg.keptIds?.length || 0))} new`
+                          : 'Updating your options'}
                       </div>
                     </div>
                   )}
@@ -10063,6 +10084,29 @@ Please respond now.`,
           )}
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", marginTop: "4px", paddingTop: "16px" }}>
             <div style={{ background: "rgba(12,11,10,0.95)", border: "1px solid rgba(201,168,76,0.18)", borderRadius: "16px", padding: "14px 16px 12px" }}>
+              {/* Dismiss-triggered replacement prompt */}
+              {dismissedIds.length > 0 && keptOptionIds.length === 0 && (
+                <div style={{ marginBottom: "12px", padding: "10px 12px", background: "rgba(201,168,76,0.05)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ color: "#9a9088", fontSize: "12px" }}>
+                    {dismissedIds.length} option{dismissedIds.length > 1 ? 's' : ''} dismissed — find replacements?
+                  </div>
+                  <button onClick={() => {
+                    const activeOpts = tripOptions.filter(o => !dismissedIds.includes(o.id));
+                    const keptIds = activeOpts.map(o => o.id);
+                    setKeptOptionIds(keptIds);
+                    const prompt = buildRefinementPrompt(activeOpts, tripOptions.filter(o => dismissedIds.includes(o.id)), '', dismissedIds.length);
+                    conversationRef.current = [{ role: 'user', content: prompt }];
+                    setRefineMessages(prev => [...prev, {
+                      role: 'assistant',
+                      text: `Finding ${dismissedIds.length} replacement option${dismissedIds.length > 1 ? 's' : ''} — scroll up in a moment ↑`,
+                      isOptionsUpdate: true
+                    }]);
+                    callClaude(prompt);
+                  }} style={{ background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "16px", padding: "6px 14px", cursor: "pointer", fontSize: "11px", fontWeight: "700", flexShrink: 0 }}>
+                    Find replacements →
+                  </button>
+                </div>
+              )}
               {/* Header */}
               <div style={{ marginBottom: "12px" }}>
                 <span style={{ color: "#b0a898", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif", fontWeight: "600" }}>Continue the conversation</span>
