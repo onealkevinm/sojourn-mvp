@@ -8529,7 +8529,7 @@ ${buildQualityContext(Object.keys(QUALITY_SIGNALS_DB).slice(0, 40))}
 - LEARNED FROM PAST TRIPS: ${learnedList}` : ""}
 - Preferred hotel brands: ${brandList}
 
-Generate EXACTLY 6 options as raw JSON in the "options" array — never 5, never 7, always exactly 6.
+Generate EXACTLY 10 options total: 6 primary options in the "options" array (never 5, never 7) AND exactly 4 reserve options in the "reserve_options" array. Both arrays are required.
 CRITICAL: You MUST also generate exactly 4 RESERVE options in the "reserve_options" array. This is required, not optional. These are pre-generated alternatives used for instant refinement — the user will see them if they dismiss or request more options.
 
 Reserve options MUST include all 4 slots:
@@ -8538,7 +8538,7 @@ Reserve options MUST include all 4 slots:
 - reserve_options[2]: Wild Card — Intent Extension — a different inference on what the traveler was really asking for. Must be genuinely different from Wild Card in primary 6. Tag: "Wild Card · [Reasoning Label]".
 - reserve_options[3]: Wild Card — Profile Extension — a different property inferred from traveler profile signals. Must be genuinely different from Wild Card in primary 6. Tag: "Wild Card · [Reasoning Label]".
 
-For thin markets with limited inventory (e.g. small towns, national parks): fill as many slots as genuinely possible, minimum 2. Never fabricate a property that doesn't exist, but most destinations have at least 2-4 viable alternatives.
+Even for smaller markets: almost every destination has at least 4 viable alternative properties beyond the primary 6. Fill all 4 reserve slots. Only leave a slot empty if the destination genuinely has fewer than 10 distinct quality hotel options total.
 Reserves use the exact same JSON schema as primary options. Output ONLY JSON — no markdown, no explanation, start with { end with }.
 
 THE 6 OPTIONS (always in this order):
