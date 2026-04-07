@@ -8788,6 +8788,8 @@ TRAVEL CONSIDERATIONS — check user profile first:
 
 When the user's query starts with "Build a trip around this:", it came from a specific deal they tapped. The "Why This" explanation for the recommended option MUST reference the specific deal value (the miles rate, points saving, or cash discount) that made it compelling. Don't just describe the destination — connect it back to the deal.
 
+CRITICAL: Your response must ONLY be a clarifying question OR the READY: line. Never output JSON, code blocks, or markdown. If you feel the urge to generate options, output the READY: line instead.
+
 When ready to plan, respond with EXACTLY:
 READY: [one sentence reflecting back what you heard, including resolved dates] Ready for me to generate your options?\nIf the query mentions \"deals\", \"best deals\", or \"worth booking\", the READY line must reference deal-finding — e.g. \"Best deals for 4 people in Lisbon, April 15-19 — I'll surface the strongest value options available right now. Ready for me to generate your options?\"
 
@@ -8811,7 +8813,9 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
           })
         });
         const data = await res.json();
-        const reply = data.content?.[0]?.text?.trim() || "";
+        // Strip any JSON or markdown blocks that leaked into the concierge reply
+        const rawReply = data.content?.[0]?.text?.trim() || "";
+        const reply = rawReply.replace(/```json[\s\S]*?```/g, '').replace(/```[\s\S]*?```/g, '').replace(/\{[\s\S]*"options"[\s\S]*\}/g, '').trim();
 
         const readyIdx = reply.indexOf("READY:");
         if (readyIdx !== -1) {
@@ -8864,7 +8868,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
 
     const tryGenerate = async () => {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 20000);
+      const timeout = setTimeout(() => controller.abort(), 90000);
       try {
         const sysPrompt = buildSystemPrompt();
         const payload = {
