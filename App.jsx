@@ -8434,6 +8434,8 @@ export default function SojournApp() {
   const buildSystemPrompt = () => {
     const p = userProfile;
     const tp = p.travelProfile || {};
+    const recentQuery = conversationRef.current.map(m => m.content).join(' ').toLowerCase();
+    const isPointsLedQuery = /i have \d|use my miles|redeem|burn my|best use of my|how far.*miles|miles.*worth|points.*worth/i.test(recentQuery);
     const cardList = (p.cards||[]).map(c=>c.name).join(", ");
     const airlinePrograms = ["United MileagePlus","Delta SkyMiles","American AAdvantage","Alaska Mileage Plan","Southwest Rapid Rewards","JetBlue TrueBlue","Emirates Skywards","British Airways Avios","Air France Flying Blue","Singapore KrisFlyer"];
     const hotelLoyalty = (p.loyaltyAccounts||[]).filter(a=>!airlinePrograms.includes(a.program)).map(a=>a.program+" ("+a.tier+", "+a.balance+")").join(", ");
@@ -8501,16 +8503,7 @@ The goal is 6 honest, genuinely useful options — not 6 slots mechanically fill
 
 A replaced bucket should be labeled with a descriptive tag that reflects what it actually is (e.g. "Most Distinctive Lodge", "Best Park Experience", "Remote Wilderness") rather than forcing a label that doesn't apply.
 
-POINTS-LED QUERY DETECTION: Activate this mode when the user's intent is to redeem or use points/miles — even if vaguely stated. Triggers include: explicit balance mention ("I have 64k Delta miles"), redemption intent ("use my miles", "redeem points", "burn my Hyatt points"), or program-specific context established earlier in the conversation. When a single program is clear, anchor all 6 options around it. When multiple programs are mentioned or the user said "open to any", generate options that draw on whichever program offers the best value for each bucket and note why. Do NOT generate options that ignore stated redemption intent.
-
-When a points-led query is detected, map the 6 buckets as follows — destination rules still apply, these redefine how each bucket is expressed:
-1. RECOMMENDED (#C9A84C) — Best overall redemption of the stated program. Must achieve at least 1.5 cents per point to qualify — if no destination clears that threshold, pick the highest available and note it. Lead with the redemption story in whyThis, not the experience story. Format: "[X] miles used · estimated value $[Y] · [Z.Z] cents per mile — [rating]." Do not lead with hotel amenities or status perks — the miles value is the headline.
-2. BEST POINTS REDEMPTION (#4CC97A) — Highest cents-per-point efficiency from the stated program on its NATURAL component (airline miles → flights, hotel points → hotel). Never redirect airline miles to a hotel or hotel points to flights. HEADLINE: frame around the destination and cpp angle — never use the words "maximum value" or "best value" (those belong to the Value bucket). Good headline framing: "Lisbon · Park Hyatt Lisbon · 4.0¢ Per Mile" or "Kyoto · Hyatt Regency Kyoto · High-Efficiency Redemption". Always use the full canonical property name in headline (never just brand or city alone). In whyThis, spell out the redemption clearly: "[X] miles used · estimated value $[Y] · [Z.Z] cents per mile — [excellent/strong/solid] value." For context: 2.0+ cents per mile = excellent, 1.4-2.0 = strong, below 1.4 = marginal. redemption field must be non-null. redemptions array must include one entry with pointsUsed, dollarsValue, centsPerPoint, component.
-3. BEST VALUE (#C9C94C) — Stack the stated program on its natural component PLUS secondary programs the traveler holds. RULE: if the stated program is an airline program, it MUST cover the flights (not pay cash for flights while using hotel points). Then layer hotel points on top to cover the accommodation. HEADLINE: frame around the stacking concept — e.g. "Mexico City · Grand Hyatt Polanco · Delta + Hyatt Points Stack" or "Lisbon · Park Hyatt Lisbon · Combined Redemption". Always use the full canonical property name (never just brand or city alone). whyThis MUST open with the stacking framing in the first sentence — e.g. "This option combines your [airline] miles for flights and your [hotel] points for the hotel, covering both with redemptions." Then spell out the stack: "[X] miles on flights · estimated value $[Y] · [Z.Z] cents per mile. [A] hotel points · estimated value $[B]. Total cash out of pocket: $[C]." The opening line must immediately distinguish this from the Redemption option above it.
-4. QUALITY UPGRADE (#C94C8A) — Use stated miles for premium cabin (business/first) AND layer hotel loyalty points for a luxury property. Stack both programs. Show what each covers and the combined cpp across both.
-5. WILD CARD (#9A4CC9) — The aperture-widening option. Can be: (a) a surprisingly high-value redemption with the traveler's existing programs they wouldn't think of, (b) a different program that offers dramatically better value for this trip with the math shown, or (c) an independent or boutique property that fits the traveler's profile exceptionally well even if it earns no loyalty points. Wild Card is led by the property or experience — what makes it surprising, distinctive, or uniquely right for this traveler. NEVER frame Wild Card around loyalty portfolio strategy, program diversification, or "reducing concentration" — those are business-school concepts, not travel recommendations. If suggesting a property outside the traveler's existing programs, lead with why the property is exceptional for them, not with the loyalty angle. If it earns points in a program they don't hold, mention it briefly as context — never as the hook.
-6. FUTURE VALUE (#4C9AC9) — Strategic alternative: don't spend your miles on this trip at all. Pay cash, earn aggressively, and position for a bigger future redemption. Tag label should be "Future Value" not "Best Points Earned". In whyThis, make the case honestly but WITHOUT assuming specific future destinations the traveler hasn't mentioned — do not reference Tokyo, Europe, Maldives, or any specific aspirational destination unless the traveler has explicitly mentioned it earlier in conversation. Instead frame strategically: "Cash flights earn [X] miles via [card] + hotel earns [Y] points = [Z] total miles earned back. At your current balance of [N] miles, holding them positions you for a premium redemption when the right trip comes up — where you could get significantly more value per mile than this route offers." Let the math speak — the point is that their balance grows and they retain optionality, not that they should go somewhere specific. This option acknowledges the traveler's intent while offering a thoughtful strategic counterpoint.
-
+${isPointsLedQuery ? POINTS_LED_RULES : ""}
 FOR NON-POINTS QUERIES, use these 6 bucket definitions in this order:
 CRITICAL: "Future Value" and "Best Points Earned" NEVER appear in non-points queries. The 6 slots are fixed as below.
 
@@ -9267,38 +9260,6 @@ CONCIERGE TONE RULES — critical:
 - If you stated something wrong, correct it cleanly in one sentence and move forward — don't over-explain or apologize
 - Always maintain the posture of a knowledgeable advisor who is being appropriately careful, not an AI exposing its constraints
 
-FLIGHT ROUTE KNOWLEDGE — Seattle (SEA) to common beach destinations:
-- SEA-HNL (Honolulu): Alaska and Hawaiian Airlines direct, ~5h45m. NOT Delta — Delta does not fly SEA-HNL nonstop.
-- SEA-OGG (Maui Kahului): Alaska direct seasonal, Hawaiian direct, ~6h15m. NOT Delta nonstop.
-- SEA-KOA (Kona/Big Island): Alaska direct seasonal, Hawaiian direct, ~6h. NOT Delta nonstop.
-- SEA-LIH (Kauai Lihue): Alaska direct seasonal, Hawaiian direct via HNL (short hop ~30min), ~6h30m total. NOT Delta nonstop.
-- SEA-ITO (Hilo/Big Island): typically 1 stop via HNL on Hawaiian or Alaska. ~7h total.
-- HAWAII ROUTING RULE: For any Hawaii island destination from Seattle, ALWAYS use Alaska or Hawaiian Airlines — Delta does not fly nonstop Seattle to Hawaii. If Delta miles are being redeemed, note they must be used on a SkyTeam partner or Delta metal, which requires connecting through a Delta hub (LAX, SFO, ATL) — this adds significant time vs. Alaska/Hawaiian direct. Be explicit about this tradeoff.
-- INTER-ISLAND: Hawaiian Airlines dominates inter-island flying (OGG, KOA, LIH, ITO all connect through HNL on Hawaiian). Alaska also flies some inter-island routes. Budget ~$80-150 per person per inter-island hop.
-- SEA-MIA (Miami): Alaska seasonal direct (spring/summer), otherwise 1 stop via LAX/PHX
-- SEA-FLL (Fort Lauderdale): Alaska seasonal, typically 1 stop
-- SEA-TPA (Tampa): Usually 1 stop via Denver or Phoenix
-- SEA-MCO (Orlando): Delta seasonal, typically 1 stop
-- SEA-SAN (San Diego): Alaska and Southwest direct, ~2h30m
-- SEA-CUN (Cancun): Alaska seasonal direct
-- SEA-NAS (Nassau): 1 stop via Miami or Atlanta
-- Caribbean/BVI/Turks: always 1-2 stops via Miami or Atlanta
-- Delta Platinum status: upgrades and priority most valuable on longer nonstop legs
-
-DESTINATION GATEWAY RULES — always use the correct arrival airport:
-- Florida Keys (Key Largo, Islamorada, Marathon, Key West): fly into MIA or FLL, never ATL — ATL adds 2+ hours
-- Key West specifically: MIA then drive 3.5h, or FLL then drive 4h, or direct to EYW (Key West airport, limited service)
-- Naples FL / Marco Island: fly into RSW (Fort Myers) or MIA
-- Sanibel/Captiva: fly into RSW (Fort Myers)
-- 30A / Destin / Panama City: fly into VPS or PNS
-- Savannah / Hilton Head: fly into SAV
-- Charleston SC: fly into CHS — Alaska has direct SEA-CHS seasonally
-- Sea Island / Golden Isles GA: fly into BQK (Brunswick) or SAV
-- Turks & Caicos: fly into PLS via MIA or JFK
-- St. Barts: fly into SXM (St. Maarten) then ferry or puddle-jump
-- BVI (Virgin Gorda, Tortola): fly into EIS via SJU (San Juan) or STT (St. Thomas)
-- Nevis: fly into NEV via SJU or ATL
-
 HARD CONSTRAINTS — these override everything else:
 - Honor ALL stated constraints across every option: weather minimums (80+ degrees means every option must hit 80+), family-friendly (no adults-only), geographic limits, budget
 - If user says "Park City" every non-Wild-Card option MUST be in Park City or immediately adjacent resorts (Deer Valley, Canyons). Beaver Creek, Vail, Steamboat are different states — never substitute these for a named destination.
@@ -9330,39 +9291,12 @@ The card benefits, lounge access, and earning shown for EACH COMPONENT must matc
 - Never show a Sky Club benefit on a non-Delta flight. Never show Centurion Lounge as a benefit unless the card shown actually includes it.
 - When the traveler's card portfolio includes multiple airline cards, match each card's benefits to the correct airline in each option.
 
-LOYALTY REDEMPTION ACCURACY — SYSTEM RULE, NOT A SUGGESTION:
-The app has a LOYALTY_BRAND_MAP and INDEPENDENT_HOTELS list. Before suggesting ANY points redemption at a specific hotel, mentally check: does this hotel's brand appear in LOYALTY_BRAND_MAP for the program? If uncertain, treat as independent and do not suggest redemption.
-
-Known independent / non-redeemable hotels (partial list — when in doubt, no redemption):
-- National park lodges: El Tovar, Old Faithful Inn, Lake Yellowstone Hotel, Jenny Lake Lodge, Crater Lake Lodge, Paradise Inn, Lake McDonald Lodge, Many Glacier Hotel, Zion Lodge, Timberline Lodge, Kalaloch Lodge, Lake Crescent Lodge, Sol Duc, Grand Canyon Lodge, Jackson Lake Lodge, LeConte Lodge, Far View Lodge, Skyland Resort, Volcano House — ALL operated by Xanterra or NPS concessioners, ZERO loyalty programs
-- Luxury independents: Montage, Four Seasons, Peninsula, Rosewood, Mandarin Oriental, Aman, Auberge, Belmond, Fairmont (AccorALL only), Sofitel (AccorALL only)
-- Historic independents: Alisal Ranch, Greyfield Inn, Gasparilla Inn
-
-Program membership — quick reference:
-- World of Hyatt: Park Hyatt, Grand Hyatt, Andaz, Hyatt Regency, Alila, Thompson, Hyatt Centric, JdV, Unbound Collection, SLH partners. NOT: Montage, Four Seasons, any Marriott/Hilton/IHG brand
-- Marriott Bonvoy: Ritz-Carlton, St. Regis, W, Westin, Sheraton, JW Marriott, EDITION, Autograph Collection, Renaissance, Luxury Collection, Tribute Portfolio, Delta Hotels, Design Hotels. NOT: any Hyatt/Hilton/IHG brand
-- Hilton Honors: Waldorf Astoria, Conrad, LXR, Curio Collection, Tapestry, DoubleTree, Canopy, Embassy Suites. NOT: any Marriott/Hyatt/IHG brand
-- IHG One Rewards: InterContinental, Kimpton, Six Senses, Regent, Hotel Indigo, voco, Crowne Plaza. NOT: any Marriott/Hyatt/Hilton brand Verify program membership before recommending redemption. Programs and their brands: World of Hyatt includes Hyatt, Park Hyatt, Grand Hyatt, Andaz, Alila, Thompson, Destination by Hyatt, SLH partners; Marriott Bonvoy includes Ritz-Carlton, St. Regis, W, Westin, Sheraton, JW Marriott, Edition, Luxury Collection, Autograph Collection; Hilton Honors includes Conrad, Waldorf Astoria, LXR, Curio, Tapestry; IHG includes InterContinental, Kimpton, Six Senses, Regent, voco.
-- MULTI-HOTEL SHORT TRIPS: Do not split a short trip (3 nights or fewer) across two hotels unless the user explicitly asks for it, or unless there is a genuinely compelling reason (e.g. a multi-city itinerary). A 3-night ski weekend should have ONE hotel. If you do split a short trip, you MUST explain the reason clearly in whyThis.
-- FLIGHT LEG PRICING: Every flight component must show a dollar value per leg. Return flight must NEVER show $0 or "included in outbound" — split the total evenly across legs if needed. Format: "~$[X] per person" on each leg. Never leave a flight component with ambiguous or missing pricing.
-
-DOMESTIC vs INTERNATIONAL DEFAULT:
-- When a user asks to "use my miles" or "best use of my Delta/United/Alaska miles" WITHOUT specifying international travel, DEFAULT to domestic US options. Most travelers asking about miles redemption are thinking about domestic trips first.
-- Only suggest international redemptions if: (a) the user explicitly mentions international travel, or (b) the user mentions a specific international destination, or (c) the user says "I want to go somewhere international" or similar.
-- For Delta SkyMiles specifically: domestic redemptions on Delta often offer good value (1.0-1.2 cpp). Do not automatically jump to international business class just because that theoretically offers better cpp — the user may not want to travel internationally.
-- Always offer at least 2-3 domestic options before introducing international if the query is ambiguous.
-
 SMART OPTION SUPPRESSION — evaluate traveler profile before generating options:
 - REDEMPTION OPPORTUNITY: only generate if the traveler has at least one loyalty program with 5,000+ points in a single program. If total redeemable balance is effectively zero, replace this slot with a second Best Value or additional Quality option.
 - BEST POINTS EARNED / FUTURE VALUE: only generate if the traveler has at least one loyalty program OR a co-branded travel card. If they have no loyalty programs AND only a cashback card, replace with a second Wild Card or Best Value.
 - Never generate a Redemption Opportunity that requires points the traveler doesn't have.
 
-WORD COUNT DISCIPLINE — strictly enforce these limits:
-- whyThis in comparison grid: TARGET 40-60 words. Lead with what makes this option distinctive for THIS traveler. One sentence on the property character, one on the practical case. No padding.
-- whyThis for MULTI-STOP options: Must name ALL stops in the first sentence. Never open with only one property. Example: "Three iconic Olympic lodges — Lake Crescent, Kalaloch, and Sol Duc — form a loop through every terrain type in the park..." Then 1-2 sentences on the collective character.
-- tradeoff: MAX 20 words. One honest counterpoint. No hedging language.
-- Chat/refinement responses: TARGET 100-150 words MAX. Good writing is tight. Say the essential thing well and stop.
-
+WORD COUNT DISCIPLINE: whyThis target 40-60 words. tradeoff max 20 words. Chat responses max 150 words.
 CARD QUALITY RULES (when generating new cards):
 - NUMBER FORMATTING: all numbers of 1,000 or more must use comma separators in ALL text fields — pointsEarned, whyThis, detail, tradeoff, loyaltyHighlight, cardStrategy. Examples: "3,200 Delta miles" not "3200 Delta miles", "$1,315" not "$1315", "26,000 Hyatt points" not "26000 Hyatt points", "$2,890" not "$2890". This applies to every number in every field without exception.
 - Go deeper, not wider. For any given destination or region, surface the most interesting and fitting properties within that geography before reaching to neighboring regions. A lesser-known gem within the stated area is always preferable to a well-known property just outside it. The Idaho Rocky Mountain Ranch in the Sawtooths is a better Idaho answer than Jackson Hole — even if Jackson Hole is more famous. Depth of knowledge within the query's geography signals intelligence. Breadth across neighboring geographies signals laziness.
@@ -10464,3 +10398,15 @@ Please respond now.`,
     </div>
   );
 }
+const POINTS_LED_RULES = `
+POINTS-LED QUERY DETECTION: Activate this mode when the user's intent is to redeem or use points/miles — even if vaguely stated. Triggers include: explicit balance mention ("I have 64k Delta miles"), redemption intent ("use my miles", "redeem points", "burn my Hyatt points"), or program-specific context established earlier in the conversation. When a single program is clear, anchor all 6 options around it.
+
+When a points-led query is detected, map the 6 buckets as follows:
+1. RECOMMENDED (#C9A84C) — Best overall redemption. Must achieve at least 1.5 cents per point. Lead with the redemption story in whyThis.
+2. BEST POINTS REDEMPTION (#4CC97A) — Highest cpp efficiency. HEADLINE: frame around destination and cpp. whyThis: spell out clearly: "[X] miles used · estimated value $[Y] · [Z.Z] cents per mile."
+3. BEST VALUE (#C9C94C) — Stack the stated program on its natural component PLUS secondary programs. whyThis MUST open with the stacking framing.
+4. QUALITY UPGRADE (#C94C8A) — Use stated miles for premium cabin AND layer hotel loyalty points for a luxury property.
+5. WILD CARD — INTENT EXTENSION (#9A4CC9) — Surprisingly high-value redemption they wouldn't think of, or a boutique property that fits their profile exceptionally well.
+6. FUTURE VALUE (#4C9AC9) — Strategic alternative: don't spend miles now. Pay cash, earn aggressively, position for a bigger future redemption. Tag label should be "Future Value". In whyThis, make the case without assuming specific future destinations.
+`;
+
