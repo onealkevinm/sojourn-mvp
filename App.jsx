@@ -8465,10 +8465,10 @@ EXACT POINTS BALANCES — these are the traveler's actual balances. REDEMPTION P
 Traveler loyalty balances (NEVER suggest a redemption requiring more points than shown):
 ${(p.loyaltyAccounts||[]).map(a => `  ${a.program}: ${a.balance} (tier: ${a.tier})`).join("\n")}
 STRUCTURED BENEFITS — use these exact values for multipliers, lounge access, tier benefits, free breakfast eligibility, and transfer partners. Do not rely on training knowledge when this data is present:
-${buildTravelerBenefitsSummary(p)}
+${buildTravelerBenefitsSummary(p).slice(0, 2000)}
 QUALITY SIGNALS — verified tiers and quality markers for known properties. Use these when surfacing or evaluating any of these properties:
-${buildQualityContext(Object.keys(QUALITY_SIGNALS_DB).slice(0, 30))}
-- Brand-to-program mapping: Marriott Bonvoy covers ${(LOYALTY_BRAND_MAP["Marriott Bonvoy"]||[]).join(", ")}. World of Hyatt covers ${(LOYALTY_BRAND_MAP["World of Hyatt"]||[]).join(", ")} — including Small Luxury Hotels (SLH) since 2023. Hilton Honors covers ${(LOYALTY_BRAND_MAP["Hilton Honors"]||[]).join(", ")}. IHG One Rewards covers ${(LOYALTY_BRAND_MAP["IHG One Rewards"]||[]).join(", ")}. Fairmont, Raffles, Rosewood, Four Seasons, Peninsula, Mandarin Oriental, Aman, Belmond, Montage are independent — no major loyalty program points.${learnedList ? `
+${buildQualityContext(Object.keys(QUALITY_SIGNALS_DB).slice(0, 15))}
+- Brand-to-program mapping: Marriott Bonvoy (Ritz-Carlton, St.Regis, W, Westin, Sheraton, JW Marriott, Edition, Autograph, Luxury Collection, Tribute, Design Hotels). World of Hyatt (Park Hyatt, Grand Hyatt, Andaz, Thompson, Alila, Hyatt Regency, Hyatt Centric, JdV, SLH partners since 2023). Hilton Honors (Waldorf Astoria, Conrad, LXR, Curio, Tapestry, DoubleTree, Canopy). IHG One Rewards (InterContinental, Kimpton, Six Senses, Regent, Hotel Indigo, voco). Fairmont, Raffles, Rosewood, Four Seasons, Peninsula, Mandarin Oriental, Aman, Belmond, Montage are independent — no major loyalty program points.${learnedList ? `
 - LEARNED FROM PAST TRIPS: ${learnedList}` : ""}
 - Preferred hotel brands: ${brandList}
 
@@ -8866,14 +8866,19 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
           headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
           body: JSON.stringify({
             model: "claude-sonnet-4-20250514",
-            max_tokens: 4000,
+            max_tokens: 2500,
             system: buildSystemPrompt(),
             messages: [{ role: "user", content: fullContext }],
           })
         });
         clearTimeout(timeout);
         const data = await res.json();
-        if (data.error) throw new Error(`API error: ${data.error.type} - ${data.error.message}`);
+        if (data.error) {
+          const errType = data.error?.type || 'unknown';
+          if (errType === 'overloaded_error') throw new Error('API_OVERLOADED');
+          if (errType === 'rate_limit_error') throw new Error('RATE_LIMITED');
+          throw new Error(`API error: ${errType} - ${data.error.message}`);
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const text = data.content?.[0]?.text?.trim() || "";
         let cleanText = text.replace(/```json/g, "").replace(/```/g, "").trim();
@@ -8922,7 +8927,12 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         setPhase("results");
         mp.track("cards_generated", { destination: parsed.tripSummary?.destination || "unknown", option_count: parsed.options?.length || 0 });
       } catch(e2) {
-        setMessages(prev => [...prev, { role: "assistant", text: "Taking a little longer than usual — tap the button again to retry." }]);
+        const errMsg = e2?.message === 'API_OVERLOADED' 
+          ? "Sojourn is busy right now — please try again in a moment."
+          : e2?.message === 'RATE_LIMITED'
+          ? "Too many requests — please wait a moment and try again."
+          : "Taking a little longer than usual — please try again.";
+        setMessages(prev => [...prev, { role: "assistant", text: errMsg }]);
       }
     } finally {
       setLoading(false);
