@@ -8404,6 +8404,7 @@ export default function SojournApp() {
     }
   };
   const [loadingMessage, setLoadingMessage] = useState("");
+  const [diagnosticMsg, setDiagnosticMsg] = useState(""); // visible error diagnostic
   const getSavedProfile = () => {
     try { const s = localStorage.getItem("sojourn_profile"); return s ? JSON.parse(s) : null; } catch(e) { return null; }
   };
@@ -8704,10 +8705,12 @@ DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these ru
     setLoading(true);
 
     if (!ANTHROPIC_KEY) {
-      setMessages(prev => [...prev, { role: "assistant", text: "Configuration error: API key not found." }]);
+      setMessages(prev => [...prev, { role: "assistant", text: "Configuration error: API key not found. Check VITE_ANTHROPIC_KEY in Vercel environment variables." }]);
+      setDiagnosticMsg("VITE_ANTHROPIC_KEY is empty or not set");
       setLoading(false);
       return;
     }
+    setDiagnosticMsg(`API key loaded (${ANTHROPIC_KEY.length} chars)`);
 
 
 
@@ -8861,16 +8864,17 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
 
     const tryGenerate = async () => {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 45000);
+      const timeout = setTimeout(() => controller.abort(), 20000);
       try {
         const sysPrompt = buildSystemPrompt();
         const payload = {
           model: "claude-sonnet-4-20250514",
-          max_tokens: 2500,
+          max_tokens: 8000,
           system: sysPrompt,
           messages: [{ role: "user", content: fullContext }],
         };
         // Diagnostic logging — visible in browser console
+        setDiagnosticMsg("Sending request...");
         console.log("[Sojourn] Sending generation request");
         console.log("[Sojourn] System prompt chars:", sysPrompt.length);
         console.log("[Sojourn] User message chars:", fullContext.length);
@@ -8882,6 +8886,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
           body: JSON.stringify(payload)
         });
         clearTimeout(timeout);
+        setDiagnosticMsg(`Response: ${res.status} ${res.statusText}`);
         console.log("[Sojourn] Response status:", res.status, res.statusText);
         const data = await res.json();
         console.log("[Sojourn] Response type:", data.type, "| stop reason:", data.stop_reason, "| error:", data.error?.type);
@@ -8917,6 +8922,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         : parsed.options;
       Object.keys(_whyThisCache).forEach(k => delete _whyThisCache[k]);
         const validatedOpts = validateOptions(filteredOptions);
+      setDiagnosticMsg(""); // clear on success
       setTripOptions(validatedOpts);
       setTripSummary(parsed.tripSummary);
       setShownOptionIds(validatedOpts.map(o => o.id)); // track all shown
@@ -8929,6 +8935,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
     } catch(e) {
       // First attempt failed
       console.error("[Sojourn] First attempt failed:", e.message, e);
+      setDiagnosticMsg(`Attempt 1 failed: ${e?.name} — ${e?.message}`);
       setLoadingMessage("Retrying...");
       await new Promise(r => setTimeout(r, 2000));
       try {
@@ -8943,6 +8950,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         mp.track("cards_generated", { destination: parsed.tripSummary?.destination || "unknown", option_count: parsed.options?.length || 0 });
       } catch(e2) {
         console.error("[Sojourn] Second attempt failed:", e2.message, e2);
+        setDiagnosticMsg(`Failed: ${e2?.name} — ${e2?.message}`);
         const errMsg = e2?.message === 'API_OVERLOADED' 
           ? "Sojourn is busy right now — please try again in a moment."
           : e2?.message === 'RATE_LIMITED'
@@ -10009,6 +10017,12 @@ Please respond now.`,
                   )}
                 </div>
               ))}
+            </div>
+          )}
+          {diagnosticMsg && !refineLoading && (
+            <div style={{ padding: "6px 10px", background: "rgba(201,76,76,0.08)", border: "1px solid rgba(201,76,76,0.2)", borderRadius: "8px", marginBottom: "6px" }}>
+              <div style={{ color: "#c94c4c", fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "2px" }}>Diagnostic</div>
+              <div style={{ color: "#9a6060", fontSize: "11px", fontFamily: "monospace" }}>{diagnosticMsg}</div>
             </div>
           )}
           {refineLoading && (
