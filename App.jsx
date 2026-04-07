@@ -8718,7 +8718,7 @@ DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these ru
       setLoading(false);
       return;
     }
-    setDiagnosticMsg(`API key loaded (${ANTHROPIC_KEY.length} chars)`);
+
 
 
 
@@ -8840,6 +8840,8 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
           setMessages(prev => [...prev, { role: "assistant", text: reply }]);
         }
       } catch(e) {
+        // Log the actual error so we can diagnose
+        console.error('[Sojourn] Concierge failed:', e?.message, e);
         // If concierge fails, just generate directly
         setConciergeMode(false);
         setLoading(false);
