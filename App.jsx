@@ -8407,7 +8407,6 @@ export default function SojournApp() {
     }
   };
   const [loadingMessage, setLoadingMessage] = useState("");
-  const [diagnosticMsg, setDiagnosticMsg] = useState(""); // visible error diagnostic
   const getSavedProfile = () => {
     try { const s = localStorage.getItem("sojourn_profile"); return s ? JSON.parse(s) : null; } catch(e) { return null; }
   };
@@ -8709,7 +8708,6 @@ DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these ru
 
     if (!ANTHROPIC_KEY) {
       setMessages(prev => [...prev, { role: "assistant", text: "Configuration error: API key not found. Check VITE_ANTHROPIC_KEY in Vercel environment variables." }]);
-      setDiagnosticMsg("VITE_ANTHROPIC_KEY is empty or not set");
       setLoading(false);
       return;
     }
@@ -8881,7 +8879,6 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
           messages: [{ role: "user", content: fullContext }],
         };
         // Diagnostic logging — visible in browser console
-        setDiagnosticMsg("Sending request...");
         console.log("[Sojourn] Sending generation request");
         console.log("[Sojourn] System prompt chars:", sysPrompt.length);
         console.log("[Sojourn] User message chars:", fullContext.length);
@@ -8893,7 +8890,6 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
           body: JSON.stringify(payload)
         });
         clearTimeout(timeout);
-        setDiagnosticMsg(`Response: ${res.status} ${res.statusText}`);
         console.log("[Sojourn] Response status:", res.status, res.statusText);
         const data = await res.json();
         console.log("[Sojourn] Response type:", data.type, "| stop reason:", data.stop_reason, "| error:", data.error?.type);
@@ -8928,8 +8924,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         ? parsed.options.map(o => o.tag === "Future Value" ? { ...o, tag: "Redemption Opportunity", tagColor: "#4CC97A" } : o)
         : parsed.options;
       Object.keys(_whyThisCache).forEach(k => delete _whyThisCache[k]);
-        const validatedOpts = validateOptions(filteredOptions);
-      setDiagnosticMsg(""); // clear on success
+        const validatedOpts = validateOptions(filteredOptions); // clear on success
       setTripOptions(validatedOpts);
       setTripSummary(parsed.tripSummary);
       setShownOptionIds(validatedOpts.map(o => o.id)); // track all shown
@@ -8942,7 +8937,6 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
     } catch(e) {
       // First attempt failed
       console.error("[Sojourn] First attempt failed:", e.message, e);
-      setDiagnosticMsg(`Attempt 1 failed: ${e?.name} — ${e?.message}`);
       setLoadingMessage("Retrying...");
       await new Promise(r => setTimeout(r, 2000));
       try {
@@ -8957,7 +8951,6 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         mp.track("cards_generated", { destination: parsed.tripSummary?.destination || "unknown", option_count: parsed.options?.length || 0 });
       } catch(e2) {
         console.error("[Sojourn] Second attempt failed:", e2.message, e2);
-        setDiagnosticMsg(`Failed: ${e2?.name} — ${e2?.message}`);
         const errMsg = e2?.message === 'API_OVERLOADED' 
           ? "Sojourn is busy right now — please try again in a moment."
           : e2?.message === 'RATE_LIMITED'
@@ -9177,8 +9170,13 @@ const handleSend = () => {
         }
       });
       // Determine kept vs slots to fill
-      const keptIds = mentionedKept.length > 0 ? mentionedKept : activeOpts.map(o => o.id);
-      const slotsToFill = 6 - keptIds.length;
+      // When user mentions options they like, keep ALL active options
+      // and add a small number of new ones in that spirit
+      // Don't replace options just because they weren't mentioned
+      const keptIds = activeOpts.map(o => o.id); // always keep all active
+      const slotsToFill = mentionedKept.length > 0 
+        ? Math.min(2, 6 - activeOpts.length) // add 1-2 when user mentions a specific option
+        : Math.max(1, 6 - activeOpts.length); // fill dismissed slots otherwise
       setKeptOptionIds(keptIds);
       const keptNames = keptIds.slice(0,2).map(id => {
         const opt = tripOptions.find(o => o.id === id);
@@ -9516,6 +9514,12 @@ Please respond now.`,
         setTripOptions(validatedRefined);
         // Track all new options as shown — no repeats in future waves
         setShownOptionIds(prev => [...new Set([...prev, ...validatedRefined.map(o => o.id)])]);
+        // Update in-progress message to show completion
+        setRefineMessages(prev => prev.map(m =>
+          m.isOptionsUpdate && (m.text.includes('Refining') || m.text.includes('Updating'))
+            ? { ...m, text: '\u2726 Your options have been updated.' }
+            : m
+        ));
         if (parsed.summary) setTripSummary(parsed.summary);
         setExpandedId(prev => {
           if (prev && parsed.options.find(o => o.id === prev)) return prev;
@@ -10009,7 +10013,7 @@ Please respond now.`,
                         conversationRef.current = [{ role: 'user', content: prompt }];
                         setRefineMessages(prev => [...prev, {
                           role: 'assistant',
-                          text: `Finding ${slotsToFill} new option${slotsToFill !== 1 ? 's' : ''} — scroll up in a moment ↑`,
+                          text: `Refining your options — one moment ↑`,
                           isOptionsUpdate: true
                         }]);
                         callClaude(prompt);
@@ -10042,12 +10046,6 @@ Please respond now.`,
                   )}
                 </div>
               ))}
-            </div>
-          )}
-          {diagnosticMsg && !refineLoading && (
-            <div style={{ padding: "6px 10px", background: "rgba(201,76,76,0.08)", border: "1px solid rgba(201,76,76,0.2)", borderRadius: "8px", marginBottom: "6px" }}>
-              <div style={{ color: "#c94c4c", fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "2px" }}>Diagnostic</div>
-              <div style={{ color: "#9a6060", fontSize: "11px", fontFamily: "monospace" }}>{diagnosticMsg}</div>
             </div>
           )}
           {refineLoading && (
@@ -10098,7 +10096,7 @@ Please respond now.`,
                     conversationRef.current = [{ role: 'user', content: prompt }];
                     setRefineMessages(prev => [...prev, {
                       role: 'assistant',
-                      text: `Finding ${dismissedIds.length} replacement option${dismissedIds.length > 1 ? 's' : ''} — scroll up in a moment ↑`,
+                      text: `Refining your options — one moment ↑`,
                       isOptionsUpdate: true
                     }]);
                     callClaude(prompt);
