@@ -299,12 +299,12 @@ const validateOptions = (options) => {
 
     // Validate hotel redemption alignment
     if (opt.redemption && hotelComp && hotelComp.detail) {
-      const hotelName = hotelComp.detail.split('·')[0].trim();
+      const hotelName = String(hotelComp.detail).split('·')[0].trim();
       const correctProgram = getHotelProgram(hotelName);
       const claimedProgram = opt.redemption;
 
       // If hotel is independent or program doesn't match, strip the redemption
-      if (correctProgram === null && INDEPENDENT_HOTELS.some(h => hotelName.toLowerCase().includes(h.toLowerCase()))) {
+      if (correctProgram === null && INDEPENDENT_HOTELS.some(h => h && hotelName && hotelName.toLowerCase().includes(String(h).toLowerCase()))) {
         console.warn(`[Sojourn] Stripped invalid redemption: ${claimedProgram} at independent hotel ${hotelName}`);
         fixed.redemption = null;
         fixed.redemptions = [];
@@ -312,7 +312,7 @@ const validateOptions = (options) => {
         // Check if claimed program overlaps with correct program
         // "World of Hyatt" → check for "hyatt"; "Marriott Bonvoy" → check for "marriott"
         const programKeyword = correctProgram.toLowerCase().replace('world of ', '').replace(' bonvoy', '').replace(' honors', '').replace(' one rewards', '').replace(' mileageplus', '').replace(' skymiles', '').replace(' aadvantage', '').replace(' mileage plan', '').split(' ')[0];
-        if (!claimedProgram.toLowerCase().includes(programKeyword)) {
+        if (claimedProgram && typeof claimedProgram === 'string' && !claimedProgram.toLowerCase().includes(programKeyword)) {
           console.warn(`[Sojourn] Program mismatch: ${claimedProgram} at ${hotelName} (should be ${correctProgram})`);
           fixed.redemption = null;
           fixed.redemptions = [];
@@ -322,10 +322,10 @@ const validateOptions = (options) => {
 
     // Validate flight component vs airline loyalty alignment
     if (flightComp && flightComp.detail) {
-      const flightDetail = flightComp.detail.toLowerCase();
+      const flightDetail = String(flightComp.detail || '').toLowerCase();
       const loyaltyHighlights = opt.loyaltyHighlights || '';
       const cardStrategy = opt.cardStrategy || '';
-      const combined = (loyaltyHighlights + ' ' + cardStrategy).toLowerCase();
+      const combined = (String(loyaltyHighlights || '') + ' ' + String(cardStrategy || '')).toLowerCase();
 
       // Detect airline mismatch: Alaska flight but Delta benefits shown
       if (flightDetail.includes('alaska') && combined.includes('sky club')) {
