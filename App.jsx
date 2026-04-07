@@ -7056,7 +7056,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
   };
 
   if (phase === 'confirmed') return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.94)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+    <div style={{ position: 'fixed', inset: 0, background: '#080706', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
       <div style={{ background: '#0a0908', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '20px', maxWidth: '480px', width: '100%', padding: '40px 36px', textAlign: 'center' }}>
         <div style={{ fontSize: '28px', marginBottom: '16px', color: '#C9A84C' }}>✦</div>
         <div style={{ fontSize: '22px', fontFamily: "'Playfair Display',Georgia,serif", fontStyle: 'italic', color: '#e8e4dc', marginBottom: '12px' }}>Your trip is confirmed.</div>
@@ -7080,7 +7080,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
   );
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.94)', zIndex: 2000, overflowY: 'auto' }}>
+    <div style={{ position: 'fixed', inset: 0, background: '#080706', zIndex: 2000, overflowY: 'auto' }}>
       <div style={{ maxWidth: '620px', margin: '0 auto', padding: '28px 20px 60px', fontFamily: "'DM Sans',system-ui,sans-serif", color: '#e8e4dc', border: '2px solid rgba(255,255,255,0.18)', borderRadius: '20px', marginTop: '20px', marginBottom: '20px', outline: '1px solid rgba(255,255,255,0.07)', outlineOffset: '4px' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
@@ -7193,7 +7193,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
                 {flightIsPoints
                   ? <div style={{ color: '#4CC97A', fontSize: '13px', fontWeight: '600' }}>{flightComp?.points?.replace(/redeemed/i, '').trim() || 'Points applied'}</div>
                   : <div style={{ color: '#e8e4dc', fontSize: '13px', fontWeight: '600' }}>${flightCash.toLocaleString()}</div>}
-                {flightCard?.name && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{flightCard.name} card</div>}
+                {flightCard?.name && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{flightCard.name}{flightCard.name.toLowerCase().includes('card') ? '' : ' card'}</div>}
               </div>
               {modifications.flight && <div style={{ color: '#C9A84C', fontSize: '11px', fontStyle: 'italic' }}>✓ {modifications.flight}</div>}
             </div>
@@ -7250,7 +7250,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
                 {hotelIsPoints
                   ? <div style={{ color: '#4CC97A', fontSize: '13px', fontWeight: '600' }}>{hotelComp?.points?.replace(/redeemed/i, '').trim() || 'Points applied'}</div>
                   : <div style={{ color: '#e8e4dc', fontSize: '13px', fontWeight: '600' }}>${hotelCash.toLocaleString()} total</div>}
-                {hotelCard?.name && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{hotelCard.name}</div>}
+                {hotelCard?.name && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{hotelCard.name}{hotelCard.name.toLowerCase().includes('card') ? '' : ' card'}</div>}
               </div>
               {modifications.hotel && <div style={{ color: '#C9A84C', fontSize: '11px', fontStyle: 'italic' }}>✓ {modifications.hotel}</div>}
             </div>
@@ -7292,7 +7292,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '6px', marginTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <div>
                 <div style={{ color: '#e8e4dc', fontSize: '13px', fontWeight: '600' }}>${carCash.toLocaleString()}</div>
-                {carCard?.name && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{carCard.name}</div>}
+                {carCard?.name && <div style={{ color: '#555', fontSize: '11px', marginTop: '2px' }}>{carCard.name}{carCard.name.toLowerCase().includes('card') ? '' : ' card'}</div>}
               </div>
               {modifications.car && <div style={{ color: '#C9A84C', fontSize: '11px', fontStyle: 'italic' }}>✓ {modifications.car}</div>}
             </div>
@@ -8471,7 +8471,7 @@ ${(p.loyaltyAccounts||[]).map(a => `  ${a.program}: ${a.balance} (tier: ${a.tier
 STRUCTURED BENEFITS — use these exact values for multipliers, lounge access, tier benefits, free breakfast eligibility, and transfer partners. Do not rely on training knowledge when this data is present:
 ${buildTravelerBenefitsSummary(p).slice(0, 2000)}
 QUALITY SIGNALS — verified tiers and quality markers for known properties. Use these when surfacing or evaluating any of these properties:
-${buildQualityContext(Object.keys(QUALITY_SIGNALS_DB).slice(0, 15))}
+${buildQualityContext(Object.keys(QUALITY_SIGNALS_DB).slice(0, 40))}
 - Brand-to-program mapping: Marriott Bonvoy (Ritz-Carlton, St.Regis, W, Westin, Sheraton, JW Marriott, Edition, Autograph, Luxury Collection, Tribute, Design Hotels). World of Hyatt (Park Hyatt, Grand Hyatt, Andaz, Thompson, Alila, Hyatt Regency, Hyatt Centric, JdV, SLH partners since 2023). Hilton Honors (Waldorf Astoria, Conrad, LXR, Curio, Tapestry, DoubleTree, Canopy). IHG One Rewards (InterContinental, Kimpton, Six Senses, Regent, Hotel Indigo, voco). Fairmont, Raffles, Rosewood, Four Seasons, Peninsula, Mandarin Oriental, Aman, Belmond, Montage are independent — no major loyalty program points.${learnedList ? `
 - LEARNED FROM PAST TRIPS: ${learnedList}` : ""}
 - Preferred hotel brands: ${brandList}
@@ -9967,7 +9967,7 @@ Please respond now.`,
                   // Swap: remove dismissed, add reserve — no need to track as dismissed
                   setTripOptions(prev => [
                     ...prev.filter(o => o.id !== id),
-                    { ...matchingReserve, _fromReserve: true }
+                    { ...matchingReserve, _fromReserve: true, id: matchingReserve.id || (Date.now()) }
                   ]);
                   setReserveOptions(remainingReserves);
                   setRefineMessages(prev => [...prev, {
@@ -10136,35 +10136,6 @@ Please respond now.`,
           )}
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", marginTop: "4px", paddingTop: "16px" }}>
             <div style={{ background: "rgba(12,11,10,0.95)", border: "1px solid rgba(201,168,76,0.18)", borderRadius: "16px", padding: "14px 16px 12px" }}>
-              {/* Dismiss-triggered replacement prompt */}
-              {dismissedIds.length > 0 && keptOptionIds.length === 0 && (
-                <div style={{ marginBottom: "12px", padding: "10px 12px", background: "rgba(201,168,76,0.05)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div style={{ color: "#9a9088", fontSize: "12px" }}>
-                    {dismissedIds.length} option{dismissedIds.length > 1 ? 's' : ''} dismissed — find replacements?
-                  </div>
-                  <button onClick={() => {
-                    const activeOpts = tripOptions.filter(o => !dismissedIds.includes(o.id));
-                    // Use reserves if available — instant, no API call
-                    if (reserveOptions.length > 0) {
-                      const toAdd = reserveOptions.slice(0, dismissedIds.length);
-                      const remaining = reserveOptions.slice(dismissedIds.length);
-                      setTripOptions(prev => [...prev.filter(o => !dismissedIds.includes(o.id)), ...toAdd.map(r => ({ ...r, _fromReserve: true }))]);
-                      setDismissedIds([]);
-                      setReserveOptions(remaining);
-                      setRefineMessages(prev => [...prev, { role: 'assistant', text: `✦ Replaced with ${toAdd.length} fresh option${toAdd.length > 1 ? 's' : ''}.`, isOptionsUpdate: true }]);
-                      return;
-                    }
-                    // No reserves — call Claude
-                    const keptIds = activeOpts.map(o => o.id);
-                    setKeptOptionIds(keptIds);
-                    const prompt = buildRefinementPrompt(activeOpts, tripOptions.filter(o => dismissedIds.includes(o.id)), '', dismissedIds.length);
-                    setRefineMessages(prev => [...prev, { role: 'assistant', text: `Refining your options — one moment ↑`, isOptionsUpdate: true }]);
-                    callClaude(prompt);
-                  }} style={{ background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "16px", padding: "6px 14px", cursor: "pointer", fontSize: "11px", fontWeight: "700", flexShrink: 0 }}>
-                    Find replacements →
-                  </button>
-                </div>
-              )}
               {/* Header */}
               <div style={{ marginBottom: "12px" }}>
                 <span style={{ color: "#b0a898", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif", fontWeight: "600" }}>Continue the conversation</span>
@@ -10235,7 +10206,6 @@ Please respond now.`,
 
                 const pills = [
                   pill1Candidates[0] || "Which of these would you book if it were your trip?",
-                  pill2Candidates[0] || "What's the easiest of these to book with my programs?",
                   pill3Candidates[0] || "I'm ready — walk me through this option",
                 ];
 
