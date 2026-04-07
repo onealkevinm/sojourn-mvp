@@ -280,6 +280,26 @@ const getHotelProgram = (hotelName) => {
 
 // Post-generation validation: fix brand/program mismatches in AI-generated options
 // Catches cases like "Marriott Residence Inn" + "Hyatt points" or "Alaska flight" + "Delta miles"
+const validateReserves = (options) => {
+  // Same as validateOptions but no hard cap — reserves can be 0-4
+  if (!options || !Array.isArray(options)) return [];
+  return options
+    .filter(opt => opt && opt.headline && opt.tag)
+    .map(opt => ({
+      ...opt,
+      id: opt.id || Math.floor(Math.random() * 9000) + 1000,
+      tag: opt.tag || 'Recommended',
+      tagColor: opt.tagColor || '#C9A84C',
+      headline: opt.headline || '',
+      subhead: opt.subhead || '',
+      whyThis: typeof opt.whyThis === 'string' ? opt.whyThis : '',
+      tradeoff: typeof opt.tradeoff === 'string' ? opt.tradeoff : '',
+      totalCost: typeof opt.totalCost === 'number' ? opt.totalCost : 0,
+      components: Array.isArray(opt.components) ? opt.components : [],
+      experiences: Array.isArray(opt.experiences) ? opt.experiences : [],
+    }));
+};
+
 const validateOptions = (options) => {
   if (!options || !Array.isArray(options)) return options;
 
@@ -8510,12 +8530,16 @@ ${buildQualityContext(Object.keys(QUALITY_SIGNALS_DB).slice(0, 40))}
 - Preferred hotel brands: ${brandList}
 
 Generate EXACTLY 6 options as raw JSON in the "options" array — never 5, never 7, always exactly 6.
-Additionally, generate up to 4 RESERVE options in the "reserve_options" array. These are the next-best options that didn't make the primary 6 — used for instant refinement without another API call. Generate as many as genuinely exist for this destination (0-4). Do NOT fabricate reserves if there aren't genuinely good options. Reserve slots should be:
-- reserve slot 1: next best overall (similar quality to Recommended)  
-- reserve slot 2: next best quality/premium option
-- reserve slot 3: next best intent-extension Wild Card (different inference angle)
-- reserve slot 4: next best profile-extension Wild Card (different profile signal)
-Reserves use the same JSON schema as primary options. Tag them with their natural bucket tag (not "Reserve"). Output ONLY JSON — no markdown, no explanation, start with { end with }.
+CRITICAL: You MUST also generate exactly 4 RESERVE options in the "reserve_options" array. This is required, not optional. These are pre-generated alternatives used for instant refinement — the user will see them if they dismiss or request more options.
+
+Reserve options MUST include all 4 slots:
+- reserve_options[0]: Next best overall — a strong alternative to the Recommended that didn't make the primary cut. Same destination, different property or approach. Tag: "Recommended" or the most fitting primary bucket tag.
+- reserve_options[1]: Next best quality/premium — a different premium property the traveler would enjoy. Tag: "Quality Upgrade".
+- reserve_options[2]: Wild Card — Intent Extension — a different inference on what the traveler was really asking for. Must be genuinely different from Wild Card in primary 6. Tag: "Wild Card · [Reasoning Label]".
+- reserve_options[3]: Wild Card — Profile Extension — a different property inferred from traveler profile signals. Must be genuinely different from Wild Card in primary 6. Tag: "Wild Card · [Reasoning Label]".
+
+For thin markets with limited inventory (e.g. small towns, national parks): fill as many slots as genuinely possible, minimum 2. Never fabricate a property that doesn't exist, but most destinations have at least 2-4 viable alternatives.
+Reserves use the exact same JSON schema as primary options. Output ONLY JSON — no markdown, no explanation, start with { end with }.
 
 THE 6 OPTIONS (always in this order):
 CRITICAL RULE BEFORE GENERATING ANY OPTION: If the user named a specific destination, ALL 6 options must be AT that destination. Never substitute a different destination to optimize a bucket — find the best hotel/flight FOR THAT DESTINATION that fits the bucket criteria.
@@ -8735,7 +8759,7 @@ COMPONENT VALUE RULE — CRITICAL:
 - netValue = totalCost - pointsValue
 - redemptions (top-level array) = list each redemption applied: [{"program": "Delta SkyMiles", "pointsUsed": 50000, "dollarsValue": 700, "centsPerPoint": 1.4, "component": "Flights"}]. One entry per redeemed program. Leave as [] if no redemptions.
 
-DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these rules. Today is Monday, March 30, 2026.\n1. SPECIFIC DATES given → use exactly. checkIn and checkOut as YYYY-MM-DD. nights = checkOut minus checkIn in days.\n2. DEPART DAY OF WEEK + nights ("leaving Friday, 5 nights") → checkIn = next occurrence of that weekday from today. checkOut = checkIn + nights.\n3. RETURN DAY OF WEEK + nights ("back Sunday, 5 nights") → checkOut = next that weekday from today. checkIn = checkOut minus nights.\n4. MONTH + nights ("April, 5 nights") → pick a mid-month Tuesday avoiding peak weekends. checkOut = checkIn + nights.\n5. SEASON + duration ("this summer, a week") → pick a representative date. checkOut = checkIn + nights.\n6. No specific time → leave checkIn and checkOut as empty strings, nights as 0.\nNIGHTS vs DAYS: "5 days" = 4 nights. Always use nights for hotel stays.\ndates field = human-readable string like "April 22-27". checkIn/checkOut = ISO YYYY-MM-DD.\n\nREQUIRED JSON SCHEMA:\n{"tripSummary":{"origin":"","destination":"","dates":"","checkIn":"","checkOut":"","nights":0,"preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","cardStrategy":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}],"reserve_options":[]}. reserve_options follows the same schema as options. CRITICAL: (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] must be an EMPTY ARRAY by default. ONLY populate it if the user has explicitly requested specific dining, activities, breweries, distilleries, or excursions in this conversation and asked for them to be included. Never speculatively generate experiences.`;
+DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these rules. Today is Monday, March 30, 2026.\n1. SPECIFIC DATES given → use exactly. checkIn and checkOut as YYYY-MM-DD. nights = checkOut minus checkIn in days.\n2. DEPART DAY OF WEEK + nights ("leaving Friday, 5 nights") → checkIn = next occurrence of that weekday from today. checkOut = checkIn + nights.\n3. RETURN DAY OF WEEK + nights ("back Sunday, 5 nights") → checkOut = next that weekday from today. checkIn = checkOut minus nights.\n4. MONTH + nights ("April, 5 nights") → pick a mid-month Tuesday avoiding peak weekends. checkOut = checkIn + nights.\n5. SEASON + duration ("this summer, a week") → pick a representative date. checkOut = checkIn + nights.\n6. No specific time → leave checkIn and checkOut as empty strings, nights as 0.\nNIGHTS vs DAYS: "5 days" = 4 nights. Always use nights for hotel stays.\ndates field = human-readable string like "April 22-27". checkIn/checkOut = ISO YYYY-MM-DD.\n\nREQUIRED JSON SCHEMA:\n{"tripSummary":{"origin":"","destination":"","dates":"","checkIn":"","checkOut":"","nights":0,"preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","cardStrategy":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}],"reserve_options":[{}, {}, {}, {}]}. reserve_options MUST have 4 entries following the same schema as options. CRITICAL: (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] must be an EMPTY ARRAY by default. ONLY populate it if the user has explicitly requested specific dining, activities, breweries, distilleries, or excursions in this conversation and asked for them to be included. Never speculatively generate experiences.`;
   };
 
 
@@ -8975,9 +8999,11 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
       setKeptOptionIds([]);
       // Parse and store reserve options (0-4) for instant refinement
       const rawReserves = parsed.reserve_options || [];
-      const validatedReserves = rawReserves.length > 0 ? validateOptions(rawReserves) : [];
+      console.log(`[Sojourn] Raw reserves from model: ${rawReserves.length}`, rawReserves.map(r => r?.tag || 'no-tag'));
+      const validatedReserves = rawReserves.length > 0 ? validateReserves(rawReserves) : [];
       updateReserves(validatedReserves);
       console.log(`[Sojourn] ${validatedReserves.length} reserve options cached`);
+      if (validatedReserves.length < 2) console.warn('[Sojourn] Low reserve count — model under-generating reserves');
       setPhase("results");
       // preserve fromDealPillRef — reset only after results are shown
 
