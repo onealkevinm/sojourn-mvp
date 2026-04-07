@@ -8863,26 +8863,36 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 45000);
       try {
+        const sysPrompt = buildSystemPrompt();
+        const payload = {
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 2500,
+          system: sysPrompt,
+          messages: [{ role: "user", content: fullContext }],
+        };
+        // Diagnostic logging — visible in browser console
+        console.log("[Sojourn] Sending generation request");
+        console.log("[Sojourn] System prompt chars:", sysPrompt.length);
+        console.log("[Sojourn] User message chars:", fullContext.length);
+        console.log("[Sojourn] API key present:", !!ANTHROPIC_KEY, "length:", ANTHROPIC_KEY.length);
         const res = await fetch("https://api.anthropic.com/v1/messages", {
           method: "POST",
           signal: controller.signal,
           headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-20250514",
-            max_tokens: 2500,
-            system: buildSystemPrompt(),
-            messages: [{ role: "user", content: fullContext }],
-          })
+          body: JSON.stringify(payload)
         });
         clearTimeout(timeout);
+        console.log("[Sojourn] Response status:", res.status, res.statusText);
         const data = await res.json();
+        console.log("[Sojourn] Response type:", data.type, "| stop reason:", data.stop_reason, "| error:", data.error?.type);
         if (data.error) {
           const errType = data.error?.type || 'unknown';
+          console.error("[Sojourn] API error:", errType, data.error.message);
           if (errType === 'overloaded_error') throw new Error('API_OVERLOADED');
           if (errType === 'rate_limit_error') throw new Error('RATE_LIMITED');
           throw new Error(`API error: ${errType} - ${data.error.message}`);
         }
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         const text = data.content?.[0]?.text?.trim() || "";
         let cleanText = text.replace(/```json/g, "").replace(/```/g, "").trim();
         const s = cleanText.indexOf("{");
@@ -8917,7 +8927,9 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
       // preserve fromDealPillRef — reset only after results are shown
 
     } catch(e) {
-      // First attempt failed — wait 2s then retry once
+      // First attempt failed
+      console.error("[Sojourn] First attempt failed:", e.message, e);
+      setLoadingMessage("Retrying...");
       await new Promise(r => setTimeout(r, 2000));
       try {
         const parsed = await tryGenerate();
@@ -8930,11 +8942,14 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         setPhase("results");
         mp.track("cards_generated", { destination: parsed.tripSummary?.destination || "unknown", option_count: parsed.options?.length || 0 });
       } catch(e2) {
+        console.error("[Sojourn] Second attempt failed:", e2.message, e2);
         const errMsg = e2?.message === 'API_OVERLOADED' 
           ? "Sojourn is busy right now — please try again in a moment."
           : e2?.message === 'RATE_LIMITED'
           ? "Too many requests — please wait a moment and try again."
-          : "Taking a little longer than usual — please try again.";
+          : e2?.name === 'AbortError'
+          ? "Request timed out — the prompt may be too large. Please try again."
+          : `Error: ${e2?.message || 'unknown'} — please try again.`;
         setMessages(prev => [...prev, { role: "assistant", text: errMsg }]);
       }
     } finally {
