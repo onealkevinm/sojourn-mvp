@@ -9068,19 +9068,16 @@ const handleSend = () => {
     // Never regenerate options once user has isolated/focused on one
     const userHasFocused = !!focusedOptionId || deepDiveConfirmed;
 
-    // NUDGE: detect implied refinement intent without explicit ask
-    // e.g. "the wild card was interesting but wanted something closer to Seattle"
-    // Acknowledge the positive signal + ask if they want options updated
-    const impliedRefinement = !isRegenRequest && !userHasFocused && !isDetailRequest &&
-      /interesting|love|like|appeals|but|however|except|wish|if only|closer|further|different|instead|prefer/i.test(msg) &&
-      /wild card|recommended|value|upgrade|redemption|option/i.test(msg);
-
     // Also detect if THIS message itself is a preference/selection signal
-    // In that case, route to focus detection rather than regen
-    const isPreferenceSignal = /(i('d| would)? (like|want|pick|choose|go with|take|book)|let'?s (go|do|book)|i('m| am) (sold|in|interested)|that('?s| is) (the one|it|perfect|great)|this one|that one|love (this|that|the))/i.test(msg);
+    const isPreferenceSignal = /\b(i('d| would)? (like|want|pick|choose|go with|take|book)|let'?s (go|do|book)|i('m| am) (sold|in|interested)|that('?s| is) (the one|it|perfect|great)|this one|that one|love (this|that|the)\b)/i.test(msg);
 
     // Itinerary/detail enrichment requests should never trigger regen
     const isDetailRequest = /itinerary|integrate|add.*dining|add.*activit|tell me more|more detail|deeper|dining.*option|restaurant|what to do|activities|experiences/i.test(msg);
+
+    // NUDGE: detect implied refinement intent without explicit ask
+    const impliedRefinement = !isRegenRequest && !userHasFocused && !isDetailRequest &&
+      /interesting|love|like|appeals|but|however|except|wish|if only|closer|further|different|instead|prefer/i.test(msg) &&
+      /wild card|recommended|value|upgrade|redemption|option/i.test(msg);
 
     if (isRegenRequest && !userHasFocused && !isPreferenceSignal && !isDetailRequest) {
       // Detect mentioned options to keep — don't blow them away
