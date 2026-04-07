@@ -8935,7 +8935,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
 
     const tryGenerate = async () => {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 90000);
+      const timeout = setTimeout(() => controller.abort(), 120000);
       try {
         const sysPrompt = buildSystemPrompt();
         const payload = {
@@ -9264,7 +9264,7 @@ const handleSend = () => {
           : currentReservesAdd.slice(0, Math.min(2, currentReservesAdd.length));
         const remainingReserves = currentReservesAdd.filter(r => !reservesToShow.find(s => s.id === r.id));
         // Add reserves to active options instantly
-        setTripOptions(prev => [...prev, ...reservesToShow.map(r => ({ ...r, _fromReserve: true, tag: (() => { const t = r.tag || ''; if (t.toLowerCase().startsWith('wild card')) { const sub = t.replace(/^wild card\\s*[·\\-]\\s*/i, '').trim(); const bad = /,\\s*[A-Z][a-z]|alaska|delta|united|marriott|hyatt|hilton|chase|amex|sapphire|mileage|skymile|bonvoy|connection|your profile|based on your/i.test(sub); return (sub && !bad) ? `Refined Option · Wild Card · ${sub}` : 'Refined Option · Wild Card'; } return `Refined Option · ${t}`; })() }))]);
+        setTripOptions(prev => [...prev, ...reservesToShow.map(r => ({ ...r, _fromReserve: true, tag: (() => { const t = r.tag || ''; if (t.toLowerCase().indexOf('wild card') === 0) { const sub = t.slice(t.indexOf('·') + 1).replace(/^\s*[-·]\s*/, '').trim(); const bad = !sub || /,\s*[A-Z]/.test(sub) || /alaska|delta|united|marriott|hyatt|hilton|chase|amex|sapphire|mileage|skymile|bonvoy|connection|your profile|based on your/i.test(sub); return bad ? 'Refined Option · Wild Card' : 'Refined Option · Wild Card · ' + sub; } return 'Refined Option · ' + t; })() }))]);
         updateReserves(remainingReserves);
         const reserveNames = reservesToShow.map(r => r.headline?.split(' · ')[1]?.trim() || r.headline?.split(' · ')[0]?.trim()).filter(Boolean);
         setRefineMessages(prev => [...prev, {
@@ -10036,7 +10036,7 @@ Please respond now.`,
                   // Swap: remove dismissed, add reserve — no need to track as dismissed
                   setTripOptions(prev => [
                     ...prev.filter(o => o.id !== id),
-                    { ...matchingReserve, _fromReserve: true, id: matchingReserve.id || (Date.now()), tag: (() => { const t = matchingReserve.tag || ''; if (t.toLowerCase().startsWith('wild card')) { const sub = t.replace(/^wild card\\s*[·\\-]\\s*/i, '').trim(); const bad = /,\\s*[A-Z][a-z]|alaska|delta|united|marriott|hyatt|hilton|chase|amex|sapphire|mileage|skymile|bonvoy|connection|your profile|based on your/i.test(sub); return (sub && !bad) ? `Refined Option · Wild Card · ${sub}` : 'Refined Option · Wild Card'; } return `Refined Option · ${t}`; })() }
+                    { ...matchingReserve, _fromReserve: true, id: matchingReserve.id || (Date.now()), tag: (() => { const t = matchingReserve.tag || ''; if (t.toLowerCase().indexOf('wild card') === 0) { const sub = t.slice(t.indexOf('·') + 1).replace(/^\s*[-·]\s*/, '').trim(); const bad = !sub || /,\s*[A-Z]/.test(sub) || /alaska|delta|united|marriott|hyatt|hilton|chase|amex|sapphire|mileage|skymile|bonvoy|connection|your profile|based on your/i.test(sub); return bad ? 'Refined Option · Wild Card' : 'Refined Option · Wild Card · ' + sub; } return 'Refined Option · ' + t; })() }
                   ]);
                   updateReserves(remainingReserves);
                   const swappedName = matchingReserve.headline?.split(' · ').slice(0, 2).join(' · ') || 'a new option';
@@ -10186,7 +10186,7 @@ Please respond now.`,
           )}
 
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", marginTop: "4px", paddingTop: "16px" }}>
-            <div style={{ background: "rgba(12,11,10,0.95)", border: "1px solid rgba(201,168,76,0.18)", borderRadius: "16px", padding: "14px 16px 12px" }}>
+            <div style={{ background: "rgba(12,11,10,0.95)", border: "1px solid rgba(201,168,76,0.35)", borderRadius: "16px", padding: "14px 16px 12px" }}>
               {/* Header */}
               <div style={{ marginBottom: "12px" }}>
                 <span style={{ color: "#b0a898", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif", fontWeight: "600" }}>Continue the conversation</span>
@@ -10302,7 +10302,7 @@ Please respond now.`,
                     <TypingIndicator />
                   </div>
                 ) : (
-                  <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleRefine(); }} disabled={!refineInput.trim()} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", cursor: refineInput.trim() ? "pointer" : "default", background: refineInput.trim() ? "#C9A84C" : "rgba(201,168,76,0.1)", color: refineInput.trim() ? "#0a0908" : "#555", fontSize: "14px", fontWeight: "bold", flexShrink: 0 }}>&#8593;</button>
+                  <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleRefine(); }} disabled={!refineInput.trim()} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", cursor: refineInput.trim() ? "pointer" : "default", background: refineInput.trim() ? "#C9A84C" : "rgba(201,168,76,0.2)", color: refineInput.trim() ? "#0a0908" : "#8a7a6a", fontSize: "14px", fontWeight: "bold", flexShrink: 0 }}>&#8593;</button>
                 )}
               </div>
             </div>
