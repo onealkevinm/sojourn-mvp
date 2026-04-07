@@ -9137,7 +9137,6 @@ const handleSend = () => {
       clearTimeout(refineTimeout);
       setRefineLoading(false);
       setRefineLoadingMessage('');
-      conversationRef.current = [{ role: 'user', content: regenMsg }];
       const destMatch = msg.match(/bend|portland|carmel|monterey|ashland|sunriver|sisters|cannon beach|[a-z]+(,?\s+or|,?\s+wa|,?\s+ca)/i);
       const destName = destMatch ? destMatch[0].trim() : null;
       const regenSummary = destName
@@ -9960,17 +9959,16 @@ Please respond now.`,
                 }
                 const opt = tripOptions.find(o => o.id === id);
                 mp.track("card_dismissed", { tag: opt?.tag, headline: opt?.headline });
-                const newDismissed = [...dismissedIds, id];
-                setDismissedIds(newDismissed);
                 // Pull from reserves instantly if available — no API call
                 if (reserveOptions.length > 0) {
-                  // Find the best matching reserve for the dismissed slot
-                  // Prefer same-tag reserve, otherwise take next available
                   const matchingReserve = reserveOptions.find(r => r.tag === opt?.tag)
                     || reserveOptions[0];
                   const remainingReserves = reserveOptions.filter(r => r.id !== matchingReserve.id);
-                  // Add reserve to active options, remove from reserve pool
-                  setTripOptions(prev => [...prev, { ...matchingReserve, _fromReserve: true }]);
+                  // Swap: remove dismissed, add reserve — no need to track as dismissed
+                  setTripOptions(prev => [
+                    ...prev.filter(o => o.id !== id),
+                    { ...matchingReserve, _fromReserve: true }
+                  ]);
                   setReserveOptions(remainingReserves);
                   setRefineMessages(prev => [...prev, {
                     role: 'assistant',
@@ -9979,6 +9977,9 @@ Please respond now.`,
                   }]);
                   return;
                 }
+                // No reserves — track as dismissed, show banner
+                const newDismissed = [...dismissedIds, id];
+                setDismissedIds(newDismissed);
                 const remaining = tripOptions.filter(o => !newDismissed.includes(o.id));
                 if (remaining.length === 1 && !deepDiveConfirmed && !focusedOptionId) {
                   const last = remaining[0];
@@ -10064,7 +10065,6 @@ Please respond now.`,
                         setKeptOptionIds(keptIds);
                         // Build clean prompt via helper and call Claude directly
                         const prompt = buildRefinementPrompt(keptOpts, replacedOpts, msg.refinementMsg, slotsToFill);
-                        conversationRef.current = [{ role: 'user', content: prompt }];
                         setRefineMessages(prev => [...prev, {
                           role: 'assistant',
                           text: `Refining your options — one moment ↑`,
@@ -10158,7 +10158,6 @@ Please respond now.`,
                     const keptIds = activeOpts.map(o => o.id);
                     setKeptOptionIds(keptIds);
                     const prompt = buildRefinementPrompt(activeOpts, tripOptions.filter(o => dismissedIds.includes(o.id)), '', dismissedIds.length);
-                    conversationRef.current = [{ role: 'user', content: prompt }];
                     setRefineMessages(prev => [...prev, { role: 'assistant', text: `Refining your options — one moment ↑`, isOptionsUpdate: true }]);
                     callClaude(prompt);
                   }} style={{ background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "16px", padding: "6px 14px", cursor: "pointer", fontSize: "11px", fontWeight: "700", flexShrink: 0 }}>
