@@ -8465,7 +8465,7 @@ ${(p.loyaltyAccounts||[]).map(a => `  ${a.program}: ${a.balance} (tier: ${a.tier
 STRUCTURED BENEFITS — use these exact values for multipliers, lounge access, tier benefits, free breakfast eligibility, and transfer partners. Do not rely on training knowledge when this data is present:
 ${buildTravelerBenefitsSummary(p)}
 QUALITY SIGNALS — verified tiers and quality markers for known properties. Use these when surfacing or evaluating any of these properties:
-${buildQualityContext(Object.keys(QUALITY_SIGNALS_DB).slice(0, 60))}
+${buildQualityContext(Object.keys(QUALITY_SIGNALS_DB).slice(0, 30))}
 - Brand-to-program mapping: Marriott Bonvoy covers ${(LOYALTY_BRAND_MAP["Marriott Bonvoy"]||[]).join(", ")}. World of Hyatt covers ${(LOYALTY_BRAND_MAP["World of Hyatt"]||[]).join(", ")} — including Small Luxury Hotels (SLH) since 2023. Hilton Honors covers ${(LOYALTY_BRAND_MAP["Hilton Honors"]||[]).join(", ")}. IHG One Rewards covers ${(LOYALTY_BRAND_MAP["IHG One Rewards"]||[]).join(", ")}. Fairmont, Raffles, Rosewood, Four Seasons, Peninsula, Mandarin Oriental, Aman, Belmond, Montage are independent — no major loyalty program points.${learnedList ? `
 - LEARNED FROM PAST TRIPS: ${learnedList}` : ""}
 - Preferred hotel brands: ${brandList}
@@ -8857,7 +8857,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
     const messageInterval = setInterval(() => {
       stepIndex = (stepIndex + 1) % loadingSteps.length;
       setLoadingMessage(loadingSteps[stepIndex]);
-    }, 2400);
+    }, 2000);
     const clearMessages = () => { clearInterval(messageInterval); setLoadingMessage(""); };
 
     const fullContext = conversationRef.current.map(m => m.content).join(" ");
@@ -8865,7 +8865,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
 
     const tryGenerate = async () => {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 120000);
+      const timeout = setTimeout(() => controller.abort(), 45000);
       try {
         const res = await fetch("https://api.anthropic.com/v1/messages", {
           method: "POST",
@@ -8873,8 +8873,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
           headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
           body: JSON.stringify({
             model: "claude-sonnet-4-20250514",
-            max_tokens: 6000,
-            temperature: 0.5,
+            max_tokens: 4000,
             system: buildSystemPrompt(),
             messages: [{ role: "user", content: fullContext }],
           })
@@ -8917,6 +8916,8 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
       // preserve fromDealPillRef — reset only after results are shown
 
     } catch(e) {
+      // First attempt failed — wait 2s then retry once
+      await new Promise(r => setTimeout(r, 2000));
       try {
         const parsed = await tryGenerate();
         const isEarningQuery2 = /business.?trip|work.?trip|maximize.?point|build.?mile|build.?point|earn.?status|rack.?up|maximize.?earn/i.test(input);
@@ -8928,7 +8929,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         setPhase("results");
         mp.track("cards_generated", { destination: parsed.tripSummary?.destination || "unknown", option_count: parsed.options?.length || 0 });
       } catch(e2) {
-        setMessages(prev => [...prev, { role: "assistant", text: "Having trouble generating your options — please try again." }]);
+        setMessages(prev => [...prev, { role: "assistant", text: "Taking a little longer than usual — tap the button again to retry." }]);
       }
     } finally {
       setLoading(false);
@@ -9553,7 +9554,7 @@ Please respond now.`,
             headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
             body: JSON.stringify({
               model: "claude-sonnet-4-20250514",
-              max_tokens: 6000,
+              max_tokens: 4000,
               system: `You are a travel option generator. Output ONLY valid JSON — no prose, no explanation. Start immediately with { and end with }. Generate 6 travel options based on the request. Use the same JSON schema as before with fields: tripSummary, options array with id/tag/tagColor/headline/subhead/totalCost/pointsEarned/pointsValue/netValue/redemption/tags/tradeoff/loyaltyHighlight/cardStrategy/whyThis/components/experiences.`,
               messages: [
                 ...conversationRef.current.slice(-6).map(m => ({ role: m.role, content: m.content })),
