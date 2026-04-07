@@ -8986,6 +8986,7 @@ const handleSend = () => {
       setRefineMessages(prev => [...prev, { role: "user", text: msg }]);
     }
     setRefineLoading(true);
+    setRefineLoadingMessage("Reviewing your refinement...");
 
     // Safety timeout — reset loading after 30s in case of silent failure
     let refineTimeout = setTimeout(() => {
@@ -9021,7 +9022,11 @@ const handleSend = () => {
       // Geographic refinements
       /stay.*in|options.*in|somewhere.*in|hotels.*in|trips.*to|fly.*to|go.*to/i,
     ];
-    const isRegenRequest = regenSignals.some(r => r.test(msg));
+    // ADDITIVE requests — "any others like X" — should NOT trigger full regen
+    // These are keep-and-expand requests, handled by Option B confirmation pattern
+    const isAdditiveRequest = /any (others?|more|additional|similar|like (those|that|these|them))|others? like|more like (those|that|them|this)|something similar|along (those|these|similar) lines|consider|what else/i.test(msg);
+
+    const isRegenRequest = !isAdditiveRequest && regenSignals.some(r => r.test(msg));
 
     // Never regenerate options once user has isolated/focused on one
     const userHasFocused = !!focusedOptionId || deepDiveConfirmed;
@@ -9041,30 +9046,42 @@ const handleSend = () => {
     const isDetailRequest = /itinerary|integrate|add.*dining|add.*activit|tell me more|more detail|deeper|dining.*option|restaurant|what to do|activities|experiences/i.test(msg);
 
     if (isRegenRequest && !userHasFocused && !isPreferenceSignal && !isDetailRequest) {
-      // Route through callClaude for full option regeneration
-      // Preserve original query context + add the refinement
+      // Detect mentioned options to keep — don't blow them away
+      const mentionedInRegen = [];
+      tripOptions.forEach(opt => {
+        const msgLower = msg.toLowerCase();
+        const tagLower = (opt.tag || '').toLowerCase();
+        const propName = (opt.headline || '').split(' · ').slice(0,2).join(' ').toLowerCase().slice(0,20);
+        if (msgLower.includes(tagLower) || (propName.length > 4 && msgLower.includes(propName.slice(0,10)))) {
+          mentionedInRegen.push(opt.id);
+        }
+      });
+      const keptForRegen = tripOptions.filter(o => mentionedInRegen.includes(o.id));
+      // Archive current non-kept options as previous wave
+      setPreviousWaveOptions(prev => [...prev, ...tripOptions.filter(o => !mentionedInRegen.includes(o.id))]);
+      setRefinementWave(w => w + 1);
+      setKeptOptionIds(mentionedInRegen);
       const originalQuery = (conversationRef.current || []).filter(m => m.role === 'user').map(m => m.content).join(' ');
       const originalTripContext = originalQuery.slice(0, 600);
-      const regenMsg = originalTripContext
-        ? `${msg}. Keep all original trip parameters from this request unless I explicitly changed them: ${originalTripContext}`
-        : msg;
-      setRefineLoading(false);
-      clearTimeout(refineTimeout);
-      // Update conversation so callClaude regenerates with full context
-      conversationRef.current = [{ role: 'user', content: regenMsg }];
-      // Add confirmation to refine history so it's visible when user returns
-      // Summarize what changed rather than echoing the raw message
-      const destMatch = msg.match(/bend|portland|ashland|sunriver|sisters|cannon beach|crater lake|hood river|[a-z]+(,?\s+or|,?\s+wa|,?\s+ca|,?\s+az)/i);
-      const destName = destMatch ? destMatch[0].trim() : null;
-      const regenSummary = destName
-        ? `Narrowing to ${destName.charAt(0).toUpperCase() + destName.slice(1)} — scroll up to see updated options ↑`
-        : msg.length < 60 ? `Updated based on: "${msg}" — scroll up ↑`
-        : `Refreshing your options — scroll up to see the new results ↑`;
-      setRefineMessages(prev => [...prev, { role: 'assistant', text: regenSummary, isOptionsUpdate: true }]);
+      const keptContext = keptForRegen.length > 0
+        ? `Keep these options exactly as-is — do not relabel or restructure them: ${keptForRegen.map(o => `[${o.tag}] ${o.headline}`).join(', ')}. `
+        : '';
+      const noRepeatContext = tripOptions.filter(o => !mentionedInRegen.includes(o.id)).length > 0
+        ? `Do not repeat these already-shown options: ${tripOptions.filter(o => !mentionedInRegen.includes(o.id)).map(o => o.headline).join(', ')}. `
+        : '';
+      const regenMsg = `${keptContext}${noRepeatContext}${msg}. Original trip: ${originalTripContext}`;
       clearTimeout(refineTimeout);
       setRefineLoading(false);
       setRefineLoadingMessage('');
-      // Note: refineInterval not yet declared at this point — cleanup happens in finally
+      conversationRef.current = [{ role: 'user', content: regenMsg }];
+      const destMatch = msg.match(/bend|portland|carmel|monterey|ashland|sunriver|sisters|cannon beach|[a-z]+(,?\s+or|,?\s+wa|,?\s+ca)/i);
+      const destName = destMatch ? destMatch[0].trim() : null;
+      const regenSummary = destName
+        ? `Narrowing to ${destName.charAt(0).toUpperCase() + destName.slice(1)} — scroll up to see updated options ↑`
+        : keptForRegen.length > 0
+          ? `Keeping ${keptForRegen.length} option${keptForRegen.length > 1 ? 's' : ''}, finding more — scroll up ↑`
+          : `Refreshing your options — scroll up to see new results ↑`;
+      setRefineMessages(prev => [...prev, { role: 'assistant', text: regenSummary, isOptionsUpdate: true }]);
       callClaude(regenMsg);
       return;
     }
@@ -9084,6 +9101,46 @@ const handleSend = () => {
         }]);
         return;
       }
+    }
+
+    // ADDITIVE REQUEST: intercept before API call — build confirmation directly
+    // "Any others like those?" → acknowledge + show Update My Options button
+    // No API call needed — we know what they're asking
+    if (isAdditiveRequest && !userHasFocused) {
+      const mentionedKept = [];
+      tripOptions.forEach(opt => {
+        const msgLower = msg.toLowerCase();
+        const tagLower = (opt.tag || '').toLowerCase();
+        const propParts = (opt.headline || '').toLowerCase().split(' · ');
+        const propName = propParts[1]?.trim().slice(0, 12) || propParts[0]?.trim().slice(0, 12);
+        if (msgLower.includes(tagLower) ||
+            (propName && propName.length > 4 && msgLower.includes(propName.slice(0, 8)))) {
+          mentionedKept.push(opt.id);
+        }
+      });
+      setKeptOptionIds(mentionedKept);
+      const keptNames = mentionedKept.map(id => {
+        const opt = tripOptions.find(o => o.id === id);
+        return opt ? opt.headline?.split(' · ')[0]?.trim() : null;
+      }).filter(Boolean);
+      // Build a warm acknowledgment restating what the user said
+      const ack = mentionedKept.length > 0
+        ? `You're drawn to ${keptNames.join(' and ')} — and want to see more options in that spirit. I'll keep those and find ${6 - mentionedKept.length} more along those lines.`
+        : `You want to see more options like the ones that caught your eye — I'll keep what's working and find new directions to consider.`;
+      setRefineMessages(prev => [...prev, {
+        role: 'assistant',
+        text: ack,
+        isRefinementConfirm: true,
+        refinementMsg: msg,
+        keptIds: mentionedKept,
+      }]);
+      // Brief pause so loading dots are visible, then show confirmation
+      setTimeout(() => {
+        setRefineLoading(false);
+        setRefineLoadingMessage('');
+      }, 600);
+      clearTimeout(refineTimeout);
+      return;
     }
 
     const refineSteps = [
