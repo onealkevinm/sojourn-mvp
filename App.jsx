@@ -8344,7 +8344,8 @@ export default function SojournApp() {
   const [refineLoading, setRefineLoading] = useState(false);
   const [refineMessages, setRefineMessages] = useState([]);
   const [refineLoadingMessage, setRefineLoadingMessage] = useState("");
-  const [keptOptionIds, setKeptOptionIds] = useState([]); // options user wants to keep
+  const [keptOptionIds, setKeptOptionIds] = useState([]);
+  const [reserveOptions, setReserveOptions] = useState([]); // options 7-10, consumed on dismiss/refine // options user wants to keep
   const [refinementWave, setRefinementWave] = useState(0); // which wave of refinement we're on
   const [previousWaveOptions, setPreviousWaveOptions] = useState([]); // collapsed prior wave
   const [shownOptionIds, setShownOptionIds] = useState([]); // all options ever shown — no repeats
@@ -8475,7 +8476,13 @@ ${buildQualityContext(Object.keys(QUALITY_SIGNALS_DB).slice(0, 15))}
 - LEARNED FROM PAST TRIPS: ${learnedList}` : ""}
 - Preferred hotel brands: ${brandList}
 
-Generate EXACTLY 6 options as raw JSON — never 5, never 7, always exactly 6. Output ONLY JSON — no markdown, no explanation, start with { end with }. The options array must have exactly 6 elements.
+Generate EXACTLY 6 options as raw JSON in the "options" array — never 5, never 7, always exactly 6.
+Additionally, generate up to 4 RESERVE options in the "reserve_options" array. These are the next-best options that didn't make the primary 6 — used for instant refinement without another API call. Generate as many as genuinely exist for this destination (0-4). Do NOT fabricate reserves if there aren't genuinely good options. Reserve slots should be:
+- reserve slot 1: next best overall (similar quality to Recommended)  
+- reserve slot 2: next best quality/premium option
+- reserve slot 3: next best intent-extension Wild Card (different inference angle)
+- reserve slot 4: next best profile-extension Wild Card (different profile signal)
+Reserves use the same JSON schema as primary options. Tag them with their natural bucket tag (not "Reserve"). Output ONLY JSON — no markdown, no explanation, start with { end with }.
 
 THE 6 OPTIONS (always in this order):
 CRITICAL RULE BEFORE GENERATING ANY OPTION: If the user named a specific destination, ALL 6 options must be AT that destination. Never substitute a different destination to optimize a bucket — find the best hotel/flight FOR THAT DESTINATION that fits the bucket criteria.
@@ -8695,7 +8702,7 @@ COMPONENT VALUE RULE — CRITICAL:
 - netValue = totalCost - pointsValue
 - redemptions (top-level array) = list each redemption applied: [{"program": "Delta SkyMiles", "pointsUsed": 50000, "dollarsValue": 700, "centsPerPoint": 1.4, "component": "Flights"}]. One entry per redeemed program. Leave as [] if no redemptions.
 
-DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these rules. Today is Monday, March 30, 2026.\n1. SPECIFIC DATES given → use exactly. checkIn and checkOut as YYYY-MM-DD. nights = checkOut minus checkIn in days.\n2. DEPART DAY OF WEEK + nights ("leaving Friday, 5 nights") → checkIn = next occurrence of that weekday from today. checkOut = checkIn + nights.\n3. RETURN DAY OF WEEK + nights ("back Sunday, 5 nights") → checkOut = next that weekday from today. checkIn = checkOut minus nights.\n4. MONTH + nights ("April, 5 nights") → pick a mid-month Tuesday avoiding peak weekends. checkOut = checkIn + nights.\n5. SEASON + duration ("this summer, a week") → pick a representative date. checkOut = checkIn + nights.\n6. No specific time → leave checkIn and checkOut as empty strings, nights as 0.\nNIGHTS vs DAYS: "5 days" = 4 nights. Always use nights for hotel stays.\ndates field = human-readable string like "April 22-27". checkIn/checkOut = ISO YYYY-MM-DD.\n\nREQUIRED JSON SCHEMA:\n{"tripSummary":{"origin":"","destination":"","dates":"","checkIn":"","checkOut":"","nights":0,"preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","cardStrategy":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}]}. CRITICAL: (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] must be an EMPTY ARRAY by default. ONLY populate it if the user has explicitly requested specific dining, activities, breweries, distilleries, or excursions in this conversation and asked for them to be included. Never speculatively generate experiences.`;
+DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these rules. Today is Monday, March 30, 2026.\n1. SPECIFIC DATES given → use exactly. checkIn and checkOut as YYYY-MM-DD. nights = checkOut minus checkIn in days.\n2. DEPART DAY OF WEEK + nights ("leaving Friday, 5 nights") → checkIn = next occurrence of that weekday from today. checkOut = checkIn + nights.\n3. RETURN DAY OF WEEK + nights ("back Sunday, 5 nights") → checkOut = next that weekday from today. checkIn = checkOut minus nights.\n4. MONTH + nights ("April, 5 nights") → pick a mid-month Tuesday avoiding peak weekends. checkOut = checkIn + nights.\n5. SEASON + duration ("this summer, a week") → pick a representative date. checkOut = checkIn + nights.\n6. No specific time → leave checkIn and checkOut as empty strings, nights as 0.\nNIGHTS vs DAYS: "5 days" = 4 nights. Always use nights for hotel stays.\ndates field = human-readable string like "April 22-27". checkIn/checkOut = ISO YYYY-MM-DD.\n\nREQUIRED JSON SCHEMA:\n{"tripSummary":{"origin":"","destination":"","dates":"","checkIn":"","checkOut":"","nights":0,"preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","cardStrategy":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}],"reserve_options":[]}. reserve_options follows the same schema as options. CRITICAL: (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] must be an EMPTY ARRAY by default. ONLY populate it if the user has explicitly requested specific dining, activities, breweries, distilleries, or excursions in this conversation and asked for them to be included. Never speculatively generate experiences.`;
   };
 
 
@@ -8931,6 +8938,11 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
       setRefinementWave(0);
       setPreviousWaveOptions([]);
       setKeptOptionIds([]);
+      // Parse and store reserve options (0-4) for instant refinement
+      const rawReserves = parsed.reserve_options || [];
+      const validatedReserves = rawReserves.length > 0 ? validateOptions(rawReserves) : [];
+      setReserveOptions(validatedReserves);
+      console.log(`[Sojourn] ${validatedReserves.length} reserve options cached`);
       setPhase("results");
       // preserve fromDealPillRef — reset only after results are shown
 
@@ -9159,34 +9171,57 @@ const handleSend = () => {
     if (isAdditiveRequest && !userHasFocused) {
       const msgLower = msg.toLowerCase();
       const activeOpts = tripOptions.filter(o => !dismissedIds.includes(o.id));
-      // Find explicitly mentioned options user wants to keep
-      const mentionedKept = [];
+
+      // Find explicitly mentioned options
+      const mentionedIds = [];
       activeOpts.forEach(opt => {
         const propParts = (opt.headline || '').toLowerCase().split(' · ');
         const propName = propParts[1]?.trim() || '';
         const propShort = propName.split(' ')[0];
         if (propShort && propShort.length > 3 && msgLower.includes(propShort.toLowerCase())) {
-          mentionedKept.push(opt.id);
+          mentionedIds.push(opt.id);
         }
       });
-      // Determine kept vs slots to fill
-      // When user mentions options they like, keep ALL active options
-      // and add a small number of new ones in that spirit
-      // Don't replace options just because they weren't mentioned
-      const keptIds = activeOpts.map(o => o.id); // always keep all active
-      const slotsToFill = mentionedKept.length > 0 
-        ? Math.min(2, 6 - activeOpts.length) // add 1-2 when user mentions a specific option
-        : Math.max(1, 6 - activeOpts.length); // fill dismissed slots otherwise
+
+      // Check reserves first — can we serve this without a Claude call?
+      if (reserveOptions.length > 0) {
+        // Pull up to 2 reserves, preferring ones that match the spirit of mentioned options
+        const mentionedTags = mentionedIds.map(id => tripOptions.find(o => o.id === id)?.tag).filter(Boolean);
+        const matchingReserves = mentionedTags.length > 0
+          ? reserveOptions.filter(r => mentionedTags.includes(r.tag))
+          : [];
+        const reservesToShow = matchingReserves.length > 0
+          ? matchingReserves.slice(0, 2)
+          : reserveOptions.slice(0, Math.min(2, reserveOptions.length));
+        const remainingReserves = reserveOptions.filter(r => !reservesToShow.find(s => s.id === r.id));
+        // Add reserves to active options instantly
+        setTripOptions(prev => [...prev, ...reservesToShow.map(r => ({ ...r, _fromReserve: true }))]);
+        setReserveOptions(remainingReserves);
+        const reserveNames = reservesToShow.map(r => r.headline?.split(' · ')[1]?.trim() || r.headline?.split(' · ')[0]?.trim()).filter(Boolean);
+        setRefineMessages(prev => [...prev, {
+          role: 'assistant',
+          text: `Added ${reservesToShow.length > 1 ? reserveNames.join(' and ') : reserveNames[0] || 'a new option'} — scroll up to see ${reservesToShow.length > 1 ? 'them' : 'it'}.`,
+          isOptionsUpdate: true
+        }]);
+        setRefineLoading(false);
+        clearTimeout(refineTimeout);
+        setRefineLoadingMessage('');
+        return;
+      }
+
+      // No reserves available — fall back to confirmation + Claude call
+      const keptIds = activeOpts.map(o => o.id);
+      const slotsToFill = mentionedIds.length > 0 ? Math.min(2, 6 - activeOpts.length + 1) : Math.max(1, 6 - activeOpts.length);
       setKeptOptionIds(keptIds);
-      const keptNames = keptIds.slice(0,2).map(id => {
+      const keptNames = mentionedIds.slice(0,2).map(id => {
         const opt = tripOptions.find(o => o.id === id);
         return opt?.headline?.split(' · ')[1]?.trim() || opt?.headline?.split(' · ')[0]?.trim();
       }).filter(Boolean);
-      const ack = mentionedKept.length > 0
-        ? `Got it — I\'ll keep ${keptNames.join(' and ')} and find ${slotsToFill} more in that spirit.`
+      const ack = keptNames.length > 0
+        ? `Got it — I'll keep ${keptNames.join(' and ')} and find a couple more in that spirit.`
         : dismissedIds.length > 0
-        ? `I\'ll replace the ${dismissedIds.length} option${dismissedIds.length > 1 ? 's' : ''} you dismissed with better fits.`
-        : `I\'ll find a few more options in that spirit alongside your current ones.`;
+        ? `I'll replace the ${dismissedIds.length} option${dismissedIds.length > 1 ? 's' : ''} you dismissed with better fits.`
+        : `I'll find a couple more options in that spirit alongside your current ones.`;
       setRefineMessages(prev => [...prev, {
         role: 'assistant',
         text: ack,
@@ -9660,7 +9695,7 @@ Please respond now.`,
     setRefineMessages([]);
     setKeptOptionIds([]); setRefinementWave(0);
     setPreviousWaveOptions([]); setShownOptionIds([]);
-    setPendingRefinement(null);
+    setPendingRefinement(null); setReserveOptions([]);
   };
 
   const clearProfile = () => {
@@ -9925,6 +9960,23 @@ Please respond now.`,
                 mp.track("card_dismissed", { tag: opt?.tag, headline: opt?.headline });
                 const newDismissed = [...dismissedIds, id];
                 setDismissedIds(newDismissed);
+                // Pull from reserves instantly if available — no API call
+                if (reserveOptions.length > 0) {
+                  // Find the best matching reserve for the dismissed slot
+                  // Prefer same-tag reserve, otherwise take next available
+                  const matchingReserve = reserveOptions.find(r => r.tag === opt?.tag)
+                    || reserveOptions[0];
+                  const remainingReserves = reserveOptions.filter(r => r.id !== matchingReserve.id);
+                  // Add reserve to active options, remove from reserve pool
+                  setTripOptions(prev => [...prev, { ...matchingReserve, _fromReserve: true }]);
+                  setReserveOptions(remainingReserves);
+                  setRefineMessages(prev => [...prev, {
+                    role: 'assistant',
+                    text: `Swapped in a new option — scroll up to see it.`,
+                    isOptionsUpdate: true
+                  }]);
+                  return;
+                }
                 const remaining = tripOptions.filter(o => !newDismissed.includes(o.id));
                 if (remaining.length === 1 && !deepDiveConfirmed && !focusedOptionId) {
                   const last = remaining[0];
@@ -10090,15 +10142,22 @@ Please respond now.`,
                   </div>
                   <button onClick={() => {
                     const activeOpts = tripOptions.filter(o => !dismissedIds.includes(o.id));
+                    // Use reserves if available — instant, no API call
+                    if (reserveOptions.length > 0) {
+                      const toAdd = reserveOptions.slice(0, dismissedIds.length);
+                      const remaining = reserveOptions.slice(dismissedIds.length);
+                      setTripOptions(prev => [...prev.filter(o => !dismissedIds.includes(o.id)), ...toAdd.map(r => ({ ...r, _fromReserve: true }))]);
+                      setDismissedIds([]);
+                      setReserveOptions(remaining);
+                      setRefineMessages(prev => [...prev, { role: 'assistant', text: `✦ Replaced with ${toAdd.length} fresh option${toAdd.length > 1 ? 's' : ''}.`, isOptionsUpdate: true }]);
+                      return;
+                    }
+                    // No reserves — call Claude
                     const keptIds = activeOpts.map(o => o.id);
                     setKeptOptionIds(keptIds);
                     const prompt = buildRefinementPrompt(activeOpts, tripOptions.filter(o => dismissedIds.includes(o.id)), '', dismissedIds.length);
                     conversationRef.current = [{ role: 'user', content: prompt }];
-                    setRefineMessages(prev => [...prev, {
-                      role: 'assistant',
-                      text: `Refining your options — one moment ↑`,
-                      isOptionsUpdate: true
-                    }]);
+                    setRefineMessages(prev => [...prev, { role: 'assistant', text: `Refining your options — one moment ↑`, isOptionsUpdate: true }]);
                     callClaude(prompt);
                   }} style={{ background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "16px", padding: "6px 14px", cursor: "pointer", fontSize: "11px", fontWeight: "700", flexShrink: 0 }}>
                     Find replacements →
