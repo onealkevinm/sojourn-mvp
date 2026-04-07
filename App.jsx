@@ -8503,7 +8503,10 @@ The goal is 6 honest, genuinely useful options — not 6 slots mechanically fill
 
 A replaced bucket should be labeled with a descriptive tag that reflects what it actually is (e.g. "Most Distinctive Lodge", "Best Park Experience", "Remote Wilderness") rather than forcing a label that doesn't apply.
 
-${isPointsLedQuery ? POINTS_LED_RULES : ""}
+${isPointsLedQuery ? `
+POINTS-LED QUERY DETECTION: Activate this mode when the user intent is to redeem or use points/miles. Triggers: explicit balance mention, redemption intent ("use my miles", "redeem points"), or program-specific context. Anchor all 6 options around the stated program.
+When points-led: 1. RECOMMENDED — best redemption at 1.5+ cpp. 2. BEST POINTS REDEMPTION (#4CC97A) — highest cpp, spell out math. 3. BEST VALUE — stack programs (airline miles for flights + hotel points for hotel). 4. QUALITY UPGRADE — premium cabin + luxury hotel with points stacked. 5. WILD CARD — INTENT EXTENSION — surprising high-value redemption or boutique property fitting profile. 6. FUTURE VALUE (#4C9AC9) — strategic hold: pay cash now, earn aggressively, redeem bigger later.
+` : ""}
 FOR NON-POINTS QUERIES, use these 6 bucket definitions in this order:
 CRITICAL: "Future Value" and "Best Points Earned" NEVER appear in non-points queries. The 6 slots are fixed as below.
 
@@ -10408,15 +10411,3 @@ Please respond now.`,
     </div>
   );
 }
-const POINTS_LED_RULES = `
-POINTS-LED QUERY DETECTION: Activate this mode when the user's intent is to redeem or use points/miles — even if vaguely stated. Triggers include: explicit balance mention ("I have 64k Delta miles"), redemption intent ("use my miles", "redeem points", "burn my Hyatt points"), or program-specific context established earlier in the conversation. When a single program is clear, anchor all 6 options around it.
-
-When a points-led query is detected, map the 6 buckets as follows:
-1. RECOMMENDED (#C9A84C) — Best overall redemption. Must achieve at least 1.5 cents per point. Lead with the redemption story in whyThis.
-2. BEST POINTS REDEMPTION (#4CC97A) — Highest cpp efficiency. HEADLINE: frame around destination and cpp. whyThis: spell out clearly: "[X] miles used · estimated value $[Y] · [Z.Z] cents per mile."
-3. BEST VALUE (#C9C94C) — Stack the stated program on its natural component PLUS secondary programs. whyThis MUST open with the stacking framing.
-4. QUALITY UPGRADE (#C94C8A) — Use stated miles for premium cabin AND layer hotel loyalty points for a luxury property.
-5. WILD CARD — INTENT EXTENSION (#9A4CC9) — Surprisingly high-value redemption they wouldn't think of, or a boutique property that fits their profile exceptionally well.
-6. FUTURE VALUE (#4C9AC9) — Strategic alternative: don't spend miles now. Pay cash, earn aggressively, position for a bigger future redemption. Tag label should be "Future Value". In whyThis, make the case without assuming specific future destinations.
-`;
-
