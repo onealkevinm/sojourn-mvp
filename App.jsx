@@ -6219,7 +6219,7 @@ const INDEPENDENT_HOTEL_URLS = {
   "Madeline Hotel & Residences": "https://auberge.com/madeline/",
   "Malliouhana": "https://malliouhana.com/",
   "Mauna Lani": "https://auberge.com/mauna-lani/",
-  "Mayflower Inn & Spa": "https://auberge.com/mayflower/",
+  "Mayflower Inn and Spa": "https://auberge.com/mayflower/",
   "Mayflower Inn and Spa": "https://auberge.com/mayflower/",
   "Primland Resort": "https://aubergeresorts.com/primland-resort/",
   "Salamander DC": "https://www.salamanderdc.com/",
@@ -6301,11 +6301,11 @@ const INDEPENDENT_HOTEL_URLS = {
   "Copacabana Palace": "https://www.belmond.com/hotels/south-america/brazil/rio-de-janeiro/belmond-copacabana-palace/",
   "Eagle Island Lodge": "https://www.belmond.com/safaris/africa/botswana/belmond-eagle-island-lodge/",
   "Grand Hotel Timeo": "https://www.belmond.com/hotels/europe/italy/taormina/belmond-grand-hotel-timeo/",
-  "Hotel Cipriani": "https://www.belmond.com/hotels/europe/italy/venice/belmond-hotel-cipriani/",
+  "Belmond Hotel Cipriani": "https://www.belmond.com/hotels/europe/italy/venice/belmond-hotel-cipriani/",
   "Hotel das Cataratas": "https://www.belmond.com/hotels/south-america/brazil/iguassu-falls/belmond-hotel-das-cataratas/",
   "Jimbaran Puri": "https://www.belmond.com/hotels/asia/bali/belmond-jimbaran-puri/",
   "La Casitas": "https://www.belmond.com/hotels/south-america/peru/colca-canyon/belmond-las-casitas/",
-  "La Residencia": "https://www.belmond.com/hotels/europe/mallorca/deia/belmond-la-residencia/",
+  "Belmond La Residencia": "https://www.belmond.com/hotels/europe/mallorca/deia/belmond-la-residencia/",
   "La Samanna": "https://www.belmond.com/hotels/north-america/caribbean/st-martin/belmond-la-samanna/",
   "Le Manoir Aux Quat'Saisons": "https://www.belmond.com/hotels/europe/uk/oxfordshire/belmond-le-manoir-aux-quat-saisons/",
   "Maroma, A Belmond Hotel": "https://www.belmond.com/hotels/north-america/mexico/riviera-maya/belmond-maroma-resort-and-spa/",
@@ -6313,7 +6313,7 @@ const INDEPENDENT_HOTEL_URLS = {
   "Monasterio": "https://www.belmond.com/hotels/south-america/peru/cusco/belmond-hotel-monasterio/",
   "Mount Nelson": "https://www.belmond.com/hotels/africa/south-africa/cape-town/belmond-mount-nelson-hotel/",
   "Palacio Nazarenas": "https://www.belmond.com/hotels/south-america/peru/cusco/belmond-palacio-nazarenas/",
-  "Reid's Place": "https://www.belmond.com/hotels/europe/portugal/madeira/belmond-reids-palace/",
+  "Reid's Palace": "https://www.belmond.com/hotels/europe/portugal/madeira/belmond-reids-palace/",
   "Rio Sagrado": "https://www.belmond.com/hotels/south-america/peru/sacred-valley/belmond-hotel-rio-sagrado/",
   "Romazzino": "https://www.belmond.com/hotels/europe/italy/costa-smeralda/belmond-romazzino/",
   "Sanctuary Lodge": "https://www.belmond.com/hotels/south-america/peru/machu-picchu/belmond-sanctuary-lodge/",
@@ -8428,11 +8428,19 @@ ${(() => {
     const stopWords = new Set(['with','that','this','from','have','want','need','will','trip','hotel','flight','night','nights','people','direct','rental','like','best','good','nice','great','also','just','some','more','over','into','very','really','looking','something','would','could','should','about','area','pool','view','room','stay','book','find','show','options','april','march','january','february','march','june','july','august','september','october','november','december','monday','tuesday','wednesday','thursday','friday','saturday','sunday','week','month','year','days','resort','beach','mountain','lake','city','town','downtown','airport','travel','vacation','holiday','leisure','luxury','budget','price','cost','rate','deal','offer','available','open','closed','near','next','last','first','second','third','four','five','six','seven','eight','nine','what','when','where','which','their','there','they','then','than','been','were','your','have','this']);
     const meaningfulWords = destWords.filter(w => !stopWords.has(w) && w.length > 3);
     
-    // Score each property by how many destination words appear in its notes
+    // Score each property by destination words across notes + structured geo fields
     const scored = Object.keys(QUALITY_SIGNALS_DB).map(propName => {
       const entry = QUALITY_SIGNALS_DB[propName];
-      const searchText = ((entry.notes || '') + ' ' + propName).toLowerCase();
-      const score = meaningfulWords.filter(w => searchText.includes(w)).length;
+      const city = (entry.city || '').toLowerCase();
+      const state = (entry.state || '').toLowerCase();
+      const country = (entry.country || '').toLowerCase();
+      const notes = (entry.notes || '').toLowerCase();
+      const searchText = (notes + ' ' + propName + ' ' + city + ' ' + state + ' ' + country).toLowerCase();
+      // Weight structured geo fields higher than notes text
+      const geoText = (city + ' ' + state + ' ' + country).toLowerCase();
+      const geoScore = meaningfulWords.filter(w => geoText.includes(w)).length * 2;
+      const notesScore = meaningfulWords.filter(w => (notes + ' ' + propName.toLowerCase()).includes(w)).length;
+      const score = geoScore + notesScore;
       return { propName, score };
     }).filter(x => x.score > 0)
       .sort((a, b) => b.score - a.score);
