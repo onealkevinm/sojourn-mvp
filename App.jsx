@@ -2533,7 +2533,7 @@ const QUALITY_SIGNALS_DB = {
   "National Park Inn": { country: "US", state: "WA", tier: "premium", historic: true, notes: "Mount Rainier National Park WA at Longmire, open year-round. The only Mount Rainier lodge open in winter — at the historic Longmire complex where the park's first road was built. Cozy fireplace lounge, small dining room. Surrounded by old-growth Douglas fir. Starting point for Wonderland Trail circumnavigation of the mountain." },
   "Nisqually Lodge": { country: "US", state: "WA", tier: "premium", historic: true, notes: "Mount Rainier WA near Ashford outside the Nisqually entrance. Just outside the national park boundary — the closest full-service lodge to the Nisqually entrance. Fireplace rooms, outdoor hot tub. Year-round access even when Paradise is snowed in. Good base for hiking, skiing, and snowshoeing." },
   "Mountain Meadows Inn": { country: "US", state: "WA", tier: "premium", historic: true, notes: "Mount Rainier WA near Ashford. Intimate B&B-style inn on 11 acres in the shadow of Mount Rainier. Former superintendent's home for the historic Ashford sawmill. Surrounded by old-growth forest, adjacent to the Carbon River rainforest area. Among the most peaceful and personal base camps for a Rainier visit." },
-  "Sun Valley Lodge": { country: "US", state: "ID", city: "Sun Valley", tier: "luxury", historic: true, notes: "Sun Valley ID, est. 1936, built by Union Pacific Railroad as America's first destination ski resort. Hemingway wrote For Whom the Bell Tolls here in 1939 and chose Ketchum for his final years. Gary Cooper, Clark Gable, Marilyn Monroe, Arnold Schwarzenegger all stayed here. The Ram Bar with original 1936 fixtures is a pilgrimage for Hemingway fans. Mountain Suites east wing third floor for corner Sawtooth views and curved windows. Wild Card framing: NOT a national park lodge — but Historic Sawtooth National Recreation Area surrounds it, and the approach via Highway 75 from Boise is one of the great American scenic drives — 2 hours through snowcapped Sawtooth Mountains with virtually no development, often described as more dramatic than any national park road." },
+  "Sun Valley Lodge": { country: "US", state: "ID", city: "Sun Valley", tier: "luxury", historic: true, notes: "Sun Valley ID, est. 1936, built by Union Pacific Railroad as America's first destination ski resort. Hemingway wrote For Whom the Bell Tolls here in 1939 and chose Ketchum for his final years. Gary Cooper, Clark Gable, Marilyn Monroe, Arnold Schwarzenegger all stayed here. The Ram Bar with original 1936 fixtures is a pilgrimage for Hemingway fans. Mountain Suites east wing third floor for corner Sawtooth views and curved windows. Wild Card framing: NOT a national park lodge — but Historic Sawtooth National Recreation Area surrounds it, and the approach via Highway 75 from Boise is one of the great American scenic drives — 2 hours through snowcapped Sawtooth Mountains with virtually no development, often described as more dramatic than any national park road.. Ski shuttle to slopes — NOT ski-in/ski-out", ski: "shuttle" },
   "Caruso": { country: "IT", city: "Ravello", tier: "ultra_luxury", belmond: true, notes: "11th-century palace in Ravello above Amalfi Coast, Michelin fine dining, one of Italy\'s most dramatic settings. Not for: beach lovers — clifftop only" },
   "Castello de Casole": { country: "IT", city: "Tuscany", tier: "ultra_luxury", belmond: true, notes: "Medieval castle on ancient Etruscan site, Tuscany, vast private estate, farm-to-table sustainability, agricultural heritage" },
   "Grand Hotel Timeo": { country: "IT", city: "Taormina", tier: "ultra_luxury", belmond: true, notes: "First hotel in Taormina Sicily, panoramic terrace with Etna + sea views, Michelin dining, cosmopolitan social scene" },
@@ -2611,6 +2611,8 @@ const QUALITY_SIGNALS_DB = {
   "Four Seasons Hotel San Francisco": { country: "US", state: "CA", city: "San Francisco", tier: "luxury", notes: "Union Square SF 12 floors in 42-storey tower, Equinox Sports Centre access, MKT Restaurant California cuisine. Central downtown SF location" },
   "Four Seasons Hotel San Francisco at Embarcadero": { country: "US", state: "CA", city: "San Francisco", tier: "luxury", notes: "Top 11 floors Embarcadero SF tower, panoramic bay and city views, boutique-style, steps from Ferry Building and Fisherman\'s Wharf. Different character from Union Square FS" },
   "Four Seasons Hotel St Louis": { country: "US", state: "MO", city: "St. Louis", tier: "luxury", notes: "Downtown St. Louis Mississippi riverfront, Ramsay\'s Kitchen by Gordon Ramsay, rooftop Sky Terrace pool, steps from Gateway Arch and Busch Stadium" },
+
+  "Nita Lake Lodge": { country: "CA", state: "BC", city: "Whistler", tier: "luxury", slh: true, notes: "Whistler BC, boutique lakeside lodge, SLH member — NOT Relais & Chateaux, ski shuttle to Whistler Blackcomb" },
 
 };
 
@@ -8417,7 +8419,7 @@ Traveler loyalty balances (NEVER suggest a redemption requiring more points than
 ${(p.loyaltyAccounts||[]).map(a => `  ${a.program}: ${a.balance} (tier: ${a.tier})`).join("\n")}
 STRUCTURED BENEFITS — use these exact values for multipliers, lounge access, tier benefits, free breakfast eligibility, and transfer partners. Do not rely on training knowledge when this data is present:
 ${buildTravelerBenefitsSummary(p).slice(0, 2000)}
-QUALITY SIGNALS — verified tiers and quality markers for known properties. Use these when surfacing or evaluating any of these properties:
+QUALITY SIGNALS — verified tiers and quality markers for known properties. CRITICAL: Only attribute Forbes stars, Relais & Châteaux membership, SLH membership, Michelin keys/stars, or other quality designations to a property if that property appears in this verified list with that marker. Do NOT infer or assume quality designations from training knowledge — these must come from this verified data only. Use these when surfacing or evaluating any of these properties:
 ${(() => {
     // Extract destination from conversation for relevant quality signals
     const userMsg = ((conversationRef.current || [])[0]?.content || '').toLowerCase();
@@ -9179,19 +9181,39 @@ const handleSend = () => {
 
       // Check reserves first — can we serve this without a Claude call?
       const currentReservesAdd = reserveOptionsRef.current;
-      if (currentReservesAdd.length > 0) {
-        // Pull up to 2 reserves, preferring ones that match the spirit of mentioned options
+
+      // Detect geographic intent in this additive request
+      // If user is asking for options in a SPECIFIC place, reserves must match that place
+      const geoIntentMatch = msgLower.match(/in\s+([\w\s]+?)(?:\s*[,.]|$)/i);
+      const requestedGeo = geoIntentMatch ? geoIntentMatch[1].trim().toLowerCase() : null;
+      
+      // If there's a geographic intent, filter reserves to those matching that location
+      // A reserve matches if its headline/tag/description contains the requested geo
+      const reservesMatchingGeo = requestedGeo
+        ? currentReservesAdd.filter(r => {
+            const rText = ((r.headline || '') + ' ' + (r.tag || '') + ' ' + (r.description || '') + ' ' + (r.details || '')).toLowerCase();
+            return rText.includes(requestedGeo);
+          })
+        : currentReservesAdd;
+
+      // If user specified a location but NO reserves match it → skip reserve pull, go to Claude
+      const hasGeoIntent = !!requestedGeo;
+      const geoReservesAvailable = reservesMatchingGeo.length > 0;
+
+      if (currentReservesAdd.length > 0 && (!hasGeoIntent || geoReservesAvailable)) {
+        // Pull up to 2 reserves from the geo-filtered set
+        const candidateReserves = hasGeoIntent ? reservesMatchingGeo : currentReservesAdd;
         const mentionedTags = mentionedIds.map(id => tripOptions.find(o => o.id === id)?.tag).filter(Boolean);
         // For wild card mentions, match reserves containing "Wild Card" in tag
         const isWildCardRequest = /wild.?card/i.test(msg);
         const matchingReserves = isWildCardRequest
-          ? currentReservesAdd.filter(r => (r.tag || '').toLowerCase().includes('wild card'))
+          ? candidateReserves.filter(r => (r.tag || '').toLowerCase().includes('wild card'))
           : mentionedTags.length > 0
-          ? currentReservesAdd.filter(r => mentionedTags.includes(r.tag))
+          ? candidateReserves.filter(r => mentionedTags.includes(r.tag))
           : [];
         const reservesToShow = matchingReserves.length > 0
           ? matchingReserves.slice(0, 2)
-          : currentReservesAdd.slice(0, Math.min(2, currentReservesAdd.length));
+          : candidateReserves.slice(0, Math.min(2, candidateReserves.length));
         const remainingReserves = currentReservesAdd.filter(r => !reservesToShow.find(s => s.id === r.id));
         // Add reserves to active options instantly
         setTripOptions(prev => [...prev, ...reservesToShow.map(r => ({ ...r, _fromReserve: true, tag: (() => { const t = r.tag || ''; if (t.toLowerCase().indexOf('wild card') === 0) { const sub = t.slice(t.indexOf('·') + 1).replace(/^\s*[-·]\s*/, '').trim(); const bad = !sub || /,\s*[A-Z]/.test(sub) || /alaska|delta|united|marriott|hyatt|hilton|chase|amex|sapphire|mileage|skymile|bonvoy|connection|your profile|based on your/i.test(sub); return bad ? 'Refined Option · Wild Card' : 'Refined Option · Wild Card · ' + sub; } return 'Refined Option · ' + t; })() }))]);
