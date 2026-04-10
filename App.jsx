@@ -7436,7 +7436,7 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
 
   const textBlock = (text, x, size, color, style, maxW, leading) => {
     doc.setFontSize(size);
-    doc.setTextColor(...color);
+    doc.setTextColor(color[0], color[1], color[2]);
     doc.setFont('helvetica', style || 'normal');
     const lines = doc.splitTextToSize(clean(text), maxW || colW);
     doc.text(lines, x, y);
@@ -7451,7 +7451,7 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
   };
 
   // ── Gold header bar ──────────────────────────────────────────────────────────
-  doc.setFillColor(...gold);
+  doc.setFillColor(gold[0], gold[1], gold[2]);
   doc.rect(0, 0, W, 9, 'F');
   doc.setFontSize(7.5); doc.setTextColor(15, 12, 8); doc.setFont('helvetica', 'bold');
   doc.text('SOJOURN', margin, 6.2);
@@ -7461,15 +7461,15 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
   // ── Trip title ───────────────────────────────────────────────────────────────
   y = 18;
   const title = clean(option.headline || 'Trip');
-  doc.setFontSize(18); doc.setTextColor(...dark); doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'bold');
   const titleLines = doc.splitTextToSize(title, colW - 28);
   doc.text(titleLines, margin, y);
 
   // Tag + cost flush right, vertically centered with title
-  doc.setFontSize(8); doc.setTextColor(...gold); doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8); doc.setTextColor(gold[0], gold[1], gold[2]); doc.setFont('helvetica', 'bold');
   doc.text(clean(option.tag || '').toUpperCase(), W - margin, y, { align: 'right' });
   const cost = '$' + (typeof option.totalCost === 'number' ? option.totalCost.toLocaleString() : clean(String(option.totalCost || '')).replace(/^\$+/, ''));
-  doc.setFontSize(12); doc.setTextColor(...dark);
+  doc.setFontSize(12); doc.setTextColor(dark[0], dark[1], dark[2]);
   doc.text(cost, W - margin, y + 6, { align: 'right' });
 
   y += titleLines.length * 7.5 + 2;
@@ -7477,22 +7477,22 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
   // Dates + origin
   const dateStr = clean([(tripSummary && tripSummary.dates) || '', (tripSummary && tripSummary.origin) || ''].filter(Boolean).join('  ·  '));
   if (dateStr) {
-    doc.setFontSize(9); doc.setTextColor(...mid); doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9); doc.setTextColor(mid[0], mid[1], mid[2]); doc.setFont('helvetica', 'normal');
     doc.text(dateStr, margin, y);
     y += 5;
   }
 
   // Thin gold rule
-  doc.setDrawColor(...gold); doc.setLineWidth(0.25);
+  doc.setDrawColor(gold[0], gold[1], gold[2]); doc.setLineWidth(0.25);
   doc.line(margin, y, W - margin, y);
   gap(5);
 
   // ── Why This ─────────────────────────────────────────────────────────────────
   const narrative = clean(expandedNarrative || option.whyThis || '');
   if (narrative) {
-    doc.setFontSize(7); doc.setTextColor(...gold); doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7); doc.setTextColor(gold[0], gold[1], gold[2]); doc.setFont('helvetica', 'bold');
     doc.text('WHY THIS OPTION', margin, y); gap(4.5);
-    doc.setFontSize(9); doc.setTextColor(...dark); doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'normal');
     const narLines = doc.splitTextToSize(narrative, colW);
     // Show full narrative — up to 12 lines
     const showLines = narLines.slice(0, 12);
@@ -7502,7 +7502,7 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
 
   // ── Trip Components ───────────────────────────────────────────────────────────
   checkPage(18);
-  doc.setFontSize(7); doc.setTextColor(...gold); doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7); doc.setTextColor(gold[0], gold[1], gold[2]); doc.setFont('helvetica', 'bold');
   doc.text('TRIP COMPONENTS', margin, y); gap(4);
 
   (option.components || []).forEach(c => {
@@ -7516,13 +7516,13 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
     
     doc.setFillColor(247, 244, 239);
     doc.roundedRect(margin, y - 2.5, colW, 8, 1, 1, 'F');
-    doc.setFontSize(7.5); doc.setTextColor(...subtle); doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5); doc.setTextColor(subtle[0], subtle[1], subtle[2]); doc.setFont('helvetica', 'bold');
     doc.text(label.toUpperCase(), margin + 2.5, y + 2.8);
-    doc.setFont('helvetica', 'normal'); doc.setTextColor(...dark);
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(dark[0], dark[1], dark[2]);
     const dLines = doc.splitTextToSize(summary, colW - 50);
     doc.text(dLines[0] || '', margin + 30, y + 2.8);
     if (c.value) {
-      doc.setTextColor(...gold); doc.setFont('helvetica', 'bold');
+      doc.setTextColor(gold[0], gold[1], gold[2]); doc.setFont('helvetica', 'bold');
       doc.text('$' + c.value.toLocaleString(), W - margin - 2, y + 2.8, { align: 'right' });
     }
     y += 9.5;
@@ -7542,7 +7542,7 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
 
   if (dayNums.length >= 1) {
     checkPage(18);
-    doc.setFontSize(7); doc.setTextColor(...gold); doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7); doc.setTextColor(gold[0], gold[1], gold[2]); doc.setFont('helvetica', 'bold');
     doc.text('DAY-BY-DAY', margin, y); gap(4);
 
     // Calculate dates for each day
@@ -7573,15 +7573,15 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
       const isLast = dayNum === maxDay;
       const badge = isFirst ? 'Departure' : isLast ? 'Return' : 'Full Day';
 
-      doc.setFillColor(...gold);
+      doc.setFillColor(gold[0], gold[1], gold[2]);
       doc.roundedRect(margin, y - 2, 22, 6, 1.5, 1.5, 'F');
       doc.setFontSize(6.5); doc.setTextColor(15, 12, 8); doc.setFont('helvetica', 'bold');
       doc.text('DAY ' + dayNum, margin + 11, y + 2, { align: 'center' });
 
-      doc.setFontSize(8); doc.setTextColor(...dark); doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'normal');
       doc.text(dayLabel, margin + 25, y + 2);
 
-      doc.setFontSize(6.5); doc.setTextColor(...mid); doc.setFont('helvetica', 'italic');
+      doc.setFontSize(6.5); doc.setTextColor(mid[0], mid[1], mid[2]); doc.setFont('helvetica', 'italic');
       doc.text(badge, W - margin, y + 2, { align: 'right' });
       y += 7;
 
@@ -7595,13 +7595,13 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
                      (c.label || '').toLowerCase().includes('ground') ? '-' : '·';
         const lbl = clean(c.label || '');
         const det = clean(c.detail || '').split(' · ').slice(0, 2).join(' · ');
-        doc.setFontSize(7.5); doc.setTextColor(...dark); doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'bold');
         doc.text('  ' + icon + '  ' + lbl, margin + 2, y);
-        doc.setFont('helvetica', 'normal'); doc.setTextColor(...mid);
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(mid[0], mid[1], mid[2]);
         const detLines = doc.splitTextToSize(det, colW - 45);
         doc.text(detLines[0] || '', margin + 35, y);
         if (c.value) {
-          doc.setTextColor(...gold); doc.setFont('helvetica', 'bold');
+          doc.setTextColor(gold[0], gold[1], gold[2]); doc.setFont('helvetica', 'bold');
           doc.text('$' + c.value.toLocaleString(), W - margin - 2, y, { align: 'right' });
         }
         y += 5.5;
@@ -7613,14 +7613,14 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
         checkPage(6);
         const expName = clean(e.title || e.name || '');
         const expDetail = clean(e.detail || '').slice(0, 60);
-        doc.setFontSize(7); doc.setTextColor(...mid); doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7); doc.setTextColor(mid[0], mid[1], mid[2]); doc.setFont('helvetica', 'normal');
         doc.text('  ~  ' + expName + (expDetail ? '  ' + expDetail : ''), margin + 2, y);
         y += 5;
       });
 
       // Add filler if no content
       if (dayComps.length === 0 && dayExps.length === 0 && !isFirst && !isLast) {
-        doc.setFontSize(7); doc.setTextColor(...mid); doc.setFont('helvetica', 'italic');
+        doc.setFontSize(7); doc.setTextColor(mid[0], mid[1], mid[2]); doc.setFont('helvetica', 'italic');
         doc.text('  Full day — explore, dine, experience', margin + 2, y);
         y += 5;
       }
@@ -7633,9 +7633,9 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
     checkPage(12);
     doc.setDrawColor(200, 190, 180); doc.setLineWidth(0.2);
     doc.line(margin, y, W - margin, y); gap(4);
-    doc.setFontSize(7); doc.setTextColor(...gold); doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7); doc.setTextColor(gold[0], gold[1], gold[2]); doc.setFont('helvetica', 'bold');
     doc.text('TRADEOFF', margin, y); gap(4);
-    doc.setFontSize(8.5); doc.setTextColor(...mid); doc.setFont('helvetica', 'italic');
+    doc.setFontSize(8.5); doc.setTextColor(mid[0], mid[1], mid[2]); doc.setFont('helvetica', 'italic');
     const trLines = doc.splitTextToSize(clean(option.tradeoff), colW);
     doc.text(trLines.slice(0, 3), margin, y);
     y += trLines.slice(0, 3).length * 4 + 3;
@@ -7644,7 +7644,7 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
   // ── Loyalty ──────────────────────────────────────────────────────────────────
   if (option.loyaltyHighlight) {
     checkPage(12);
-    doc.setFontSize(7); doc.setTextColor([76, 154, 76]); doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7); doc.setTextColor(76, 154, 76); doc.setFont('helvetica', 'bold');
     doc.text('LOYALTY HIGHLIGHTS', margin, y); gap(4);
     doc.setFontSize(8.5); doc.setTextColor(50, 120, 60); doc.setFont('helvetica', 'normal');
     const loyLines = doc.splitTextToSize(clean(option.loyaltyHighlight), colW);
@@ -7656,7 +7656,7 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
   const pageCount = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
-    doc.setFillColor(...gold);
+    doc.setFillColor(gold[0], gold[1], gold[2]);
     doc.rect(0, 289, W, 8, 'F');
     doc.setFontSize(6.5); doc.setTextColor(15, 12, 8); doc.setFont('helvetica', 'normal');
     doc.text('Sojourn  ·  trysojourn.com', margin, 294);
@@ -7667,7 +7667,7 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
   doc.save(fname);
 };
 
-// Grid options table — portrait A4, one option per row
+// Grid options table — portrait A4, two-column card layout per option
 const exportGridPDF = async (options, tripSummary, userProfile) => {
   const jsPDF = await loadJsPDF();
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -7675,108 +7675,158 @@ const exportGridPDF = async (options, tripSummary, userProfile) => {
   let y = 14;
 
   const clean = (str) => (str || '')
-    .replace(/[\u2013\u2014\u2012]/g, '-')
-    .replace(/[\u2018\u2019\u02BC]/g, "'")
-    .replace(/[\u201C\u201D]/g, '"')
-    .replace(/[\u2022\u2026\u2726\u25AA\u00B7]/g, ' ')
-    .replace(/[^\x20-\x7E]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+    .replace(/[\u2013\u2014\u2012]/g, '-').replace(/[\u2018\u2019\u02BC]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"').replace(/[\u2022\u2026\u2726\u25AA\u00B7]/g, ' ')
+    .replace(/[^\x20-\x7E]/g, '').replace(/\s+/g, ' ').trim();
 
   const gold = [201, 168, 76], dark = [20, 16, 12], mid = [100, 92, 82];
 
-  // Header
-  doc.setFillColor(...gold);
+  // Tag colors map (hex to rgb)
+  const tagRGB = {
+    '#C9A84C': [201, 168, 76],   // Recommended
+    '#C94C8A': [201, 76, 138],   // Quality Upgrade
+    '#C9C94C': [180, 180, 60],   // Best Value
+    '#4CC97A': [76, 201, 122],   // Redemption
+    '#9A4CC9': [154, 76, 201],   // Wild Card 1
+    '#4C9AC9': [76, 154, 201],   // Wild Card 2
+  };
+
+  const getTagRGB = (hex) => tagRGB[hex] || gold;
+
+  // Header bar
+  doc.setFillColor(gold[0], gold[1], gold[2]);
   doc.rect(0, 0, W, 9, 'F');
   doc.setFontSize(7.5); doc.setTextColor(15, 12, 8); doc.setFont('helvetica', 'bold');
   doc.text('SOJOURN', margin, 6.2);
   doc.setFont('helvetica', 'normal');
-  const dest = clean([(tripSummary && tripSummary.destination) || '', (tripSummary && tripSummary.dates) || ''].filter(Boolean).join('  ·  '));
-  doc.text(dest, W - margin, 6.2, { align: 'right' });
+  const hdr = clean([(tripSummary && tripSummary.destination) || '', (tripSummary && tripSummary.dates) || ''].filter(Boolean).join('  ·  '));
+  doc.text(hdr, W - margin, 6.2, { align: 'right' });
 
+  // Title
   y = 15;
-  doc.setFontSize(13); doc.setTextColor(...dark); doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'bold');
   doc.text(options.length + ' Options, Optimized for You', margin, y); y += 5;
-  const origin = clean((userProfile && userProfile.travelProfile && userProfile.travelProfile.homeAirport) ? 'From ' + userProfile.travelProfile.homeAirport : '');
+  const origin = clean((userProfile && userProfile.travelProfile && userProfile.travelProfile.homeAirport) || '');
   if (origin) {
-    doc.setFontSize(8); doc.setTextColor(...mid); doc.setFont('helvetica', 'normal');
-    doc.text(origin, margin, y); y += 4;
+    doc.setFontSize(8); doc.setTextColor(mid[0], mid[1], mid[2]); doc.setFont('helvetica', 'normal');
+    doc.text('From ' + origin, margin, y); y += 4;
   }
-  y += 1;
+  y += 2;
 
-  // Each option as a card block — portrait fits ~4-6 options per page cleanly
+  // Each option as a structured card
   options.forEach((opt, idx) => {
     if (!opt) return;
+
     const comps = opt.components || [];
     const flight = comps.find(c => c && c.label && c.label.toLowerCase() === 'flight');
-    const hotel = comps.find(c => c && c.label && (
-      c.label.toLowerCase().includes('hotel') || c.label.toLowerCase().includes('resort') ||
-      c.label.toLowerCase().includes('lodge') || c.label.toLowerCase().includes('inn') ||
-      c.label.toLowerCase().includes('ranch')
-    ));
+    const hotel = comps.find(c => c && c.label && /hotel|resort|lodge|inn|ranch|motel/i.test(c.label));
+    const ground = comps.find(c => c && c.label && /ground|car|rental|drive/i.test(c.label));
 
-    // Estimate row height
+    const tagColor = getTagRGB(opt.tagColor || '');
     const whyText = clean(opt.whyThis || '');
     const whyLines = doc.splitTextToSize(whyText, colW - 6);
     const whyShow = Math.min(whyLines.length, 3);
-    const rowH = 8 + 7 + (whyShow * 3.8) + 5;
 
-    if (y + rowH > 280) { doc.addPage(); y = 14; }
+    // Estimate card height: header(9) + components(~7 each) + why(whyShow*3.8) + padding
+    const nComps = [flight, hotel, ground].filter(Boolean).length;
+    const cardH = 9 + (nComps * 7.5) + (whyShow > 0 ? whyShow * 3.8 + 5 : 0) + 6;
+
+    if (y + cardH > 278) { doc.addPage(); y = 14; }
 
     // Card background
-    const isFirst = idx === 0;
-    doc.setFillColor(isFirst ? 252 : 249, isFirst ? 249 : 247, isFirst ? 243 : 242);
-    doc.roundedRect(margin, y, colW, rowH, 1.5, 1.5, 'F');
-    // Left gold stripe
-    doc.setFillColor(...gold);
-    doc.roundedRect(margin, y, 2.5, rowH, 1, 1, 'F');
+    doc.setFillColor(idx % 2 === 0 ? 251 : 248, idx % 2 === 0 ? 249 : 246, idx % 2 === 0 ? 244 : 242);
+    doc.roundedRect(margin, y, colW, cardH, 1.5, 1.5, 'F');
 
-    const cx = margin + 5;
+    // Left color stripe matching tag color
+    doc.setFillColor(tagColor[0], tagColor[1], tagColor[2]);
+    doc.roundedRect(margin, y, 3, cardH, 1, 1, 'F');
 
-    // Row 1: Tag | Property name | Cost
-    doc.setFontSize(7); doc.setTextColor(...gold); doc.setFont('helvetica', 'bold');
+    const cx = margin + 5.5;
+    // ── Row 1: Tag pill | Property name | Cost ──────────────────────────────
+    // Tag
+    doc.setFontSize(6.5); doc.setTextColor(tagColor[0], tagColor[1], tagColor[2]); doc.setFont('helvetica', 'bold');
     doc.text(clean(opt.tag || '').toUpperCase(), cx, y + 5.5);
 
-    const propName = clean(opt.headline || '').split(' · ').slice(1).join(' ') || clean(opt.headline || '');
-    doc.setFontSize(9); doc.setTextColor(...dark); doc.setFont('helvetica', 'bold');
-    const propLines = doc.splitTextToSize(propName, colW - 50);
-    doc.text(propLines[0] || '', cx + 28, y + 5.5);
+    // Property name — extract from headline (after first ' · ' if present)
+    const hl = clean(opt.headline || '');
+    const hlParts = hl.split(' · ');
+    const propName = hlParts.length > 1 ? hlParts.slice(1).join(' ') : hl;
+    doc.setFontSize(9.5); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'bold');
+    const propLines = doc.splitTextToSize(propName, colW - 60);
+    doc.text(propLines[0] || '', cx + 35, y + 5.5);
 
-    const totalStr = '$' + (typeof opt.totalCost === 'number' ? opt.totalCost.toLocaleString() : clean(String(opt.totalCost || '')).replace(/^\$+/, ''));
-    doc.setFontSize(10); doc.setTextColor(...gold);
-    doc.text(totalStr, W - margin - 3, y + 5.5, { align: 'right' });
+    // Cost — right aligned
+    const costStr = '$' + (typeof opt.totalCost === 'number' ? opt.totalCost.toLocaleString() : clean(String(opt.totalCost || '')).replace(/^\$+/, ''));
+    doc.setFontSize(10); doc.setTextColor(tagColor[0], tagColor[1], tagColor[2]);
+    doc.text(costStr, W - margin - 3, y + 5.5, { align: 'right' });
 
-    // Row 2: Destination | Flight snippet | Hotel snippet
-    doc.setFontSize(7.5); doc.setTextColor(...mid); doc.setFont('helvetica', 'normal');
-    const destStr = clean(opt.subhead || '').split(' · ')[0];
-    doc.text(destStr, cx, y + 11);
+    // ── Row 2: Destination | Points/cashback ────────────────────────────────
+    const destStr = clean((opt.subhead || '').split(' · ')[0]);
+    doc.setFontSize(7.5); doc.setTextColor(mid[0], mid[1], mid[2]); doc.setFont('helvetica', 'normal');
+    doc.text(destStr, cx, y + 10);
+
+    if (opt.pointsEarned) {
+      doc.setFontSize(7); doc.setTextColor(60, 130, 70);
+      doc.text(clean(opt.pointsEarned).slice(0, 40), W - margin - 3, y + 10, { align: 'right' });
+    }
+
+    // ── Divider ─────────────────────────────────────────────────────────────
+    doc.setDrawColor(220, 215, 205); doc.setLineWidth(0.15);
+    doc.line(cx, y + 12, W - margin - 3, y + 12);
+
+    let ry = y + 16; // component rows start
+
+    // ── Components — two columns ─────────────────────────────────────────────
+    // Left col: Flight | Right col: Hotel
+    const leftColW = (colW - 8) / 2;
+    const rightColX = cx + leftColW + 4;
 
     if (flight) {
       const fp = clean(flight.detail || '').split(' · ');
-      doc.text((fp[0] || '') + ' ' + (fp[1] || ''), cx + 45, y + 11);
+      doc.setFontSize(6.5); doc.setTextColor(tagColor[0], tagColor[1], tagColor[2]); doc.setFont('helvetica', 'bold');
+      doc.text('FLIGHT', cx, ry);
+      doc.setFontSize(7.5); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'bold');
+      doc.text(fp[0] || '', cx, ry + 4.5); // airline
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(mid[0], mid[1], mid[2]);
+      doc.text((fp[1] || '') + (fp[3] ? '  ' + fp[3] : ''), cx, ry + 8.5); // route + duration
     }
+
     if (hotel) {
       const hp = clean(hotel.detail || '').split(' · ');
-      doc.text(doc.splitTextToSize(hp[0] || '', 55)[0], cx + 105, y + 11);
+      doc.setFontSize(6.5); doc.setTextColor(tagColor[0], tagColor[1], tagColor[2]); doc.setFont('helvetica', 'bold');
+      doc.text('HOTEL', rightColX, ry);
+      doc.setFontSize(7.5); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'bold');
+      const hotelName = doc.splitTextToSize(hp[0] || '', leftColW - 2);
+      doc.text(hotelName[0] || '', rightColX, ry + 4.5);
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(mid[0], mid[1], mid[2]);
+      doc.text((hp[1] || '').slice(0, 28), rightColX, ry + 8.5);
     }
 
-    // Loyalty
-    if (opt.pointsEarned) {
-      doc.setFontSize(6.5); doc.setTextColor(60, 130, 70);
-      doc.text(clean(opt.pointsEarned).slice(0, 35), W - margin - 3, y + 11, { align: 'right' });
+    // If no flight (road trip), show ground across full width
+    if (!flight && ground) {
+      const gp = clean(ground.detail || '').split(' · ');
+      doc.setFontSize(6.5); doc.setTextColor(tagColor[0], tagColor[1], tagColor[2]); doc.setFont('helvetica', 'bold');
+      doc.text('DRIVE', cx, ry);
+      doc.setFontSize(7.5); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'normal');
+      doc.text(gp[0] || '', cx, ry + 4.5);
     }
 
-    // Why This — up to 3 lines
+    if (flight || hotel || ground) ry += 12;
+
+    // ── Why This ─────────────────────────────────────────────────────────────
     if (whyShow > 0) {
-      doc.setFontSize(7.5); doc.setTextColor(80, 72, 62); doc.setFont('helvetica', 'italic');
-      doc.text(whyLines.slice(0, whyShow), cx, y + 16.5, { lineHeightFactor: 1.35 });
+      doc.setDrawColor(220, 215, 205); doc.setLineWidth(0.15);
+      doc.line(cx, ry - 1, W - margin - 3, ry - 1);
+      doc.setFontSize(7.5); doc.setTextColor(70, 62, 52); doc.setFont('helvetica', 'italic');
+      doc.text(whyLines.slice(0, whyShow), cx, ry + 3, { lineHeightFactor: 1.3 });
+      ry += whyShow * 3.8 + 4;
     }
 
-    y += rowH + 3;
+    y += cardH + 3;
   });
 
   // Footer
-  doc.setFillColor(...gold);
+  doc.setFillColor(gold[0], gold[1], gold[2]);
   doc.rect(0, 286, W, 11, 'F');
   doc.setFontSize(6.5); doc.setTextColor(15, 12, 8); doc.setFont('helvetica', 'normal');
   doc.text('Generated by Sojourn  ·  trysojourn.com', margin, 293);
@@ -7784,6 +7834,7 @@ const exportGridPDF = async (options, tripSummary, userProfile) => {
   const dname = clean((tripSummary && tripSummary.destination) ? tripSummary.destination : 'Options');
   doc.save('Sojourn-' + dname.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-').slice(0, 28) + '-Options.pdf');
 };
+
 
 const exportOptionPDF = async (option, tripSummary, userProfile) => {
   const expanded = window._whyThisCacheGlobal && window._whyThisCacheGlobal[option && option.id];
@@ -9047,11 +9098,12 @@ MUTUAL EXCLUSIVITY: Best Value and Redemption Opportunity are mutually exclusive
 - Can and should leave the stated destination when a better answer exists elsewhere
 - Must be genuinely surprising, not a minor variation
 
-6. WILD CARD — PROFILE EXTENSION (#4C9AC9) — Ignore the query almost entirely. Reason from the traveler's profile: their selected brands, loyalty programs, preferred airlines, travel types, and learned preferences. Ask: what would this person love that they don't know to ask for? Surface an option that reflects who they are as a traveler, not just what they searched.
-- Weight signals in this order: (1) selected brands — brand affinity reveals the most about experiential preferences. Aman/Auberge/Alila = independent luxury, experience-first. Andaz/Thompson = design-forward, urban/cultural. Marriott Autograph = character without sacrificing points. (2) loyalty tier — Globalist/Platinum/Diamond signals frequency and seriousness. (3) airline programs — reveals geography of life and travel cadence. (4) travel types — "International + Beach + Urban" is a meaningful combination. (5) learned preferences if available.
-- The tag label should name what was inferred: "Wild Card · Based on Your Profile" or more specifically "Wild Card · Independent Luxury" or "Wild Card · Your Hyatt Sweet Spot"
-- In whyThis, show your reasoning explicitly: "Your selection of [brands] and [loyalty tier] suggests [inference] — this option reflects that profile even though you didn't ask for it." Be specific about which signals drove the choice.
-- This option builds trust by demonstrating the system knows the traveler beyond the query. Take a real inference risk — a safe choice here reads as "also recommended" not "profile extension."
+6. WILD CARD — PROFILE EXTENSION (#4C9AC9) — Ignore the query almost entirely. Reason from the traveler's qualitative profile: their selected brands, travel types, and experiential preferences. Ask: what would this person love that they don't know to ask for? Surface an option that reflects who they are as a traveler, not just what they searched.
+- Weight signals in this order: (1) selected brands — brand affinity is the strongest signal. Aman/Auberge/Alila = independent luxury, experience-first. Andaz/Thompson = design-forward, urban/cultural. Marriott Autograph = character without sacrificing points. (2) travel types — "International + Beach + Urban" is a meaningful combination that reveals a traveler's sensibility. (3) loyalty tier — Globalist/Platinum/Diamond signals travel frequency and seriousness. (4) learned preferences if available.
+- AIRLINE PROGRAMS ARE NOT A PRIMARY SIGNAL HERE. Do not build an option around an airline loyalty program or attempt to justify a destination by anchoring it to a preferred airline. Airlines reveal geography but should never be the justification for a Wild Card option. Never invent or imply airline/ferry partnerships that don't exist.
+- The tag label should name what was inferred from EXPERIENCE signals, not programs: "Wild Card · Independent Luxury" or "Wild Card · Design-Forward Escape" or "Wild Card · Off-Grid Adventure" — never "Wild Card · Your [Airline] Connection"
+- In whyThis, lead with the experiential and qualitative reasons: what kind of traveler this person is, what this property delivers experientially, why it fits their sensibility. Reference brands or travel types to anchor the inference. Do not lead with or over-index on loyalty programs, points, or airline affiliations.
+- This option builds trust by demonstrating the system understands the traveler's taste, not their points portfolio. Take a real inference risk — a safe choice reads as "also recommended" not "profile extension."
 - Can leave the stated destination entirely if the profile signals point somewhere more fitting
 TRIP LENGTH / FLIGHT DURATION MATCHING — HARD RULE:
 - 2-3 night trips (long weekends): domestic or short-haul ONLY. Max ~5 hours flight time. Do NOT suggest international destinations requiring transatlantic or transpacific flights regardless of cpp value. Canada and Mexico qualify as short-haul.
