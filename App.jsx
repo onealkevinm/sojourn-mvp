@@ -7744,16 +7744,23 @@ const exportGridPDF = async (options, tripSummary, userProfile) => {
     const cx = margin + 5.5;
     // ── Row 1: Tag pill | Property name | Cost ──────────────────────────────
     // Tag
+    // Tag — truncate long Wild Card labels to max 28 chars, wrap to second line if needed
+    const tagText = clean(opt.tag || '').toUpperCase();
+    const tagShort = tagText.length > 28 ? tagText.slice(0, 26) + '..' : tagText;
+    const tagLines = doc.splitTextToSize(tagShort, 40);
     doc.setFontSize(6.5); doc.setTextColor(tagColor[0], tagColor[1], tagColor[2]); doc.setFont('helvetica', 'bold');
-    doc.text(clean(opt.tag || '').toUpperCase(), cx, y + 5.5);
+    doc.text(tagLines[0] || '', cx, y + 5.5);
+    if (tagLines[1]) doc.text(tagLines[1], cx, y + 9.5);
 
-    // Property name — extract from headline (after first ' · ' if present)
+    // Property name — starts after tag column, uses remaining width
     const hl = clean(opt.headline || '');
     const hlParts = hl.split(' · ');
     const propName = hlParts.length > 1 ? hlParts.slice(1).join(' ') : hl;
+    const propStartX = cx + 42; // fixed column start, clear of any tag text
     doc.setFontSize(9.5); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'bold');
-    const propLines = doc.splitTextToSize(propName, colW - 60);
-    doc.text(propLines[0] || '', cx + 35, y + 5.5);
+    const propLines = doc.splitTextToSize(propName, colW - 55);
+    doc.text(propLines[0] || '', propStartX, y + 5.5);
+    if (propLines[1]) { doc.setFontSize(8); doc.text(propLines[1], propStartX, y + 10); }
 
     // Cost — right aligned
     const costStr = '$' + (typeof opt.totalCost === 'number' ? opt.totalCost.toLocaleString() : clean(String(opt.totalCost || '')).replace(/^\$+/, ''));
@@ -7837,8 +7844,52 @@ const exportGridPDF = async (options, tripSummary, userProfile) => {
 
 
 const exportOptionPDF = async (option, tripSummary, userProfile) => {
-  const expanded = window._whyThisCacheGlobal && window._whyThisCacheGlobal[option && option.id];
-  return exportItineraryPDF(option, tripSummary, userProfile, expanded);
+  // Use cached expanded narrative if available
+  const cached = window._whyThisCacheGlobal && option && window._whyThisCacheGlobal[option.id];
+  if (cached) {
+    return exportItineraryPDF(option, tripSummary, userProfile, cached);
+  }
+  // Cache miss — fetch expanded narrative before generating PDF
+  try {
+    const profile = userProfile || {};
+    const loyalty = (profile.loyaltyAccounts || []).filter(a => a && a.tier && a.tier !== 'None').map(a => a.program).join(', ') || 'not set';
+    const brands = (profile.preferredBrands || []).slice(0, 5).join(', ') || 'not set';
+    const notes = option && option.headline ? (() => {
+      const propName = (option.headline || '').split(' · ').slice(1).join(' ') || option.headline || '';
+      const q = typeof getQualitySignal === 'function' ? getQualitySignal(propName) : null;
+      return q && q.notes && q.notes.length > 60 ? q.notes : null;
+    })() : null;
+    const prompt = [
+      'You are Sojourn, a luxury travel advisor.',
+      'Write an expanded property narrative: 150-200 words, 3 short paragraphs, second person, no bullets, no headers. Do NOT reference specific room numbers. Do NOT include seasonal events unless they fall within the traveler's stated travel dates.',
+      '',
+      'Option headline: ' + (option && option.headline || ''),
+      'Option type: ' + (option && option.tag || ''),
+      'Destination: ' + (option && option.subhead || ''),
+      'Brief summary: ' + (option && option.whyThis || ''),
+      notes ? 'Property notes: ' + notes : '',
+      '',
+      'Traveler loyalty: ' + loyalty,
+      'Preferred brands: ' + brands,
+      '',
+      'Paragraph 1: Property character, setting, style. Paragraph 2: Specific anticipation-building details (room types where distinctive, dining, views). Paragraph 3: Why this fits this traveler.',
+    ].filter(Boolean).join('
+');
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 380, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await resp.json();
+    const narrative = data && data.content && data.content[0] && data.content[0].text;
+    if (narrative && narrative.length > 40) {
+      if (window._whyThisCacheGlobal && option) window._whyThisCacheGlobal[option.id] = narrative.trim();
+      return exportItineraryPDF(option, tripSummary, userProfile, narrative.trim());
+    }
+  } catch(e) {
+    console.warn('[Sojourn] PDF narrative fetch failed, using short summary:', e);
+  }
+  return exportItineraryPDF(option, tripSummary, userProfile, null);
 };
 
 
@@ -9131,8 +9182,8 @@ INTELLIGENCE RULES:
 - Hotel: ALWAYS use a real, specific named property (e.g. "Mokara Hotel & Spa" not "boutique hotel" or "historic inn"). Never invent placeholder names. If you cannot name a real property in the destination, use a nearby city with real inventory.
 - Hotel detail: property name · exact room config matching party size (e.g. "Two adjoining Kings" or "3BR villa sleeps 6") · nights · neighborhood. Never just "suite" — always specify beds and how the party fits. CANONICAL NAME RULE: the property name in the detail field MUST be the exact official name of the hotel — the same name that would appear on the hotel's own website and in our quality signals database. Do not abbreviate, paraphrase, or add descriptors. "The Ritz-Carlton Chicago" not "Ritz Chicago" or "Ritz-Carlton, Chicago". "Kimpton Surfcomber Hotel" not "Surfcomber" or "the Surfcomber". "Thompson Nashville" not "Thompson Hotel Nashville". "W Hollywood" not "W Hotel Hollywood". Use the precise, official property name every time.
 - Flight detail field MUST use this EXACT format with · separators and spaces: "[Airline] · [ORIGIN-DEST] [nonstop/1-stop] · [departure time range] · [~Xh duration]" e.g. "Alaska Airlines · SEA-LIH nonstop · morning ~8-10am · ~6h30m" or "Delta · SEA-HNL nonstop · afternoon ~1-3pm · ~5h45m". CRITICAL: always put spaces around the · separator. Never concatenate airline and route without a separator (never "DeltaSEA-HNL"). Departure time should be a realistic range, not a specific invented flight number.
-- FLIGHT COST RULE: Each leg (Flight and Return Flight) must show its own cash value — never $0 unless it is genuinely a free redemption ticket. For a roundtrip fare of $800 total for 2 people, show Flight value = 400 and Return Flight value = 400 (split evenly).
-- MILES PER LEG: Each flight leg must show miles earned independently in its points field. Format: "2 tickets · est. X miles earned" for outbound, "2 tickets · est. X miles earned" for return. NEVER use "Included in roundtrip" or "included in outbound" — every leg shows its own earning. Miles per leg should reflect actual flight distance (e.g. SEA-LAX ~1136 miles, JFK-LAX ~2475 miles).
+- FLIGHT COST RULE — HARD RULE, NO EXCEPTIONS: Every flight component (Flight AND Return Flight) MUST have its own positive cash value. value: 0 is NEVER acceptable for any flight leg unless it is a genuine award ticket (points used, not cash). For a roundtrip cash fare of $800 total: Flight value = 400, Return Flight value = 400. Split evenly. A Return Flight with value: 0 and "included in roundtrip" in the detail is ALWAYS WRONG. This is a display bug that confuses users — fix it every single time.
+- MILES PER LEG — HARD RULE: Each flight leg must show miles earned independently in its points field. Format: "2 tickets · est. X miles earned" for outbound, "2 tickets · est. X miles earned" for return. NEVER write "Included in roundtrip" or "included in outbound" or "see outbound" in any points field — every leg shows its own earning independently. Miles per leg reflect actual flight distance (e.g. SEA-LAX ~1136 miles, JFK-LAX ~2475 miles).
 - AIRLINE ALIGNMENT: The loyalty program earning, card benefits, and Sky Club/lounge access shown for a flight MUST match the actual airline on the ticket. If the flight is Alaska Airlines, show Alaska Mileage Plan earning — not Delta SkyMiles. If the flight is United, show MileagePlus. Never attribute Delta Sky Club access to an Alaska or United flight.
 - Rental car pricing: use realistic market rates. A full-size SUV in Hawaii runs $150-250/day in peak season, $80-150/day off-peak. A standard sedan runs $60-100/day. Never show rental car costs below $40/day — these are not realistic. Total rental cost = daily rate × number of days. Always show both daily rate and total: "$175/day · 5 days · $875 total". ROAD TRIP EXCEPTION: if the query is a road trip (user is driving their own vehicle), never include a rental car component — show gas cost instead or omit Ground entirely.
 - Rental car cashback: USAA 1.5% cashback on a $875 rental = $13 — never show cashback exceeding 1.5% of the rental cost. Do not inflate cashback estimates.
