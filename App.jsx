@@ -7873,8 +7873,7 @@ const exportOptionPDF = async (option, tripSummary, userProfile) => {
       'Preferred brands: ' + brands,
       '',
       'Paragraph 1: Property character, setting, style. Paragraph 2: Specific anticipation-building details (room types where distinctive, dining, views). Paragraph 3: Why this fits this traveler.',
-    ].filter(Boolean).join('
-');
+    ].filter(Boolean).join('\n');
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
