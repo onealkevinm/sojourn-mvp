@@ -6585,7 +6585,7 @@ const ComponentRow = ({ label, value, detail, points, card, checkIn, checkOut, n
 };
 
 // Cache for expanded whyThis text — persists within session
-const _whyThisCache = {};
+const _whyThisCache = {}; window._whyThisCacheGlobal = _whyThisCache;
 
 // ── Deal Intelligence Card ────────────────────────────────────────────────
 
@@ -7417,158 +7417,343 @@ const loadJsPDF = () => new Promise((resolve, reject) => {
   document.head.appendChild(script);
 });
 
-const exportItineraryPDF = async (option, tripSummary, userProfile) => {
+const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarrative) => {
   const jsPDF = await loadJsPDF();
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const W = 210; const margin = 18; const colW = W - margin * 2;
-  let y = 22;
+  const W = 210, margin = 16, colW = W - margin * 2;
+  let y = 18;
 
-  const gold = [201, 168, 76];
-  const dark = [30, 25, 20];
-  const mid = [120, 110, 100];
-  const light = [180, 168, 152];
+  // Clean text — strip non-latin chars that cause jsPDF spacing bug
+  const clean = (str) => (str || '')
+    .replace(/[\u2013\u2014]/g, '-')   // em/en dash
+    .replace(/[\u2018\u2019]/g, "'")   // curly apostrophes
+    .replace(/[\u201C\u201D]/g, '"')   // curly quotes
+    .replace(/\u2726|\u2022|\u25AA/g, '*') // special bullets
+    .replace(/[^\x00-\x7F]/g, '')      // strip remaining non-ASCII
+    .trim();
 
-  const addText = (text, x, size, color, style='normal', maxW) => {
+  const gold = [201, 168, 76], dark = [20, 16, 12], mid = [120, 110, 100], light = [180, 168, 152];
+
+  const wrap = (text, x, size, color, style, maxW, lineH) => {
     doc.setFontSize(size);
     doc.setTextColor(...color);
-    doc.setFont('helvetica', style);
-    if (maxW) {
-      const lines = doc.splitTextToSize(String(text || ''), maxW);
-      doc.text(lines, x, y);
-      return lines.length * (size * 0.4);
-    }
-    doc.text(String(text || ''), x, y);
-    return size * 0.4;
+    doc.setFont('helvetica', style || 'normal');
+    const lines = doc.splitTextToSize(clean(text), maxW || colW);
+    doc.text(lines, x, y);
+    y += lines.length * (lineH || size * 0.42) + 1;
+    return lines.length;
   };
 
-  const checkPage = (needed = 10) => {
-    if (y + needed > 275) { doc.addPage(); y = 20; }
+  const checkPage = (needed) => {
+    if (y + (needed || 8) > 280) { doc.addPage(); y = 18; }
   };
 
-  // Header bar
+  // ── Header bar ──
   doc.setFillColor(...gold);
-  doc.rect(0, 0, W, 12, 'F');
-  doc.setFontSize(9); doc.setTextColor(15,12,8); doc.setFont('helvetica','bold');
-  doc.text('SOJOURN', margin, 8);
-  doc.setFont('helvetica','normal');
-  doc.text('Travel Itinerary', W - margin, 8, { align: 'right' });
-  y = 22;
+  doc.rect(0, 0, W, 10, 'F');
+  doc.setFontSize(8); doc.setTextColor(15, 12, 8); doc.setFont('helvetica', 'bold');
+  doc.text('SOJOURN', margin, 7);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Travel Itinerary', W - margin, 7, { align: 'right' });
 
-  // Trip title
-  addText(option.headline || 'Trip Itinerary', margin, 16, dark, 'bold', colW);
-  y += 9;
-  addText((tripSummary?.dates || '') + (tripSummary?.origin ? '  ·  ' + tripSummary.origin : ''), margin, 9, mid, 'normal');
+  // ── Trip header ──
+  y = 18;
+  doc.setFontSize(17); doc.setTextColor(...dark); doc.setFont('helvetica', 'bold');
+  const titleLines = doc.splitTextToSize(clean(option.headline || 'Trip Itinerary'), colW - 30);
+  doc.text(titleLines, margin, y);
+  y += titleLines.length * 7 + 2;
+
+  // Dates + tag on one row
+  doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(...mid);
+  const dateStr = clean((tripSummary && tripSummary.dates) ? tripSummary.dates + '  ·  ' + (tripSummary.origin || '') : '');
+  doc.text(dateStr, margin, y);
+  // Tag pill
+  const tagStr = clean(option.tag || '').toUpperCase();
+  const cost = '$' + (typeof option.totalCost === 'number' ? option.totalCost.toLocaleString() : clean(String(option.totalCost || '')).replace(/^\$+/, ''));
+  doc.setFontSize(8); doc.setTextColor(...gold); doc.setFont('helvetica', 'bold');
+  doc.text(tagStr, W - margin, y, { align: 'right' });
+  y += 5;
+  doc.setFontSize(10); doc.setTextColor(...dark); doc.setFont('helvetica', 'bold');
+  doc.text(cost, W - margin, y, { align: 'right' });
   y += 6;
 
-  // Tag + cost row
-  doc.setFillColor(245,240,230);
-  doc.roundedRect(margin, y, colW, 9, 2, 2, 'F');
-  doc.setFontSize(8); doc.setTextColor(...gold); doc.setFont('helvetica','bold');
-  doc.text((option.tag || '').toUpperCase(), margin + 3, y + 6);
-  doc.setTextColor(...dark);
-  const costStr = '$' + (typeof option.totalCost === 'number' ? option.totalCost.toLocaleString() : String(option.totalCost || '').replace(/^\$+/,''));
-  doc.text(costStr, W - margin - 3, y + 6, { align: 'right' });
-  y += 14;
+  // Divider
+  doc.setDrawColor(...gold); doc.setLineWidth(0.3);
+  doc.line(margin, y, W - margin, y); y += 5;
 
-  // Why This
-  if (option.whyThis) {
+  // ── Why This — use expanded narrative if available, else whyThis ──
+  const narrative = clean(expandedNarrative || option.whyThis || '');
+  if (narrative) {
     checkPage(20);
-    doc.setFillColor(248,245,240);
-    const whyLines = doc.splitTextToSize(option.whyThis, colW - 6);
-    const whyH = Math.max(12, whyLines.length * 4.5 + 6);
-    doc.roundedRect(margin, y, colW, whyH, 2, 2, 'F');
-    doc.setFontSize(7); doc.setTextColor(...mid); doc.setFont('helvetica','bold');
-    doc.text('WHY THIS OPTION', margin + 3, y + 5);
-    doc.setFont('helvetica','normal'); doc.setTextColor(...dark);
-    doc.text(whyLines, margin + 3, y + 10);
-    y += whyH + 6;
+    doc.setFontSize(7); doc.setTextColor(...gold); doc.setFont('helvetica', 'bold');
+    doc.text('WHY THIS OPTION', margin, y); y += 4;
+    doc.setFontSize(9.5); doc.setTextColor(...dark); doc.setFont('helvetica', 'normal');
+    const narLines = doc.splitTextToSize(narrative, colW);
+    // Limit to ~6 lines to keep single page
+    const showLines = narLines.slice(0, 7);
+    doc.text(showLines, margin, y);
+    y += showLines.length * 4.2 + 5;
   }
 
-  // Components
+  // ── Trip Components ──
   checkPage(15);
-  doc.setFontSize(7); doc.setTextColor(...gold); doc.setFont('helvetica','bold');
-  doc.text('TRIP COMPONENTS', margin, y); y += 5;
+  doc.setFontSize(7); doc.setTextColor(...gold); doc.setFont('helvetica', 'bold');
+  doc.text('TRIP COMPONENTS', margin, y); y += 4;
+
   (option.components || []).forEach(c => {
     if (!c) return;
-    checkPage(10);
-    doc.setFillColor(250,248,245);
-    doc.roundedRect(margin, y, colW, 9, 1.5, 1.5, 'F');
-    doc.setFontSize(8); doc.setTextColor(...dark); doc.setFont('helvetica','bold');
-    doc.text((c.label || ''), margin + 3, y + 6);
-    doc.setFont('helvetica','normal'); doc.setTextColor(...mid);
-    const detail = doc.splitTextToSize(c.detail || '', colW - 55);
-    doc.text(detail[0] || '', margin + 28, y + 6);
+    checkPage(8);
+    const label = clean(c.label || '');
+    const detail = clean(c.detail || '');
+    // Trim detail to first segment only (before '·')
+    const detailShort = detail.split(' · ')[0] + (detail.includes(' · ') ? '  ' + detail.split(' · ')[1] : '');
+    doc.setFillColor(248, 246, 242);
+    doc.roundedRect(margin, y - 3, colW, 7.5, 1, 1, 'F');
+    doc.setFontSize(8); doc.setTextColor(...dark); doc.setFont('helvetica', 'bold');
+    doc.text(label, margin + 2, y + 2.5);
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(...mid);
+    const detailLines = doc.splitTextToSize(detailShort, colW - 50);
+    doc.text(detailLines[0] || '', margin + 32, y + 2.5);
     if (c.value) {
-      doc.setTextColor(...gold);
-      doc.text('$' + c.value.toLocaleString(), W - margin - 3, y + 6, { align: 'right' });
+      doc.setTextColor(...gold); doc.setFont('helvetica', 'bold');
+      doc.text('$' + c.value.toLocaleString(), W - margin - 2, y + 2.5, { align: 'right' });
     }
-    y += 11;
+    y += 8.5;
   });
-  y += 4;
+  y += 2;
 
-  // Day-by-day if we have dates
+  // ── Day by Day ──
   const comps = option.components || [];
-  const maxDay = comps.reduce((m,c) => Math.max(m, c.day || 1), 1);
-  if (maxDay > 1) {
-    checkPage(15);
-    doc.setFontSize(7); doc.setTextColor(...gold); doc.setFont('helvetica','bold');
-    doc.text('DAY-BY-DAY', margin, y); y += 5;
+  const byDay = {};
+  comps.forEach(c => { if (!c) return; const d = c.day || 1; if (!byDay[d]) byDay[d] = []; byDay[d].push(c); });
+  const days = Object.keys(byDay).map(Number).sort((a, b) => a - b);
 
-    const byDay = {};
-    comps.forEach(c => { const d = c.day||1; if(!byDay[d]) byDay[d]=[]; byDay[d].push(c); });
-    Object.entries(byDay).sort(([a],[b]) => a-b).forEach(([day, dayComps]) => {
-      checkPage(18);
+  if (days.length > 1) {
+    checkPage(15);
+    doc.setFontSize(7); doc.setTextColor(...gold); doc.setFont('helvetica', 'bold');
+    doc.text('DAY-BY-DAY', margin, y); y += 4;
+
+    days.forEach(day => {
+      checkPage(12);
+      // Day pill
       doc.setFillColor(...gold);
-      doc.roundedRect(margin, y, 18, 7, 1.5, 1.5, 'F');
-      doc.setFontSize(7); doc.setTextColor(15,12,8); doc.setFont('helvetica','bold');
-      doc.text('DAY ' + day, margin + 9, y + 5, { align: 'center' });
-      doc.setTextColor(...dark); doc.setFont('helvetica','normal');
-      y += 9;
-      dayComps.forEach(c => {
-        checkPage(8);
-        doc.setFontSize(8);
-        doc.setTextColor(...dark); doc.setFont('helvetica','bold');
-        doc.text('• ' + (c.label||''), margin + 3, y);
-        doc.setFont('helvetica','normal'); doc.setTextColor(...mid);
-        const dlines = doc.splitTextToSize(c.detail||'', colW - 10);
-        doc.text(dlines[0]||'', margin + 28, y);
+      doc.roundedRect(margin, y - 2, 16, 6.5, 1, 1, 'F');
+      doc.setFontSize(7); doc.setTextColor(15, 12, 8); doc.setFont('helvetica', 'bold');
+      doc.text('DAY ' + day, margin + 8, y + 2.8, { align: 'center' });
+      y += 7;
+
+      byDay[day].forEach(c => {
+        if (!c) return;
+        checkPage(7);
+        const label = clean(c.label || '');
+        // Extract just the key info from detail - first clause only
+        const rawDetail = clean(c.detail || '');
+        const parts = rawDetail.split(' · ');
+        // For flights: "Airline · ROUTE · time · duration" → "Airline ROUTE"
+        // For hotel: "Name · Room type · N nights · City" → "Name · Room type"
+        const summary = parts.slice(0, 2).join(' · ');
+        doc.setFontSize(8); doc.setTextColor(...dark); doc.setFont('helvetica', 'bold');
+        doc.text('  ' + label, margin + 3, y);
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(...mid);
+        doc.text(summary, margin + 32, y);
         y += 5.5;
       });
       y += 2;
     });
   }
 
-  // Loyalty highlight
+  // ── Loyalty highlight ──
   if (option.loyaltyHighlight) {
-    checkPage(14);
-    doc.setFillColor(240,248,240);
-    const loyLines = doc.splitTextToSize('✦ ' + option.loyaltyHighlight, colW - 6);
-    const loyH = loyLines.length * 4.5 + 8;
-    doc.roundedRect(margin, y, colW, loyH, 2, 2, 'F');
-    doc.setFontSize(7); doc.setTextColor(60,140,80); doc.setFont('helvetica','bold');
-    doc.text('LOYALTY HIGHLIGHTS', margin + 3, y + 5);
-    doc.setFont('helvetica','normal'); doc.setTextColor(40,100,60);
-    doc.text(loyLines, margin + 3, y + 10);
-    y += loyH + 4;
+    checkPage(12);
+    doc.setDrawColor(...gold); doc.setLineWidth(0.4);
+    doc.line(margin, y, W - margin, y); y += 4;
+    doc.setFontSize(7); doc.setTextColor(...gold); doc.setFont('helvetica', 'bold');
+    doc.text('LOYALTY', margin, y); y += 4;
+    doc.setFontSize(8.5); doc.setTextColor(60, 130, 70); doc.setFont('helvetica', 'normal');
+    const loyLines = doc.splitTextToSize(clean(option.loyaltyHighlight), colW);
+    doc.text(loyLines.slice(0, 2), margin, y);
+    y += loyLines.slice(0, 2).length * 4 + 2;
   }
 
-  // Footer
+  // ── Tradeoff ──
+  if (option.tradeoff) {
+    checkPage(10);
+    doc.setFontSize(7); doc.setTextColor(...mid); doc.setFont('helvetica', 'bold');
+    doc.text('TRADEOFF', margin, y); y += 4;
+    doc.setFontSize(8.5); doc.setFont('helvetica', 'italic'); doc.setTextColor(...mid);
+    const trLines = doc.splitTextToSize(clean(option.tradeoff), colW);
+    doc.text(trLines.slice(0, 2), margin, y);
+    y += trLines.slice(0, 2).length * 4 + 2;
+  }
+
+  // ── Footer ──
   const pageCount = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
-    doc.setFontSize(7); doc.setTextColor(...mid);
-    doc.text('Generated by Sojourn  ·  trysojourn.com', margin, 291);
-    doc.text('Page ' + i + ' of ' + pageCount, W - margin, 291, { align: 'right' });
+    doc.setDrawColor(50, 40, 30); doc.setLineWidth(0.2);
+    doc.line(margin, 287, W - margin, 287);
+    doc.setFontSize(7); doc.setTextColor(...mid); doc.setFont('helvetica', 'normal');
+    doc.text('Sojourn  ·  trysojourn.com', margin, 292);
+    doc.text('Page ' + i + ' of ' + pageCount, W - margin, 292, { align: 'right' });
   }
 
-  const filename = 'Sojourn-' + (option.headline||'Trip').replace(/[^a-zA-Z0-9]/g,'-').replace(/-+/g,'-').slice(0,40) + '.pdf';
+  const filename = 'Sojourn-' + clean(option.headline || 'Trip').replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-').slice(0, 40) + '.pdf';
   doc.save(filename);
 };
 
-const exportOptionPDF = async (option, tripSummary, userProfile) => {
-  // Simpler single-option export for card detail view
-  return exportItineraryPDF(option, tripSummary, userProfile);
+// Grid export — clean 1-page options table
+const exportGridPDF = async (options, tripSummary, userProfile) => {
+  const jsPDF = await loadJsPDF();
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const W = 297, margin = 14, colW = W - margin * 2;
+  let y = 16;
+
+  const clean = (str) => (str || '')
+    .replace(/[\u2013\u2014]/g, '-').replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"').replace(/\u2726|\u2022|\u25AA/g, '*')
+    .replace(/[^\x00-\x7F]/g, '').trim();
+
+  const gold = [201, 168, 76], dark = [20, 16, 12], mid = [110, 100, 90], light = [200, 190, 180];
+
+  // Header bar
+  doc.setFillColor(...gold);
+  doc.rect(0, 0, W, 10, 'F');
+  doc.setFontSize(8); doc.setTextColor(15, 12, 8); doc.setFont('helvetica', 'bold');
+  doc.text('SOJOURN', margin, 7);
+  doc.setFont('helvetica', 'normal');
+  const headerRight = clean((tripSummary && tripSummary.destination ? tripSummary.destination + '  ·  ' : '') + (tripSummary && tripSummary.dates ? tripSummary.dates : ''));
+  doc.text(headerRight, W - margin, 7, { align: 'right' });
+
+  // Title
+  y = 17;
+  doc.setFontSize(14); doc.setTextColor(...dark); doc.setFont('helvetica', 'bold');
+  doc.text(clean((options.length) + ' Options, Optimized for You'), margin, y);
+  y += 6;
+  doc.setFontSize(8); doc.setTextColor(...mid); doc.setFont('helvetica', 'normal');
+  const origin = clean(userProfile && userProfile.travelProfile && userProfile.travelProfile.homeAirport ? 'From ' + userProfile.travelProfile.homeAirport : '');
+  if (origin) { doc.text(origin, margin, y); y += 5; }
+  else y += 2;
+
+  // Column layout — tag | property | destination | flight | hotel | total | loyalty
+  const cols = [
+    { label: 'Option', w: 30 },
+    { label: 'Property', w: 55 },
+    { label: 'Destination', w: 35 },
+    { label: 'Flight', w: 42 },
+    { label: 'Hotel', w: 42 },
+    { label: 'Total', w: 22 },
+    { label: 'Points', w: 38 },
+  ];
+  const totalW = cols.reduce((s, c) => s + c.w, 0);
+  const scale = colW / totalW;
+  const scaledCols = cols.map(c => ({ ...c, w: c.w * scale }));
+
+  // Table header row
+  doc.setFillColor(30, 25, 18);
+  doc.rect(margin, y, colW, 7, 'F');
+  let x = margin;
+  doc.setFontSize(7); doc.setTextColor(...gold); doc.setFont('helvetica', 'bold');
+  scaledCols.forEach(col => {
+    doc.text(col.label.toUpperCase(), x + 2, y + 4.8);
+    x += col.w;
+  });
+  y += 9;
+
+  // Option rows
+  options.forEach((opt, i) => {
+    if (!opt) return;
+    const rowH = 14;
+    const isAlt = i % 2 === 0;
+    doc.setFillColor(isAlt ? 252 : 248, isAlt ? 250 : 246, isAlt ? 246 : 242);
+    doc.rect(margin, y, colW, rowH, 'F');
+
+    // Tag color stripe
+    doc.setFillColor(...gold);
+    doc.rect(margin, y, 2, rowH, 'F');
+
+    x = margin + 3;
+    const comps = opt.components || [];
+    const flight = comps.find(c => c && c.label && c.label.toLowerCase() === 'flight');
+    const hotel = comps.find(c => c && c.label && (c.label.toLowerCase().includes('hotel') || c.label.toLowerCase().includes('resort') || c.label.toLowerCase().includes('lodge') || c.label.toLowerCase().includes('inn')));
+
+    // Tag
+    doc.setFontSize(7); doc.setTextColor(...gold); doc.setFont('helvetica', 'bold');
+    doc.text(clean(opt.tag || '').toUpperCase(), x, y + 5);
+    x += scaledCols[0].w;
+
+    // Property name
+    const propName = clean(opt.headline || '').split(' · ').slice(1).join(' · ') || clean(opt.headline || '');
+    doc.setFontSize(8.5); doc.setTextColor(...dark); doc.setFont('helvetica', 'bold');
+    const propLines = doc.splitTextToSize(propName, scaledCols[1].w - 3);
+    doc.text(propLines.slice(0, 2), x, y + 5);
+    x += scaledCols[1].w;
+
+    // Destination
+    doc.setFontSize(7.5); doc.setTextColor(...mid); doc.setFont('helvetica', 'normal');
+    const dest = clean(opt.subhead || '').split(' · ')[0];
+    doc.text(doc.splitTextToSize(dest, scaledCols[2].w - 3)[0] || '', x, y + 5);
+    x += scaledCols[2].w;
+
+    // Flight
+    if (flight) {
+      const fp = clean(flight.detail || '').split(' · ');
+      doc.setFontSize(7); doc.setTextColor(...dark);
+      doc.text((fp[0] || ''), x, y + 4); // airline
+      doc.setTextColor(...mid);
+      doc.text((fp[1] || ''), x, y + 8); // route
+      doc.text((fp[3] || ''), x, y + 12); // duration
+    }
+    x += scaledCols[3].w;
+
+    // Hotel
+    if (hotel) {
+      const hp = clean(hotel.detail || '').split(' · ');
+      doc.setFontSize(7); doc.setTextColor(...dark);
+      doc.text(doc.splitTextToSize(hp[0] || '', scaledCols[4].w - 3)[0] || '', x, y + 4);
+      doc.setTextColor(...mid);
+      doc.text((hp[1] || ''), x, y + 8);
+    }
+    x += scaledCols[4].w;
+
+    // Total
+    doc.setFontSize(9); doc.setTextColor(...gold); doc.setFont('helvetica', 'bold');
+    const totalStr = '$' + (typeof opt.totalCost === 'number' ? opt.totalCost.toLocaleString() : clean(String(opt.totalCost || '')).replace(/^\$+/, ''));
+    doc.text(totalStr, x + scaledCols[5].w - 3, y + 6, { align: 'right' });
+    x += scaledCols[5].w;
+
+    // Points earned
+    doc.setFontSize(7); doc.setTextColor(60, 130, 70); doc.setFont('helvetica', 'normal');
+    if (opt.pointsEarned) {
+      const pLines = doc.splitTextToSize(clean(opt.pointsEarned), scaledCols[6].w - 3);
+      doc.text(pLines.slice(0, 2), x, y + 5);
+    }
+
+    // Why This — small italic below
+    if (opt.whyThis) {
+      doc.setFontSize(6.5); doc.setTextColor(150, 140, 130); doc.setFont('helvetica', 'italic');
+      const whyLines = doc.splitTextToSize(clean(opt.whyThis), colW - 6);
+      doc.text(whyLines[0] || '', margin + 3, y + 12.5);
+    }
+
+    y += rowH + 1;
+  });
+
+  // Footer
+  doc.setDrawColor(...mid); doc.setLineWidth(0.2);
+  doc.line(margin, y + 4, W - margin, y + 4);
+  doc.setFontSize(7); doc.setTextColor(...mid); doc.setFont('helvetica', 'normal');
+  doc.text('Generated by Sojourn  ·  trysojourn.com', margin, y + 9);
+
+  const dest = clean(tripSummary && tripSummary.destination ? tripSummary.destination : 'Options');
+  doc.save('Sojourn-' + dest.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-').slice(0, 30) + '-Options.pdf');
 };
+
+const exportOptionPDF = async (option, tripSummary, userProfile) => {
+  // Use cached expanded narrative if available
+  const expanded = window._whyThisCacheGlobal && window._whyThisCacheGlobal[option && option.id];
+  return exportItineraryPDF(option, tripSummary, userProfile, expanded);
+};
+
 
 const ItineraryOverlay = ({ option, tripSummary, userProfile, onClose }) => {
   if (!option) return null;
@@ -7782,7 +7967,7 @@ const ItineraryOverlay = ({ option, tripSummary, userProfile, onClose }) => {
   const [pdfLoading, setPdfLoading] = React.useState(false);
   const handleExportPDF = async () => {
     setPdfLoading(true);
-    try { await exportItineraryPDF(option, tripSummary, userProfile); }
+    try { const expanded = window._whyThisCacheGlobal && window._whyThisCacheGlobal[option && option.id]; await exportItineraryPDF(option, tripSummary, userProfile, expanded); }
     catch(e) { console.warn('[Sojourn] PDF export error:', e); alert('PDF export failed — try again.'); }
     finally { setPdfLoading(false); }
   };
@@ -10224,12 +10409,15 @@ Please respond now.`,
         <div data-results-top style={{ padding: "20px 28px 10px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <div style={{ flex: 1 }}>
             <div style={{ display: "flex", alignItems: "baseline", gap: "14px", marginBottom: "3px" }}>
-              <div style={{ fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif" }}>
-                {tripOptions.filter(o => !dismissedIds.includes(o.id)).length} option{tripOptions.filter(o => !dismissedIds.includes(o.id)).length !== 1 ? "s" : ""}, optimized for you
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                <div style={{ fontSize: "22px", fontFamily: "'Playfair Display',Georgia,serif" }}>
+                  {tripOptions.filter(o => !dismissedIds.includes(o.id)).length} option{tripOptions.filter(o => !dismissedIds.includes(o.id)).length !== 1 ? "s" : ""}, optimized for you
+                </div>
+                <button onClick={() => exportGridPDF(tripOptions.filter(o => !dismissedIds.includes(o.id)), tripSummary, userProfile)} style={{ background: "none", border: "1px solid rgba(201,168,76,0.25)", color: "#8a7a5a", padding: "6px 14px", borderRadius: "20px", cursor: "pointer", fontSize: "11px", fontFamily: "serif", letterSpacing: "0.05em", flexShrink: 0 }}>Export Options Table to PDF ↓</button>
               </div>
 
             </div>
-            <div style={{ color: "#555", fontSize: "12px" }}>{expandedId ? "Viewing details · click back to compare all" : "Click any option for details · dismiss ✕ options to narrow · refine your search below"}</div>
+            <div style={{ color: "#555", fontSize: "12px" }}>{expandedId ? "Viewing details · click back to compare all" : "Click any option for details · dismiss ✕ options to narrow · refine ontSize: "12px" }}>{expandedId ? "Viewing details · click back to compare all" : "Click any option for details · dismiss ✕ options to narrow · refine your search below"}</div>
           </div>
         </div>
 
