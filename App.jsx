@@ -7861,7 +7861,7 @@ const exportOptionPDF = async (option, tripSummary, userProfile) => {
     })() : null;
     const prompt = [
       'You are Sojourn, a luxury travel advisor.',
-      'Write an expanded property narrative: 150-200 words, 3 short paragraphs, second person, no bullets, no headers. Do NOT reference specific room numbers. Do NOT include seasonal events unless they fall within the traveler's stated travel dates.',
+      'Write an expanded property narrative: 150-200 words, 3 short paragraphs, second person, no bullets, no headers. Do NOT reference specific room numbers. Do NOT include seasonal events unless they fall within the traveler\'s stated travel dates.',
       '',
       'Option headline: ' + (option && option.headline || ''),
       'Option type: ' + (option && option.tag || ''),
