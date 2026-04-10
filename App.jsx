@@ -10417,7 +10417,7 @@ Please respond now.`,
               </div>
 
             </div>
-            <div style={{ color: "#555", fontSize: "12px" }}>{expandedId ? "Viewing details · click back to compare all" : "Click any option for details · dismiss ✕ options to narrow · refine ontSize: "12px" }}>{expandedId ? "Viewing details · click back to compare all" : "Click any option for details · dismiss ✕ options to narrow · refine your search below"}</div>
+            <div style={{ color: "#555", fontSize: "12px" }}>{expandedId ? "Viewing details · click back to compare all" : "Click any option for details · dismiss ✕ options to narrow · refine your search below"}</div>
           </div>
         </div>
 
