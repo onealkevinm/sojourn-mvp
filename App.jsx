@@ -7590,9 +7590,11 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
       dayComps.forEach(c => {
         if (!c) return;
         checkPage(7);
-        const icon = (c.label || '').toLowerCase().includes('flight') ? '>' :
-                     (c.label || '').toLowerCase().includes('hotel') || (c.label || '').toLowerCase().includes('lodge') ? '*' :
-                     (c.label || '').toLowerCase().includes('ground') ? '-' : '·';
+        const ltype = (c.label || '').toLowerCase();
+        // Unicode icons: U+2708=plane, U+25FC=hotel square, U+25B6=car arrow
+        const icon = ltype.includes('flight') ? '\u2708 ' :
+                     ltype.includes('hotel') || ltype.includes('lodge') || ltype.includes('inn') || ltype.includes('resort') || ltype.includes('ranch') ? '\u25FC ' :
+                     ltype.includes('ground') || ltype.includes('car') || ltype.includes('drive') ? '\u25B6 ' : '  ';
         const lbl = clean(c.label || '');
         const det = clean(c.detail || '').split(' · ').slice(0, 2).join(' · ');
         doc.setFontSize(7.5); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'bold');
@@ -7744,23 +7746,24 @@ const exportGridPDF = async (options, tripSummary, userProfile) => {
     const cx = margin + 5.5;
     // ── Row 1: Tag pill | Property name | Cost ──────────────────────────────
     // Tag
-    // Tag — truncate long Wild Card labels to max 28 chars, wrap to second line if needed
+    // Tag — SINGLE LINE ONLY. Measure tag width and push property name past it.
     const tagText = clean(opt.tag || '').toUpperCase();
-    const tagShort = tagText.length > 28 ? tagText.slice(0, 26) + '..' : tagText;
-    const tagLines = doc.splitTextToSize(tagShort, 40);
-    doc.setFontSize(6.5); doc.setTextColor(tagColor[0], tagColor[1], tagColor[2]); doc.setFont('helvetica', 'bold');
-    doc.text(tagLines[0] || '', cx, y + 5.5);
-    if (tagLines[1]) doc.text(tagLines[1], cx, y + 9.5);
+    doc.setFontSize(6.5); doc.setFont('helvetica', 'bold');
+    const tagMaxW = 44; // max px for tag column
+    const tagTrunc = doc.splitTextToSize(tagText, tagMaxW)[0] || ''; // take first line only
+    doc.setTextColor(tagColor[0], tagColor[1], tagColor[2]);
+    doc.text(tagTrunc, cx, y + 5.5);
+    const tagActualW = doc.getTextWidth(tagTrunc);
+    const propStartX = cx + Math.max(tagActualW + 4, 46); // at least 46mm from left edge
 
-    // Property name — starts after tag column, uses remaining width
+    // Property name — starts right after tag with consistent gap
     const hl = clean(opt.headline || '');
     const hlParts = hl.split(' · ');
     const propName = hlParts.length > 1 ? hlParts.slice(1).join(' ') : hl;
-    const propStartX = cx + 42; // fixed column start, clear of any tag text
-    doc.setFontSize(9.5); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'bold');
-    const propLines = doc.splitTextToSize(propName, colW - 55);
+    const propW = W - margin - 3 - propStartX - 18; // leave room for cost
+    doc.setFontSize(9); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'bold');
+    const propLines = doc.splitTextToSize(propName, propW);
     doc.text(propLines[0] || '', propStartX, y + 5.5);
-    if (propLines[1]) { doc.setFontSize(8); doc.text(propLines[1], propStartX, y + 10); }
 
     // Cost — right aligned
     const costStr = '$' + (typeof opt.totalCost === 'number' ? opt.totalCost.toLocaleString() : clean(String(opt.totalCost || '')).replace(/^\$+/, ''));
@@ -7791,7 +7794,7 @@ const exportGridPDF = async (options, tripSummary, userProfile) => {
     if (flight) {
       const fp = clean(flight.detail || '').split(' · ');
       doc.setFontSize(6.5); doc.setTextColor(tagColor[0], tagColor[1], tagColor[2]); doc.setFont('helvetica', 'bold');
-      doc.text('FLIGHT', cx, ry);
+      doc.text('✈ FLIGHT', cx, ry);
       doc.setFontSize(7.5); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'bold');
       doc.text(fp[0] || '', cx, ry + 4.5); // airline
       doc.setFont('helvetica', 'normal'); doc.setTextColor(mid[0], mid[1], mid[2]);
@@ -7801,7 +7804,7 @@ const exportGridPDF = async (options, tripSummary, userProfile) => {
     if (hotel) {
       const hp = clean(hotel.detail || '').split(' · ');
       doc.setFontSize(6.5); doc.setTextColor(tagColor[0], tagColor[1], tagColor[2]); doc.setFont('helvetica', 'bold');
-      doc.text('HOTEL', rightColX, ry);
+      doc.text('◼ HOTEL', rightColX, ry);
       doc.setFontSize(7.5); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'bold');
       const hotelName = doc.splitTextToSize(hp[0] || '', leftColW - 2);
       doc.text(hotelName[0] || '', rightColX, ry + 4.5);
@@ -7813,7 +7816,7 @@ const exportGridPDF = async (options, tripSummary, userProfile) => {
     if (!flight && ground) {
       const gp = clean(ground.detail || '').split(' · ');
       doc.setFontSize(6.5); doc.setTextColor(tagColor[0], tagColor[1], tagColor[2]); doc.setFont('helvetica', 'bold');
-      doc.text('DRIVE', cx, ry);
+      doc.text('▶ DRIVE', cx, ry);
       doc.setFontSize(7.5); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'normal');
       doc.text(gp[0] || '', cx, ry + 4.5);
     }
