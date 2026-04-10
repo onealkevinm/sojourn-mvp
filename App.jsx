@@ -6952,11 +6952,14 @@ const TripCard = ({ option, isExpanded, onToggle, onItinerary, onDismiss, onBook
               <div style={{ color: "#7a7468", fontSize: "12px", lineHeight: "1.6" }}>▪ {option.cardStrategy}</div>
             </div>
           )}
-          <div style={{ display: "flex", gap: "10px", marginTop: "18px" }}>
-            <button onClick={() => onItinerary && onItinerary(option)} style={{ flex: 1, padding: "14px", background: "rgba(255,255,255,0.04)", color: "#b0a898", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", fontSize: "12px", fontWeight: "600", cursor: "pointer", letterSpacing: "0.06em", fontFamily: "'Playfair Display',Georgia,serif" }}>
+          <div style={{ display: "flex", gap: "10px", marginTop: "18px", flexWrap: "wrap" }}>
+            <button onClick={() => onItinerary && onItinerary(option)} style={{ flex: 1, minWidth: "120px", padding: "14px", background: "rgba(255,255,255,0.04)", color: "#b0a898", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", fontSize: "12px", fontWeight: "600", cursor: "pointer", letterSpacing: "0.06em", fontFamily: "'Playfair Display',Georgia,serif" }}>
               View as Itinerary ↗
             </button>
-            <button onClick={(e) => { e.stopPropagation(); mp.track("book_intent", { tag: option.tag, headline: option.headline, total_cost: option.totalCost, net_value: option.netValue, destination: option.subhead }); if (onBook) onBook(option); }} style={{ flex: 2, padding: "14px", background: option.tagColor, color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>
+            <button onClick={(e) => { e.stopPropagation(); exportOptionPDF(option, tripSummary, userProfile).catch(err => console.warn('[Sojourn] PDF error:', err)); }} style={{ padding: "14px 16px", background: "rgba(255,255,255,0.03)", color: "#8a7a5a", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", fontSize: "12px", fontWeight: "600", cursor: "pointer", letterSpacing: "0.04em", fontFamily: "'Playfair Display',Georgia,serif", flexShrink: 0 }}>
+              PDF ↓
+            </button>
+            <button onClick={(e) => { e.stopPropagation(); mp.track("book_intent", { tag: option.tag, headline: option.headline, total_cost: option.totalCost, net_value: option.netValue, destination: option.subhead }); if (onBook) onBook(option); }} style={{ flex: 2, minWidth: "140px", padding: "14px", background: option.tagColor, color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>
               Book This Trip →
             </button>
           </div>
@@ -7403,6 +7406,170 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
   );
 };
 
+
+// ── PDF Export Utility ────────────────────────────────────────────────────────
+const loadJsPDF = () => new Promise((resolve, reject) => {
+  if (window.jspdf) { resolve(window.jspdf.jsPDF); return; }
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+  script.onload = () => resolve(window.jspdf.jsPDF);
+  script.onerror = reject;
+  document.head.appendChild(script);
+});
+
+const exportItineraryPDF = async (option, tripSummary, userProfile) => {
+  const jsPDF = await loadJsPDF();
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const W = 210; const margin = 18; const colW = W - margin * 2;
+  let y = 22;
+
+  const gold = [201, 168, 76];
+  const dark = [30, 25, 20];
+  const mid = [120, 110, 100];
+  const light = [180, 168, 152];
+
+  const addText = (text, x, size, color, style='normal', maxW) => {
+    doc.setFontSize(size);
+    doc.setTextColor(...color);
+    doc.setFont('helvetica', style);
+    if (maxW) {
+      const lines = doc.splitTextToSize(String(text || ''), maxW);
+      doc.text(lines, x, y);
+      return lines.length * (size * 0.4);
+    }
+    doc.text(String(text || ''), x, y);
+    return size * 0.4;
+  };
+
+  const checkPage = (needed = 10) => {
+    if (y + needed > 275) { doc.addPage(); y = 20; }
+  };
+
+  // Header bar
+  doc.setFillColor(...gold);
+  doc.rect(0, 0, W, 12, 'F');
+  doc.setFontSize(9); doc.setTextColor(15,12,8); doc.setFont('helvetica','bold');
+  doc.text('SOJOURN', margin, 8);
+  doc.setFont('helvetica','normal');
+  doc.text('Travel Itinerary', W - margin, 8, { align: 'right' });
+  y = 22;
+
+  // Trip title
+  addText(option.headline || 'Trip Itinerary', margin, 16, dark, 'bold', colW);
+  y += 9;
+  addText((tripSummary?.dates || '') + (tripSummary?.origin ? '  ·  ' + tripSummary.origin : ''), margin, 9, mid, 'normal');
+  y += 6;
+
+  // Tag + cost row
+  doc.setFillColor(245,240,230);
+  doc.roundedRect(margin, y, colW, 9, 2, 2, 'F');
+  doc.setFontSize(8); doc.setTextColor(...gold); doc.setFont('helvetica','bold');
+  doc.text((option.tag || '').toUpperCase(), margin + 3, y + 6);
+  doc.setTextColor(...dark);
+  const costStr = '$' + (typeof option.totalCost === 'number' ? option.totalCost.toLocaleString() : String(option.totalCost || '').replace(/^\$+/,''));
+  doc.text(costStr, W - margin - 3, y + 6, { align: 'right' });
+  y += 14;
+
+  // Why This
+  if (option.whyThis) {
+    checkPage(20);
+    doc.setFillColor(248,245,240);
+    const whyLines = doc.splitTextToSize(option.whyThis, colW - 6);
+    const whyH = Math.max(12, whyLines.length * 4.5 + 6);
+    doc.roundedRect(margin, y, colW, whyH, 2, 2, 'F');
+    doc.setFontSize(7); doc.setTextColor(...mid); doc.setFont('helvetica','bold');
+    doc.text('WHY THIS OPTION', margin + 3, y + 5);
+    doc.setFont('helvetica','normal'); doc.setTextColor(...dark);
+    doc.text(whyLines, margin + 3, y + 10);
+    y += whyH + 6;
+  }
+
+  // Components
+  checkPage(15);
+  doc.setFontSize(7); doc.setTextColor(...gold); doc.setFont('helvetica','bold');
+  doc.text('TRIP COMPONENTS', margin, y); y += 5;
+  (option.components || []).forEach(c => {
+    if (!c) return;
+    checkPage(10);
+    doc.setFillColor(250,248,245);
+    doc.roundedRect(margin, y, colW, 9, 1.5, 1.5, 'F');
+    doc.setFontSize(8); doc.setTextColor(...dark); doc.setFont('helvetica','bold');
+    doc.text((c.label || ''), margin + 3, y + 6);
+    doc.setFont('helvetica','normal'); doc.setTextColor(...mid);
+    const detail = doc.splitTextToSize(c.detail || '', colW - 55);
+    doc.text(detail[0] || '', margin + 28, y + 6);
+    if (c.value) {
+      doc.setTextColor(...gold);
+      doc.text('$' + c.value.toLocaleString(), W - margin - 3, y + 6, { align: 'right' });
+    }
+    y += 11;
+  });
+  y += 4;
+
+  // Day-by-day if we have dates
+  const comps = option.components || [];
+  const maxDay = comps.reduce((m,c) => Math.max(m, c.day || 1), 1);
+  if (maxDay > 1) {
+    checkPage(15);
+    doc.setFontSize(7); doc.setTextColor(...gold); doc.setFont('helvetica','bold');
+    doc.text('DAY-BY-DAY', margin, y); y += 5;
+
+    const byDay = {};
+    comps.forEach(c => { const d = c.day||1; if(!byDay[d]) byDay[d]=[]; byDay[d].push(c); });
+    Object.entries(byDay).sort(([a],[b]) => a-b).forEach(([day, dayComps]) => {
+      checkPage(18);
+      doc.setFillColor(...gold);
+      doc.roundedRect(margin, y, 18, 7, 1.5, 1.5, 'F');
+      doc.setFontSize(7); doc.setTextColor(15,12,8); doc.setFont('helvetica','bold');
+      doc.text('DAY ' + day, margin + 9, y + 5, { align: 'center' });
+      doc.setTextColor(...dark); doc.setFont('helvetica','normal');
+      y += 9;
+      dayComps.forEach(c => {
+        checkPage(8);
+        doc.setFontSize(8);
+        doc.setTextColor(...dark); doc.setFont('helvetica','bold');
+        doc.text('• ' + (c.label||''), margin + 3, y);
+        doc.setFont('helvetica','normal'); doc.setTextColor(...mid);
+        const dlines = doc.splitTextToSize(c.detail||'', colW - 10);
+        doc.text(dlines[0]||'', margin + 28, y);
+        y += 5.5;
+      });
+      y += 2;
+    });
+  }
+
+  // Loyalty highlight
+  if (option.loyaltyHighlight) {
+    checkPage(14);
+    doc.setFillColor(240,248,240);
+    const loyLines = doc.splitTextToSize('✦ ' + option.loyaltyHighlight, colW - 6);
+    const loyH = loyLines.length * 4.5 + 8;
+    doc.roundedRect(margin, y, colW, loyH, 2, 2, 'F');
+    doc.setFontSize(7); doc.setTextColor(60,140,80); doc.setFont('helvetica','bold');
+    doc.text('LOYALTY HIGHLIGHTS', margin + 3, y + 5);
+    doc.setFont('helvetica','normal'); doc.setTextColor(40,100,60);
+    doc.text(loyLines, margin + 3, y + 10);
+    y += loyH + 4;
+  }
+
+  // Footer
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7); doc.setTextColor(...mid);
+    doc.text('Generated by Sojourn  ·  trysojourn.com', margin, 291);
+    doc.text('Page ' + i + ' of ' + pageCount, W - margin, 291, { align: 'right' });
+  }
+
+  const filename = 'Sojourn-' + (option.headline||'Trip').replace(/[^a-zA-Z0-9]/g,'-').replace(/-+/g,'-').slice(0,40) + '.pdf';
+  doc.save(filename);
+};
+
+const exportOptionPDF = async (option, tripSummary, userProfile) => {
+  // Simpler single-option export for card detail view
+  return exportItineraryPDF(option, tripSummary, userProfile);
+};
+
 const ItineraryOverlay = ({ option, tripSummary, userProfile, onClose }) => {
   if (!option) return null;
   try {
@@ -7612,7 +7779,13 @@ const ItineraryOverlay = ({ option, tripSummary, userProfile, onClose }) => {
     days.push({ dayNum: d, label: formatDay(d - 1), badge, items });
   }
 
-  const handlePrint = () => window.print();
+  const [pdfLoading, setPdfLoading] = React.useState(false);
+  const handleExportPDF = async () => {
+    setPdfLoading(true);
+    try { await exportItineraryPDF(option, tripSummary, userProfile); }
+    catch(e) { console.warn('[Sojourn] PDF export error:', e); alert('PDF export failed — try again.'); }
+    finally { setPdfLoading(false); }
+  };
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 1000, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "24px 16px", overflowY: "auto" }} onClick={onClose}>
@@ -7626,7 +7799,7 @@ const ItineraryOverlay = ({ option, tripSummary, userProfile, onClose }) => {
             <div style={{ color: "#555", fontSize: "12px", marginTop: "6px" }}>{rawDates} · {origin} → {destination}</div>
           </div>
           <div style={{ display: "flex", gap: "8px", alignItems: "center", flexShrink: 0 }}>
-            <button onClick={handlePrint} style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.2)", color: "#C9A84C", padding: "8px 14px", borderRadius: "10px", cursor: "pointer", fontSize: "11px", fontFamily: "serif", letterSpacing: "0.08em" }}>Export PDF ↓</button>
+            <button onClick={handleExportPDF} disabled={pdfLoading} style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.2)", color: pdfLoading ? "#8a7a5a" : "#C9A84C", padding: "8px 14px", borderRadius: "10px", cursor: pdfLoading ? "default" : "pointer", fontSize: "11px", fontFamily: "serif", letterSpacing: "0.08em", opacity: pdfLoading ? 0.6 : 1 }}>{pdfLoading ? "Generating..." : "Export PDF ↓"}</button>
             <button onClick={onClose} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#666", width: "32px", height: "32px", borderRadius: "8px", cursor: "pointer", fontSize: "16px", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
           </div>
         </div>
