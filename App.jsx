@@ -9136,7 +9136,7 @@ PROPERTY EXISTENCE RULE — HARD RULE: Every property you name must actually exi
 
 Before finalizing any option confirm: (a) the property exists as a real operating hotel, (b) it is located in the city or region the traveler requested. A real brand in the wrong city is a hallucination. If you cannot confirm a property's specific neighborhood in the stated city with high confidence, use a different property or reserve the uncertainty for a Wild Card slot. The verified quality signals DB is your primary check — if a property appears there with the correct city tag, it is confirmed. If it does not appear, apply high scrutiny before naming it.
 
-CHICAGO DESIGN-FORWARD NOTE: For design-forward queries in Chicago, real options include: Chicago Athletic Association Hotel (Unbound by Hyatt, Venetian Gothic 1893, Millennium Park views, Cindy's rooftop, Roman and Williams interiors), The St. Regis Chicago (Studio Gang tower, Lakeshore Drive, ultra-luxury Marriott), Kimpton Gray Hotel (Loop, IHG), The Godfrey Hotel (River North, independent). Do not reach outside Chicago for this brief. NOTE: 21c Museum Hotel has NO Chicago location — do not surface it for Chicago queries.
+NOTE: 21c Museum Hotel has NO Chicago location (locations: Louisville, Cincinnati, Durham, Lexington, Bentonville, St. Louis only). For Chicago design-forward queries use verified DB properties: Chicago Athletic Association Hotel (Unbound/Hyatt), St. Regis Chicago (Studio Gang), Kimpton Gray, The Godfrey.
 
 Suppress or replace Redemption Opportunity when:
 - The query is primarily about national park lodges, parkitecture, or NPS properties (Old Faithful Inn, El Tovar, Jenny Lake Lodge, etc.) — none are bookable with hotel loyalty points. Replace with a second Quality Upgrade featuring the most distinctive park lodge option.
@@ -9544,7 +9544,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         const sysPrompt = buildSystemPrompt();
         const payload = {
           model: "claude-sonnet-4-5",
-          max_tokens: 8000,
+          max_tokens: 12000,
           system: sysPrompt,
           messages: [{ role: "user", content: fullContext }],
         };
@@ -9948,7 +9948,7 @@ const handleSend = () => {
         headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
         body: JSON.stringify({
           model: "claude-sonnet-4-5",
-          max_tokens: 4000,
+          max_tokens: 6000,
           system: `You are Sojourn, an expert travel advisor. The traveler has seen their options and wants to refine or explore further.
 
 TRAVELER PROFILE:
@@ -10285,7 +10285,7 @@ Please respond now.`,
             headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
             body: JSON.stringify({
               model: "claude-sonnet-4-5",
-              max_tokens: 4000,
+              max_tokens: 6000,
               system: `You are a travel option generator. Output ONLY valid JSON — no prose, no explanation. Start immediately with { and end with }. Generate 6 travel options based on the request. Use the same JSON schema as before with fields: tripSummary, options array with id/tag/tagColor/headline/subhead/totalCost/pointsEarned/pointsValue/netValue/redemption/tags/tradeoff/loyaltyHighlight/cardStrategy/whyThis/components/experiences.`,
               messages: [
                 ...conversationRef.current.slice(-6).map(m => ({ role: m.role, content: m.content })),
