@@ -6699,7 +6699,7 @@ const WhyThisExpanded = ({ option, userProfile }) => {
         'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 380,
         messages: [{ role: 'user', content: prompt }],
       }),
@@ -6787,7 +6787,7 @@ const WhyThisExpanded = ({ option, userProfile }) => {
     fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-      body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 600, messages: [{ role: "user", content: deepPrompt }] })
+      body: JSON.stringify({ model: "claude-sonnet-4-5", max_tokens: 600, messages: [{ role: "user", content: deepPrompt }] })
     })
     .then(function(r) { return r.json(); })
     .then(function(d) {
@@ -7901,7 +7901,7 @@ const exportOptionPDF = async (option, tripSummary, userProfile) => {
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 380, messages: [{ role: 'user', content: prompt }] })
+      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 380, messages: [{ role: 'user', content: prompt }] })
     });
     const data = await resp.json();
     const narrative = data && data.content && data.content[0] && data.content[0].text;
@@ -8979,7 +8979,7 @@ export default function SojournApp() {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-5",
           max_tokens: 800,
           system: optimizeSystem,
           messages: [{ role: "user", content: `Cards: ${cardList}. Loyalty: ${loyaltyList}. Preferred hotel/airline brands: ${(p.preferredBrands||p.selectedBrands||[]).slice(0,15).join(", ")||"none set"}. Car rental programs: ${(p.loyaltyAccounts||[]).filter(a=>["National Emerald Club","Hertz Gold Plus Rewards","Avis Preferred","Enterprise Plus"].includes(a.program)).map(a=>a.program).join(", ")||"none"}. Benefits summary: ${benefitsSummary.slice(0,500)}. Provide 2-3 honest optimization recommendations covering cards, loyalty program gaps from preferred brands, and car rental if not already set up.` }],
@@ -9397,7 +9397,7 @@ DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these ru
           method: "POST",
           headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
           body: JSON.stringify({
-            model: "claude-sonnet-4-20250514",
+            model: "claude-sonnet-4-5",
             max_tokens: 400,
             system: `You are Sojourn, a knowledgeable travel companion — expert in trip planning, local discovery, dining, activities, and getting the most from loyalty programs and credit cards.
 
@@ -9543,7 +9543,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
       try {
         const sysPrompt = buildSystemPrompt();
         const payload = {
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-5",
           max_tokens: 8000,
           system: sysPrompt,
           messages: [{ role: "user", content: fullContext }],
@@ -9947,7 +9947,7 @@ const handleSend = () => {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-5",
           max_tokens: 4000,
           system: `You are Sojourn, an expert travel advisor. The traveler has seen their options and wants to refine or explore further.
 
@@ -10284,7 +10284,7 @@ Please respond now.`,
             method: "POST",
             headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
             body: JSON.stringify({
-              model: "claude-sonnet-4-20250514",
+              model: "claude-sonnet-4-5",
               max_tokens: 4000,
               system: `You are a travel option generator. Output ONLY valid JSON — no prose, no explanation. Start immediately with { and end with }. Generate 6 travel options based on the request. Use the same JSON schema as before with fields: tripSummary, options array with id/tag/tagColor/headline/subhead/totalCost/pointsEarned/pointsValue/netValue/redemption/tags/tradeoff/loyaltyHighlight/cardStrategy/whyThis/components/experiences.`,
               messages: [
@@ -10420,7 +10420,7 @@ Please respond now.`,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-5",
           max_tokens: 300,
           system: "Extract 3-6 DURABLE traveler preference signals from this conversation — things true on their NEXT trip too, not specifics of this one. INCLUDE: style preferences, logistical preferences, quality standards, recurring family needs, weather minimums, destination affinities. EXCLUDE: anything trip-specific like dates, this hotel name, current points balance. Return ONLY a JSON array of short strings, no markdown, no preamble.",
           messages: [{ role: "user", content: convoText.slice(0, 3000) }]
