@@ -5817,7 +5817,7 @@ const AIRLINE_BASE_URLS = {
   'delta':     'https://www.delta.com/flightsearch/book-a-flight',
   'united':    'https://www.united.com/en/us/fsr/choose-flights',
   'american':  'https://www.aa.com/booking/find-flights',
-  'alaska':    'https://www.alaskaair.com/booking/choose-flights',
+  'alaska':    'https://www.alaskaair.com/search/results',
   'southwest': 'https://www.southwest.com/air/booking/',
   'jetblue':   'https://www.jetblue.com/booking/flights',
   'lufthansa': 'https://www.lufthansa.com/us/en/homepage',
@@ -5831,26 +5831,45 @@ const AIRLINE_BASE_URLS = {
 const buildAirlineLink = (airlineName, origin, dest, date) => {
   if (!airlineName) return null;
   const a = airlineName.toLowerCase();
+  const o = (origin || '').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 3);
+  const d = (dest || '').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 3);
 
-  // Match airline name to key
-  let key = null;
-  if (a.includes('delta')) key = 'delta';
-  else if (a.includes('united')) key = 'united';
-  else if (a.includes('american')) key = 'american';
-  else if (a.includes('alaska')) key = 'alaska';
-  else if (a.includes('southwest')) key = 'southwest';
-  else if (a.includes('jetblue')) key = 'jetblue';
-  else if (a.includes('lufthansa')) key = 'lufthansa';
-  else if (a.includes('british')) key = 'british';
-  else if (a.includes('air canada')) key = 'air canada';
-  else if (a.includes('hawaiian')) key = 'hawaiian';
-  else if (a.includes('frontier')) key = 'frontier';
-  else if (a.includes('spirit')) key = 'spirit';
+  // Alaska — deep link with route params
+  if (a.includes('alaska')) {
+    if (o && d) return `https://www.alaskaair.com/search/results?o1=${o}&d1=${d}&type=A&px=2`;
+    return 'https://www.alaskaair.com/search/results';
+  }
+  // Hawaiian — deep link with route
+  if (a.includes('hawaiian')) {
+    if (o && d) return `https://www.hawaiianairlines.com/book-a-flight/${o}/${d}`;
+    return 'https://www.hawaiianairlines.com/book-a-flight';
+  }
+  // Delta — route-aware
+  if (a.includes('delta')) {
+    if (o && d) return `https://www.delta.com/us/en/flight-search/book-a-flight?tripType=ONE_WAY&origin=${o}&destination=${d}`;
+    return AIRLINE_BASE_URLS['delta'];
+  }
+  // United — route-aware
+  if (a.includes('united')) {
+    if (o && d) return `https://www.united.com/en/us/fsr/choose-flights?f=${o}&t=${d}&tt=1&sc=7&px=2`;
+    return AIRLINE_BASE_URLS['united'];
+  }
+  // American — route-aware
+  if (a.includes('american')) {
+    if (o && d) return `https://www.aa.com/booking/find-flights?locale=en_US&pax=2&adult=2&type=OneWay&searchType=matrix&cabin=&carriers=AA&outboundDatetime=&origin=${o}&destination=${d}`;
+    return AIRLINE_BASE_URLS['american'];
+  }
+  // Others — just base URL
+  if (a.includes('southwest')) return AIRLINE_BASE_URLS['southwest'];
+  if (a.includes('jetblue')) return AIRLINE_BASE_URLS['jetblue'];
+  if (a.includes('lufthansa')) return AIRLINE_BASE_URLS['lufthansa'];
+  if (a.includes('british')) return AIRLINE_BASE_URLS['british'];
+  if (a.includes('air canada')) return AIRLINE_BASE_URLS['air canada'];
+  if (a.includes('frontier')) return AIRLINE_BASE_URLS['frontier'];
+  if (a.includes('spirit')) return AIRLINE_BASE_URLS['spirit'];
 
-  if (key && AIRLINE_BASE_URLS[key]) return AIRLINE_BASE_URLS[key];
-
-  // Fallback: Google Flights with airline filter
-  const q = [airlineName, origin, dest].filter(Boolean).join(' ');
+  // Fallback: Google Flights with airline + route filter
+  const q = [airlineName, o && d ? `${o} to ${d}` : ''].filter(Boolean).join(' ');
   return `https://www.google.com/travel/flights?q=${encodeURIComponent(q)}`;
 };
 
@@ -6044,7 +6063,7 @@ const buildHyattLink = (propertyName, checkIn, checkOut, adults) => {
   if (baseUrl) return baseUrl;
   // Fallback: search Hyatt.com for the property name
   const searchQuery = encodeURIComponent(propertyName.replace(/^(The|A|An) /i, '').split(' · ')[0].trim());
-  return `https://www.hyatt.com/search?searchQuery=${searchQuery}`;
+  return `https://www.hyatt.com/en-US/search?searchQuery=${searchQuery}&checkinDate=${checkIn || ''}&checkoutDate=${checkOut || ''}&adults=${adults || 2}`;
 };
 
 // IHG property codes (qSlH parameter)
