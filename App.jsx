@@ -9534,6 +9534,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         };
         // Diagnostic logging — visible in browser console
         console.log("[Sojourn] Sending generation request");
+        const _t0 = Date.now();
         console.log("[Sojourn] System prompt chars:", sysPrompt.length);
         console.log("[Sojourn] User message chars:", fullContext.length);
         console.log("[Sojourn] API key present:", !!ANTHROPIC_KEY, "length:", ANTHROPIC_KEY.length);
@@ -9571,6 +9572,9 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
             try {
               const evt = JSON.parse(evtData);
               if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
+                if (!fullText && typeof _t0 !== "undefined") {
+                  console.log(`[Sojourn] TTFT: ${Date.now() - _t0}ms`);
+                }
                 fullText += evt.delta.text || "";
               }
               if (evt.type === "message_delta") {
@@ -9582,6 +9586,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
             } catch(sseErr) { /* skip malformed lines */ }
           }
         }
+        console.log(`[Sojourn] Generation complete: ${Date.now() - _t0}ms total | ${fullText.length} chars output`);
         const text = fullText.trim();
         let cleanText = text.replace(/```json/g, "").replace(/```/g, "").trim();
         const s = cleanText.indexOf("{");
