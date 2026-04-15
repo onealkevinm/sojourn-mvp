@@ -5309,7 +5309,7 @@ const OnboardingFlow = ({ onComplete }) => {
         <div style={{ display: "flex", justifyContent: "center", width: "100%", position: "relative", alignItems: "center" }}>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: "11px", letterSpacing: "0.3em", color: "#C9A84C", textTransform: "uppercase", fontFamily: "serif", marginBottom: "2px" }}>Sojourn · AI</div>
-            {step === 0 && <div style={{ color: "#444", fontSize: "11px", letterSpacing: "0.08em" }}>Your travel, optimized.</div>}
+            {step === 0 && <div style={{ color: "#444", fontSize: "11px", letterSpacing: "0.08em" }}>Travel intent, illuminated.</div>}
           </div>
         </div>
         {step > 0 && (
@@ -5652,7 +5652,7 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
               {!isMobile && <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Cash Out of Pocket</th>}
               {!isMobile && <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Points</th>}
               {!isMobile && <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Net Value</th>}
-              {!isMobile && <th style={{ textAlign: "left", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "26%" }}>Why This</th>}
+              {!isMobile && <th style={{ textAlign: "left", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "26%" }}>Why This Option</th>}
               {!isMobile && <th style={{ width: "32px" }}></th>}
             </tr>
           </thead>
@@ -5702,12 +5702,7 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                         <div style={{ color: "#d8d4cc", fontSize: "13px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.3", marginBottom: "4px" }}>{opt.headline}</div>
                         <div style={{ color: "#555", fontSize: "11px" }}>{opt.subhead}</div>
                         
-                        {(() => {
-                          const hotelComp = (opt.components||[]).find(c => c.label?.toLowerCase().includes("hotel") || c.label?.toLowerCase().includes("accommodation"));
-                          const flightComp = (opt.components||[]).find(c => c.label === "Flight");
-                          const propertyName = hotelComp?.detail?.split("·")[0]?.trim() || flightComp?.detail?.split("·")[0]?.trim();
-                          return propertyName ? <div style={{ color: "#555", fontSize: "10px", marginTop: "4px", fontStyle: "italic" }}>{propertyName}</div> : null;
-                        })()}
+
                         {!isOnHold && <div style={{ color: isHov ? "#C9A84C" : "#333", fontSize: "10px", marginTop: "5px", letterSpacing: "0.05em", transition: "color 0.15s" }}>View details →</div>}
                       </>
                     )}
@@ -6566,19 +6561,7 @@ const ComponentRow = ({ label, value, detail, points, card, checkIn, checkOut, n
       ) : (
         <div style={{ color: "#c0b8ae", fontSize: "13px", marginBottom: "6px" }}>{fmtNums(detail)}</div>
       )}
-      {card && (() => {
-        // Extract multiplier from card string if present — e.g. "Chase Sapphire Reserve · 3x travel"
-        const cardParts = card.split(/·|—|-(?=\s*\d)/);
-        const cardName = cardParts[0]?.trim() || card;
-        const cardReason = cardParts[1]?.trim() || null;
-        return (
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(255,255,255,0.04)", borderRadius: "8px", padding: "3px 8px" }}>
-            <span style={{ color: "#C9A84C", fontSize: "10px" }}>▪</span>
-            <span style={{ color: "#7a7468", fontSize: "11px" }}>Use your {cardName}</span>
-            {cardReason && <span style={{ color: "#7a7060", fontSize: "10px" }}>· {cardReason}</span>}
-          </div>
-        );
-      })()}
+      
       {/* Affiliate links — hotel and flight booking shortcuts */}
       {label && label.toLowerCase().includes('hotel') && detail && (() => {
         const hotelNameRaw = detail.split('·')[0]?.trim() || '';
@@ -6611,7 +6594,7 @@ const ComponentRow = ({ label, value, detail, points, card, checkIn, checkOut, n
         return url ? (
           <a href={url} target="_blank" rel="noopener noreferrer"
             style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#6a6460", fontSize: "11px", textDecoration: "none", marginTop: "8px", borderBottom: "1px solid rgba(106,100,96,0.3)" }}>
-            Book this flight →
+            {fc.origin && fc.dest ? `Explore ${fc.origin} to ${fc.dest} flights →` : 'Explore flights →'}
           </a>
         ) : null;
       })()}
@@ -9355,7 +9338,7 @@ COMPONENT VALUE RULE — CRITICAL:
   - If earning: "est. 2,400 Delta miles earned" or "est. 4,200 Bonvoy points earned" — always include "est." and "earned"
   - Never mix redemption and earning in the same points field
 - loyaltyHighlight = a friendly, plain-English reminder of the marginal status perks this traveler unlocks on THIS specific trip. Use the STRUCTURED BENEFITS data injected above — specifically the loyaltyHighlight arrays for each program/tier. Only include benefits that apply every time they use this program at this tier (free breakfast, lounge access tied to status, guaranteed late checkout, upgrade eligibility, free checked bags). Do NOT include annual credits, metered benefits, or anything requiring residual balance knowledge — those go in itinerary reminders, not here. Do NOT repeat points math (covered in components). Keep to 2-4 genuinely relevant perks. Tone: warm, like a knowledgeable friend reminding you of things you might forget to use.
-- cardStrategy = which card to use for each cash-paid component and why, based on the highest earning multiplier for that spend category. Format: "Flights: [card] ([Nx] miles) · Hotel: [card] ([Nx] points) · Dining: [card] ([Nx] points)". Only include components where cash is paid — skip components covered by points redemption. This must reflect the traveler's actual cards and their actual category multipliers. Never invent a multiplier. If two cards tie, pick the one that earns the program with the higher cpp value. CASHBACK CARDS: cash back is certain and immediate; points/miles have future redemption risk. For spend categories where no card has a NATIVE bonus multiplier (i.e. a hotel that doesn't match any card's bonus category), prefer the cashback card over a 1x points card — 1.5% certain cash beats 1x miles at an estimated future cpp. Only route to a points card over cashback if the points card has a genuine category bonus (2x or higher) on that spend type.
+- cardStrategy = which card to use for each cash-paid component and why. Format: "Flights: [card] ([Nx] miles) · Hotel: [card] ([Nx] points)". Only include components where cash is paid. Reflect actual cards and multipliers — never invent. Prefer cashback over 1x points cards when no category bonus applies.
 - whyThis = frame cash figures consistently with what the card shows — if flights are $0 out of pocket, say "flights covered by your miles" not "flights cost $X"
 - pointsEarned (top-level) = earning side ONLY — points/miles/cashback this trip generates on cash-paid components. CRITICAL: if a component is covered by a redemption, it earns NO points — do NOT include that program in pointsEarned. Example: if Delta miles cover flights, do NOT include "Delta miles earned" in pointsEarned. Only include programs earned on cash-paid components.
 - CASHBACK vs POINTS FORMATTING: USAA Preferred Cash Rewards earns CASH BACK, not points. Always format as "$X cashback" never as "X points" or "X USAA points". In pointsEarned field: "est. 3,200 Delta miles + $48 cashback" — the cashback is a dollar amount with $ sign, not a point count. In component points field: "est. $18 cashback (1.5%)" — always include % rate and $ sign.
@@ -11047,7 +11030,7 @@ Please respond now.`,
       {/* Header */}
       <div style={{ padding: "28px 24px 0", textAlign: "center" }}>
         <div style={{ fontSize: "11px", letterSpacing: "0.3em", color: "#C9A84C", textTransform: "uppercase", marginBottom: "2px", fontFamily: "serif" }}>Sojourn · AI</div>
-        <div className="desktop-only" style={{ color: "#444", fontSize: "11px", letterSpacing: "0.08em" }}>Your travel, optimized.</div>
+        <div className="desktop-only" style={{ color: "#444", fontSize: "11px", letterSpacing: "0.08em" }}>Travel intent, illuminated.</div>
       </div>
 
       {/* Hero — centerpoint on first load */}
