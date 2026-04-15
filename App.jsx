@@ -9120,11 +9120,12 @@ ${(() => {
 - LEARNED FROM PAST TRIPS: ${learnedList}` : ""}
 - Preferred hotel brands: ${brandList}
 
-Generate EXACTLY 10 options total: 6 primary options in the "options" array (never 5, never 7) AND exactly 4 reserve options in the "reserve_options" array. Both arrays are required.
-CRITICAL: You MUST also generate exactly 4 RESERVE options in the "reserve_options" array. This is required, not optional. These are pre-generated alternatives used for instant refinement — the user will see them if they dismiss or request more options.
+Generate EXACTLY 10 options total: exactly 6 primary options in the "options" array (never 5, never 7). The reserve_options array must be present but should be an empty array [].
 
-Reserve options MUST include all 4 slots:
-- reserve_options[0]: Next best overall — a strong alternative to the Recommended that didn't make the primary cut. Same destination, different property or approach. Tag: "Recommended" or the most fitting primary bucket tag.
+RESERVE OPTIONS: Do NOT generate reserve options in this call. They will be generated separately. Set reserve_options to [].
+
+Reserve slot descriptions (for reference only — DO NOT generate these now):
+- reserve_options[0]: Next best overall — strong alternative to Recommended, same destination, different property or approach. Tag: "Recommended" or the most fitting primary bucket tag.
 - reserve_options[1]: Next best quality/premium — a different premium property the traveler would enjoy. Tag: "Quality Upgrade". Headline format: "City · Actual Hotel Name · What Makes It Special" — the specific hotel name must be in position 2.
 - reserve_options[2]: Wild Card — Intent Extension — a different inference on what the traveler was really asking for. Must be genuinely different from Wild Card in primary 6. Tag: "Wild Card · [Reasoning Label]".
 - reserve_options[3]: Wild Card — Profile Extension — a different property inferred from traveler profile signals. Must be genuinely different from Wild Card in primary 6. Tag: "Wild Card · [Reasoning Label]".
@@ -9186,19 +9187,19 @@ CRITICAL: Best Value is a CASH option. It never involves points redemptions as t
 CRITICAL: Redemption Opportunity is a POINTS option. It must have a non-null redemption field with actual points used. If no strong redemption exists, replace this slot with a second Best Value variant at a different property — do not fabricate a weak redemption to fill the slot. Never tag a cash option as Redemption Opportunity.
 MUTUAL EXCLUSIVITY: Best Value and Redemption Opportunity are mutually exclusive. An option cannot be both. If points are covering any major component, it is Redemption Opportunity. If it is purely cash with smart routing, it is Best Value. Never duplicate the same fundamental trip structure across both slots — they must be genuinely different options.
 
-5. WILD CARD — INTENT EXTENSION (#9A4CC9) — A different answer to the same underlying question. Reason from the traveler's query intent and ask: what were they REALLY asking for? The query is a placeholder for a feeling or experience goal. Find the destination, property, or trip format that better serves that real goal — even if it means challenging the stated destination, timeframe, or format. This is the "you asked for Bend but you were really asking for X" option.
+5. WILD CARD — INTENT EXTENSION (#9A4CC9) — A different answer to the same underlying question. Reason from the traveler's query intent and ask: what were they REALLY asking for? The query is a placeholder for a feeling or experience goal. Find the property or experience that better serves that real goal.
+- DESTINATION RULE: For specific city queries (e.g. "Austin", "Chicago", "Carmel"), the Intent Extension should find a surprising or unexpected property WITHIN that destination — a different neighborhood, a different property type, a different experience format. Leaving the city is only appropriate when the query is explicitly open-ended ("somewhere in Texas", "mountain town", "beach") or when the traveler has signaled flexibility. NEVER substitute a different city for a specific city request — San Antonio is not Austin.
 - The tag label should be descriptive and specific: "Wild Card · [What It Is]" e.g. "Wild Card · Sage Lodge, Montana" or "Wild Card · Ranch Experience" — never just "Wild Card"
 - In whyThis, name the inferred intent explicitly: "Your query suggested X but the underlying goal seems to be Y — this option serves that better because..."
-- Can and should leave the stated destination when a better answer exists elsewhere
-- Must be genuinely surprising, not a minor variation
+- Must be genuinely surprising, not a minor variation of the Recommended slot
 
-6. WILD CARD — PROFILE EXTENSION (#4C9AC9) — Ignore the query almost entirely. Reason from the traveler's qualitative profile: their selected brands, travel types, and experiential preferences. Ask: what would this person love that they don't know to ask for? Surface an option that reflects who they are as a traveler, not just what they searched.
+6. WILD CARD — PROFILE EXTENSION (#4C9AC9) — Reason from the traveler's qualitative profile to surface something they'd love that they didn't think to ask for. Ask: what property or experience fits who this person is as a traveler?
+- DESTINATION RULE: For specific city queries, stay within the stated destination. The Profile Extension finds a surprising property that fits the traveler's taste WITHIN the city — not a different city or state entirely. Leaving the destination is only appropriate when the query is explicitly open-ended. NEVER substitute Deer Valley for Austin, or any other unrelated destination, because the traveler has ski preferences — match their profile to what exists at their stated destination.
 - Weight signals in this order: (1) selected brands — brand affinity is the strongest signal. Aman/Auberge/Alila = independent luxury, experience-first. Andaz/Thompson = design-forward, urban/cultural. Marriott Autograph = character without sacrificing points. (2) travel types — "International + Beach + Urban" is a meaningful combination that reveals a traveler's sensibility. (3) loyalty tier — Globalist/Platinum/Diamond signals travel frequency and seriousness. (4) learned preferences if available.
 - AIRLINE PROGRAMS ARE NOT A PRIMARY SIGNAL HERE. Do not build an option around an airline loyalty program or attempt to justify a destination by anchoring it to a preferred airline. Airlines reveal geography but should never be the justification for a Wild Card option. Never invent or imply airline/ferry partnerships that don't exist.
 - The tag label should name what was inferred from EXPERIENCE signals, not programs: "Wild Card · Independent Luxury" or "Wild Card · Design-Forward Escape" or "Wild Card · Off-Grid Adventure" — never "Wild Card · Your [Airline] Connection"
-- In whyThis, lead with the experiential and qualitative reasons: what kind of traveler this person is, what this property delivers experientially, why it fits their sensibility. Reference brands or travel types to anchor the inference. Do not lead with or over-index on loyalty programs, points, or airline affiliations.
+- In whyThis, lead with the experiential and qualitative reasons: what kind of traveler this person is, what this property delivers experientially, why it fits their sensibility at THIS destination. Reference brands or travel types to anchor the inference. Do not lead with or over-index on loyalty programs, points, or airline affiliations.
 - This option builds trust by demonstrating the system understands the traveler's taste, not their points portfolio. Take a real inference risk — a safe choice reads as "also recommended" not "profile extension."
-- Can leave the stated destination entirely if the profile signals point somewhere more fitting
 TRIP LENGTH / FLIGHT DURATION MATCHING — HARD RULE:
 - 2-3 night trips (long weekends): domestic or short-haul ONLY. Max ~5 hours flight time. Do NOT suggest international destinations requiring transatlantic or transpacific flights regardless of cpp value. Canada and Mexico qualify as short-haul.
 - 4-5 night trips: North America, Caribbean, or Mexico only. Max ~8 hours.
@@ -9348,7 +9349,7 @@ COMPONENT VALUE RULE — CRITICAL:
 - netValue = totalCost - pointsValue
 - redemptions (top-level array) = list each redemption applied: [{"program": "Delta SkyMiles", "pointsUsed": 50000, "dollarsValue": 700, "centsPerPoint": 1.4, "component": "Flights"}]. One entry per redeemed program. Leave as [] if no redemptions.
 
-DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these rules. Today is Monday, March 30, 2026.\n1. SPECIFIC DATES given → use exactly. checkIn and checkOut as YYYY-MM-DD. nights = checkOut minus checkIn in days.\n2. DEPART DAY OF WEEK + nights ("leaving Friday, 5 nights") → checkIn = next occurrence of that weekday from today. checkOut = checkIn + nights.\n3. RETURN DAY OF WEEK + nights ("back Sunday, 5 nights") → checkOut = next that weekday from today. checkIn = checkOut minus nights.\n4. MONTH + nights ("April, 5 nights") → pick a mid-month Tuesday avoiding peak weekends. checkOut = checkIn + nights.\n5. SEASON + duration ("this summer, a week") → pick a representative date. checkOut = checkIn + nights.\n6. No specific time → leave checkIn and checkOut as empty strings, nights as 0.\nNIGHTS vs DAYS: "5 days" = 4 nights. Always use nights for hotel stays.\ndates field = human-readable string like "April 22-27". checkIn/checkOut = ISO YYYY-MM-DD.\n\nREQUIRED JSON SCHEMA:\n{"tripSummary":{"origin":"","destination":"","dates":"","checkIn":"","checkOut":"","nights":0,"preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","cardStrategy":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}],"reserve_options":[{}, {}, {}, {}]}. reserve_options MUST have 4 entries following the same schema as options. CRITICAL: (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] must be an EMPTY ARRAY by default. ONLY populate it if the user has explicitly requested specific dining, activities, breweries, distilleries, or excursions in this conversation and asked for them to be included. Never speculatively generate experiences.`;
+DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these rules. Today is Monday, March 30, 2026.\n1. SPECIFIC DATES given → use exactly. checkIn and checkOut as YYYY-MM-DD. nights = checkOut minus checkIn in days.\n2. DEPART DAY OF WEEK + nights ("leaving Friday, 5 nights") → checkIn = next occurrence of that weekday from today. checkOut = checkIn + nights.\n3. RETURN DAY OF WEEK + nights ("back Sunday, 5 nights") → checkOut = next that weekday from today. checkIn = checkOut minus nights.\n4. MONTH + nights ("April, 5 nights") → pick a mid-month Tuesday avoiding peak weekends. checkOut = checkIn + nights.\n5. SEASON + duration ("this summer, a week") → pick a representative date. checkOut = checkIn + nights.\n6. No specific time → leave checkIn and checkOut as empty strings, nights as 0.\nNIGHTS vs DAYS: "5 days" = 4 nights. Always use nights for hotel stays.\ndates field = human-readable string like "April 22-27". checkIn/checkOut = ISO YYYY-MM-DD.\n\nREQUIRED JSON SCHEMA:\n{"tripSummary":{"origin":"","destination":"","dates":"","checkIn":"","checkOut":"","nights":0,"preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","cardStrategy":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}],"reserve_options":[]}. Set reserve_options to an empty array []. (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] must be an EMPTY ARRAY by default. ONLY populate it if the user has explicitly requested specific dining, activities, breweries, distilleries, or excursions in this conversation and asked for them to be included. Never speculatively generate experiences.`;
   };
 
 
@@ -9613,14 +9614,76 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
       setRefinementWave(0);
       setPreviousWaveOptions([]);
       setKeptOptionIds([]);
-      // Parse and store reserve options (0-4) for instant refinement
-      const rawReserves = parsed.reserve_options || [];
-      console.log(`[Sojourn] Raw reserves from model: ${rawReserves.length}`, rawReserves.map(r => r?.tag || 'no-tag'));
-      const validatedReserves = rawReserves.length > 0 ? validateReserves(rawReserves) : [];
-      updateReserves(validatedReserves);
-      console.log(`[Sojourn] ${validatedReserves.length} reserve options cached`);
-      if (validatedReserves.length < 2) console.warn('[Sojourn] Low reserve count — model under-generating reserves');
+      // Show results immediately — reserves generated in background
       setPhase("results");
+      // ── Background reserve generation ────────────────────────────────────
+      // Fire-and-forget: generate 4 reserve options after displaying results
+      // User sees results ~40% faster; reserves arrive before first dismiss
+      setTimeout(() => {
+        const reserveSysPrompt = buildSystemPrompt();
+        const reserveUserMsg = `${fullContext}
+
+RESERVE OPTIONS ONLY: Generate exactly 4 reserve options as a JSON object with this structure:
+{"reserve_options": [<4 options using the same schema as the primary options>]}
+
+Reserve options must:
+- Be real alternatives the user hasn't seen yet (different from the 6 primary options)
+- Cover: [0] strong Recommended alternative, [1] premium/quality upgrade alternative, [2] Wild Card intent extension, [3] Wild Card profile extension
+- Same destination and dates as the primary query
+- Same JSON schema as primary options (all fields required)
+- Return ONLY the JSON object, no other text`;
+
+        const reservePayload = {
+          model: "claude-sonnet-4-5",
+          max_tokens: 5000,
+          stream: true,
+          system: reserveSysPrompt,
+          messages: [{ role: "user", content: reserveUserMsg }],
+        };
+        fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+          body: JSON.stringify(reservePayload)
+        }).then(async (res) => {
+          if (!res.ok) { console.warn("[Sojourn] Reserve fetch failed:", res.status); return; }
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let reserveText = "";
+          let sseBuffer = "";
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            sseBuffer += decoder.decode(value, { stream: true });
+            const lines = sseBuffer.split("
+");
+            sseBuffer = lines.pop() || "";
+            for (const line of lines) {
+              if (!line.startsWith("data: ")) continue;
+              const evtData = line.slice(6).trim();
+              if (evtData === "[DONE]") continue;
+              try {
+                const evt = JSON.parse(evtData);
+                if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
+                  reserveText += evt.delta.text || "";
+                }
+              } catch(e) { /* skip malformed */ }
+            }
+          }
+          try {
+            const clean = reserveText.replace(/```json/g, "").replace(/```/g, "").trim();
+            const s = clean.indexOf("{");
+            const e = clean.lastIndexOf("}");
+            if (s === -1 || e === -1) { console.warn("[Sojourn] No JSON in reserve response"); return; }
+            const reserveParsed = JSON.parse(clean.slice(s, e + 1));
+            const rawReserves = reserveParsed.reserve_options || [];
+            console.log(`[Sojourn] Background reserves loaded: ${rawReserves.length}`);
+            const validatedReserves = rawReserves.length > 0 ? validateReserves(rawReserves) : [];
+            updateReserves(validatedReserves);
+          } catch(e) {
+            console.warn("[Sojourn] Reserve parse failed:", e.message);
+          }
+        }).catch(e => console.warn("[Sojourn] Reserve background call failed:", e));
+      }, 100);
       // preserve fromDealPillRef — reset only after results are shown
 
     } catch(e) {
