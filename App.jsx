@@ -7459,6 +7459,9 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
   let y = 16;
 
   const clean = (str) => (str || '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ')
+    .replace(/&#x[0-9a-fA-F]+;/g, '').replace(/&#[0-9]+;/g, '')
+    .replace(/[\u200B\u200C\u200D\uFEFF\u00AD]/g, '')
     .replace(/[\u2013\u2014\u2012]/g, '-')
     .replace(/[\u2018\u2019\u02BC]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')
