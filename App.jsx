@@ -2700,7 +2700,7 @@ const buildQualityContext = (propertyNames) => {
       q.ecotourism ? "Eco/sustainability focus" : null,
     ].filter(Boolean);
     const tier = q.tier ? q.tier.replace('_', ' ') : '';
-    const notes = q.notes && q.notes.length > 20 ? ` — ${q.notes}` : '';
+    const notes = q.notes && q.notes.length > 20 ? ` — ${q.notes.slice(0, 120)}` : '';
     const markerStr = markers.length > 0 ? ` [${markers.join(', ')}]` : '';
     // Add geo data if available
     const geo = GEO_ENRICHMENTS[name];
@@ -9107,10 +9107,10 @@ ${(() => {
       .sort((a, b) => b.score - a.score);
     
     // Take top destination matches + some ultra_luxury globals
-    const relevantKeys = scored.slice(0, 25).map(x => x.propName);
+    const relevantKeys = scored.slice(0, 20).map(x => x.propName);
     const globalNotable = Object.keys(QUALITY_SIGNALS_DB)
       .filter(k => QUALITY_SIGNALS_DB[k].tier === 'ultra_luxury' && !relevantKeys.includes(k))
-      .slice(0, 10);
+      .slice(0, 8);
     
     const keysToUse = [...new Set([...relevantKeys, ...globalNotable])];
     return keysToUse.length > 0 ? buildQualityContext(keysToUse) : buildQualityContext(Object.keys(QUALITY_SIGNALS_DB).slice(0, 20));
@@ -9524,12 +9524,12 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
 
     const tryGenerate = async () => {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 120000);
+      const timeout = setTimeout(() => controller.abort(), 150000);
       try {
         const sysPrompt = buildSystemPrompt();
         const payload = {
           model: "claude-sonnet-4-5",
-          max_tokens: 12000,
+          max_tokens: 8000,
           system: sysPrompt,
           messages: [{ role: "user", content: fullContext }],
         };
