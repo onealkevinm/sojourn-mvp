@@ -9538,31 +9538,58 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         console.log("[Sojourn] System prompt chars:", sysPrompt.length);
         console.log("[Sojourn] User message chars:", fullContext.length);
         console.log("[Sojourn] API key present:", !!ANTHROPIC_KEY, "length:", ANTHROPIC_KEY.length);
+        // Streaming fetch — keeps connection alive, avoids browser timeout
+        const streamPayload = { ...payload, stream: true };
         const res = await fetch("https://api.anthropic.com/v1/messages", {
           method: "POST",
           signal: controller.signal,
           headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(streamPayload)
         });
         clearTimeout(timeout);
-        console.log("[Sojourn] Response status:", res.status, res.statusText);
-        const data = await res.json();
-        console.log("[Sojourn] Response type:", data.type, "| stop reason:", data.stop_reason, "| error:", data.error?.type);
-        if (data.error) {
-          const errType = data.error?.type || 'unknown';
-          console.error("[Sojourn] API error:", errType, data.error.message);
-          if (errType === 'overloaded_error') throw new Error('API_OVERLOADED');
-          if (errType === 'rate_limit_error') throw new Error('RATE_LIMITED');
-          throw new Error(`API error: ${errType} - ${data.error.message}`);
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          const errType = errData.error?.type || "unknown";
+          if (errType === "overloaded_error") throw new Error("API_OVERLOADED");
+          if (errType === "rate_limit_error") throw new Error("RATE_LIMITED");
+          throw new Error("HTTP " + res.status + ": " + errType);
         }
-        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        const text = data.content?.[0]?.text?.trim() || "";
+        // Accumulate streamed text from SSE events
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = "";
+        let sseBuffer = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          sseBuffer += decoder.decode(value, { stream: true });
+          const lines = sseBuffer.split("\n");
+          sseBuffer = lines.pop() || "";
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const evtData = line.slice(6).trim();
+            if (evtData === "[DONE]") continue;
+            try {
+              const evt = JSON.parse(evtData);
+              if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
+                fullText += evt.delta.text || "";
+              }
+              if (evt.type === "message_delta") {
+                console.log("[Sojourn] Stream stop:", evt.delta?.stop_reason);
+              }
+              if (evt.type === "error") {
+                throw new Error("Stream error: " + (evt.error?.type || "unknown"));
+              }
+            } catch(sseErr) { /* skip malformed lines */ }
+          }
+        }
+        const text = fullText.trim();
         let cleanText = text.replace(/```json/g, "").replace(/```/g, "").trim();
         const s = cleanText.indexOf("{");
         const e = cleanText.lastIndexOf("}");
         if (s === -1 || e === -1) throw new Error("No JSON in response");
         let jsonStr = cleanText.slice(s, e + 1);
-        jsonStr = jsonStr.replace(/['']/g, "'").replace(/[""]/g, '"');
+        jsonStr = jsonStr.replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
         const parsed = JSON.parse(jsonStr);
         if (!parsed.options?.length) throw new Error("No options array");
         return parsed;
