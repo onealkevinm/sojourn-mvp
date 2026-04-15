@@ -9529,7 +9529,7 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         const sysPrompt = buildSystemPrompt();
         const payload = {
           model: "claude-sonnet-4-5",
-          max_tokens: 8000,
+          max_tokens: 10000,
           system: sysPrompt,
           messages: [{ role: "user", content: fullContext }],
         };
