@@ -1494,7 +1494,7 @@ const QUALITY_SIGNALS_DB = {
   "Blackberry Farm": { country: "US", state: "TN", city: "Walland", tier: "ultra_luxury", relais_chateaux: true, forbes_stars: 5, tl_gold: true, notes: "Traditional farm Tennessee Great Smoky Mountains, farm-to-table from own cheese/vegetables/honey, Wellhouse spa, cooking classes, cheesemaking, fly-fishing. Family-friendly with adult sophistication" },
   "Brush Creek Ranch": { country: "US", state: "WY", city: "Saratoga", tier: "ultra_luxury", relais_chateaux: true, notes: "Wyoming, independent" },
   "L'Auberge Carmel": { country: "US", state: "CA", city: "Carmel", tier: "luxury", relais_chateaux: true, michelin_stars: 1, notes: "1929 Bohemian-style boutique Carmel village, 20 rooms, Aubergine 2-Michelin-star restaurant, no AC (ocean-cooled), world-famous golf nearby, Relais & Chateaux. Destination dining as much as hotel" },
-  "Bernardus Lodge": { country: "US", state: "CA", city: "Carmel", tier: "luxury", relais_chateaux: true, notes: "Carmel Valley, wine country feel" },
+  "Bernardus Lodge": { country: "US", state: "CA", city: "Carmel Valley", tier: "luxury", relais_chateaux: true, notes: "Carmel Valley, wine country feel" },
   "Inn at Little Washington": { country: "US",  city: "Washington",state: "VA", tier: "luxury", relais_chateaux: true, michelin_keys: 3, michelin_stars: 3, notes: "Washington VA, Patrick O'Connell" },
   "Blackberry Mountain": { country: "US", state: "TN", city: "Walland", tier: "luxury", michelin_keys: 1, relais_chateaux: true, notes: "Great Smoky Mountains sister to Blackberry Farm, stone-and-wood cabins, wellness and outdoor adventure focus, underground spa with Ayurvedic treatments. Adults-oriented activity property" },
   "Idaho Rocky Mountain Ranch": { country: "US", state: "ID", city: "Sawtooth Valley", tier: "luxury",  notes: "Sawtooth Valley Idaho, historic guest ranch" },
@@ -2658,6 +2658,10 @@ const QUALITY_SIGNALS_DB = {
   "Thompson Chicago": { country: "US", state: "IL", city: "Chicago", tier: "luxury", notes: "Gold Coast Chicago near Michigan Avenue and Oak Street Beach, World of Hyatt Design Hotels, rooftop bar, mid-century design. Between Magnificent Mile shopping and lakefront — NOT in West Loop or Lincoln Park neighborhoods." },
   "Viceroy Chicago": { country: "US", state: "IL", city: "Chicago", tier: "luxury", notes: "Gold Coast Chicago, independent luxury boutique, roof terrace with lake and skyline views, Somerset restaurant, sophisticated residential neighborhood feel. Near Oak Street Beach and Michigan Avenue." },
   "Ace Hotel Chicago": { country: "US", state: "IL", city: "Chicago", tier: "luxury", notes: "West Loop Fulton Market Chicago, design-forward boutique, Waydown rooftop bar, central to restaurant row. Walking distance to Girl & the Goat, Au Cheval, Randolph Street dining." },
+
+  "Hyatt Carmel Highlands": { country: "US", state: "CA", city: "Carmel", tier: "luxury", notes: "Highlands Inn Park Hyatt Carmel, dramatic cliff-top ocean views near Point Lobos, World of Hyatt, Pacific Edge restaurant, spa, fireplaces in rooms. 4 miles south of Carmel village. Strong Hyatt redemption option for Carmel/Big Sur queries." },
+  "Carmel Valley Ranch": { country: "US", state: "CA", city: "Carmel", tier: "luxury", notes: "Carmel Valley CA, Hyatt/Unbound Collection, 500-acre ranch resort, 9-hole par-3 golf, spa, family-friendly, wine country setting. World of Hyatt eligible. Inland from Carmel village — wine country atmosphere, not ocean-facing." },
+  "Monterey Plaza Hotel & Spa": { country: "US", state: "CA", city: "Monterey", tier: "luxury", notes: "Cannery Row Monterey CA directly on the water, Marriott Bonvoy, full-service spa, seafood dining, sea otter views from ocean-facing rooms. Best chain hotel on Cannery Row." },
 
 };
 
@@ -9224,14 +9228,9 @@ INTELLIGENCE RULES:
 - FLIGHT COST RULE — HARD RULE, NO EXCEPTIONS: Every flight component (Flight AND Return Flight) MUST have its own positive cash value. value: 0 is NEVER acceptable for any flight leg unless it is a genuine award ticket (points used, not cash). For a roundtrip cash fare of $800 total: Flight value = 400, Return Flight value = 400. Split evenly. A Return Flight with value: 0 and "included in roundtrip" in the detail is ALWAYS WRONG. This is a display bug that confuses users — fix it every single time.
 - MILES PER LEG — HARD RULE: Each flight leg must show miles earned independently in its points field. Format: "2 tickets · est. X miles earned" for outbound, "2 tickets · est. X miles earned" for return. NEVER write "Included in roundtrip" or "included in outbound" or "see outbound" in any points field — every leg shows its own earning independently. Miles per leg reflect actual flight distance (e.g. SEA-LAX ~1136 miles, JFK-LAX ~2475 miles).
 - AIRLINE ALIGNMENT: The loyalty program earning, card benefits, and Sky Club/lounge access shown for a flight MUST match the actual airline on the ticket. If the flight is Alaska Airlines, show Alaska Mileage Plan earning — not Delta SkyMiles. If the flight is United, show MileagePlus. Never attribute Delta Sky Club access to an Alaska or United flight.
-- Rental car pricing: use realistic market rates. A full-size SUV in Hawaii runs $150-250/day in peak season, $80-150/day off-peak. A standard sedan runs $60-100/day. Never show rental car costs below $40/day — these are not realistic. Total rental cost = daily rate × number of days. Always show both daily rate and total: "$175/day · 5 days · $875 total". ROAD TRIP EXCEPTION: if the query is a road trip (user is driving their own vehicle), never include a rental car component — show gas cost instead or omit Ground entirely.
-- Rental car cashback: USAA 1.5% cashback on a $875 rental = $13 — never show cashback exceeding 1.5% of the rental cost. Do not inflate cashback estimates.
-- Small/rural destinations: if the destination has fewer than 6 real bookable hotel options at the requested quality level, expand to the nearest metro area (e.g. Boerne TX → include San Antonio options 30 min away, label them clearly as "San Antonio · 30 min from Boerne"). Never fabricate hotel names.
-- headline: ALWAYS follow this format: "[Location] · [Brand] · [Distinctive Element]" — e.g. "Maui · Andaz · Overwater Suite" or "Key Biscayne · Ritz-Carlton · Family Suites" or "Turks & Caicos · Amanyara · Direct JetBlue". Location first, brand second, what makes this option unique third. Never lead with the brand alone.
-- subhead: one sentence describing the experience character — e.g. "Boutique adults-contemporary resort steps from Wailea Beach"
-- tradeoff: one crisp specific sentence naming the actual tradeoff
-- whyThis: 2-3 sentences specific to THIS traveler's profile and THIS trip's preferences
-- Honor all stated constraints: weather minimums, family-friendly, geography, budget
+- Rental car pricing: use realistic rates ($60-100/day sedan, $100-200/day SUV, higher in Hawaii/peak season). Never below $40/day. Format: "$X/day · N days · $Y total". ROAD TRIP EXCEPTION: if user is driving their own vehicle, show gas cost instead of rental.
+- Rental car cashback: never exceed actual card rate (USAA = 1.5% cashback). Do not inflate.
+ums, family-friendly, geography, budget
 - ASCII only — no accented characters, smart quotes, or apostrophes in string values
 - totalCost, pointsValue, netValue: plain integers only (11850 not "$11,850")
 - pointsValue: the DOLLAR VALUE of points earned (e.g. if earning 4,480 UR points at 1.5cpp, pointsValue = 67). Never leave as 0 if points are being earned.
@@ -9327,30 +9326,7 @@ When a gateway city option is included, the headline and whyThis MUST frame it a
 
 When asked to regenerate options within a specific state, you MUST output new JSON — a conversational acknowledgment without JSON does nothing.
 
-CARMEL / MONTEREY PENINSULA HOTEL INVENTORY — use these real properties, never reach toward Napa or Wine Country:
-INDEPENDENT / RELAIS & CHÂTEAUX (no chain loyalty):
-- L'Auberge Carmel — boutique luxury in the heart of Carmel village, Relais & Châteaux, Michelin-starred restaurant (Aubergine), no AC (ocean-cooled)
-- Bernardus Lodge & Spa — Carmel Valley, Relais & Châteaux, wine country feel but IS in Carmel Valley (not Napa), excellent restaurant
-- Post Ranch Inn — Big Sur, ultra-luxury, adults only, dramatic cliffside setting, 3 Michelin Keys, independent
-- Ventana Big Sur — Big Sur, Alila brand (World of Hyatt), 3 Michelin Keys, adults only, stunning coastal setting — EARNS HYATT POINTS
-- Tickle Pink Inn — Carmel Highlands, boutique, ocean views, independent
-
-WORLD OF HYATT:
-- Ventana Big Sur (Alila) — 3 Michelin Keys, top-tier Hyatt redemption
-- Hyatt Carmel Highlands — dramatic ocean views, Point Lobos area, solid Hyatt property
-- Carmel Valley Ranch — Hyatt, sprawling ranch resort, golf, spa, family-friendly
-
-MARRIOTT BONVOY:
-- Monterey Plaza Hotel & Spa — on Cannery Row, full-service, good Bonvoy earn/redeem
-- Portola Hotel & Spa — downtown Monterey, Autograph Collection, Bonvoy
-- InterContinental The Clement Monterey — IHG, waterfront Cannery Row
-
-HILTON:
-- Carmel Mission Inn — modest but well-located, Hilton, good value
-- Hyatt Place Monterey — reliable points earn, walking distance to downtown Monterey
-
-AIRPORT: Fly into MRY (Monterey Regional) — short hop, 10 min to Carmel. Alternative: SFO/SJC then 2hr scenic drive down Hwy 1 or 101.
-NEVER suggest Auberge du Soleil (that is Napa Valley). Bernardus Lodge is Carmel Valley — acceptable. Post Ranch and Ventana are Big Sur — acceptable and adjacent.
+DESTINATION DISAMBIGUATION: For Carmel/Monterey queries, use DB-verified properties in the Carmel, Big Sur, and Monterey city tags. NEVER reach toward Napa or Auberge du Soleil for a Carmel query — they are different destinations. Fly into MRY (Monterey Regional, 10 min to Carmel) or SFO/SJC with 2hr drive.
 
 COMPONENT VALUE RULE — CRITICAL:
 - component "value" field = cash out of pocket for that component ONLY. Never the points dollar equivalent.
