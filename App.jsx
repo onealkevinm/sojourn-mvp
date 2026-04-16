@@ -8845,7 +8845,15 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
               </div>
               <div style={{ marginTop: "12px", display: "flex", gap: "8px" }}>
                 <input id="brand-add-input" placeholder="Add a brand (e.g. Andaz, Kimpton)..." style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#e8e4dc", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }} list="brand-suggestions" />
-                <datalist id="brand-suggestions">{["Andaz","Thompson Hotels","Alila","Park Hyatt","Grand Hyatt","Autograph Collection","Edition","W Hotels","Kimpton","Hotel Indigo","Six Senses","Curio Collection","Tapestry Collection","Conrad","Waldorf Astoria","The Luxury Collection","Ritz-Carlton","St. Regis","Westin","Le Meridien"].map(b => <option key={b} value={b} />)}</datalist>
+                <datalist id="brand-suggestions">{[
+                  "Auberge Resorts","Aman","Belmond","Small Luxury Hotels (SLH)","Relais & Chateaux",
+                  "Four Seasons","Rosewood","Montage","Waldorf Astoria","Ritz-Carlton","St. Regis","The Luxury Collection",
+                  "Park Hyatt","Andaz","Thompson Hotels","Alila","Hyatt Unbound Collection","Joie de Vivre",
+                  "Edition","Autograph Collection","W Hotels","Le Meridien","Westin",
+                  "Conrad","Curio Collection","Tapestry Collection",
+                  "Kimpton","Hotel Indigo","Six Senses","Intercontinental",
+                  "Grand Hyatt","Marriott","Hilton"
+                ].map(b => <option key={b} value={b} />)}</datalist>
                 <button onClick={() => { const inp = document.getElementById("brand-add-input"); const val = inp?.value?.trim(); if (val && !brands.includes(val)) { setProfile({ ...profile, selectedBrands: [...brands, val], preferredBrands: [...brands, val] }); if (inp) inp.value = ""; } }} style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: "8px", color: "#C9A84C", fontSize: "11px", padding: "6px 12px", cursor: "pointer" }}>Add</button>
               </div>
             </div>
@@ -9206,7 +9214,7 @@ MUTUAL EXCLUSIVITY: Best Value and Redemption Opportunity are mutually exclusive
 6. WILD CARD — PROFILE EXTENSION (#4C9AC9) — Reason from the traveler's brand preferences and travel style to surface a property they'd love that they didn't think to ask for. The reasoning must start from WHO THIS PERSON IS as a traveler — not what cards they carry.
 
 REASONING PROCESS — follow this sequence:
-(1) Read the traveler's selected brands. These are the strongest identity signal. Someone who selects Aman, Auberge, or Alila is telling you they value independent luxury and experience-first travel. Someone who selects Andaz or Thompson values design-forward and urban culture. Someone who selects Marriott Autograph wants character without sacrificing points. THIS is your starting point — not their credit cards.
+(1) Read the traveler's selected brands. These are the strongest identity signal. Someone who selects Aman, Auberge Resorts, Belmond, Rosewood, or Alila is telling you they value independent luxury and experience-first travel — these are experience-first, non-chain travelers. Someone who selects SLH or Relais & Chateaux signals boutique independent taste with quality standards. Someone who selects Andaz or Thompson values design-forward and urban culture. Someone who selects Marriott Autograph or Curio Collection wants character without sacrificing points. Someone who selects Four Seasons or Park Hyatt values consistent ultra-luxury service. THIS is your starting point — not their credit cards.
 (2) Read their travel types — these are high-signal activity preferences. "Skiing" means surface ski-in/ski-out properties and mountain towns. "Wine & Culinary" means vineyard inns and food-destination properties. "Wellness & Spa" means spa-rated properties. "Ranch & Glamping" means outdoor experiential properties. "Honeymoon & Romance" means adults-only and intimate boutique properties. "Hiking & Nature" means properties with trail access and national park adjacency. "Golf" means resort golf properties. "Lake & Fishing" means lakeside and river lodge properties. "Arts, Culture & Design" means properties with notable architecture, design pedigree, art collections, or cultural programming — weight properties with design_forward, historic, or arts notes. Use these as explicit filters on which properties to surface, not background context.
 (3) Ask: given who this person is, what property at the stated destination would genuinely surprise and delight them — something they might not have discovered on their own?
 (4) Then and only then — check if the property earns relevant points. Points compatibility is a bonus detail, not the justification.
