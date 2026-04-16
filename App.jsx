@@ -7610,13 +7610,11 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
         checkPage(7);
         const ltype = (c.label || '').toLowerCase();
         // Unicode icons: U+2708=plane, U+25FC=hotel square, U+25B6=car arrow
-        const icon = ltype.includes('flight') ? '\u2708 ' :
-                     ltype.includes('hotel') || ltype.includes('lodge') || ltype.includes('inn') || ltype.includes('resort') || ltype.includes('ranch') ? '\u25FC ' :
-                     ltype.includes('ground') || ltype.includes('car') || ltype.includes('drive') ? '\u25B6 ' : '  ';
+        const icon = '';
         const lbl = clean(c.label || '');
         const det = clean(c.detail || '').split(' · ').slice(0, 2).join(' · ');
         doc.setFontSize(7.5); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'bold');
-        doc.text('  ' + icon + '  ' + lbl, margin + 2, y);
+        doc.text(lbl, margin + 2, y);
         doc.setFont('helvetica', 'normal'); doc.setTextColor(mid[0], mid[1], mid[2]);
         const detLines = doc.splitTextToSize(det, colW - 45);
         doc.text(detLines[0] || '', margin + 35, y);
@@ -7749,7 +7747,7 @@ const exportGridPDF = async (options, tripSummary, userProfile) => {
 
     // Estimate card height: header(9) + components(~7 each) + why(whyShow*3.8) + padding
     const nComps = [flight, hotel, ground].filter(Boolean).length;
-    const cardH = 9 + (nComps * 7.5) + (whyShow > 0 ? whyShow * 3.8 + 5 : 0) + 6;
+    const cardH = 9 + 8 + (nComps * 7.5) + (whyShow > 0 ? whyShow * 3.8 + 5 : 0) + 6; // +8 for subhead/earnings rows
 
     if (y + cardH > 278) { doc.addPage(); y = 14; }
 
@@ -7789,20 +7787,28 @@ const exportGridPDF = async (options, tripSummary, userProfile) => {
     doc.text(costStr, W - margin - 3, y + 5.5, { align: 'right' });
 
     // ── Row 2: Destination | Points/cashback ────────────────────────────────
+    // Subhead — wrap if needed, then earnings on next line
     const destStr = clean((opt.subhead || '').split(' · ')[0]);
     doc.setFontSize(7.5); doc.setTextColor(mid[0], mid[1], mid[2]); doc.setFont('helvetica', 'normal');
-    doc.text(destStr, cx, y + 10);
+    const destLines = doc.splitTextToSize(destStr, colW * 0.6);
+    doc.text(destLines[0] || '', cx, y + 10);
+    let subheadRows = destLines.length > 1 ? 2 : 1;
 
     if (opt.pointsEarned) {
-      doc.setFontSize(7); doc.setTextColor(60, 130, 70);
-      doc.text(clean(opt.pointsEarned).slice(0, 40), W - margin - 3, y + 10, { align: 'right' });
+      const earnStr = clean(opt.pointsEarned).slice(0, 48);
+      doc.setFontSize(6.5); doc.setTextColor(60, 130, 70);
+      // Put earnings on its own row below subhead
+      doc.text(earnStr, cx, y + 10 + (subheadRows * 4));
+      subheadRows += 1;
     }
+    const subheadHeight = subheadRows * 4;
 
     // ── Divider ─────────────────────────────────────────────────────────────
+    const dividerY = y + 10 + subheadHeight + 2;
     doc.setDrawColor(220, 215, 205); doc.setLineWidth(0.15);
-    doc.line(cx, y + 12, W - margin - 3, y + 12);
+    doc.line(cx, dividerY, W - margin - 3, dividerY);
 
-    let ry = y + 16; // component rows start
+    let ry = dividerY + 4; // component rows start
 
     // ── Components — two columns ─────────────────────────────────────────────
     // Left col: Flight | Right col: Hotel
@@ -7812,29 +7818,35 @@ const exportGridPDF = async (options, tripSummary, userProfile) => {
     if (flight) {
       const fp = clean(flight.detail || '').split(' · ');
       doc.setFontSize(6.5); doc.setTextColor(tagColor[0], tagColor[1], tagColor[2]); doc.setFont('helvetica', 'bold');
-      doc.text('✈ FLIGHT', cx, ry);
+      doc.text('FLIGHT', cx, ry);
       doc.setFontSize(7.5); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'bold');
-      doc.text(fp[0] || '', cx, ry + 4.5); // airline
+      const airlineLines = doc.splitTextToSize(fp[0] || '', leftColW - 2);
+      doc.text(airlineLines[0] || '', cx, ry + 4.5);
       doc.setFont('helvetica', 'normal'); doc.setTextColor(mid[0], mid[1], mid[2]);
-      doc.text((fp[1] || '') + (fp[3] ? '  ' + fp[3] : ''), cx, ry + 8.5); // route + duration
+      const routeStr = (fp[1] || '') + (fp[3] ? '  ' + fp[3] : '');
+      const routeLines = doc.splitTextToSize(routeStr, leftColW - 2);
+      doc.text(routeLines[0] || '', cx, ry + 8.5);
+      if (routeLines[1]) doc.text(routeLines[1], cx, ry + 12);
     }
 
     if (hotel) {
       const hp = clean(hotel.detail || '').split(' · ');
       doc.setFontSize(6.5); doc.setTextColor(tagColor[0], tagColor[1], tagColor[2]); doc.setFont('helvetica', 'bold');
-      doc.text('◼ HOTEL', rightColX, ry);
+      doc.text('HOTEL', rightColX, ry);
       doc.setFontSize(7.5); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'bold');
       const hotelName = doc.splitTextToSize(hp[0] || '', leftColW - 2);
       doc.text(hotelName[0] || '', rightColX, ry + 4.5);
+      if (hotelName[1]) doc.text(hotelName[1], rightColX, ry + 8.5);
       doc.setFont('helvetica', 'normal'); doc.setTextColor(mid[0], mid[1], mid[2]);
-      doc.text((hp[1] || '').slice(0, 28), rightColX, ry + 8.5);
+      const hotelDetail = doc.splitTextToSize(hp[1] || '', leftColW - 2);
+      doc.text(hotelDetail[0] || '', rightColX, hotelName[1] ? ry + 12 : ry + 8.5);
     }
 
     // If no flight (road trip), show ground across full width
     if (!flight && ground) {
       const gp = clean(ground.detail || '').split(' · ');
       doc.setFontSize(6.5); doc.setTextColor(tagColor[0], tagColor[1], tagColor[2]); doc.setFont('helvetica', 'bold');
-      doc.text('▶ DRIVE', cx, ry);
+      doc.text('DRIVE', cx, ry);
       doc.setFontSize(7.5); doc.setTextColor(dark[0], dark[1], dark[2]); doc.setFont('helvetica', 'normal');
       doc.text(gp[0] || '', cx, ry + 4.5);
     }
