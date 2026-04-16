@@ -5395,12 +5395,17 @@ const OnboardingFlow = ({ onComplete }) => {
                   { label: "International", icon: "✈️" },
                   { label: "Business", icon: "💼" },
                   { label: "Urban / City", icon: "🏙" },
-                  { label: "Vacation — Beach", icon: "🏖" },
-                  { label: "Vacation — Ski", icon: "⛷" },
-                  { label: "Vacation — Other", icon: "🌿" },
-                  { label: "Family / Relatives", icon: "👨‍👩‍👧" },
-                  { label: "Youth Athletics", icon: "🏆" },
-                  { label: "Ecotourism", icon: "🌱" },
+                  { label: "Beach & Water", icon: "🏖" },
+                  { label: "Skiing", icon: "⛷" },
+                  { label: "Golf", icon: "⛳" },
+                  { label: "Wine & Culinary", icon: "🍷" },
+                  { label: "Wellness & Spa", icon: "🧘" },
+                  { label: "Hiking & Nature", icon: "🥾" },
+                  { label: "Ranch & Glamping", icon: "🏕" },
+                  { label: "Lake & Fishing", icon: "🎣" },
+                  { label: "Honeymoon & Romance", icon: "✨" },
+                  { label: "Family with Kids", icon: "👨‍👩‍👧" },
+                  { label: "Arts & Culture", icon: "🎨" },
                 ].map(({ label, icon }) => {
                   const active = travelProfile.travelTypes.includes(label);
                   return (
@@ -8456,7 +8461,7 @@ const PointsDashboardDrawer = ({ profile, optimizeRecs, optimizeLoading, onOptim
               <div>
                 <div style={{ color: "#555", fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Travel Style</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "16px" }}>
-                  {["Domestic", "International", "Business", "Urban / City", "Vacation — Beach", "Vacation — Ski", "Vacation — Other", "Family / Relatives", "Youth Athletics"].map(label => {
+                  {["Domestic", "International", "Business", "Urban / City", "Beach & Water", "Skiing", "Golf", "Wine & Culinary", "Wellness & Spa", "Hiking & Nature", "Ranch & Glamping", "Lake & Fishing", "Honeymoon & Romance", "Family with Kids", "Arts & Culture"].map(label => {
                     const active = (profile?.travelProfile?.travelTypes || []).includes(label);
                     return (
                       <button key={label} onClick={() => {
@@ -8788,7 +8793,7 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
             <div>
               <div style={{ color: "#C9A84C", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "12px" }}>Travel Style</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "16px" }}>
-                {["Domestic", "International", "Business", "Urban / City", "Vacation — Beach", "Vacation — Ski", "Vacation — Other", "Family / Relatives", "Youth Athletics"].map(label => {
+                {["Domestic", "International", "Business", "Urban / City", "Beach & Water", "Skiing", "Golf", "Wine & Culinary", "Wellness & Spa", "Hiking & Nature", "Ranch & Glamping", "Lake & Fishing", "Honeymoon & Romance", "Family with Kids", "Arts & Culture"].map(label => {
                   const active = (profile?.travelProfile?.travelTypes || []).includes(label);
                   return (
                     <button key={label} onClick={() => {
@@ -9200,7 +9205,7 @@ MUTUAL EXCLUSIVITY: Best Value and Redemption Opportunity are mutually exclusive
 
 REASONING PROCESS — follow this sequence:
 (1) Read the traveler's selected brands. These are the strongest identity signal. Someone who selects Aman, Auberge, or Alila is telling you they value independent luxury and experience-first travel. Someone who selects Andaz or Thompson values design-forward and urban culture. Someone who selects Marriott Autograph wants character without sacrificing points. THIS is your starting point — not their credit cards.
-(2) Read their travel types. "International + Beach" combined with independent brand affinity tells you something specific about their sensibility. Use that combination.
+(2) Read their travel types — these are high-signal activity preferences. "Skiing" means surface ski-in/ski-out properties and mountain towns. "Wine & Culinary" means vineyard inns and food-destination properties. "Wellness & Spa" means spa-rated properties. "Ranch & Glamping" means outdoor experiential properties. "Honeymoon & Romance" means adults-only and intimate boutique properties. "Hiking & Nature" means properties with trail access and national park adjacency. "Golf" means resort golf properties. "Lake & Fishing" means lakeside and river lodge properties. Use these as explicit filters on which properties to surface, not background context.
 (3) Ask: given who this person is, what property at the stated destination would genuinely surprise and delight them — something they might not have discovered on their own?
 (4) Then and only then — check if the property earns relevant points. Points compatibility is a bonus detail, not the justification.
 
