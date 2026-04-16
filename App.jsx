@@ -8811,6 +8811,7 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
               <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
                 {[
                   { label: "Traveling with children", icon: "👶" },
+                  { label: "Adults only preferred", icon: "🔞" },
                   { label: "Traveling with pets", icon: "🐾" },
                   { label: "Wheelchair accessible", icon: "♿" },
                   { label: "Mobility assistance needed", icon: "🦽" },
