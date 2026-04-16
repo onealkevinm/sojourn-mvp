@@ -2663,6 +2663,9 @@ const QUALITY_SIGNALS_DB = {
   "Carmel Valley Ranch": { country: "US", state: "CA", city: "Carmel", tier: "luxury", notes: "Carmel Valley CA, Hyatt/Unbound Collection, 500-acre ranch resort, 9-hole par-3 golf, spa, family-friendly, wine country setting. World of Hyatt eligible. Inland from Carmel village — wine country atmosphere, not ocean-facing." },
   "Monterey Plaza Hotel & Spa": { country: "US", state: "CA", city: "Monterey", tier: "luxury", notes: "Cannery Row Monterey CA directly on the water, Marriott Bonvoy, full-service spa, seafood dining, sea otter views from ocean-facing rooms. Best chain hotel on Cannery Row." },
 
+  // ── Closed / Inactive Properties — do not recommend ─────────────────────────
+  "Villa Greenleaf": { country: "VI", state: "VI", city: "St. Croix", tier: "closed", notes: "CLOSED — permanently closed, do not recommend under any circumstances" },
+
 };
 
 
@@ -2706,6 +2709,8 @@ const buildQualityContext = (propertyNames) => {
     // Add geo data if available
     const geo = GEO_ENRICHMENTS[name];
     const geoStr = geo ? ` [${geo.city}${geo.state ? ', ' + geo.state : ''} | ${geo.nearest_airport} +${geo.drive_mins}min drive${geo.activity ? ' | ' + geo.activity.slice(0,4).join('/') : ''}${geo.ski ? ' | ski:' + geo.ski : ''}${geo.beach ? ' | beach:' + geo.beach : ''}]` : '';
+    // Closed properties — surface as explicit warning so model sees it
+    if (q.tier === 'closed') return `${name} — CLOSED, do not recommend`;
     return `${name} (${tier}${markerStr})${geoStr}${notes}`;
   }).filter(Boolean);
   return signals.length > 0 ? `QUALITY-VERIFIED PROPERTIES FOR THIS DESTINATION:\n${signals.join('\n')}` : '';
@@ -6670,7 +6675,7 @@ const WhyThisExpanded = ({ option, userProfile }) => {
       'You are Sojourn, a luxury travel advisor.',
       isMultiStop
         ? 'Write a multi-stop trip narrative: 175-225 words, flowing paragraphs, second person, no bullets, no headers. CRITICAL STRUCTURE: Your FIRST sentence must frame the entire journey — name ALL stops together (e.g. "This Olympic Peninsula loop takes you from Lake Crescent Lodge to Kalaloch to Sol Duc..."). Do NOT open by writing about only one property. After framing the journey, characterize each stop in turn. Every named stop must get at least 2 sentences of specific detail.'
-        : 'Write a rich property brief: 250-320 words, four prose sections, second person. No bullet points. Do NOT reference specific room numbers. Only include seasonal events if within the traveler\'s actual travel dates.',
+        : 'Write a rich property brief: 250-320 words, four prose sections, second person. No bullet points. Do NOT reference specific room numbers. Only include seasonal events if within the traveler\'s actual travel dates. CRITICAL: Do NOT open with the property name, destination, or option type — those are already displayed. Begin directly with narrative content.',
       '',
       'Option headline: ' + (option.headline || ''),
       'Option type: ' + tag,
@@ -6684,7 +6689,7 @@ const WhyThisExpanded = ({ option, userProfile }) => {
       'Instruction: ' + framing,
       isMultiStop
         ? 'Structure: (1) Journey arc sentence naming ALL stops — this must come first, before any single-property description. (2) Each stop in sequence: 2-3 sentences on what makes it distinctive — setting, character, one specific detail. Never spend more than 3 sentences on any single stop. (3) Closing sentence on why this routing fits this specific traveler. Do not open with a single property. Do not omit any stop.'
-        : 'Write four prose sections, separated by blank lines. Every section should be written for this specific traveler and query — generic sentences that could apply to any trip are not acceptable. Tie language back to what was asked for and who this person is, but never invent links to their credit cards or airline programs.\n\nTHE PLACE (~80 words): Where this property sits and what that position specifically enables for this traveler — not just the neighborhood name but what it means to wake up here. Include what makes this property irreducible: the history, the signature artifact, the architectural detail, the thing you can only experience here and nowhere else. Write it as lived experience, not a location description.\n\nACTIVITIES (~70 words): Only write this section if the query or traveler profile signals specific activities — hiking, beach, golf, wine, skiing, kids activities, etc. If no activities were signaled, omit this section entirely. When included: write about the activity as an experience, not a data point. "The Barton Creek Greenbelt starts at the resort boundary" is less useful than what it actually feels like to be there.\n\nDINING & DRINKS (~70 words): Lead with on-site dining where the property has something genuinely worth calling out — name it specifically (NOMI Kitchen at Park Hyatt Chicago, Aubergine at L\'Auberge Carmel, Cecconi\'s at Soho House). Then 1-2 nearby options filtered to what this traveler actually wants — family-friendly if kids were mentioned, wine-focused if wine country was the intent. Write as experience: what it feels like to eat there, not star ratings or adjectives.\n\nPROPERTY FEATURES (~60 words): The 2-3 amenities that genuinely matter for this specific trip. A rooftop pool matters for a June Texas family trip. A spa matters for a wellness query. Omit anything that does not connect to what this person asked for or who they are. Write what the feature delivers experientially, not what it is technically.',
+        : 'Write four flowing prose paragraphs separated by blank lines — no section headers or labels, just narrative. Every sentence should be written for this specific traveler and query — generic sentences that could apply to any trip are not acceptable. Tie language back to what was asked for and who this person is, but never invent links to their credit cards or airline programs.\n\nParagraph 1 (~80 words): Where this property sits and what that position specifically enables for this traveler — not just the neighborhood name but what it means to wake up here. Include what makes this property irreducible: the history, the signature artifact, the architectural detail, the thing you can only experience here and nowhere else. Write it as lived experience, not a location description.\n\nParagraph 2 (~70 words, CONDITIONAL): Only write this section if the query or traveler profile signals specific activities — hiking, beach, golf, wine, skiing, kids activities, etc. If no activities were signaled, omit this section entirely. When included: write about the activity as an experience, not a data point. "The Barton Creek Greenbelt starts at the resort boundary" is less useful than what it actually feels like to be there.\n\nParagraph 3 (~70 words): Lead with on-site dining where the property has something genuinely worth calling out — name it specifically (NOMI Kitchen at Park Hyatt Chicago, Aubergine at L\'Auberge Carmel, Cecconi\'s at Soho House). Then 1-2 nearby options filtered to what this traveler actually wants — family-friendly if kids were mentioned, wine-focused if wine country was the intent. Write as experience: what it feels like to eat there, not star ratings or adjectives.\n\nParagraph 4 (~60 words): The 2-3 amenities that genuinely matter for this specific trip. A rooftop pool matters for a June Texas family trip. A spa matters for a wellness query. Omit anything that does not connect to what this person asked for or who they are. Write what the feature delivers experientially, not what it is technically.',
     ].filter(Boolean).join('\n');
 
     fetch('https://api.anthropic.com/v1/messages', {
@@ -7439,7 +7444,7 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
   let y = 16;
 
   const clean = (str) => (str || '')
-    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&middot;/g, '-').replace(/&bull;/g, ' ').replace(/&mdash;/g, '-').replace(/&ndash;/g, '-').replace(/&rsquo;/g, "'").replace(/&lsquo;/g, "'").replace(/&rdquo;/g, '"').replace(/&ldquo;/g, '"')
     .replace(/&#x[0-9a-fA-F]+;/g, '').replace(/&#[0-9]+;/g, '')
     .replace(/[\u200B\u200C\u200D\uFEFF\u00AD]/g, '')
     .replace(/[\u2013\u2014\u2012]/g, '-')
@@ -7677,7 +7682,7 @@ const exportItineraryPDF = async (option, tripSummary, userProfile, expandedNarr
     doc.setFillColor(gold[0], gold[1], gold[2]);
     doc.rect(0, 289, W, 8, 'F');
     doc.setFontSize(6.5); doc.setTextColor(15, 12, 8); doc.setFont('helvetica', 'normal');
-    doc.text('Sojourn  ·  trysojourn.com', margin, 294);
+    doc.text('Sojourn - trysojourn.com', margin, 294);
     doc.text('Page ' + i + ' of ' + pageCount, W - margin, 294, { align: 'right' });
   }
 
@@ -7693,6 +7698,8 @@ const exportGridPDF = async (options, tripSummary, userProfile) => {
   let y = 14;
 
   const clean = (str) => (str || '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&middot;/g, '-').replace(/&bull;/g, ' ').replace(/&mdash;/g, '-').replace(/&ndash;/g, '-').replace(/&rsquo;/g, "'").replace(/&lsquo;/g, "'").replace(/&rdquo;/g, '"').replace(/&ldquo;/g, '"')
+    .replace(/&#x[0-9a-fA-F]+;/g, '').replace(/&#[0-9]+;/g, '')
     .replace(/[\u2013\u2014\u2012]/g, '-').replace(/[\u2018\u2019\u02BC]/g, "'")
     .replace(/[\u201C\u201D]/g, '"').replace(/[\u2022\u2026\u2726\u25AA\u00B7]/g, ' ')
     .replace(/[^\x20-\x7E]/g, '').replace(/\s+/g, ' ').trim();
@@ -7869,7 +7876,7 @@ const exportGridPDF = async (options, tripSummary, userProfile) => {
   doc.setFillColor(gold[0], gold[1], gold[2]);
   doc.rect(0, 286, W, 11, 'F');
   doc.setFontSize(6.5); doc.setTextColor(15, 12, 8); doc.setFont('helvetica', 'normal');
-  doc.text('Generated by Sojourn  ·  trysojourn.com', margin, 293);
+  doc.text('Generated by Sojourn - trysojourn.com', margin, 293);
 
   const dname = clean((tripSummary && tripSummary.destination) ? tripSummary.destination : 'Options');
   doc.save('Sojourn-' + dname.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-').slice(0, 28) + '-Options.pdf');
@@ -9142,7 +9149,7 @@ EARNING-INTENT QUERY DETECTION: Activate this mode when the user's primary goal 
 
 ADAPTIVE BUCKET RULE — critical: Some query types make certain buckets structurally impossible or dishonest. When a bucket cannot be genuinely filled, REPLACE it with an additional Best Value or Quality Upgrade variant. Never fabricate a bucket just to fill a slot.
 
-PROPERTY EXISTENCE RULE — HARD RULE: Every property you name must actually exist at the stated destination. The reasoning order is: (1) GEOGRAPHY FIRST — only consider properties that actually exist in the stated city or region. This is a binary eligibility gate, not a preference. (2) QUALITY TIER — among geographically eligible properties, confirm quality tier via DB signals or high-confidence training knowledge. (3) EXPERIENTIAL FIT — among quality-eligible properties, reason about brand character, design sensibility, location within the city, amenity fit. Do not reverse this order. Never start from "what brand or character fits this brief" and work backward to a location — that path produces hallucinations. Start from "what quality-verified properties exist in this city" and work forward to fit.
+PROPERTY EXISTENCE RULE — HARD RULE: Every property you name must actually exist AND currently be operating at the stated destination. The reasoning order is: (1) GEOGRAPHY FIRST — only consider properties that actually exist in the stated city or region. This is a binary eligibility gate, not a preference. OPERATING STATUS: If you have any uncertainty about whether a property is currently open — small villas, boutique properties, hurricane-affected Caribbean properties, recently opened or recently closed properties — do NOT recommend it. Choose a property you are confident is operating. A confidently recommended open property is always better than a more interesting property that may be closed. Caribbean and remote properties are especially vulnerable to closure — apply extra skepticism to small independent villas and boutique properties in those markets. (2) QUALITY TIER — among geographically eligible properties, confirm quality tier via DB signals or high-confidence training knowledge. (3) EXPERIENTIAL FIT — among quality-eligible properties, reason about brand character, design sensibility, location within the city, amenity fit. Do not reverse this order. Never start from "what brand or character fits this brief" and work backward to a location — that path produces hallucinations. Start from "what quality-verified properties exist in this city" and work forward to fit.
 
 Before finalizing any option confirm: (a) the property exists as a real operating hotel, (b) it is located in the city or region the traveler requested. A real brand in the wrong city is a hallucination. If you cannot confirm a property's specific neighborhood in the stated city with high confidence, use a different property or reserve the uncertainty for a Wild Card slot. The verified quality signals DB is your primary check — if a property appears there with the correct city tag, it is confirmed. If it does not appear, apply high scrutiny before naming it.
 
@@ -9975,6 +9982,16 @@ const handleSend = () => {
         const remainingReserves = currentReservesAdd.filter(r => !reservesToShow.find(s => s.id === r.id));
         // Add reserves to active options instantly
         setTripOptions(prev => [...prev, ...reservesToShow.map(r => ({ ...r, _fromReserve: true, tag: (() => { const t = r.tag || ''; if (t.toLowerCase().indexOf('wild card') === 0) { const sub = t.slice(t.indexOf('·') + 1).replace(/^\s*[-·]\s*/, '').trim(); const bad = !sub || /,\s*[A-Z]/.test(sub) || /alaska|delta|united|marriott|hyatt|hilton|chase|amex|sapphire|mileage|skymile|bonvoy|connection|your profile|based on your/i.test(sub); return bad ? 'Refined Option · Wild Card' : 'Refined Option · Wild Card · ' + sub; } return 'Refined Option · ' + t; })() }))]);
+        // Post-merge dedup — remove any option that duplicates a property already shown
+        setTripOptions(prev => {
+          const seenNorms = new Set();
+          return prev.filter(o => {
+            const norm = normalizePropertyName(o.headline);
+            if (!norm || seenNorms.has(norm)) return false;
+            seenNorms.add(norm);
+            return true;
+          });
+        });
         updateReserves(remainingReserves);
         const reserveNames = reservesToShow.map(r => r.headline?.split(' · ')[1]?.trim() || r.headline?.split(' · ')[0]?.trim()).filter(Boolean);
         setRefineMessages(prev => [...prev, {
