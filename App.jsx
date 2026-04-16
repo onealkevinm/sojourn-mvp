@@ -6670,7 +6670,7 @@ const WhyThisExpanded = ({ option, userProfile }) => {
       'You are Sojourn, a luxury travel advisor.',
       isMultiStop
         ? 'Write a multi-stop trip narrative: 175-225 words, flowing paragraphs, second person, no bullets, no headers. CRITICAL STRUCTURE: Your FIRST sentence must frame the entire journey — name ALL stops together (e.g. "This Olympic Peninsula loop takes you from Lake Crescent Lodge to Kalaloch to Sol Duc..."). Do NOT open by writing about only one property. After framing the journey, characterize each stop in turn. Every named stop must get at least 2 sentences of specific detail.'
-        : 'Write an expanded property narrative: 150-200 words, 3 short paragraphs, second person, no bullets, no headers. Do NOT reference specific room numbers or suggest calling ahead about specific rooms — mention room types or locations only where they reflect a genuinely distinctive feature of this property (e.g. cliff-facing suites, overwater villas). Do NOT include seasonal events, festivals, or time-specific details unless they fall within or immediately adjacent to the traveler\'s stated travel dates.',
+        : 'Write a rich property brief: 250-320 words, four prose sections, second person. No bullet points. Do NOT reference specific room numbers. Only include seasonal events if within the traveler\'s actual travel dates.',
       '',
       'Option headline: ' + (option.headline || ''),
       'Option type: ' + tag,
@@ -6684,7 +6684,7 @@ const WhyThisExpanded = ({ option, userProfile }) => {
       'Instruction: ' + framing,
       isMultiStop
         ? 'Structure: (1) Journey arc sentence naming ALL stops — this must come first, before any single-property description. (2) Each stop in sequence: 2-3 sentences on what makes it distinctive — setting, character, one specific detail. Never spend more than 3 sentences on any single stop. (3) Closing sentence on why this routing fits this specific traveler. Do not open with a single property. Do not omit any stop.'
-        : 'Paragraph 1: Property character, setting, style. Paragraph 2: Specific anticipation-building details (room types, plunge pools, dining, views). Paragraph 3: Why this fits this traveler.',
+        : 'Write four prose sections, separated by blank lines. Every section should be written for this specific traveler and query — generic sentences that could apply to any trip are not acceptable. Tie language back to what was asked for and who this person is, but never invent links to their credit cards or airline programs.\n\nTHE PLACE (~80 words): Where this property sits and what that position specifically enables for this traveler — not just the neighborhood name but what it means to wake up here. Include what makes this property irreducible: the history, the signature artifact, the architectural detail, the thing you can only experience here and nowhere else. Write it as lived experience, not a location description.\n\nACTIVITIES (~70 words): Only write this section if the query or traveler profile signals specific activities — hiking, beach, golf, wine, skiing, kids activities, etc. If no activities were signaled, omit this section entirely. When included: write about the activity as an experience, not a data point. "The Barton Creek Greenbelt starts at the resort boundary" is less useful than what it actually feels like to be there.\n\nDINING & DRINKS (~70 words): Lead with on-site dining where the property has something genuinely worth calling out — name it specifically (NOMI Kitchen at Park Hyatt Chicago, Aubergine at L\'Auberge Carmel, Cecconi\'s at Soho House). Then 1-2 nearby options filtered to what this traveler actually wants — family-friendly if kids were mentioned, wine-focused if wine country was the intent. Write as experience: what it feels like to eat there, not star ratings or adjectives.\n\nPROPERTY FEATURES (~60 words): The 2-3 amenities that genuinely matter for this specific trip. A rooftop pool matters for a June Texas family trip. A spa matters for a wellness query. Omit anything that does not connect to what this person asked for or who they are. Write what the feature delivers experientially, not what it is technically.',
     ].filter(Boolean).join('\n');
 
     fetch('https://api.anthropic.com/v1/messages', {
@@ -6814,10 +6814,7 @@ const WhyThisExpanded = ({ option, userProfile }) => {
       style: { color: '#9a9088', fontSize: '13px', lineHeight: '1.8', marginTop: '14px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.05)' }
     }, deeperText),
     deeper && deeperLoading && React.createElement(DancingDots, null),
-    canGoDeeper && !deeper && React.createElement('button', {
-      onClick: handleDeeper,
-      style: { marginTop: '12px', background: 'none', border: '1px solid rgba(201,168,76,0.25)', color: '#8a7a5a', padding: '6px 14px', borderRadius: '20px', fontSize: '11px', cursor: 'pointer', fontFamily: "serif", letterSpacing: '0.06em' }
-    }, 'Tell me more →'),
+
     null /* tradeoff rendered by dedicated Tradeoff block below */
   );
 };
@@ -7901,7 +7898,7 @@ const exportOptionPDF = async (option, tripSummary, userProfile) => {
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 380, messages: [{ role: 'user', content: prompt }] })
+      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 700, messages: [{ role: 'user', content: prompt }] })
     });
     const data = await resp.json();
     const narrative = data && data.content && data.content[0] && data.content[0].text;
@@ -9337,9 +9334,9 @@ COMPONENT VALUE RULE — CRITICAL:
   - If redeeming: "25,000 Delta miles redeemed" or "30,000 Hyatt points redeemed" — always include the word "redeemed"
   - If earning: "est. 2,400 Delta miles earned" or "est. 4,200 Bonvoy points earned" — always include "est." and "earned"
   - Never mix redemption and earning in the same points field
-- loyaltyHighlight = a friendly, plain-English reminder of the marginal status perks this traveler unlocks on THIS specific trip. Use the STRUCTURED BENEFITS data injected above — specifically the loyaltyHighlight arrays for each program/tier. Only include benefits that apply every time they use this program at this tier (free breakfast, lounge access tied to status, guaranteed late checkout, upgrade eligibility, free checked bags). Do NOT include annual credits, metered benefits, or anything requiring residual balance knowledge — those go in itinerary reminders, not here. Do NOT repeat points math (covered in components). Keep to 2-4 genuinely relevant perks. Tone: warm, like a knowledgeable friend reminding you of things you might forget to use.
+- loyaltyHighlight = one short sentence, 150 characters max. The single most relevant status perk for this trip — e.g. "Your Globalist status gets free breakfast and 4pm late checkout here." Do NOT repeat points math.
 - cardStrategy = which card to use for each cash-paid component and why. Format: "Flights: [card] ([Nx] miles) · Hotel: [card] ([Nx] points)". Only include components where cash is paid. Reflect actual cards and multipliers — never invent. Prefer cashback over 1x points cards when no category bonus applies.
-- whyThis = frame cash figures consistently with what the card shows — if flights are $0 out of pocket, say "flights covered by your miles" not "flights cost $X"
+- whyThis = 2-3 sentences only. Be specific to this traveler and destination. Frame cash figures consistently — if flights are $0 out of pocket, say "flights covered by your miles" not "flights cost $X". Do not pad.
 - pointsEarned (top-level) = earning side ONLY — points/miles/cashback this trip generates on cash-paid components. CRITICAL: if a component is covered by a redemption, it earns NO points — do NOT include that program in pointsEarned. Example: if Delta miles cover flights, do NOT include "Delta miles earned" in pointsEarned. Only include programs earned on cash-paid components.
 - CASHBACK vs POINTS FORMATTING: USAA Preferred Cash Rewards earns CASH BACK, not points. Always format as "$X cashback" never as "X points" or "X USAA points". In pointsEarned field: "est. 3,200 Delta miles + $48 cashback" — the cashback is a dollar amount with $ sign, not a point count. In component points field: "est. $18 cashback (1.5%)" — always include % rate and $ sign.
 - SUMMARY CONSISTENCY: the top-level pointsEarned string must exactly match the sum of all component earning fields. If components show "est. 2,670 Delta miles" on flights and "est. $27 cashback" on hotel, pointsEarned must show "est. 2,670 Delta miles + $27 cashback" — not just "via USAA" or a different number. Never attribute flight mile earning to USAA — Delta miles come from the Delta Reserve card, cashback comes from USAA, and these are distinct programs that must be listed separately.
