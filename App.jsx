@@ -11154,8 +11154,8 @@ Please respond now.`,
         const hasPets = (userProfile?.travelConsiderations || []).includes("Traveling with pets");
           const hasKids = (userProfile?.travelConsiderations || []).includes("Traveling with children");
           const hasAccessibility = (userProfile?.travelConsiderations || []).some(c => c.includes("Wheelchair") || c.includes("Mobility"));
-          const hasHoneymoon = (userProfile?.travelConsiderations || []).includes("Honeymoon");
-          const hasCelebration = (userProfile?.travelConsiderations || []).includes("Anniversary or celebration");
+          const hasHoneymoon = (userProfile?.travelConsiderations || []).includes("Honeymoon") || (tp.travelTypes||[]).some(t => /honeymoon|romance/i.test(t));
+          const hasCelebration = (userProfile?.travelConsiderations || []).includes("Anniversary or celebration") || (tp.travelTypes||[]).some(t => /anniversary|milestone/i.test(t));
           const pillPrograms = loyalty.map(a => a.program).filter(Boolean);
           const topProgram = pillPrograms.length > 0 ? pillPrograms[0] : null;
           const topCard = cards.length > 0 ? cards[0].name : null;
@@ -11188,8 +11188,6 @@ Please respond now.`,
           const hasArts = travelTypes.some(t => /arts|culture|design/i.test(t));
           const hasGolf = travelTypes.some(t => /golf/i.test(t));
           const hasFishing = travelTypes.some(t => /fishing/i.test(t));
-          const hasHoneymoon = travelTypes.some(t => /honeymoon|romance/i.test(t));
-          const hasCelebration = travelTypes.some(t => /anniversary|milestone/i.test(t));
           const isInternational = travelTypes.some(t => /international/i.test(t));
           const isUrban = travelTypes.some(t => /urban|city/i.test(t));
 
@@ -11209,81 +11207,83 @@ Please respond now.`,
 
           // ── BUCKET A: High-CPC mainstream ski/mountain queries ────────────────
           // "ski resorts Vail", "Aspen lodges", "Park City ski hotels" = $4-7 CPC
-          // If user has ski profile signal, these are their next natural research queries
+          // Pills written fully specified: party size implied, 2+ conjunction elements,
+          // no clarifying questions needed — model goes READY immediately
           const skiMainstreamPills = hasSkiing ? [
-            "Best ski resorts Vail — hotels and lodges for a long weekend",
-            "Best hotels Aspen — what's worth staying for a ski trip",
-            "Best ski resorts Park City — where to stay and what to book",
-            isMountain ? "Best ski trip from Denver — resorts and lodges this winter" : null,
-            isPNW ? "Best ski resorts Whistler — lodges and hotels for a long weekend" : null,
+            "Best ski resorts Vail — hotels and lodges for a couples long weekend",
+            "Best hotels Aspen for a ski trip — two adults, worth the price?",
+            "Best ski resorts Park City — where two people should actually stay",
+            isMountain ? "Best ski trip from Denver for a couple — resorts and lodges this winter" : null,
+            isPNW ? "Best ski resorts Whistler for a long weekend — two adults" : null,
+            "Best ski lodges Jackson Hole — couples long weekend this winter",
           ].filter(Boolean) : [];
 
           // ── BUCKET B: High-CPC mainstream beach/Caribbean queries ─────────────
-          // "resorts Caribbean", "hotels Maldives", "best beach resorts" = $5-8 CPC
+          // "resorts Caribbean", "best beach resorts" = $5-8 CPC
           const beachMainstreamPills = (hasBeach || hasHoneymoon) ? [
-            "Best luxury resorts Caribbean — where should we actually go?",
-            hasHoneymoon ? "Best honeymoon resorts — top options across all destinations" : null,
-            "Best hotels Turks and Caicos — full breakdown of where to stay",
-            "Best resorts St. Barths — what's worth the price",
-            isEast ? "Best beach resorts within a 3-hour flight from New York" : null,
-            isTexas ? "Best beach resort trip from Dallas — Mexico or Caribbean?" : null,
+            "Best luxury beach resorts Caribbean for a couples trip — where should we go?",
+            hasHoneymoon ? "Best honeymoon resorts worldwide — top options for two across all destinations" : "Best adults-only beach resorts Caribbean — couples trip, where to go",
+            "Best hotels Turks and Caicos for a couples long weekend — full breakdown",
+            "Best resorts St. Barths for two — what's worth the price",
+            isEast ? "Best beach resorts within a 3-hour flight from New York — couples trip" : null,
+            isTexas ? "Best beach resort trip for a couple from Dallas — Mexico or Caribbean?" : null,
           ].filter(Boolean) : [];
 
           // ── BUCKET C: High-CPC mainstream wine/culinary queries ───────────────
-          // "Napa Valley hotels", "wine country resorts", "best Sonoma hotels" = $3-6 CPC
+          // "Napa Valley hotels", "wine country resorts" = $3-6 CPC
           const wineMainstreamPills = hasWine ? [
-            "Best hotels Napa Valley — full breakdown of where to stay",
-            "Best wine country resorts Sonoma — hotel options and what to book",
-            isCA || isPNW ? "Best wine country weekend California — Napa vs Sonoma vs further?" : null,
-            isPNW ? "Best wine country hotels Oregon — Willamette Valley full guide" : null,
-            "Best luxury hotels wine country — top options for a wine-focused trip",
+            "Best hotels Napa Valley for a wine trip — two adults, full breakdown",
+            "Best wine country resorts Sonoma for a couples weekend — where to stay",
+            isCA || isPNW ? "Best wine country weekend California for two — Napa vs Sonoma vs further?" : null,
+            isPNW ? "Best wine country hotels Willamette Valley for a long weekend — two adults" : null,
+            "Best luxury wine country hotels — top options for a couples wine trip",
           ].filter(Boolean) : [];
 
           // ── BUCKET D: High-CPC mainstream hotel destination queries ───────────
-          // "hotels New York", "best hotels Chicago", "Las Vegas hotels" = $5-10 CPC
-          // Personalized by airport region — these are the user's most natural next queries
+          // "hotels New York", "best hotels Chicago" = $5-10 CPC
+          // Party size implied by framing: "long weekend" = 2 adults default
           const destinationMainstreamPills = [
-            isEast ? "Best hotels New York City — where to actually stay" : null,
-            isEast ? "Best hotels Boston for a long weekend — neighborhoods and options" : null,
-            isMidwest ? "Best hotels Chicago — where to stay for a weekend" : null,
-            isTexas ? "Best hotels Austin — where to stay and what's worth booking" : null,
-            isCA ? "Best hotels San Francisco — neighborhoods and where to stay" : null,
-            isPNW ? "Best hotels Portland Oregon — neighborhoods and top options" : null,
-            isMountain ? "Best hotels Denver — where to stay for a weekend" : null,
-            isInternational ? "Best hotels Tokyo for a first trip — where to stay" : null,
-            isInternational ? "Best hotels Paris — where to actually stay vs tourist traps" : null,
-            "Best hotels Las Vegas — what's worth staying for a long weekend",
-            "Best luxury hotels Miami — South Beach and beyond",
+            isEast ? "Best hotels New York City for a long weekend — where two people should stay" : null,
+            isEast ? "Best hotels Boston for a long weekend — neighborhoods and top options for two" : null,
+            isMidwest ? "Best hotels Chicago for a long weekend — where to stay, what's worth it" : null,
+            isTexas ? "Best hotels Austin for a long weekend — where to stay and what to book" : null,
+            isCA ? "Best hotels San Francisco for a long weekend — neighborhoods and top picks" : null,
+            isPNW ? "Best hotels Portland Oregon for a long weekend — neighborhoods and options" : null,
+            isMountain ? "Best hotels Denver for a long weekend — where to stay and what to do" : null,
+            isInternational ? "Best hotels Tokyo for a first trip — two adults, one week, where to stay" : null,
+            isInternational ? "Best hotels Paris for a long weekend — where two people should actually stay" : null,
+            "Best hotels Las Vegas for a long weekend — what's worth staying for two adults",
+            "Best luxury hotels Miami for a long weekend — South Beach and beyond",
           ].filter(Boolean);
 
           // ── BUCKET E: High-CPC occasion/milestone mainstream queries ──────────
-          // "honeymoon resorts", "anniversary hotels", "best wedding venues" = $4-8 CPC
+          // "honeymoon resorts", "anniversary hotels" = $4-8 CPC
           const occasionMainstreamPills = [
             hasHoneymoon
-              ? "Best honeymoon destinations — full breakdown of top options worldwide"
-              : "Best luxury resorts for a special occasion — where to go",
+              ? "Best honeymoon destinations worldwide — full breakdown of top options for two"
+              : "Best luxury resorts for a special occasion trip — couples, where to go",
             hasCelebration
-              ? "Best anniversary resorts — top options for a milestone trip"
+              ? "Best anniversary resorts — top options for a milestone couples trip"
               : null,
-            "Best wedding venues — boutique estates and resort options",
-            "Best resorts for a bachelorette trip — full options beyond Nashville",
+            "Best boutique wedding venues — estates, ranches, and resort options",
+            "Best bachelorette trip destinations — full options for a group beyond Nashville",
             hasHoneymoon || hasCelebration
-              ? "Best all-inclusive resorts adults-only — Caribbean and Mexico options"
+              ? "Best adults-only all-inclusive resorts Caribbean — couples trip top options"
               : null,
           ].filter(Boolean);
 
           // ── BUCKET F: Program / points (intercept loyalty research queries) ────
-          // "best Hyatt redemptions", "how to use Chase points", "Amex travel" = $2-4 CPC
+          // "best Hyatt redemptions", "how to use Chase points" = $2-4 CPC
           const programPills = [
             topProgram
-              ? `Best way to use my ${topProgram} points — top redemptions right now`
-              : "Best hotel points redemptions — where to get the most value",
+              ? `Best way to use my ${topProgram} points for a couples trip — top redemptions`
+              : "Best hotel points redemptions for a couples trip — where to get the most value",
             topCard
-              ? `How to get the most out of my ${topCard} for travel`
-              : "Best travel credit cards — which ones are worth having",
+              ? `How to get the most travel value from my ${topCard} — flights, hotels, dining`
+              : "Best travel credit cards for hotel and flight value — which ones are worth it",
             topProgram
-              ? `Best ${topProgram} hotels — top properties in the program`
-              : "Best loyalty program hotels — top properties worth booking with points",
+              ? `Best ${topProgram} hotels for a long weekend — top properties worth booking`
+              : "Best loyalty program hotels for a long weekend — top properties worth points",
           ];
 
           // ── FINAL PILL SELECTION ──────────────────────────────────────────────
