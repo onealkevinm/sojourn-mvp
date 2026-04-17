@@ -9441,7 +9441,42 @@ Go READY immediately if you have: any destination or travel theme, AND a party s
 CRITICAL: "Open to ideas", "open to location", "not sure where", "surprise me", "somewhere warm" — these are ALL sufficient as destination. NEVER respond conversationally with destination suggestions when party size and timeframe are present. The gridview is built to handle open destinations — the destination diversity rule spreads options across the geographic possibility space automatically. A conversational list of destination options before the gridview is NEVER the right response when you have party size + timeframe. Go READY immediately and let the grid do the work.
 IMPORTANT: Trip DURATION (e.g. "3 nights", "a week") is NOT a timeframe — it tells you how long but not when. A query with duration but no when (no season, month, or relative window) is missing timeframe and requires the question: "Was there a timeframe or specific dates you had in mind?"
 Exception: if user explicitly says they are flexible or have no dates in mind, proceed immediately.
-TWO REQUIRED CLARIFICATIONS — ask for both in one message if both are missing, otherwise ask for whichever is missing:
+
+INTENT ELICITATION — ONE OPTIONAL QUESTION:
+After resolving party size and timeframe, you may ask ONE additional intent-elicitation question — but only when it would materially improve the results. This question should feel like a knowledgeable friend asking a natural follow-up, not a form field. Use a DECISION TREE, not a fixed priority order — the right question depends entirely on what this specific query is missing.
+
+NEVER ask an intent question when ANY of these conditions are true:
+- The query already has 3+ conjunction elements (activity + destination + character/occasion) — it is fully specified, just go READY
+- The destination is already narrow and supply is thin (specific small city + activity + vibe already stated) — adding filters risks zero good results
+- A high-stakes occasion is already fully stated (honeymoon, anniversary, proposal, bachelor) — the occasion implies the profile
+- The query already contains negation framing ("not Napa", "not a chain", "not a resort") — traveler has done the filtering work
+- This is not the first query in the session — you already have context from the conversation, use it
+- The query is a repeat, refinement, or continuation of something already asked
+
+DECISION TREE — evaluate in this order, ask the first one that applies:
+
+STEP 1 — DESTINATION AMBIGUOUS?
+If the traveler seems to have a destination in mind but hasn't named it (e.g. "somewhere in wine country", "a ski trip", "tropical beach"), ask: "Do you have a specific destination in mind, or are you open to where the best options are?" Do NOT ask this if the destination is genuinely open — open destinations are fine, the model handles them. Only ask if the destination feels implied but unstated.
+
+STEP 2 — HIGH-CONCENTRATION DESTINATION + NO NEGATION?
+If the destination is high-concentration (Napa, Maldives, Tuscany, Vegas, Cancun, Aspen, Cabo, Hawaii at Christmas, Caribbean in general, ski Colorado) and no negation or anti-mainstream signal is present, ask: "Anything you're specifically trying to avoid — a destination that feels overdone, or a type of property that's not you?" This is the question no search engine ever asks. It surfaces the negation trailing filter that most sharpens the conjunction. Even a risk-mitigation answer ("avoid large crowds", "not a chain resort") is a powerful signal.
+
+STEP 3 — VIBE / CHARACTER ABSENT?
+If no character or feel signal is present and the query could resolve to very different experience types, ask one binary question chosen from these pairs based on query context:
+- Activity-anchored queries (skiing, wine, beach): "More adventure and activity, or relaxation and slowness?"
+- Destination-anchored queries (Sedona, Santa Fe, Asheville, Hudson Valley): "Design-forward and modern, or historic and full of character?"
+- Open/opportunistic queries: "Are you drawn more to somewhere restorative and quiet, or somewhere with energy and things to do?"
+- Wellness/spa queries: "More spiritual and nature-immersed, or polished luxury spa?"
+- Urban/culinary queries: "Deep local immersion — markets, neighborhoods, chef-driven spots — or more curated and design-forward?"
+These pairs map directly to the vibe taxonomy: Restorative/Slow vs Adventurous, Design-Forward vs Historic/Storied, Ultra-Luxury vs Authentic/Local. Choose the pair that most splits the likely result set for this query.
+
+STEP 4 — OCCASION ABSENT AND AMBIGUOUS?
+If no occasion is stated and the query could serve multiple occasions with very different result structures (e.g. "trip to Anguilla" could be honeymoon, anniversary, or friend group), ask: "Is this a special occasion trip, or more of a spontaneous getaway?" Only ask this if the occasion would meaningfully change the results — don't ask for purely activity-driven queries where occasion doesn't alter the supply.
+
+If none of the above apply — go READY immediately. The refine loop handles everything else.
+NEVER ask about: exact dates (resolved separately), budget (the Value bucket handles it), loyalty programs (already in profile), specific activities unless they hard-filter supply (activity is almost always inferable).
+
+TWO REQUIRED CLARIFICATIONS — ask for both in one message if both are missing, otherwise ask for whichever is missing. If you also have an intent question to ask, fold it into the same message so the traveler only answers once:
 1. PARTY SIZE: Must be stated or clearly implied — do NOT assume 2. "solo", "we", "family of 4", "two adults" all count. Dates alone (even specific ones like "July 7-10") are NOT sufficient — if party size is missing, always ask before generating.
    ROOMS: For parties of 3-4, ask "Will you need one room or two?" as part of the same clarifying question. For 1-2 always assume 1 room. For 5+ assume 2 rooms. Store the answer in constraints.
 2. TIMEFRAME: Must have at least a rough window — "this summer", "mid-May", "next month", "around the holidays" all count. A completely open timeframe ("whenever", no mention at all) requires asking. Use this exact phrasing: "Was there a timeframe or specific dates you had in mind?"
@@ -11125,77 +11160,166 @@ Please respond now.`,
           const topProgram = pillPrograms.length > 0 ? pillPrograms[0] : null;
           const topCard = cards.length > 0 ? cards[0].name : null;
 
-          // ── 5 Pill Buckets ────────────────────────────────────────────────────
-          // Bucket 1: Program / points / status
+          // ── Query DB-Informed Pill Generation ─────────────────────────────────
+          // Pills serve three simultaneous jobs:
+          // 1. Intercept high-CPC adjacent queries before user takes them to Google/Bing
+          //    — "hotels Vail", "resorts Caribbean", "ski trip Colorado" cost $3-8 CPC externally
+          //    — serving them here is free; that's the cost avoidance
+          // 2. Deepen the session — one query becomes 2-3 naturally
+          // 3. Build Person DB signals from what they tap
+          //
+          // KEY LOGIC: pills are NOT query variants of what they just asked.
+          // Pills are the MAINSTREAM ADJACENT queries the user will run next in their
+          // research process — the high-competition, high-CPC queries we can't afford
+          // to win via paid search but can serve for free once they're already here.
+          //
+          // Example: user asked "best boutique ski lodge Telluride not a chain"
+          // → next natural queries: "ski resorts Vail", "Park City ski hotels", "Aspen lodges"
+          // → those are $4-6 CPC externally. Pill intercepts them.
+
+          // ── Profile signal inference ──────────────────────────────────────────
+          const travelTypes = tp.travelTypes || [];
+          const hasSkiing = travelTypes.some(t => /ski/i.test(t));
+          const hasWine = travelTypes.some(t => /wine|culinary/i.test(t));
+          const hasWellness = travelTypes.some(t => /wellness|spa/i.test(t));
+          const hasBeach = travelTypes.some(t => /beach|water/i.test(t));
+          const hasHiking = travelTypes.some(t => /hiking|nature/i.test(t));
+          const hasRanch = travelTypes.some(t => /ranch|glamping/i.test(t));
+          const hasArts = travelTypes.some(t => /arts|culture|design/i.test(t));
+          const hasGolf = travelTypes.some(t => /golf/i.test(t));
+          const hasFishing = travelTypes.some(t => /fishing/i.test(t));
+          const hasHoneymoon = travelTypes.some(t => /honeymoon|romance/i.test(t));
+          const hasCelebration = travelTypes.some(t => /anniversary|milestone/i.test(t));
+          const isInternational = travelTypes.some(t => /international/i.test(t));
+          const isUrban = travelTypes.some(t => /urban|city/i.test(t));
+
+          // Airport region inference for proximity-based pills
+          const pnwAirports = ["SEA","PDX","GEG"];
+          const caAirports = ["SFO","LAX","SAN","SJC","OAK","BUR","LGB","SMF"];
+          const mountainAirports = ["DEN","SLC","BOI","ABQ","PHX"];
+          const texasAirports = ["DFW","IAH","AUS","SAT","HOU"];
+          const eastAirports = ["JFK","EWR","BOS","DCA","IAD","PHL","CLT","ATL","MIA","MCO"];
+          const midwestAirports = ["ORD","MDW","MSP","DTW","CMH","IND","STL","MKE"];
+          const isPNW = pnwAirports.includes(airport);
+          const isCA = caAirports.includes(airport);
+          const isMountain = mountainAirports.includes(airport);
+          const isTexas = texasAirports.includes(airport);
+          const isEast = eastAirports.includes(airport);
+          const isMidwest = midwestAirports.includes(airport);
+
+          // ── BUCKET A: High-CPC mainstream ski/mountain queries ────────────────
+          // "ski resorts Vail", "Aspen lodges", "Park City ski hotels" = $4-7 CPC
+          // If user has ski profile signal, these are their next natural research queries
+          const skiMainstreamPills = hasSkiing ? [
+            "Best ski resorts Vail — hotels and lodges for a long weekend",
+            "Best hotels Aspen — what's worth staying for a ski trip",
+            "Best ski resorts Park City — where to stay and what to book",
+            isMountain ? "Best ski trip from Denver — resorts and lodges this winter" : null,
+            isPNW ? "Best ski resorts Whistler — lodges and hotels for a long weekend" : null,
+          ].filter(Boolean) : [];
+
+          // ── BUCKET B: High-CPC mainstream beach/Caribbean queries ─────────────
+          // "resorts Caribbean", "hotels Maldives", "best beach resorts" = $5-8 CPC
+          const beachMainstreamPills = (hasBeach || hasHoneymoon) ? [
+            "Best luxury resorts Caribbean — where should we actually go?",
+            hasHoneymoon ? "Best honeymoon resorts — top options across all destinations" : null,
+            "Best hotels Turks and Caicos — full breakdown of where to stay",
+            "Best resorts St. Barths — what's worth the price",
+            isEast ? "Best beach resorts within a 3-hour flight from New York" : null,
+            isTexas ? "Best beach resort trip from Dallas — Mexico or Caribbean?" : null,
+          ].filter(Boolean) : [];
+
+          // ── BUCKET C: High-CPC mainstream wine/culinary queries ───────────────
+          // "Napa Valley hotels", "wine country resorts", "best Sonoma hotels" = $3-6 CPC
+          const wineMainstreamPills = hasWine ? [
+            "Best hotels Napa Valley — full breakdown of where to stay",
+            "Best wine country resorts Sonoma — hotel options and what to book",
+            isCA || isPNW ? "Best wine country weekend California — Napa vs Sonoma vs further?" : null,
+            isPNW ? "Best wine country hotels Oregon — Willamette Valley full guide" : null,
+            "Best luxury hotels wine country — top options for a wine-focused trip",
+          ].filter(Boolean) : [];
+
+          // ── BUCKET D: High-CPC mainstream hotel destination queries ───────────
+          // "hotels New York", "best hotels Chicago", "Las Vegas hotels" = $5-10 CPC
+          // Personalized by airport region — these are the user's most natural next queries
+          const destinationMainstreamPills = [
+            isEast ? "Best hotels New York City — where to actually stay" : null,
+            isEast ? "Best hotels Boston for a long weekend — neighborhoods and options" : null,
+            isMidwest ? "Best hotels Chicago — where to stay for a weekend" : null,
+            isTexas ? "Best hotels Austin — where to stay and what's worth booking" : null,
+            isCA ? "Best hotels San Francisco — neighborhoods and where to stay" : null,
+            isPNW ? "Best hotels Portland Oregon — neighborhoods and top options" : null,
+            isMountain ? "Best hotels Denver — where to stay for a weekend" : null,
+            isInternational ? "Best hotels Tokyo for a first trip — where to stay" : null,
+            isInternational ? "Best hotels Paris — where to actually stay vs tourist traps" : null,
+            "Best hotels Las Vegas — what's worth staying for a long weekend",
+            "Best luxury hotels Miami — South Beach and beyond",
+          ].filter(Boolean);
+
+          // ── BUCKET E: High-CPC occasion/milestone mainstream queries ──────────
+          // "honeymoon resorts", "anniversary hotels", "best wedding venues" = $4-8 CPC
+          const occasionMainstreamPills = [
+            hasHoneymoon
+              ? "Best honeymoon destinations — full breakdown of top options worldwide"
+              : "Best luxury resorts for a special occasion — where to go",
+            hasCelebration
+              ? "Best anniversary resorts — top options for a milestone trip"
+              : null,
+            "Best wedding venues — boutique estates and resort options",
+            "Best resorts for a bachelorette trip — full options beyond Nashville",
+            hasHoneymoon || hasCelebration
+              ? "Best all-inclusive resorts adults-only — Caribbean and Mexico options"
+              : null,
+          ].filter(Boolean);
+
+          // ── BUCKET F: Program / points (intercept loyalty research queries) ────
+          // "best Hyatt redemptions", "how to use Chase points", "Amex travel" = $2-4 CPC
           const programPills = [
-            topProgram ? `Where would my ${topProgram} points go furthest right now?` : "Where would my points go furthest for a long weekend?",
-            topProgram ? `What's the best way to hit top-tier status in ${topProgram} this year?` : "What's the fastest path to elite status right now?",
-            topCard ? `Am I getting the most out of my ${topCard}?` : "Am I using my travel cards as well as I could be?",
-            "Best sweet spot redemptions available in the next 90 days",
-            "Walk me through how to stack my points and cards for maximum value",
-          ];
-
-          // Bucket 2: Unstructured discovery (occasions live here — occasion drives the trip)
-          const discoveryPills = [
-            `Best long weekend from ${airportCity} I haven't thought of yet`,
-            "A city I've never been to that would genuinely surprise me",
-            "Somewhere that feels completely different from where I live",
-            "I want to stay somewhere historic and full of character — not a chain hotel",
-            hasHoneymoon ? "Our honeymoon — somewhere extraordinary, we're open to anywhere in the world" : "Most underrated places to travel right now",
-            hasCelebration ? "Our anniversary is coming up — somewhere genuinely special, open to any destination" : "A place that feels like a real escape — not just a vacation",
-            "What destination should I go to that I've never considered?",
-            "A milestone birthday trip — somewhere that actually feels worthy of the occasion",
-          ];
-
-          // Bucket 3: Structured exploration
-          const explorationPills = [
-            `Best beach within 5 hours of ${airportCity} — where should I go this summer?`,
-            "Long weekend ski trip — where's the best snow right now?",
-            "Safari trip — where to start and what to realistically budget",
-            hasKids ? "Best all-around family resort — kids love it, adults don't suffer" : "Best mountain resort for a long weekend — hiking, food, no crowds",
-            hasPets ? `Pet-friendly escape from ${airportCity} — somewhere worth the drive` : `National park road trip from ${airportCity} — best lodges inside the parks`,
-            "A week in Japan — first timer, two adults, where to start?",
-            "Best island in the Caribbean right now — not overrun, actually beautiful",
-            hasAccessibility ? "Best accessible luxury resorts — full amenities, no compromises" : "Road trip through the American Southwest — where to stay, what to see",
-          ];
-
-          // Bucket 4: Localized / on-trip services
-          // Lead with on-trip reference to build intuition that Sojourn works mid-trip
-          const localPills = [
-            `I'm on my trip in Austin — what's the best BBQ I can't miss while I'm here?`,
-            `I'm in ${airportCity} — where do locals actually eat?`,
-            "I just landed — what's worth doing on my first evening here?",
-            "Best dinner within walking distance of my hotel tonight",
-            "What's happening this weekend worth building an evening around?",
-            "I have 3 hours between meetings — best thing to do near where I am",
-            "Where would a local take someone visiting for the first time?",
-            "I'm here for a conference — what's actually worth seeing beyond the hotel?",
-          ];
-
-          // Bucket 5: Complex / stacked reasoning
-          const complexPills = [
             topProgram
-              ? `5 days somewhere warm in the next 60 days — open to using ${topProgram} points, want real value not just cheap`
-              : "5 days somewhere warm in the next 60 days — mix of points and cash, want the best overall experience",
-            `Long weekend trip that stacks well — flight, hotel, and points working together from ${airportCity}`,
-            hasKids
-              ? "Family week away — somewhere the kids will remember, somewhere the adults won't dread, and ideally using points for part of it"
-              : "A trip that would actually push me to book — not too far, genuinely exciting, and makes smart use of what I have",
-            "Best trip I could take in the next 90 days given my exact points, cards, and schedule",
+              ? `Best way to use my ${topProgram} points — top redemptions right now`
+              : "Best hotel points redemptions — where to get the most value",
             topCard
-              ? `Plan a long weekend that maximizes my ${topCard} benefits end to end — flights, hotel, dining`
-              : "Plan a long weekend that makes full use of my travel setup — flights, hotel, dining, all optimized",
+              ? `How to get the most out of my ${topCard} for travel`
+              : "Best travel credit cards — which ones are worth having",
+            topProgram
+              ? `Best ${topProgram} hotels — top properties in the program`
+              : "Best loyalty program hotels — top properties worth booking with points",
           ];
 
-          // Pick one from each bucket, rotating by session index
-          const pick = (arr, offset) => arr[(pillIdx + offset) % arr.length];
-          const finalPrompts = [
-            pick(programPills, 0),
-            pick(discoveryPills, 1),
-            pick(explorationPills, 2),
-            pick(localPills, 3),
-            pick(complexPills, 4),
-          ].slice(0, 4); // 4 rotating pills
+          // ── FINAL PILL SELECTION ──────────────────────────────────────────────
+          // Slot 1: Best profile-matched high-CPC mainstream adjacent query
+          // Slot 2: Second mainstream category or occasion
+          // Slot 3: Destination mainstream (personalized by airport)
+          // Slot 4: Program/points or remaining mainstream
+          // Rotate by session index so pills feel fresh each visit
+
+          const pick = (arr, offset) => {
+            const valid = arr.filter(Boolean);
+            if (!valid.length) return null;
+            return valid[(pillIdx + offset) % valid.length];
+          };
+
+          // Build priority-ordered pool of high-CPC pills matching this profile
+          const highCpcPool = [
+            ...skiMainstreamPills,
+            ...beachMainstreamPills,
+            ...wineMainstreamPills,
+            ...occasionMainstreamPills,
+          ];
+
+          const slot1 = highCpcPool.length > 0
+            ? pick(highCpcPool, 0)
+            : pick(destinationMainstreamPills, 0);
+
+          const slot2 = highCpcPool.length > 1
+            ? pick(highCpcPool, 1)
+            : pick(destinationMainstreamPills, 1);
+
+          const slot3 = pick(destinationMainstreamPills, 2);
+
+          const slot4 = pick(programPills, 0);
+
+          const finalPrompts = [slot1, slot2, slot3, slot4].filter(Boolean);
 
           // 2-2 layout (4 pills)
           const row1 = finalPrompts.slice(0, 2);
