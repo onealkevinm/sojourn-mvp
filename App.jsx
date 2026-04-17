@@ -11205,8 +11205,12 @@ Please respond now.`,
           return (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "0 24px 12px", animation: "fadeUp 0.5s ease forwards" }}>
           <div style={{ marginBottom: "24px", textAlign: "center", width: "100%", maxWidth: "860px" }}>
-            <div style={{ fontSize: "clamp(22px, 5vw, 34px)", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic", color: "#e8e4dc", lineHeight: "1.2", marginBottom: "16px" }}>Great travel isn't about more choices. It's about the right ones — and knowing why.</div>
-            <div style={{ color: "#6a6460", fontSize: "15px", lineHeight: "1.7", maxWidth: "580px", margin: "0 auto" }}>Tell us what you're drawn to — a place, a feeling, an activity, an occasion. Sojourn surfaces the options that fit your travel style and taste.</div>
+            <div style={{ fontSize: "clamp(18px, 3.5vw, 26px)", fontFamily: "'Playfair Display',Georgia,serif", fontStyle: "italic", color: "#e8e4dc", lineHeight: "1.2", marginBottom: "16px" }}>Great travel isn't about more choices. It's about the right ones — and knowing why.</div>
+            <div style={{ color: "#6a6460", fontSize: "15px", lineHeight: "1.7", maxWidth: "580px", margin: "0 auto" }}>
+              Tell us what you're drawn to — a place, a feeling, an activity, an occasion.
+              <br />
+              <span style={{ color: "#e8e4dc" }}>Sojourn</span> surfaces the options that fit your travel style and taste.
+            </div>
           </div>
           <div style={{ width: "100%", maxWidth: "860px" }}>
             <div style={{ background: "rgba(255,255,255,0.04)", border: "2px solid rgba(255,255,255,0.14)", outline: "1px solid rgba(255,255,255,0.05)", outlineOffset: "3px", borderRadius: "20px", padding: "6px 6px 6px 22px", display: "flex", alignItems: "flex-end", gap: "8px", marginBottom: "18px", position: "relative" }}>
