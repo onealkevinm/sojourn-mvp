@@ -8439,19 +8439,7 @@ const PointsDashboardDrawer = ({ profile, optimizeRecs, optimizeLoading, onOptim
                     </div>
                   </div>
                 ))}
-                <button
-                  onClick={() => {
-                    sendMessage("Personalized travel deals for you — show me personalized deals");
-                  }}
-                  style={{
-                    width: "100%", marginTop: "14px", padding: "10px",
-                    background: "linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.08))",
-                    border: "1px solid rgba(201,168,76,0.3)", borderRadius: "10px",
-                    color: "#C9A84C", fontSize: "11px", fontWeight: "600",
-                    letterSpacing: "0.06em", cursor: "pointer", textAlign: "center"
-                  }}>
-                  Show Me Trips That Maximize These Offers →
-                </button>
+
                 <div style={{ color: "#444", fontSize: "10px", textAlign: "center", marginTop: "8px", lineHeight: "1.5" }}>
                   Full deal intelligence — scanning your travel emails — coming soon
                 </div>
@@ -11356,30 +11344,7 @@ Please respond now.`,
                 {row2.map(ex => <button key={ex} onClick={() => setInput(ex)} style={{ flex: 1, maxWidth: "420px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "#6a6460", borderRadius: "20px", padding: "9px 18px", cursor: "pointer", fontSize: "12px", textAlign: "center" }}>{ex}</button>)}
               </div>
 
-              {/* ── Deal Intelligence standing pill ── */}
-              <div style={{ display: "flex", justifyContent: "center", marginTop: "8px" }}>
-                <button onClick={() => {
-                  const airport = userProfile?.travelProfile?.homeAirport || "my home airport";
-                  const programs = (userProfile?.loyaltyAccounts||[]).map(a=>a.program).filter(Boolean).slice(0,2).join(" and ") || "my points";
-                  fromDealPillRef.current = true; // mark session as deal-pill-sourced
-                  const query = `Show me the best travel deals available to me now that are worth booking`;
-                  setInput(query);
-                  setTimeout(() => {
-                    const textarea = document.querySelector('textarea');
-                    if (textarea) { textarea.focus(); textarea.form?.requestSubmit?.() || handleSend(); }
-                    else handleSend();
-                  }, 50);
-                }} style={{
-                  display: "inline-flex", alignItems: "center", gap: "6px",
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  color: "#6a6460", borderRadius: "20px", padding: "9px 18px",
-                  cursor: "pointer", fontSize: "12px", textAlign: "center"
-                }}>
-                  <span style={{ fontSize: "11px", opacity: 0.7 }}>✦</span>
-                  Personalized travel deals for you
-                </button>
-              </div>
+
             </div>
           </div>
         </div>
