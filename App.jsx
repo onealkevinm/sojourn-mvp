@@ -5849,7 +5849,7 @@ const CompareView = ({ options, onBack, onSelectOption }) => (
 // Format numbers with commas in AI-generated text strings
 const fmtNums = (str) => {
   if (!str) return str;
-  return String(str).replace(/(\d{4,})/g, n => parseInt(n).toLocaleString());
+  return String(str).replace(/(\d{4,})/g, n => parseInt(n).toLocaleString());
 };
 
 // ── Airline direct booking links ─────────────────────────────────────────────
@@ -6884,9 +6884,9 @@ const extractPartySize = (option, tripSummary) => {
   for (const s of sources) {
     const m = s.match(/(\d+)\s*(?:people|adults|guests|travelers|pax)/i);
     if (m) return parseInt(m[1]);
-    if (/solo/i.test(s)) return 1;
-    if (/couple|two|2/i.test(s)) return 2;
-    if (/family/i.test(s)) return 4;
+    if (/solo/i.test(s)) return 1;
+    if (/couple|two|2/i.test(s)) return 2;
+    if (/family/i.test(s)) return 4;
   }
   return 2; // default
 };
@@ -10021,7 +10021,7 @@ const handleSend = () => {
 
       // Detect geographic intent in this additive request
       // If user is asking for options in a SPECIFIC place, reserves must match that place
-      const geoIntentMatch = msgLower.match(/in\s+([\w\s]+?)(?:\s*[,.]|$)/i);
+      const geoIntentMatch = msgLower.match(/in\s+([\w\s]+?)(?:\s*[,.]|$)/i);
       const requestedGeo = geoIntentMatch ? geoIntentMatch[1].trim().toLowerCase() : null;
       
       // If there's a geographic intent, filter reserves to those matching that location
@@ -11013,7 +11013,7 @@ Please respond now.`,
               <div style={{ marginBottom: "12px" }}>
                 <span style={{ color: "#b0a898", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif", fontWeight: "600" }}>Continue the conversation</span>
                 <span style={{ color: "#3a3530", fontSize: "12px", margin: "0 6px" }}>—</span>
-                <span style={{ color: "#7a7060", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }}>Refine your query · dive deeper into current options · generate new ones · explore dining, drinks and activities</span>
+                <span style={{ color: "#7a7060", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }}>refine your results · go deeper on any option</span>
               </div>
               {/* Context-aware suggestion pills ─────────────────────────────────────────
                    TWO PILL LAYERS with different optimization targets:
@@ -11037,7 +11037,7 @@ Please respond now.`,
                 const isRedemptionIntent = /use my miles|redeem|burn my|best use of my/i.test(originalQuery);
                 const isOccasion = /anniversary|birthday|honeymoon|proposal|celebration|bachelor|bachelorette/i.test(originalQuery);
                 const isGeoUncertain = /surprise me|open to|anywhere|somewhere|not sure|ideas|flexible/i.test(originalQuery);
-                const isGeoSpecific = !isGeoUncertain && /(in|near|around)\s+[A-Z][a-z]/i.test(originalQuery);
+                const isGeoSpecific = !isGeoUncertain && /(\s|^)(in|near|around)\s+[A-Z]/i.test(originalQuery);
                 const hasActivity = /ski|wine|beach|golf|ranch|hiking|fishing|wellness|spa|culinary|food/i.test(originalQuery);
 
                 // ── Dismiss signal inference (binary, deliberate, most informative) ──
@@ -11073,6 +11073,7 @@ Please respond now.`,
                 //   3. Commitment tradeoff: what would they be giving up vs. the obvious alternative?
                 //   4. Logistics/practical: what practical unknowns remain about THIS property?
                 // Rule: never recapitulate whyThis. Every pill must surface something NOT already answered.
+                let pills = [];
                 if (userFocusing && focusedPropName) {
                   const focusedOpt2 = tripOptions.find(o => o.id === focusedOptionId);
                   const isAdultsOnlyPref = (userProfile?.travelConsiderations||[]).includes("Adults only preferred");
@@ -11122,7 +11123,7 @@ Please respond now.`,
                       : null,
                   ].filter(Boolean);
 
-                  var pills = uncertaintyPills.slice(0, 2);
+                  pills = uncertaintyPills.slice(0, 2);
                 }
                 // ── LAYER 1: Grid-level pills (user has results, hasn't committed) ──
                 // Goal: refine the result set or go deeper on a dimension of the query
@@ -11200,14 +11201,8 @@ Please respond now.`,
                   }
 
                   // Take top 2, no duplicates
-                  var pills = [...new Set(layer1Pills)].slice(0, 2);
+                  pills = [...new Set(layer1Pills)].slice(0, 2);
                 }
-
-                return (
-                  <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
-                    {pills.map((pill, i) => (
-                      <button
-           
 
                 return (
                   <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
