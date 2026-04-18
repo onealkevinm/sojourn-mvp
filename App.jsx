@@ -5723,7 +5723,7 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                         <div style={{ color: "#555", fontSize: "11px" }}>{opt.subhead}</div>
                         
 
-                        {!isOnHold && <div style={{ color: isHov ? "#C9A84C" : "#333", fontSize: "10px", marginTop: "5px", letterSpacing: "0.05em", transition: "color 0.15s" }}>View details →</div>}
+                        {!isOnHold && <div style={{ display: "inline-block", marginTop: "8px" }}><span style={{ color: isHov ? "#C9A84C" : "#888", fontSize: "10px", letterSpacing: "0.04em", border: `1px solid ${isHov ? "rgba(201,168,76,0.3)" : "rgba(255,255,255,0.12)"}`, borderRadius: "8px", padding: "4px 10px", transition: "all 0.15s", cursor: "pointer" }}>view details →</span></div>}
                       </>
                     )}
                   </td>
@@ -10263,6 +10263,7 @@ SMART OPTION SUPPRESSION — evaluate traveler profile before generating options
 - Never generate a Redemption Opportunity that requires points the traveler doesn't have.
 
 WORD COUNT DISCIPLINE: whyThis target 40-60 words. tradeoff max 20 words. Chat responses max 150 words.
+AFFIRMATIVE REASONING RULE: Every whyThis must stand on its own. Make the strongest affirmative case for THIS option for THIS traveler — why it fits their intent, profile, and occasion specifically. NEVER compare to or throw shade on other options in the result set. NEVER say "unlike the Quality Upgrade..." or "while Option 3 is further..." The tradeoff field is for honest constraints about THIS option only (weather, logistics, cost) — not comparisons. The user can compare across the grid. Your job is to make each option's best case independently.
 CARD QUALITY RULES (when generating new cards):
 - NUMBER FORMATTING: all numbers of 1,000 or more must use comma separators in ALL text fields — pointsEarned, whyThis, detail, tradeoff, loyaltyHighlight, cardStrategy. Examples: "3,200 Delta miles" not "3200 Delta miles", "$1,315" not "$1315", "26,000 Hyatt points" not "26000 Hyatt points", "$2,890" not "$2890". This applies to every number in every field without exception.
 - Go deeper, not wider. For any given destination or region, surface the most interesting and fitting properties within that geography before reaching to neighboring regions. A lesser-known gem within the stated area is always preferable to a well-known property just outside it. The Idaho Rocky Mountain Ranch in the Sawtooths is a better Idaho answer than Jackson Hole — even if Jackson Hole is more famous. Depth of knowledge within the query's geography signals intelligence. Breadth across neighboring geographies signals laziness.
@@ -10829,10 +10830,29 @@ Please respond now.`,
                 }
                 const opt = tripOptions.find(o => o.id === id);
                 mp.track("card_dismissed", { tag: opt?.tag, headline: opt?.headline });
-                // Pull from reserves instantly — use ref to avoid stale closure
+                // Pull from reserves — semantically informed by what was dismissed
+                // Mapping: Dismiss Value → prefer Quality Upgrade replacement
+                //          Dismiss Quality Upgrade → prefer Value replacement
+                //          Dismiss Recommended → prefer Wild Card replacement (obvious answer didn't fit)
+                //          Dismiss Wild Card → prefer on-query replacement (extension went too far)
                 const currentReserves = reserveOptionsRef.current;
                 if (currentReserves.length > 0) {
-                  const matchingReserve = currentReserves.find(r => r.tag === opt?.tag)
+                  const dismissedTag = (opt?.tag||"").toLowerCase();
+                  // Semantic target tag for replacement
+                  const targetTag = dismissedTag.includes("best value") || dismissedTag.includes("value")
+                    ? "quality upgrade"
+                    : dismissedTag.includes("quality upgrade")
+                    ? "best value"
+                    : dismissedTag.includes("recommended") || dismissedTag === "★ top pick"
+                    ? "wild card"
+                    : dismissedTag.includes("wild card")
+                    ? "recommended"
+                    : null;
+                  // Find semantically matched reserve first, fall back to any reserve
+                  const matchingReserve = (targetTag
+                    ? currentReserves.find(r => (r.tag||"").toLowerCase().includes(targetTag))
+                    : null)
+                    || currentReserves.find(r => r.tag === opt?.tag)
                     || currentReserves[0];
                   const remainingReserves = currentReserves.filter(r => r.id !== matchingReserve.id);
                   // Swap: remove dismissed, add reserve — no need to track as dismissed
@@ -10995,72 +11015,199 @@ Please respond now.`,
                 <span style={{ color: "#3a3530", fontSize: "12px", margin: "0 6px" }}>—</span>
                 <span style={{ color: "#7a7060", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }}>Refine your query · dive deeper into current options · generate new ones · explore dining, drinks and activities</span>
               </div>
-              {/* Context-aware suggestion pills — regenerate based on conversation state */}
+              {/* Context-aware suggestion pills ─────────────────────────────────────────
+                   TWO PILL LAYERS with different optimization targets:
+                   Layer 1 (grid view, no option selected): optimize for result refinement
+                     — deepen geographic specificity, refine the result set, adjacent query
+                     — NEVER comparative ranking across options (no "which would you pick")
+                     — NEVER anchor on one property before user signals preference
+                   Layer 2 (option expanded / deep dive): optimize for sealing the deal
+                     — deepen knowledge of THIS property specifically
+                     — anticipate adjacent activities/logistics that matter for this option
+                     — affirmative: strengthen the case for this option, not compare to others
+                */}
               {(() => {
                 const opts = (tripOptions || []).filter(o => !dismissedIds.includes(o.id));
                 const rec = opts.find(o => o.id === 1);
-                const wildCard = opts.find(o => o.tag === "Wild Card");
-                const upgrade = opts.find(o => o.tag === "Quality Upgrade");
-
-                // Detect query intent from original message
                 const originalQuery = (conversationRef.current && conversationRef.current[0] && conversationRef.current[0].content || "").toLowerCase();
-                const isEarningIntent = /business.?trip|work.?trip|maximize.?point|build.?mile|build.?point|earn.?status|rack.?up|maximize.?earn/i.test(originalQuery);
-                const isRedemptionIntent = /i have \d|use my miles|redeem|burn my|best use of my/i.test(originalQuery);
-                const isDestinationUncertain = /surprise me|open to|anywhere|somewhere warm|somewhere|don.t know|not sure|ideas/i.test(originalQuery);
-                const isOccasion = /anniversary|birthday|honeymoon|proposal|celebration|bachelor|bachelorette/i.test(originalQuery);
-
-                // Build conversation history string to detect what's already been covered
                 const conversationText = refineMessages.map(m => m.text || "").join(" ").toLowerCase();
-                const askedAboutEarning = /earning rate|earn.*compare|how.*earn|miles.*compare/i.test(conversationText);
-                const askedAboutFlights = /flight time|depart|arrival|nonstop|connection/i.test(conversationText);
-                const askedAboutDining = /restaurant|dinner|lunch|eat|food|bbq|bar/i.test(conversationText);
-                const askedAboutUpgrade = /upgrade.*add|quality upgrade|suite|premium/i.test(conversationText);
-                const askedAboutValue = /value per mile|best.*mile|cpp|cents per/i.test(conversationText);
-                const askedAboutVibe = /vibe|spirit|feel|character|different from each/i.test(conversationText);
-                const focusingOnOption = refineMessages.length > 2 && /i like|leaning toward|going with|prefer the|love the/i.test(conversationText);
+
+                // ── Query intent signals ──────────────────────────────────
+                const isEarningIntent = /business.?trip|work.?trip|maximize.?point|build.?mile|earn.?status/i.test(originalQuery);
+                const isRedemptionIntent = /use my miles|redeem|burn my|best use of my/i.test(originalQuery);
+                const isOccasion = /anniversary|birthday|honeymoon|proposal|celebration|bachelor|bachelorette/i.test(originalQuery);
+                const isGeoUncertain = /surprise me|open to|anywhere|somewhere|not sure|ideas|flexible/i.test(originalQuery);
+                const isGeoSpecific = !isGeoUncertain && /(in|near|around)\s+[A-Z][a-z]/i.test(originalQuery);
+                const hasActivity = /ski|wine|beach|golf|ranch|hiking|fishing|wellness|spa|culinary|food/i.test(originalQuery);
+
+                // ── Dismiss signal inference (binary, deliberate, most informative) ──
+                // Dismissals reveal what user is NOT optimizing for — stronger signal than clicks
+                const dismissedOpts = tripOptions.filter(o => dismissedIds.includes(o.id));
+                const dismissedTags = dismissedOpts.map(o => (o.tag||"").toLowerCase());
+                const dismissedValue = dismissedTags.some(t => t.includes("value") || t.includes("best value"));
+                const dismissedUpgrade = dismissedTags.some(t => t.includes("quality upgrade"));
+                const dismissedWildCard = dismissedTags.some(t => t.includes("wild card"));
+                const dismissedRedemption = dismissedTags.some(t => t.includes("redemption"));
+                const hasDismissals = dismissedOpts.length > 0;
+                // Infer optimization direction from dismiss pattern
+                const signalsPremium = dismissedValue && !dismissedUpgrade;
+                const signalsPractical = dismissedWildCard && !dismissedValue; // dismissed Wild Card = wants results closer to original query intent
+                const signalsValueSeeking = dismissedUpgrade && !dismissedValue;
+                const signalsNoPoints = dismissedRedemption;
                 const hasConversation = refineMessages.length > 0;
+                const askedAboutDining = /restaurant|dinner|lunch|eat|food|bar/i.test(conversationText);
+                const askedAboutFlights = /flight time|depart|arrival|nonstop|connection/i.test(conversationText);
+                const userFocusing = !!focusedOptionId || deepDiveConfirmed || (refineMessages.length > 2 && /i like|leaning|going with|prefer|love the/i.test(conversationText));
 
-                // ── Closing-oriented pills — resolve concerns, confirm preferences, move toward yes ──
-                // Each pill answers a likely remaining question rather than opening new topics
-                const recName = rec ? rec.headline?.split(" · ")[1] || "Recommended" : "Recommended";
-                const upgradeName = upgrade ? upgrade.headline?.split(" · ")[1] || "Quality Upgrade" : null;
+                // Extract destination and key option details for specific pills
+                const dest = tripOptions?.[0]?.headline?.split(" · ")?.[0]?.trim() || "";
+                const focusedOpt = focusedOptionId ? tripOptions.find(o => o.id === focusedOptionId) : null;
+                const focusedPropName = focusedOpt?.headline?.split(" · ")?.[1]?.trim() || focusedOpt?.headline?.split(" · ")?.[0]?.trim() || "";
+                const focusedDest = focusedOpt?.headline?.split(" · ")?.[0]?.trim() || dest;
 
-                const pill1Candidates = [
-                  // Resolve the primary decision concern based on query type
-                  focusingOnOption ? "Is there anything about this option I should know before booking?" : null,
-                  !askedAboutEarning && isEarningIntent ? "Which option actually builds the most points for this trip?" : null,
-                  !askedAboutValue && isRedemptionIntent ? "Which redemption gives me the most value for my miles?" : null,
-                  isOccasion ? `What makes the ${recName} the right choice for this occasion?` : null,
-                  !askedAboutVibe && isDestinationUncertain ? "If you could only choose one of these, which would you pick for me?" : null,
-                  hasConversation ? `What's the strongest case for the ${recName} option?` : null,
-                  wildCard ? "What makes the Wild Card worth considering over the Recommended?" : null,
-                  "Which of these would you book if it were your trip?",
-                ].filter(Boolean);
+                // ── LAYER 2: Option-focused pills (user has selected or is focused on one) ──
+                // Goal: resolve the specific uncertainties standing between this user and a booking decision
+                // Source of uncertainty in priority order:
+                //   1. Query-specific: what did the query leave open that this option doesn't resolve?
+                //   2. Profile-specific: what does the profile signal that creates doubt about this option?
+                //   3. Commitment tradeoff: what would they be giving up vs. the obvious alternative?
+                //   4. Logistics/practical: what practical unknowns remain about THIS property?
+                // Rule: never recapitulate whyThis. Every pill must surface something NOT already answered.
+                if (userFocusing && focusedPropName) {
+                  const focusedOpt2 = tripOptions.find(o => o.id === focusedOptionId);
+                  const isAdultsOnlyPref = (userProfile?.travelConsiderations||[]).includes("Adults only preferred");
+                  const isLargeGroup = conversationText.includes("group") || /\b([5-9]|1[0-9])\s*(people|adults|guests)\b/i.test(originalQuery);
+                  const isBudgetSensitive = /value|save|budget|affordable|cheaper/i.test(originalQuery + " " + conversationText);
+                  const hasLoyaltyProgram = (userProfile?.loyaltyAccounts||[]).some(a => parseInt((a.balance||"0").replace(/,/g,"")) > 5000);
 
-                const pill2Candidates = [
-                  // Resolve a likely logistical concern
-                  focusingOnOption ? "What's the one tradeoff I should accept going in?" : null,
-                  !askedAboutUpgrade && upgrade ? `Is the ${upgradeName || "Quality Upgrade"} worth the price difference?` : null,
-                  isEarningIntent && !askedAboutFlights ? "Which option has the best setup for back-to-back meetings?" : null,
-                  !askedAboutFlights ? "Are the flight times reasonable or is there a better routing?" : null,
-                  askedAboutFlights ? "Is the hotel location actually convenient for what I need?" : null,
-                  "What's the easiest of these to book with my programs?",
-                ].filter(Boolean);
+                  const uncertaintyPills = [
+                    // Dismiss-informed uncertainty: what does their dismissal pattern say about this option?
+                    // If they dismissed the value option but are now looking at a value-tier option — surface that tension
+                    signalsValueSeeking && focusedOpt2?.tag?.toLowerCase().includes("quality")
+                      ? `You dismissed the value options — what makes ${focusedPropName} worth the premium for this trip?`
+                      : signalsPremium && focusedOpt2?.tag?.toLowerCase().includes("value")
+                      ? `You dismissed the budget options — is ${focusedPropName} actually the right tier for this occasion?`
+                      : signalsPractical && focusedOpt2?.tag?.toLowerCase().includes("wild")
+                      ? `You dismissed the wild card options — what makes ${focusedPropName} feel like the right fit for what you actually asked for?`
+                      : null,
+                    // Query uncertainty: geography was open — does this destination actually work?
+                    isGeoUncertain
+                      ? `Is ${focusedDest} the right destination for this trip — or should we consider alternatives?`
+                      : null,
+                    // Query uncertainty: large group — will this property work for the group size?
+                    isLargeGroup
+                      ? `Will ${focusedPropName} work well for a larger group — room configuration and logistics`
+                      : null,
+                    // Profile uncertainty: adults-only preferred but property may allow families
+                    isAdultsOnlyPref && isOccasion
+                      ? `Is ${focusedPropName} genuinely adult-oriented in practice, or do families tend to be there?`
+                      : null,
+                    // Commitment tradeoff: what are they giving up vs. the obvious alternative?
+                    isOccasion && !isGeoSpecific
+                      ? `If we go with ${focusedDest} over a beach destination — is that the right call for this occasion?`
+                      : null,
+                    // Practical logistics not already asked about
+                    !askedAboutFlights && !isGeoSpecific
+                      ? `What are the flight options and travel logistics to ${focusedDest} — is it easy to get to?`
+                      : null,
+                    // Dining/experience if not yet asked — but only as a deal-sealer, not info repeat
+                    !askedAboutDining && isOccasion
+                      ? `What dining and nightlife near ${focusedPropName} would make this trip feel complete?`
+                      : !askedAboutDining
+                      ? `What experiences near ${focusedPropName} are worth building the trip around?`
+                      : null,
+                    // Points/loyalty if they have a program and haven't asked
+                    hasLoyaltyProgram && !conversationText.includes("points") && !conversationText.includes("miles")
+                      ? `How do my loyalty points and cards work for this specific booking?`
+                      : null,
+                  ].filter(Boolean);
 
-                const pill3Candidates = [
-                  // Move toward commitment — add an experience or confirm readiness
-                  focusingOnOption ? "Add a dinner recommendation to my itinerary" : null,
-                  !askedAboutDining && rec ? `Any restaurants near the ${recName} worth adding?` : null,
-                  !askedAboutDining && isOccasion ? "What experience would make this trip truly memorable?" : null,
-                  askedAboutDining ? "I'm ready — walk me through this option" : null,
-                  hasConversation ? "I think I've got what I need — let's go with this one" : null,
-                  "Add a must-try local experience to my itinerary",
-                ].filter(Boolean);
+                  var pills = uncertaintyPills.slice(0, 2);
+                }
+                // ── LAYER 1: Grid-level pills (user has results, hasn't committed) ──
+                // Goal: refine the result set or go deeper on a dimension of the query
+                // Three types: geographic deepening, query refinement, adjacent activity
+                else {
+                  const layer1Pills = [];
 
-                const pills = [
-                  pill1Candidates[0] || "Which of these would you book if it were your trip?",
-                  pill3Candidates[0] || "I'm ready — walk me through this option",
-                ];
+                  // Type A: Geographic deepening — if destination was uncertain, offer to resolve it
+                  // Extract actual destination cities from current results for specific pills
+                  const destCities = [...new Set(opts.slice(0,3).map(o => o.headline?.split(" · ")?.[0]?.trim()).filter(Boolean))];
+
+                  if (isGeoUncertain && destCities.length > 1) {
+                    layer1Pills.push(`Show me more options in ${destCities[0]} specifically`);
+                    if (destCities[1]) layer1Pills.push(`Show me more options in ${destCities[1]} specifically`);
+                  }
+
+                  // Type B: Query refinement — tighten a dimension that was open
+                  // Also incorporate dismiss signals — user has revealed what they're optimizing for
+                  if (signalsPremium && !hasConversation) {
+                    layer1Pills.push(`Show me more premium options — no budget constraints, what's the best available`);
+                  }
+                  if (signalsValueSeeking && !hasConversation) {
+                    layer1Pills.push(`Show me more value-focused options — same quality, lower cost`);
+                  }
+                  if (signalsPractical && !hasConversation) {
+                    layer1Pills.push(`Show me options that stay closer to my original query — fewer surprises, more on-brief`);
+                  }
+                  if (signalsNoPoints) {
+                    layer1Pills.push(`Refocus on cash options only — skip the points redemptions`);
+                  }
+                  if (isOccasion && !isGeoSpecific) {
+                    layer1Pills.push(`Show me options closer to ${dest} with more nightlife access`);
+                  }
+                  if (isEarningIntent) {
+                    layer1Pills.push("Which of these maximizes points earned across the full trip?");
+                  }
+                  if (isRedemptionIntent) {
+                    layer1Pills.push("Which redemption gives me the best cents-per-point value here?");
+                  }
+
+                  // Type C: Adjacent activity — deepen the experience dimension
+                  if (isOccasion && !askedAboutDining) {
+                    layer1Pills.push(`What dining experiences near these options would make this trip memorable`);
+                  }
+                  if (hasActivity && !hasConversation) {
+                    const activityPill = /ski/i.test(originalQuery)
+                      ? "Which option has the best ski-in/ski-out access or on-mountain convenience"
+                      : /wine/i.test(originalQuery)
+                      ? "Which option has the most direct vineyard access for tastings"
+                      : /beach/i.test(originalQuery)
+                      ? "Which option has the most private or secluded beach access"
+                      : /golf/i.test(originalQuery)
+                      ? "Which option has the best course access or golf package"
+                      : /wellness|spa/i.test(originalQuery)
+                      ? "Which option has the strongest spa and wellness programming"
+                      : null;
+                    if (activityPill) layer1Pills.push(activityPill);
+                  }
+
+                  // Type D: Deepen a specific option only after user signals interest
+                  if (hasConversation && !userFocusing && rec) {
+                    const recPropName = rec.headline?.split(" · ")?.[1]?.trim() || rec.headline?.split(" · ")?.[0]?.trim();
+                    if (!askedAboutDining && recPropName) {
+                      layer1Pills.push(`What dining and experiences near ${recPropName} are worth building around`);
+                    }
+                    if (askedAboutFlights) {
+                      layer1Pills.push("What are the best room types and what should I request at check-in");
+                    }
+                  }
+
+                  // Fallback: practical refinement pills that are always useful
+                  if (layer1Pills.length === 0) {
+                    if (isGeoUncertain) layer1Pills.push(`Narrow these to one destination — which region fits best`);
+                    else layer1Pills.push(`What would make any of these options feel more personalized to this trip`);
+                  }
+
+                  // Take top 2, no duplicates
+                  var pills = [...new Set(layer1Pills)].slice(0, 2);
+                }
+
+                return (
+                  <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
+                    {pills.map((pill, i) => (
+                      <button
+           
 
                 return (
                   <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
