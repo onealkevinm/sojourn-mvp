@@ -11256,18 +11256,36 @@ Please respond now.`,
           ].filter(Boolean);
 
           // ── BUCKET E: High-CPC occasion/milestone mainstream queries ──────────
-          // "honeymoon resorts", "anniversary hotels" = $4-8 CPC
+          // CRITICAL: every occasion pill must be gated behind a POSITIVE profile signal
+          // Surfacing an irrelevant occasion pill (bachelorette to a married man,
+          // wedding venue to someone already married) destroys personalization trust.
+          // Only include if we have explicit evidence this occasion applies.
+          const isSolo = (tp.groupType||'').toLowerCase().includes('solo');
+          const hasGroupTravel = travelTypes.some(t => /bachelor|bachelorette|group|friends/i.test(t));
+          const hasKidsOrFamily = hasKids || travelTypes.some(t => /family/i.test(t));
+
           const occasionMainstreamPills = [
+            // Honeymoon — only if explicitly flagged
             hasHoneymoon
               ? "Best honeymoon destinations worldwide — full breakdown of top options for two"
-              : "Best luxury resorts for a special occasion trip — couples, where to go",
+              : null,
+            // Anniversary — only if explicitly flagged
             hasCelebration
               ? "Best anniversary resorts — top options for a milestone couples trip"
               : null,
-            "Best boutique wedding venues — estates, ranches, and resort options",
-            "Best bachelorette trip destinations — full options for a group beyond Nashville",
-            hasHoneymoon || hasCelebration
+            // Adults-only — only for honeymoon or celebration travelers
+            (hasHoneymoon || hasCelebration)
               ? "Best adults-only all-inclusive resorts Caribbean — couples trip top options"
+              : null,
+            // Wedding venue — only surface if profile has a wedding-adjacent signal
+            // (honeymoon flag is the closest proxy — they may be engaged/planning)
+            hasHoneymoon
+              ? "Best boutique wedding venues — estates, ranches, and resort options"
+              : null,
+            // Bachelorette/bachelor — only if group travel or explicit occasion signal
+            // Never surface generically
+            hasGroupTravel && !hasKidsOrFamily
+              ? "Best bachelorette trip destinations — full options for a group beyond Nashville"
               : null,
           ].filter(Boolean);
 
