@@ -5659,11 +5659,11 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               {!isMobile && <th style={{ textAlign: "left", padding: "10px 16px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "32%" }}>Option</th>}
               {isMobile && <th style={{ textAlign: "left", padding: "8px 10px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "100%" }}>Options</th>}
-              {!isMobile && <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Cash Out of Pocket</th>}
-              {!isMobile && <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Points</th>}
-              {!isMobile && <th style={{ textAlign: "right", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Net Value</th>}
+              {!isMobile && <th style={{ textAlign: "right", padding: "10px 8px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "11%" }}>Cash Out</th>}
+              {!isMobile && <th style={{ textAlign: "right", padding: "10px 8px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Points</th>}
+              {!isMobile && <th style={{ textAlign: "right", padding: "10px 8px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase" }}>Net Value</th>}
               {!isMobile && <th style={{ textAlign: "left", padding: "10px 12px", color: "#444", fontSize: "10px", fontFamily: "serif", letterSpacing: "0.12em", textTransform: "uppercase", width: "26%" }}>Why This Option</th>}
-              {!isMobile && <th style={{ width: "32px" }}></th>}
+              {!isMobile && <th style={{ width: "80px" }}></th>}
             </tr>
           </thead>
           <tbody>
@@ -5775,7 +5775,7 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                   </td>}
 
                   {/* Dismiss — desktop shows labeled button, mobile shows X in whyThis row */}
-                  {!isMobile && <td style={{ padding: "0 10px", textAlign: "center", verticalAlign: "middle", width: "80px" }}>
+                  {!isMobile && <td style={{ padding: "0 8px", textAlign: "center", verticalAlign: "middle", width: "80px" }}>
                     {!isOnHold && onDismiss && (
                       <button
                         onClick={e => { e.stopPropagation(); onDismiss(opt.id); }}
@@ -5789,16 +5789,18 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                 </tr>
                 {isMobile && opt.whyThis && (
                   <tr>
-                    <td colSpan={1} style={{ padding: "0 10px 12px", verticalAlign: "top" }}>
+                    <td colSpan={1} style={{ padding: "0 10px 14px", verticalAlign: "top", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                       <div style={{ color: "#9a9088", fontSize: "12px", lineHeight: "1.6", wordBreak: "break-word", whiteSpace: "normal", maxWidth: "100%", overflowWrap: "break-word" }}>{opt.whyThis}</div>
                       {opt.tradeoff && <div style={{ color: "#7a7060", fontSize: "10px", marginTop: "4px", fontStyle: "italic" }}>{opt.tradeoff}</div>}
                       {!isOnHold && onDismiss && (
-                        <button
-                          onClick={e => { e.stopPropagation(); onDismiss(opt.id); }}
-                          style={{ marginTop: "10px", background: "none", border: "1px solid rgba(255,255,255,0.08)", color: "#555", fontSize: "10px", cursor: "pointer", padding: "5px 14px", borderRadius: "8px", letterSpacing: "0.04em" }}
-                          onMouseEnter={e => { e.currentTarget.style.color = "#C9A84C"; e.currentTarget.style.borderColor = "rgba(201,168,76,0.25)"; }}
-                          onMouseLeave={e => { e.currentTarget.style.color = "#555"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
-                        >dismiss this option</button>
+                        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px" }}>
+                          <button
+                            onClick={e => { e.stopPropagation(); onDismiss(opt.id); }}
+                            style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", color: "#555", fontSize: "10px", cursor: "pointer", padding: "5px 14px", borderRadius: "8px", letterSpacing: "0.04em" }}
+                            onMouseEnter={e => { e.currentTarget.style.color = "#C9A84C"; e.currentTarget.style.borderColor = "rgba(201,168,76,0.25)"; }}
+                            onMouseLeave={e => { e.currentTarget.style.color = "#555"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+                          >dismiss this option</button>
+                        </div>
                       )}
                     </td>
                   </tr>
