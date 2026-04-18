@@ -157,29 +157,29 @@ const USER_PROFILE = {
 
 
 const CARD_OPTIONS = [
-  { name: "Chase Sapphire Reserve", issuer: "Chase" },
-  { name: "Chase Sapphire Preferred", issuer: "Chase" },
-  { name: "Chase Freedom Unlimited", issuer: "Chase" },
-  { name: "Chase Ink Business Preferred", issuer: "Chase" },
-  { name: "Amex Platinum", issuer: "Amex" },
   { name: "Amex Gold", issuer: "Amex" },
   { name: "Amex Green", issuer: "Amex" },
-  { name: "Amex Business Platinum", issuer: "Amex" },
-  { name: "Citi AAdvantage Executive", issuer: "Citi" },
-  { name: "Citi AAdvantage Platinum", issuer: "Citi" },
-  { name: "Capital One Venture X", issuer: "Capital One" },
+  { name: "Amex Platinum", issuer: "Amex" },
   { name: "Capital One Venture", issuer: "Capital One" },
-  { name: "BofA Alaska Airlines Visa", issuer: "BofA" },
-  { name: "BofA Premium Rewards", issuer: "BofA" },
-  { name: "Hilton Honors Amex Surpass", issuer: "Amex" },
-  { name: "Marriott Bonvoy Boundless", issuer: "Chase" },
   { name: "World of Hyatt Card", issuer: "Chase" },
   { name: "United Explorer Card", issuer: "Chase" },
-  { name: "Delta SkyMiles Reserve", issuer: "Amex" },
-  { name: "Delta SkyMiles Platinum", issuer: "Amex" },
-  { name: "Southwest Rapid Rewards Priority", issuer: "Chase" },
-  { name: "Barclays AAdvantage Aviator", issuer: "Barclays" },
+  { name: "BofA Premium Rewards", issuer: "BofA" },
+  { name: "Capital One Venture X", issuer: "Capital One" },
   { name: "Wells Fargo Autograph", issuer: "Wells Fargo" },
+  { name: "Delta SkyMiles Reserve", issuer: "Amex" },
+  { name: "Amex Business Platinum", issuer: "Amex" },
+  { name: "Chase Sapphire Reserve", issuer: "Chase" },
+  { name: "Delta SkyMiles Platinum", issuer: "Amex" },
+  { name: "Chase Freedom Unlimited", issuer: "Chase" },
+  { name: "Chase Sapphire Preferred", issuer: "Chase" },
+  { name: "Citi AAdvantage Platinum", issuer: "Citi" },
+  { name: "Marriott Bonvoy Boundless", issuer: "Chase" },
+  { name: "BofA Alaska Airlines Visa", issuer: "BofA" },
+  { name: "Citi AAdvantage Executive", issuer: "Citi" },
+  { name: "Hilton Honors Amex Surpass", issuer: "Amex" },
+  { name: "Barclays AAdvantage Aviator", issuer: "Barclays" },
+  { name: "Chase Ink Business Preferred", issuer: "Chase" },
+  { name: "Southwest Rapid Rewards Priority", issuer: "Chase" },
 ];
 
 const LOYALTY_OPTIONS = {
@@ -211,17 +211,8 @@ const LOYALTY_OPTIONS = {
     { program: "National Emerald Club", tiers: ["None", "Emerald Club", "Executive", "Executive Elite"] },
     { program: "Budget Fastbreak", tiers: ["None", "Fastbreak"] },
     { program: "Alamo Insiders", tiers: ["None", "Member"] },
-    { program: "Turo", tiers: ["None", "Member"] },
-    { program: "Zipcar", tiers: ["None", "Member"] },
   ],
-  rideshare: [
-    { program: "Uber", tiers: ["Regular User"] },
-    { program: "Uber One", tiers: ["None", "Member"] },
-    { program: "Lyft Pink", tiers: ["None", "Pink", "Pink All Access"] },
-    { program: "Blacklane", tiers: ["None", "Member"] },
-    { program: "Blade", tiers: ["None", "Member"] },
-    { program: "Via", tiers: ["None", "Member"] },
-  ],
+
 };
 
 const LOYALTY_BRAND_MAP = {
@@ -2696,7 +2687,7 @@ const buildQualityContext = (propertyNames) => {
       q.tl_gold ? "T&L Gold List" : null,
       q.slh ? "Small Luxury Hotels" : null,
       q.aman ? "Aman" : null,
-      q.auberge ? "Auberge Resorts" : null,
+      q.auberge ? "Auberge Collection" : null,
       q.belmond ? "Belmond" : null,
       q.cn_gold ? "Condé Nast Gold List" : null,
       q.cn_hot_list ? "Condé Nast Hot List" : null,
@@ -5093,6 +5084,41 @@ const buildRestaurantContext = (city) => {
 
 const BRAND_CATEGORIES = [
   {
+    key: "luxury_independent",
+    label: "Luxury Independent",
+    sublabel: "Premium properties outside loyalty ecosystems",
+    brands: ["Aman", "Viceroy", "Belmond", "Rosewood", "Montage", "Shangri-La", "Four Seasons", "Auberge Collection", "Oetker Collection"],
+  },
+  {
+    key: "curated_collections",
+    label: "Curated Collections",
+    sublabel: "Handpicked independent properties",
+    brands: ["Tablet Hotels", "Design Hotels", "Mr & Mrs Smith", "Small Luxury Hotels", "Relais & Châteaux", "Leading Hotels of the World"],
+  },
+  {
+    key: "style_boutique",
+    label: "Boutique & Design-Forward",
+    sublabel: "Independently spirited, design-conscious properties",
+    brands: ["Ace Hotel", "Soho House", "Grupo Habita", "Standard Hotels", "Freehand Hotels", "Graduate Hotels", "21c Museum Hotels", "Bunkhouse Group"],
+  },
+  {
+    key: "recognition",
+    label: "Quality & Discovery",
+    sublabel: "Award and rating systems you trust",
+    brands: [
+      "T+L Hot List",
+      "Forbes Five Star",
+      "AAA Five Diamond",
+      "Michelin Keys (hotel)",
+      "Condé Nast Gold List",
+      "Bon Appétit Hot 10",
+      "Eater 38 / City Lists",
+      "James Beard Nominated",
+      "Michelin Stars (restaurant)",
+      "James Beard Award Winner",
+    ],
+  },
+  {
     key: "loyalty_brands",
     label: "Loyalty Program Brands",
     sublabel: "Auto-populated from your loyalty programs",
@@ -5100,63 +5126,11 @@ const BRAND_CATEGORIES = [
     brands: [],
   },
   {
-    key: "luxury_independent",
-    label: "Luxury Independent",
-    sublabel: "Premium properties outside loyalty ecosystems",
-    brands: ["Four Seasons", "One & Only", "Aman", "Rosewood", "Belmond", "Montage Hotels", "Proper Hotels", "Auberge Resorts", "Virgin Hotels", "SH Hotels"],
-  },
-  {
-    key: "curated_collections",
-    label: "Curated Collections",
-    sublabel: "Handpicked independent properties",
-    brands: ["Leading Hotels of the World", "Relais & Châteaux", "Small Luxury Hotels", "Design Hotels", "Tablet Hotels", "Mr & Mrs Smith"],
-  },
-  {
-    key: "recognition",
-    label: "Quality & Discovery",
-    sublabel: "Award and rating systems you trust",
-    brands: [
-      "Michelin Keys (hotel)",
-      "Michelin Stars (restaurant)",
-      "Michelin Bib Gourmand",
-      "Forbes Five Star",
-      "AAA Five Diamond",
-      "Condé Nast Gold List",
-      "T+L Hot List",
-      "Eater 38 / City Lists",
-      "James Beard Nominated",
-      "James Beard Award Winner",
-      "Bon Appétit Hot 10",
-      "Diners, Drive-Ins and Dives",
-    ],
-  },
-  {
-    key: "style_business",
-    label: "Business Focused",
-    sublabel: "Optimized for work travel",
-    brands: ["Marriott", "Hilton", "Hyatt Regency", "Westin", "Courtyard", "Residence Inn", "Homewood Suites", "AC Hotels"],
-  },
-  {
-    key: "style_resort",
-    label: "Resort & Leisure",
-    sublabel: "Destination and leisure properties",
-    brands: ["Four Seasons Resort", "One & Only Resorts", "Sandals", "Club Med", "Beaches Resorts", "Excellence Resorts"],
-  },
-  {
     key: "style_allinclusive",
     label: "All-Inclusive",
     sublabel: "Bundled experience properties",
-    brands: ["Sandals", "Beaches", "Club Med", "Excellence Playa Mujeres", "Secrets Resorts", "Dreams Resorts", "Iberostar"],
+    brands: ["Sandals", "Beaches", "Club Med", "Iberostar", "Dreams Resorts", "Secrets Resorts", "Excellence Playa Mujeres"],
   },
-  {
-    key: "style_boutique",
-    label: "Boutique & Lifestyle",
-    sublabel: "Independently spirited properties",
-    brands: ["Ace Hotel", "Soho House", "Graduate Hotels", "21c Museum Hotels", "Bunkhouse Group", "Standard Hotels", "Freehand Hotels"],
-  },
-
-
-
 ];
 
 const Chip = ({ label, active, onClick }) => (
@@ -5337,17 +5311,17 @@ const OnboardingFlow = ({ onComplete }) => {
         {/* Step 0 — Welcome */}
         {step === 0 && (
           <div>
-            <div style={{ fontSize: "36px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.15", marginBottom: "16px", textAlign: "center" }}>Travel the way<br />you were meant to.</div>
+            <div style={{ fontSize: "36px", fontFamily: "'Playfair Display',Georgia,serif", lineHeight: "1.15", marginBottom: "16px", textAlign: "center" }}>Discover the trip that's<br />actually right for you.</div>
             <div style={{ color: "#666", fontSize: "15px", lineHeight: "1.7", marginBottom: "32px", textAlign: "center" }}>Tell us what you're drawn to — a place, a feeling, an activity, an occasion. Sojourn surfaces the options that fit your travel style and taste.</div>
             <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginBottom: "36px" }}>
-              {["Discovers options you'd never find on your own", "Puts your points and cards to work on every trip", "Learns your preferences and remembers what you love"].map(t => (
+              {["Discover options you'd never find on your own", "Explains exactly why each option fits you", "Learns your preferences and remembers what you care about"].map(t => (
                 <div key={t} style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
                   <span style={{ color: "#C9A84C", fontSize: "12px", marginTop: "3px", flexShrink: 0 }}>▪</span>
                   <span style={{ color: "#7a7468", fontSize: "14px", lineHeight: "1.5" }}>{t}</span>
                 </div>
               ))}
             </div>
-            <div style={{ color: "#444", fontSize: "12px", marginBottom: "20px", textAlign: "center" }}>Takes about 2 minutes · No login required · You can update preferences anytime</div>
+            <div style={{ color: "#444", fontSize: "12px", marginBottom: "20px", textAlign: "center" }}>Takes about 2 minutes · No login required · No personal information collected · Update preferences anytime</div>
             <button onClick={() => setStep(1)} style={{ width: "100%", padding: "16px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "14px", fontSize: "14px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>Get Started →</button>
           </div>
         )}
@@ -5389,23 +5363,30 @@ const OnboardingFlow = ({ onComplete }) => {
             <div style={{ marginBottom: "8px" }}>
               <div style={{ color: "#888", fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>Travel Type & Purpose</div>
               <div style={{ color: "#444", fontSize: "11px", marginBottom: "10px" }}>Select all that apply</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                 {[
-                  { label: "Domestic", icon: "🗺" },
-                  { label: "International", icon: "✈️" },
+                  { label: "Golf", icon: "⛳" },
+                  { label: "Skiing", icon: "⛷" },
                   { label: "Business", icon: "💼" },
+                  { label: "Domestic", icon: "🗺" },
                   { label: "Urban / City", icon: "🏙" },
                   { label: "Beach & Water", icon: "🏖" },
-                  { label: "Skiing", icon: "⛷" },
-                  { label: "Golf", icon: "⛳" },
-                  { label: "Wine & Culinary", icon: "🍷" },
+                  { label: "Lake & Fishing", icon: "🎣" },
                   { label: "Food & Dining", icon: "🍽" },
                   { label: "Wellness & Spa", icon: "🧘" },
-                  { label: "Hiking & Nature", icon: "🥾" },
                   { label: "Ranch & Glamping", icon: "🏕" },
-                  { label: "Lake & Fishing", icon: "🎣" },
+                  { label: "Wine & Culinary", icon: "🍷" },
+                  { label: "Hiking & Nature", icon: "🥾" },
+                  { label: "International", icon: "✈️" },
                   { label: "Honeymoon & Romance", icon: "✨" },
                   { label: "Arts, Culture & Design", icon: "🎨" },
+                  { label: "Proposal Trip", icon: "💎" },
+                  { label: "Milestone Birthday", icon: "🎂" },
+                  { label: "Girls Trip / Guys Trip", icon: "🥂" },
+                  { label: "Bachelor / Bachelorette", icon: "🎉" },
+                  { label: "Anniversary / Milestone", icon: "✨" },
+                  { label: "Family Reunion", icon: "👨‍👩‍👧‍👦" },
+                  { label: "Planning a Wedding", icon: "💐" },
                 ].map(({ label, icon }) => {
                   const active = travelProfile.travelTypes.includes(label);
                   return (
@@ -5422,19 +5403,11 @@ const OnboardingFlow = ({ onComplete }) => {
             <div style={{ marginBottom: "20px" }}>
               <div style={{ color: "#9a9088", fontSize: "12px", letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "6px" }}>Travel Considerations</div>
               <div style={{ color: "#444", fontSize: "11px", marginBottom: "10px" }}>Select any that apply to your travel</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                 {[
-                  { label: "Traveling with children", icon: "👶" },
-                  { label: "Adults only preferred", icon: "🔞" },
                   { label: "Traveling with pets", icon: "🐾" },
-                  { label: "Honeymoon", icon: "💍" },
-                  { label: "Proposal Trip", icon: "💎" },
-                  { label: "Anniversary / Milestone", icon: "🥂" },
-                  { label: "Milestone Birthday", icon: "🎂" },
-                  { label: "Bachelor / Bachelorette", icon: "🎉" },
-                  { label: "Girls Trip / Guys Trip", icon: "✈️" },
-                  { label: "Family Reunion", icon: "👨‍👩‍👧‍👦" },
-                  { label: "Planning a Wedding", icon: "💐" },
+                  { label: "Adults only preferred", icon: "🔞" },
+                  { label: "Traveling with children", icon: "👶" },
                   { label: "Wheelchair accessible", icon: "♿" },
                   { label: "Mobility assistance needed", icon: "🦽" },
                 ].map(({ label, icon }) => {
@@ -5459,7 +5432,7 @@ const OnboardingFlow = ({ onComplete }) => {
             <div style={{ marginBottom: "6px", color: "#C9A84C", fontSize: "11px", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "serif" }}>Step 2 of 4</div>
             <div style={{ fontSize: "26px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "6px" }}>Which cards do you carry?</div>
             <div style={{ color: "#555", fontSize: "13px", marginBottom: "18px", lineHeight: "1.6" }}>Select all that apply. Sojourn routes each component to the card that earns the most rewards.</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "7px", marginBottom: "14px", maxHeight: "300px", overflowY: "auto" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "7px", marginBottom: "14px", maxHeight: "300px", overflowY: "auto" }}>
               {CARD_OPTIONS.map(({ name }) => <Chip key={name} label={name} active={selectedCards.includes(name)} onClick={() => toggleCard(name)} />)}
             </div>
 
@@ -5523,7 +5496,6 @@ const OnboardingFlow = ({ onComplete }) => {
               { label: "Hotel Programs", key: "hotel", hint: "Marriott, Hyatt, Hilton..." },
               { label: "Airline Programs", key: "airline", hint: "United, Delta, Alaska..." },
               { label: "Car Rental", key: "car", hint: "Hertz, Avis, Enterprise..." },
-              { label: "Rideshare & Ground", key: "rideshare", hint: "Uber, Lyft..." },
             ].map(({ label, key, hint }) => {
               const selectedCount = LOYALTY_OPTIONS[key].filter(({ program }) => loyaltyAccounts[program]?.selected).length;
               const isOpen = expandedLoyaltyCat === key;
@@ -5558,7 +5530,7 @@ const OnboardingFlow = ({ onComplete }) => {
                                 <select value={acct.tier} onChange={e => setTier(program, e.target.value)} style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#b0a898", fontSize: "12px", cursor: "pointer", fontFamily: "'DM Sans',system-ui,sans-serif" }}>
                                   {tiers.map(t => <option key={t} value={t} style={{ background: "#1a1a1a" }}>{t}</option>)}
                                 </select>
-                                <input value={acct.balance} onChange={e => setBalance(program, e.target.value)} placeholder="Miles/points (e.g. 45,000)" style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#e8e4dc", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
+                                <input value={acct.balance} onChange={e => setBalance(program, e.target.value)} placeholder={key === "airline" ? "Miles (e.g. 45,000)" : "Points (e.g. 45,000)"} style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#e8e4dc", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
                               </div>
                             )}
                           </div>
@@ -8824,17 +8796,9 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
               <div style={{ color: "#C9A84C", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", fontFamily: "serif", marginBottom: "8px" }}>Travel Considerations</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
                 {[
-                  { label: "Traveling with children", icon: "👶" },
-                  { label: "Adults only preferred", icon: "🔞" },
                   { label: "Traveling with pets", icon: "🐾" },
-                  { label: "Honeymoon", icon: "💍" },
-                  { label: "Proposal Trip", icon: "💎" },
-                  { label: "Anniversary / Milestone", icon: "🥂" },
-                  { label: "Milestone Birthday", icon: "🎂" },
-                  { label: "Bachelor / Bachelorette", icon: "🎉" },
-                  { label: "Girls Trip / Guys Trip", icon: "✈️" },
-                  { label: "Family Reunion", icon: "👨‍👩‍👧‍👦" },
-                  { label: "Planning a Wedding", icon: "💐" },
+                  { label: "Adults only preferred", icon: "🔞" },
+                  { label: "Traveling with children", icon: "👶" },
                   { label: "Wheelchair accessible", icon: "♿" },
                   { label: "Mobility assistance needed", icon: "🦽" },
                 ].map(({ label, icon }) => {
@@ -8868,7 +8832,7 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
               <div style={{ marginTop: "12px", display: "flex", gap: "8px" }}>
                 <input id="brand-add-input" placeholder="Add a brand (e.g. Andaz, Kimpton)..." style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#e8e4dc", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }} list="brand-suggestions" />
                 <datalist id="brand-suggestions">{[
-                  "Auberge Resorts","Aman","Belmond","Small Luxury Hotels (SLH)","Relais & Chateaux",
+                  "Auberge Collection","Aman","Belmond","Small Luxury Hotels (SLH)","Relais & Chateaux",
                   "Four Seasons","Rosewood","Montage","Waldorf Astoria","Ritz-Carlton","St. Regis","The Luxury Collection",
                   "Park Hyatt","Andaz","Thompson Hotels","Alila","Hyatt Unbound Collection","Joie de Vivre",
                   "Edition","Autograph Collection","W Hotels","Le Meridien","Westin",
@@ -11320,11 +11284,11 @@ Please respond now.`,
           const hasAccessibility = (userProfile?.travelConsiderations || []).some(c => c.includes("Wheelchair") || c.includes("Mobility"));
           const hasAdultsOnly = (userProfile?.travelConsiderations || []).includes("Adults only preferred");
           const hasHoneymoon = (userProfile?.travelConsiderations || []).includes("Honeymoon") || (tp.travelTypes||[]).some(t => /honeymoon|romance/i.test(t));
-          const hasCelebration = (userProfile?.travelConsiderations || []).includes("Anniversary or celebration") || (userProfile?.travelConsiderations || []).includes("Anniversary / Milestone") || (tp.travelTypes||[]).some(t => /anniversary|milestone/i.test(t));
-          const hasBachelorette = (userProfile?.travelConsiderations || []).some(c => /bachelor|bachelorette/i.test(c));
-          const hasGroupTrip = (userProfile?.travelConsiderations || []).some(c => /girls.?trip|guys.?trip|group/i.test(c));
-          const hasWeddingPlanning = (userProfile?.travelConsiderations || []).some(c => /wedding|engaged/i.test(c));
-          const hasMilestoneBirthday = (userProfile?.travelConsiderations || []).some(c => /birthday|milestone/i.test(c));
+          const hasCelebration = (userProfile?.travelConsiderations || []).includes("Anniversary or celebration") || (userProfile?.travelConsiderations || []).includes("Anniversary / Milestone") || travelTypes.some(t => /anniversary|milestone/i.test(t));
+          const hasBachelorette = (userProfile?.travelConsiderations || []).some(c => /bachelor|bachelorette/i.test(c)) || travelTypes.some(t => /bachelor|bachelorette/i.test(t));
+          const hasGroupTrip = (userProfile?.travelConsiderations || []).some(c => /girls.?trip|guys.?trip|group/i.test(c)) || travelTypes.some(t => /girls.?trip|guys.?trip/i.test(t));
+          const hasWeddingPlanning = (userProfile?.travelConsiderations || []).some(c => /wedding|engaged/i.test(c)) || travelTypes.some(t => /wedding/i.test(t));
+          const hasMilestoneBirthday = (userProfile?.travelConsiderations || []).some(c => /birthday|milestone/i.test(c)) || travelTypes.some(t => /birthday|milestone/i.test(t));
           const pillPrograms = loyalty.map(a => a.program).filter(Boolean);
           const topProgram = pillPrograms.length > 0 ? pillPrograms[0] : null;
           const topCard = cards.length > 0 ? cards[0].name : null;
