@@ -5669,6 +5669,7 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
           <tbody>
             {options.map((opt, i) => {
               const isRec = opt.id === 1;
+              const isAltRow = i % 2 === 0;
               const isFocused = focusedOptionId === opt.id;
               const isOnHold = focusedOptionId && !isFocused;
               const isHov = hovered === opt.id;
@@ -5682,7 +5683,7 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                   onMouseLeave={() => setHovered(null)}
                   style={{
                     borderBottom: "1px solid rgba(255,255,255,0.05)",
-                    background: isFocused ? "rgba(201,168,76,0.07)" : isRec && !isOnHold ? "rgba(201,168,76,0.03)" : isHov && !isOnHold ? "rgba(255,255,255,0.03)" : "transparent",
+                    background: isFocused ? "rgba(201,168,76,0.07)" : isAltRow && !isOnHold ? "rgba(255,255,255,0.025)" : isHov && !isOnHold ? "rgba(255,255,255,0.03)" : "transparent",
                     cursor: isOnHold ? "default" : "pointer",
                     opacity: isOnHold ? 0.25 : 1,
                     transition: "all 0.2s",
@@ -5793,7 +5794,7 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                       <div style={{ color: "#9a9088", fontSize: "12px", lineHeight: "1.6", wordBreak: "break-word", whiteSpace: "normal", maxWidth: "100%", overflowWrap: "break-word" }}>{opt.whyThis}</div>
                       {opt.tradeoff && <div style={{ color: "#7a7060", fontSize: "10px", marginTop: "4px", fontStyle: "italic" }}>{opt.tradeoff}</div>}
                       {!isOnHold && onDismiss && (
-                        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px" }}>
+                        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
                           <button
                             onClick={e => { e.stopPropagation(); onDismiss(opt.id); }}
                             style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", color: "#555", fontSize: "10px", cursor: "pointer", padding: "5px 14px", borderRadius: "8px", letterSpacing: "0.04em" }}
