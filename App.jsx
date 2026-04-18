@@ -5774,16 +5774,16 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                     {opt.tradeoff && <div style={{ color: "#7a7060", fontSize: "10px", marginTop: "5px", fontStyle: "italic" }}>{opt.tradeoff}</div>}
                   </td>}
 
-                  {/* Dismiss X — hidden on mobile (full-width card has no room) */}
-                  {!isMobile && <td style={{ padding: "0 10px", textAlign: "center", verticalAlign: "middle" }}>
+                  {/* Dismiss — desktop shows labeled button, mobile shows X in whyThis row */}
+                  {!isMobile && <td style={{ padding: "0 10px", textAlign: "center", verticalAlign: "middle", width: "80px" }}>
                     {!isOnHold && onDismiss && (
                       <button
                         onClick={e => { e.stopPropagation(); onDismiss(opt.id); }}
                         title="Not for me"
-                        style={{ background: "none", border: "none", color: "#6a5a4a", fontSize: "13px", cursor: "pointer", padding: "4px 6px", borderRadius: "6px", lineHeight: 1 }}
-                        onMouseEnter={e => e.currentTarget.style.color = "#C9A84C"}
-                        onMouseLeave={e => e.currentTarget.style.color = "#6a5a4a"}
-                      >✕</button>
+                        style={{ background: "none", border: "1px solid rgba(255,255,255,0.07)", color: "#555", fontSize: "10px", cursor: "pointer", padding: "4px 10px", borderRadius: "8px", lineHeight: 1, letterSpacing: "0.04em", whiteSpace: "nowrap" }}
+                        onMouseEnter={e => { e.currentTarget.style.color = "#C9A84C"; e.currentTarget.style.borderColor = "rgba(201,168,76,0.3)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.color = "#555"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"; }}
+                      >dismiss</button>
                     )}
                   </td>}
                 </tr>
@@ -5792,6 +5792,14 @@ const GridView = ({ options, onSelectOption, onDismiss, dismissedIds, focusedOpt
                     <td colSpan={1} style={{ padding: "0 10px 12px", verticalAlign: "top" }}>
                       <div style={{ color: "#9a9088", fontSize: "12px", lineHeight: "1.6", wordBreak: "break-word", whiteSpace: "normal", maxWidth: "100%", overflowWrap: "break-word" }}>{opt.whyThis}</div>
                       {opt.tradeoff && <div style={{ color: "#7a7060", fontSize: "10px", marginTop: "4px", fontStyle: "italic" }}>{opt.tradeoff}</div>}
+                      {!isOnHold && onDismiss && (
+                        <button
+                          onClick={e => { e.stopPropagation(); onDismiss(opt.id); }}
+                          style={{ marginTop: "10px", background: "none", border: "1px solid rgba(255,255,255,0.08)", color: "#555", fontSize: "10px", cursor: "pointer", padding: "5px 14px", borderRadius: "8px", letterSpacing: "0.04em" }}
+                          onMouseEnter={e => { e.currentTarget.style.color = "#C9A84C"; e.currentTarget.style.borderColor = "rgba(201,168,76,0.25)"; }}
+                          onMouseLeave={e => { e.currentTarget.style.color = "#555"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+                        >dismiss this option</button>
+                      )}
                     </td>
                   </tr>
                 )}
@@ -10746,7 +10754,7 @@ Please respond now.`,
               </div>
 
             </div>
-            <div style={{ color: "#555", fontSize: "12px" }}>{expandedId ? "Viewing details · click back to compare all" : "Click any option for details · dismiss ✕ options to narrow · refine your search below"}</div>
+            <div style={{ color: "#555", fontSize: "12px" }}>{expandedId ? "Viewing details · click back to compare all" : "Click any option for details · dismiss options to narrow · refine your search below"}</div>
           </div>
         </div>
 
