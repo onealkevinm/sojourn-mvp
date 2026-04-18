@@ -5399,6 +5399,7 @@ const OnboardingFlow = ({ onComplete }) => {
                   { label: "Skiing", icon: "⛷" },
                   { label: "Golf", icon: "⛳" },
                   { label: "Wine & Culinary", icon: "🍷" },
+                  { label: "Food & Dining", icon: "🍽" },
                   { label: "Wellness & Spa", icon: "🧘" },
                   { label: "Hiking & Nature", icon: "🥾" },
                   { label: "Ranch & Glamping", icon: "🏕" },
@@ -5426,6 +5427,14 @@ const OnboardingFlow = ({ onComplete }) => {
                   { label: "Traveling with children", icon: "👶" },
                   { label: "Adults only preferred", icon: "🔞" },
                   { label: "Traveling with pets", icon: "🐾" },
+                  { label: "Honeymoon", icon: "💍" },
+                  { label: "Proposal Trip", icon: "💎" },
+                  { label: "Anniversary / Milestone", icon: "🥂" },
+                  { label: "Milestone Birthday", icon: "🎂" },
+                  { label: "Bachelor / Bachelorette", icon: "🎉" },
+                  { label: "Girls Trip / Guys Trip", icon: "✈️" },
+                  { label: "Family Reunion", icon: "👨‍👩‍👧‍👦" },
+                  { label: "Planning a Wedding", icon: "💐" },
                   { label: "Wheelchair accessible", icon: "♿" },
                   { label: "Mobility assistance needed", icon: "🦽" },
                 ].map(({ label, icon }) => {
@@ -8479,6 +8488,12 @@ const PointsDashboardDrawer = ({ profile, optimizeRecs, optimizeLoading, onOptim
                     { label: "Traveling with children", icon: "👶" },
                     { label: "Adults only preferred", icon: "🔞" },
                     { label: "Traveling with pets", icon: "🐾" },
+                    { label: "Honeymoon", icon: "💍" },
+                    { label: "Anniversary / Milestone", icon: "🥂" },
+                    { label: "Milestone Birthday", icon: "🎂" },
+                    { label: "Bachelor / Bachelorette", icon: "🎉" },
+                    { label: "Girls Trip / Guys Trip", icon: "✈️" },
+                    { label: "Planning a Wedding", icon: "💐" },
                     { label: "Wheelchair accessible", icon: "♿" },
                     { label: "Mobility assistance needed", icon: "🦽" },
                   ].map(({ label, icon }) => {
@@ -8812,6 +8827,14 @@ const OptimizingForBar = ({ profile, setProfile, optimizeRecs, optimizeLoading, 
                   { label: "Traveling with children", icon: "👶" },
                   { label: "Adults only preferred", icon: "🔞" },
                   { label: "Traveling with pets", icon: "🐾" },
+                  { label: "Honeymoon", icon: "💍" },
+                  { label: "Proposal Trip", icon: "💎" },
+                  { label: "Anniversary / Milestone", icon: "🥂" },
+                  { label: "Milestone Birthday", icon: "🎂" },
+                  { label: "Bachelor / Bachelorette", icon: "🎉" },
+                  { label: "Girls Trip / Guys Trip", icon: "✈️" },
+                  { label: "Family Reunion", icon: "👨‍👩‍👧‍👦" },
+                  { label: "Planning a Wedding", icon: "💐" },
                   { label: "Wheelchair accessible", icon: "♿" },
                   { label: "Mobility assistance needed", icon: "🦽" },
                 ].map(({ label, icon }) => {
@@ -11153,8 +11176,13 @@ Please respond now.`,
         const hasPets = (userProfile?.travelConsiderations || []).includes("Traveling with pets");
           const hasKids = (userProfile?.travelConsiderations || []).includes("Traveling with children");
           const hasAccessibility = (userProfile?.travelConsiderations || []).some(c => c.includes("Wheelchair") || c.includes("Mobility"));
+          const hasAdultsOnly = (userProfile?.travelConsiderations || []).includes("Adults only preferred");
           const hasHoneymoon = (userProfile?.travelConsiderations || []).includes("Honeymoon") || (tp.travelTypes||[]).some(t => /honeymoon|romance/i.test(t));
-          const hasCelebration = (userProfile?.travelConsiderations || []).includes("Anniversary or celebration") || (tp.travelTypes||[]).some(t => /anniversary|milestone/i.test(t));
+          const hasCelebration = (userProfile?.travelConsiderations || []).includes("Anniversary or celebration") || (userProfile?.travelConsiderations || []).includes("Anniversary / Milestone") || (tp.travelTypes||[]).some(t => /anniversary|milestone/i.test(t));
+          const hasBachelorette = (userProfile?.travelConsiderations || []).some(c => /bachelor|bachelorette/i.test(c));
+          const hasGroupTrip = (userProfile?.travelConsiderations || []).some(c => /girls.?trip|guys.?trip|group/i.test(c));
+          const hasWeddingPlanning = (userProfile?.travelConsiderations || []).some(c => /wedding|engaged/i.test(c));
+          const hasMilestoneBirthday = (userProfile?.travelConsiderations || []).some(c => /birthday|milestone/i.test(c));
           const pillPrograms = loyalty.map(a => a.program).filter(Boolean);
           const topProgram = pillPrograms.length > 0 ? pillPrograms[0] : null;
           const topCard = cards.length > 0 ? cards[0].name : null;
@@ -11189,6 +11217,10 @@ Please respond now.`,
           const hasFishing = travelTypes.some(t => /fishing/i.test(t));
           const isInternational = travelTypes.some(t => /international/i.test(t));
           const isUrban = travelTypes.some(t => /urban|city/i.test(t));
+          const isBusiness = travelTypes.some(t => /business/i.test(t));
+          const hasFoodDining = travelTypes.some(t => /food|dining|culinary/i.test(t));
+          const hasProposal = (userProfile?.travelConsiderations || []).some(c => /proposal/i.test(c));
+          const hasFamilyReunion = (userProfile?.travelConsiderations || []).some(c => /family reunion/i.test(c));
 
           // Airport region inference for proximity-based pills
           const pnwAirports = ["SEA","PDX","GEG"];
@@ -11219,8 +11251,10 @@ Please respond now.`,
 
           // ── BUCKET B: High-CPC mainstream beach/Caribbean queries ─────────────
           // "resorts Caribbean", "best beach resorts" = $5-8 CPC
-          const beachMainstreamPills = (hasBeach || hasHoneymoon) ? [
-            "Best luxury beach resorts Caribbean for a couples trip — where should we go?",
+          const beachMainstreamPills = (hasBeach || hasHoneymoon || hasAdultsOnly) ? [
+            hasAdultsOnly
+              ? "Best adults-only beach resorts Caribbean — where to actually go for a couples trip"
+              : "Best luxury beach resorts Caribbean for a couples trip — where should we go?",
             hasHoneymoon ? "Best honeymoon resorts worldwide — top options for two across all destinations" : "Best adults-only beach resorts Caribbean — couples trip, where to go",
             "Best hotels Turks and Caicos for a couples long weekend — full breakdown",
             "Best resorts St. Barths for two — what's worth the price",
@@ -11237,6 +11271,58 @@ Please respond now.`,
             isPNW ? "Best wine country hotels Willamette Valley for a long weekend — two adults" : null,
             "Best luxury wine country hotels — top options for a couples wine trip",
           ].filter(Boolean) : [];
+
+          // ── BUCKET C2: High-CPC mainstream activity queries (profile-matched) ──────
+          // Golf, wellness, ranch, hiking, food, arts, fishing
+          // Each only surfaces for users with that travel type signal
+          const activityMainstreamPills = [
+            // Golf
+            hasGolf ? [
+              "Best golf resorts Scottsdale — full breakdown for a couples golf trip",
+              "Best golf resorts Pebble Beach — what's worth booking for two",
+              isPNW || isMountain ? "Best golf resorts Bandon Dunes Oregon — what to know before booking" : null,
+            ].filter(Boolean) : [],
+            // Wellness
+            hasWellness ? [
+              "Best spa resorts Sedona for a couples wellness weekend",
+              "Best destination spa resorts — Canyon Ranch, Miraval, top options",
+              isCA ? "Best spa resorts Ojai for a long weekend — two adults" : null,
+            ].filter(Boolean) : [],
+            // Ranch & Glamping
+            hasRanch ? [
+              "Best luxury ranch resorts — Wyoming, Montana, Colorado top options for two",
+              "Best glamping resorts — luxury outdoor stays for a couples trip",
+              isMountain ? "Best dude ranch stays Colorado — all-inclusive horseback options" : null,
+            ].filter(Boolean) : [],
+            // Hiking & National Parks
+            hasHiking ? [
+              "Best lodges inside national parks — top options for a couples trip",
+              isPNW ? "Best lodges near Olympic and Rainier national parks for two" : null,
+              isMountain ? "Best lodges near Rocky Mountain National Park — where to stay" : null,
+              isEast ? "Best lodges near Acadia National Park for a long weekend" : null,
+              "Best Glacier National Park lodges — inside and adjacent, two adults",
+            ].filter(Boolean) : [],
+            // Food & Dining
+            (hasFoodDining || hasWine) ? [
+              "Best boutique hotels for food lovers Charleston — culinary trip for two",
+              "Best boutique hotels New Orleans food scene — where to stay for a culinary trip",
+              isCA ? "Best hotels San Francisco for a food-focused long weekend" : null,
+              "Best culinary hotels Oaxaca Mexico — food lovers trip for two",
+            ].filter(Boolean) : [],
+            // Arts & Design
+            hasArts ? [
+              "Best design hotels Santa Fe for a long weekend — arts and architecture",
+              "Best boutique hotels Palm Springs — mid-century design trip for two",
+              isTexas ? "Best design hotels Austin for a long weekend — arts and culture" : null,
+              "Best arts hotels Marfa Texas — design-forward boutique stay for two",
+            ].filter(Boolean) : [],
+            // Fly Fishing
+            hasFishing ? [
+              "Best fly fishing lodges Montana — Madison River and Big Hole for two",
+              "Best fishing lodges Jackson Hole — guided float trips for a couples trip",
+              isPNW ? "Best fly fishing lodges Oregon and Washington — guided options" : null,
+            ].filter(Boolean) : [],
+          ].flat().filter(Boolean);
 
           // ── BUCKET D: High-CPC mainstream hotel destination queries ───────────
           // "hotels New York", "best hotels Chicago" = $5-10 CPC
@@ -11279,13 +11365,22 @@ Please respond now.`,
               : null,
             // Wedding venue — only surface if profile has a wedding-adjacent signal
             // (honeymoon flag is the closest proxy — they may be engaged/planning)
-            hasHoneymoon
+            hasWeddingPlanning
               ? "Best boutique wedding venues — estates, ranches, and resort options"
               : null,
             // Bachelorette/bachelor — only if group travel or explicit occasion signal
             // Never surface generically
-            hasGroupTravel && !hasKidsOrFamily
-              ? "Best bachelorette trip destinations — full options for a group beyond Nashville"
+            (hasBachelorette || hasGroupTrip || (hasGroupTravel && !hasKidsOrFamily))
+              ? "Best bachelorette or group trip destinations — full options beyond Nashville and Vegas"
+              : null,
+            hasMilestoneBirthday
+              ? "Best milestone birthday trip destinations — somewhere genuinely worthy of the occasion"
+              : null,
+            hasProposal
+              ? "Best proposal trip destinations — most romantic boutique hotels for the moment"
+              : null,
+            hasFamilyReunion
+              ? "Best family reunion resorts — ranch, beach, or mountain options for a group"
               : null,
           ].filter(Boolean);
 
@@ -11321,6 +11416,7 @@ Please respond now.`,
             ...skiMainstreamPills,
             ...beachMainstreamPills,
             ...wineMainstreamPills,
+            ...activityMainstreamPills,
             ...occasionMainstreamPills,
           ];
 
