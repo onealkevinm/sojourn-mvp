@@ -5432,8 +5432,17 @@ const OnboardingFlow = ({ onComplete }) => {
             <div style={{ marginBottom: "6px", color: "#C9A84C", fontSize: "11px", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "serif" }}>Step 2 of 4</div>
             <div style={{ fontSize: "26px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "6px" }}>Which cards do you carry?</div>
             <div style={{ color: "#555", fontSize: "13px", marginBottom: "18px", lineHeight: "1.6" }}>Select all that apply. Sojourn routes each component to the card that earns the most rewards.</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "7px", marginBottom: "14px", maxHeight: "300px", overflowY: "auto" }}>
-              {CARD_OPTIONS.map(({ name }) => <Chip key={name} label={name} active={selectedCards.includes(name)} onClick={() => toggleCard(name)} />)}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "14px", maxHeight: "300px", overflowY: "auto" }}>
+              {CARD_OPTIONS.map(({ name }) => (
+                <button key={name} onClick={() => toggleCard(name)} style={{
+                  background: selectedCards.includes(name) ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.03)",
+                  border: `1px solid ${selectedCards.includes(name) ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.08)"}`,
+                  color: selectedCards.includes(name) ? "#C9A84C" : "#6a6460",
+                  borderRadius: "20px", padding: "7px 8px", cursor: "pointer",
+                  fontSize: "11px", transition: "all 0.15s", whiteSpace: "nowrap",
+                  overflow: "hidden", textOverflow: "ellipsis", width: "100%", textAlign: "center",
+                }}>{selectedCards.includes(name) ? "✓ " : ""}{name}</button>
+              ))}
             </div>
 
             {/* Autocomplete card add */}
@@ -5526,11 +5535,11 @@ const OnboardingFlow = ({ onComplete }) => {
                               <span onClick={() => toggleLoyalty(program)} style={{ color: acct.selected ? "#e8e4dc" : "#6a6460", fontSize: "13px", cursor: "pointer", flex: 1 }}>{program}</span>
                             </div>
                             {acct.selected && (
-                              <div style={{ display: "flex", gap: "8px", paddingLeft: "27px" }}>
-                                <select value={acct.tier} onChange={e => setTier(program, e.target.value)} style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#b0a898", fontSize: "12px", cursor: "pointer", fontFamily: "'DM Sans',system-ui,sans-serif" }}>
+                              <div style={{ display: "flex", gap: "6px", paddingLeft: "8px" }}>
+                                <select value={acct.tier} onChange={e => setTier(program, e.target.value)} style={{ flex: "0 1 45%", minWidth: 0, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 8px", color: "#b0a898", fontSize: "11px", cursor: "pointer", fontFamily: "'DM Sans',system-ui,sans-serif" }}>
                                   {tiers.map(t => <option key={t} value={t} style={{ background: "#1a1a1a" }}>{t}</option>)}
                                 </select>
-                                <input value={acct.balance} onChange={e => setBalance(program, e.target.value)} placeholder={key === "airline" ? "Miles (e.g. 45,000)" : "Points (e.g. 45,000)"} style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 10px", color: "#e8e4dc", fontSize: "12px", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
+                                <input value={acct.balance} onChange={e => setBalance(program, e.target.value)} placeholder={key === "airline" ? "Miles" : "Points"} style={{ flex: "0 1 50%", minWidth: 0, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px 8px", color: "#e8e4dc", fontSize: "11px", fontFamily: "'DM Sans',system-ui,sans-serif" }} />
                               </div>
                             )}
                           </div>
@@ -5551,7 +5560,7 @@ const OnboardingFlow = ({ onComplete }) => {
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ marginBottom: "6px", color: "#C9A84C", fontSize: "11px", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "serif" }}>Step 4 of 4</div>
             <div style={{ fontSize: "26px", fontFamily: "'Playfair Display',Georgia,serif", marginBottom: "6px" }}>Brand & style preferences</div>
-            <div style={{ color: "#555", fontSize: "13px", marginBottom: "16px", lineHeight: "1.6" }}>Sojourn weights these in every recommendation. Tap any category to expand and select. You can skip this and add preferences later.</div>
+            <div style={{ color: "#555", fontSize: "13px", marginBottom: "16px", lineHeight: "1.6" }}>Sojourn weights these in every recommendation. Tap any category to expand and select. You can add, remove or modify these during use.</div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "16px", maxHeight: "380px", overflowY: "auto", paddingRight: "4px" }}>
               {BRAND_CATEGORIES.map((cat) => {
@@ -5578,12 +5587,12 @@ const OnboardingFlow = ({ onComplete }) => {
                         {cat.dynamic && brands.length === 0 ? (
                           <div style={{ color: "#444", fontSize: "12px", paddingTop: "6px", fontStyle: "italic" }}>Select loyalty programs in Step 3 to auto-populate this section.</div>
                         ) : (
-                          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", paddingTop: "8px" }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", paddingTop: "8px" }}>
                             {brands.map(brand => (
                               <div
                                 key={brand}
                                 onClick={(e) => { e.stopPropagation(); toggleBrand(brand); }}
-                                style={{ background: selectedBrands.includes(brand) ? "rgba(201,168,76,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${selectedBrands.includes(brand) ? "rgba(201,168,76,0.45)" : "rgba(255,255,255,0.1)"}`, color: selectedBrands.includes(brand) ? "#C9A84C" : "#6a6460", borderRadius: "20px", padding: "6px 12px", cursor: "pointer", fontSize: "12px", transition: "all 0.15s", userSelect: "none" }}
+                                style={{ background: selectedBrands.includes(brand) ? "rgba(201,168,76,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${selectedBrands.includes(brand) ? "rgba(201,168,76,0.45)" : "rgba(255,255,255,0.1)"}`, color: selectedBrands.includes(brand) ? "#C9A84C" : "#6a6460", borderRadius: "20px", padding: "6px 10px", cursor: "pointer", fontSize: "11px", transition: "all 0.15s", userSelect: "none", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                               >
                                 {selectedBrands.includes(brand) ? "✓ " : ""}{brand}
                               </div>
@@ -5617,7 +5626,7 @@ const OnboardingFlow = ({ onComplete }) => {
                   } catch(e) {
                     setDebugMsg("ERROR: " + e.message);
                   }
-                }} style={{ padding: "12px 28px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>Start Optimizing →</button>
+                }} style={{ padding: "12px 28px", background: "#C9A84C", color: "#0a0908", border: "none", borderRadius: "12px", fontSize: "13px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.08em", fontFamily: "'Playfair Display',Georgia,serif" }}>Start Exploring →</button>
               </div>
             </div>
           </div>
