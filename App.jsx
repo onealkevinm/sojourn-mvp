@@ -2649,10 +2649,8 @@ const QUALITY_SIGNALS_DB = {
   "Ace Hotel Chicago": { country: "US", state: "IL", city: "Chicago", tier: "luxury", notes: "West Loop Fulton Market Chicago, design-forward boutique, Waydown rooftop bar, central to restaurant row. Walking distance to Girl & the Goat, Au Cheval, Randolph Street dining." },
 
   "Hyatt Carmel Highlands": { country: "US", state: "CA", city: "Carmel", tier: "luxury", notes: "Highlands Inn Park Hyatt Carmel, dramatic cliff-top ocean views near Point Lobos, World of Hyatt, Pacific Edge restaurant, spa, fireplaces in rooms. 4 miles south of Carmel village. Strong Hyatt redemption option for Carmel/Big Sur queries." },
-  "Carmel Valley Ranch": { country: "US", state: "CA", city: "Carmel", tier: "luxury", notes: "Carmel Valley CA, Hyatt/Unbound Collection, 500-acre ranch resort, 9-hole par-3 golf, spa, family-friendly, wine country setting. World of Hyatt eligible. Inland from Carmel village — wine country atmosphere, not ocean-facing." },
-  "Monterey Plaza Hotel & Spa": { country: "US", state: "CA", city: "Monterey", tier: "luxury", notes: "Cannery Row Monterey CA directly on the water, Marriott Bonvoy, full-service spa, seafood dining, sea otter views from ocean-facing rooms. Best chain hotel on Cannery Row." },
 
-  // ── Closed / Inactive Properties — do not recommend ─────────────────────────
+
   "Villa Greenleaf": { country: "VI", state: "VI", city: "St. Croix", tier: "closed", notes: "CLOSED — permanently closed, do not recommend under any circumstances" },
 
 };
@@ -6295,7 +6293,6 @@ const INDEPENDENT_HOTEL_URLS = {
   "Malliouhana": "https://malliouhana.com/",
   "Mauna Lani": "https://auberge.com/mauna-lani/",
   "Mayflower Inn and Spa": "https://auberge.com/mayflower/",
-  "Mayflower Inn and Spa": "https://auberge.com/mayflower/",
   "Primland Resort": "https://aubergeresorts.com/primland-resort/",
   "Salamander DC": "https://www.salamanderdc.com/",
   "Salamander Middleburg": "https://salamanderresort.com/",
@@ -7897,7 +7894,7 @@ var exportOptionPDF = async (option, tripSummary, userProfile) => {
     const notes = option && option.headline ? (() => {
       const propName = (option.headline || '').split(' · ').slice(1).join(' ') || option.headline || '';
       const qProp = typeof getQualitySignal === 'function' ? getQualitySignal(propName) : null;
-      return q && q.notes && q.notes.length > 60 ? q.notes : null;
+      return qProp && qProp.notes && qProp.notes.length > 60 ? qProp.notes : null;
     })() : null;
     const prompt = [
       'You are Sojourn, a luxury travel advisor.',
