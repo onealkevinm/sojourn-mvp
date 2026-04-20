@@ -1764,7 +1764,7 @@ const QUALITY_SIGNALS_DB = {
   "Rosewood Phuket": { country: "TH", city: "Phuket", tier: "luxury", notes: "Phuket Thailand, Rosewood" },
   "Rosewood Phnom Penh": { country: "KH", city: "Phnom Penh", tier: "luxury", notes: "Phnom Penh Cambodia, Rosewood" },
   "Rosewood Luang Prabang": { country: "LA", city: "Luang Prabang", tier: "ultra_luxury", notes: "Luang Prabang Laos, Rosewood" , url: "https://www.rosewoodhotels.com/en/luang-prabang" },
-  "Rosewood London": { country: "UK", city: "London", tier: "ultra_luxury", notes: "Holborn London, Rosewood" },
+  "Rosewood London": { country: "UK", city: "London", tier: "ultra_luxury", notes: "High Holborn London, Edwardian landmark, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/london" },
   "Rosewood Vienna": { country: "AT", city: "Vienna", tier: "ultra_luxury", notes: "Palais Henckel Vienna, Rosewood" },
   "Rosewood Castiglion del Bosco": { country: "IT", city: "Tuscany", tier: "ultra_luxury", relais_chateaux: true, notes: "Montalcino Tuscany, Rosewood" , url: "https://www.rosewoodhotels.com/en/castiglion-del-bosco" },
   "Rosewood Puebla": { country: "MX", state: "PUE", city: "Puebla", tier: "ultra_luxury", notes: "Historic center Puebla Mexico, Rosewood" , url: "https://www.rosewoodhotels.com/en/puebla" },
