@@ -129,10 +129,7 @@ const mp = {
   }
 };
 
-const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
-if (!ANTHROPIC_KEY) {
-  console.error("[Sojourn] CRITICAL: VITE_ANTHROPIC_KEY is not set. All API calls will fail with auth errors.");
-}
+// API calls proxied through backend — no client-side key needed
 
 // ─── Simulated user profile (will eventually come from OAuth integrations) ───
 const USER_PROFILE = {
@@ -6698,13 +6695,10 @@ const WhyThisExpanded = ({ option, userProfile }) => {
         : 'Write four flowing prose paragraphs separated by blank lines — no section headers or labels, just narrative. Every sentence should be written for this specific traveler and query — generic sentences that could apply to any trip are not acceptable. Tie language back to what was asked for and who this person is, but never invent links to their credit cards or airline programs.\n\nParagraph 1 (~80 words): Where this property sits and what that position specifically enables for this traveler — not just the neighborhood name but what it means to wake up here. Include what makes this property irreducible: the history, the signature artifact, the architectural detail, the thing you can only experience here and nowhere else. Write it as lived experience, not a location description.\n\nParagraph 2 (~70 words, CONDITIONAL): Only write this section if the query or traveler profile signals specific activities — hiking, beach, golf, wine, skiing, kids activities, etc. If no activities were signaled, omit this section entirely. When included: write about the activity as an experience, not a data point. "The Barton Creek Greenbelt starts at the resort boundary" is less useful than what it actually feels like to be there.\n\nParagraph 3 (~70 words): Lead with on-site dining where the property has something genuinely worth calling out — name it specifically (NOMI Kitchen at Park Hyatt Chicago, Aubergine at L\'Auberge Carmel, Cecconi\'s at Soho House). Then 1-2 nearby options filtered to what this traveler actually wants — family-friendly if kids were mentioned, wine-focused if wine country was the intent. Write as experience: what it feels like to eat there, not star ratings or adjectives.\n\nParagraph 4 (~60 words): The 2-3 amenities that genuinely matter for this specific trip. A rooftop pool matters for a June Texas family trip. A spa matters for a wellness query. Omit anything that does not connect to what this person asked for or who they are. Write what the feature delivers experientially, not what it is technically.',
     ].filter(Boolean).join('\n');
 
-    fetch('https://api.anthropic.com/v1/messages', {
+    fetch('https://sojourn-proxy-production.up.railway.app/api/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
@@ -6792,9 +6786,9 @@ const WhyThisExpanded = ({ option, userProfile }) => {
     var partySizeNote = partySize ? "Party size: " + partySize + " people." : "";
 
     var deepPrompt = "You are Sojourn, a knowledgeable travel advisor. The traveler wants deeper detail on this option. Write 220-300 words total using EXACTLY these four sections with **bold headers**. Do not repeat what was already covered in the main description. Be specific, honest, and anticipation-building.\n\n**Dining & Drinks**\nRecommend 2 dining and 2 drinks options specific to this property or neighborhood. If dining was mentioned in the main description, go deeper or different — no redundancy. Be specific: dish names, atmosphere, best time to go.\n\n**Room Strategy**\n" + partySizeNote + " Only include this section if there are genuinely distinctive room types or locations at this property worth knowing about — skip entirely if it is a standard hotel with no meaningful variation. When included: describe room TYPE or physical location (e.g. corner suite, cliff-facing, overwater, garden level). Never reference specific room numbers. Never suggest calling the concierge about rooms.\\n\\n**Strategic Timing & First Day**\\nPractical, honest tips for the first 24 hours. Do not promise things outside the traveler\'s control (early check-in is request-only). Focus on arrival time, what to do first, best time for key experiences, how to avoid crowds.\\n\\n**Insider Intelligence**\\nAuthentic, specific details that reward the informed traveler. CRITICAL: only include seasonal events, festivals, or time-specific programming if they fall within or immediately adjacent to the traveler\'s actual travel dates. A June event is irrelevant to a May traveler and erodes trust. If no relevant seasonal detail applies, skip it and focus on year-round insider knowledge.\n\nOption: " + (option.headline || '') + ". Components: " + allComps + ". Previous description: " + display;
-    fetch("https://api.anthropic.com/v1/messages", {
+    fetch("https://sojourn-proxy-production.up.railway.app/api/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ model: "claude-sonnet-4-5", max_tokens: 600, messages: [{ role: "user", content: deepPrompt }] })
     })
     .then(function(r) { return r.json(); })
@@ -7920,9 +7914,9 @@ const exportOptionPDF = async (option, tripSummary, userProfile) => {
       '',
       'Paragraph 1: Property character, setting, style. Paragraph 2: Specific anticipation-building details (room types where distinctive, dining, views). Paragraph 3: Why this fits this traveler.',
     ].filter(Boolean).join('\n');
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    const resp = await fetch('https://sojourn-proxy-production.up.railway.app/api/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 700, messages: [{ role: 'user', content: prompt }] })
     });
     const data = await resp.json();
@@ -9001,9 +8995,9 @@ export default function SojournApp() {
         "Format: JSON array only, no markdown, no preamble.",
         '[{"type":"add"|"remove"|"swap","title":"short title","detail":"specific rec with math","saving_or_value":"saves $X/yr or worth ~$X/yr"}]'
       ].join(" ");
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("https://sojourn-proxy-production.up.railway.app/api/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-5",
           max_tokens: 800,
@@ -9384,8 +9378,9 @@ DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these ru
     conversationRef.current = [...conversationRef.current, { role: "user", content: userMessage }];
     setLoading(true);
 
-    if (!ANTHROPIC_KEY) {
-      setMessages(prev => [...prev, { role: "assistant", text: "Configuration error: API key not found. Check VITE_ANTHROPIC_KEY in Vercel environment variables." }]);
+    // API calls go through backend proxy — no client-side key needed
+    if (false) {
+      setMessages(prev => [...prev, { role: "assistant", text: "Configuration error." }]);
       setLoading(false);
       return;
     }
@@ -9403,9 +9398,9 @@ DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these ru
       try {
         const p = userProfile;
         const tp = p.travelProfile || {};
-        const res = await fetch("https://api.anthropic.com/v1/messages", {
+        const res = await fetch("https://sojourn-proxy-production.up.railway.app/api/messages", {
           method: "POST",
-          headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "claude-sonnet-4-5",
             max_tokens: 400,
@@ -9598,13 +9593,12 @@ Conversation so far: ${JSON.stringify(conversationRef.current)}`,
         const _t0 = Date.now();
         console.log("[Sojourn] System prompt chars:", sysPrompt.length);
         console.log("[Sojourn] User message chars:", fullContext.length);
-        console.log("[Sojourn] API key present:", !!ANTHROPIC_KEY, "length:", ANTHROPIC_KEY.length);
         // Streaming fetch — keeps connection alive, avoids browser timeout
         const streamPayload = { ...payload, stream: true };
-        const res = await fetch("https://api.anthropic.com/v1/messages", {
+        const res = await fetch("https://sojourn-proxy-production.up.railway.app/api/messages", {
           method: "POST",
           signal: controller.signal,
-          headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(streamPayload)
         });
         clearTimeout(timeout);
@@ -9704,9 +9698,9 @@ Reserve options must:
           system: reserveSysPrompt,
           messages: [{ role: "user", content: reserveUserMsg }],
         };
-        fetch("https://api.anthropic.com/v1/messages", {
+        fetch("https://sojourn-proxy-production.up.railway.app/api/messages", {
           method: "POST",
-          headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(reservePayload)
         }).then(async (res) => {
           if (!res.ok) { console.warn("[Sojourn] Reserve fetch failed:", res.status); return; }
@@ -10091,9 +10085,9 @@ const handleSend = () => {
       setRefineLoadingMessage(refineSteps[refineStepIdx]);
     }, 2000);
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("https://sojourn-proxy-production.up.railway.app/api/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-5",
           max_tokens: 6000,
@@ -10429,9 +10423,9 @@ Please respond now.`,
       if (promisedUpdate && looksLikeRefinementRequest && !replyText.includes('"options"') && !replyText.includes('"headline"')) {
         // AI talked instead of generating JSON — force a direct JSON-only call
         try {
-          const forceRes = await fetch("https://api.anthropic.com/v1/messages", {
+          const forceRes = await fetch("https://sojourn-proxy-production.up.railway.app/api/messages", {
             method: "POST",
-            headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               model: "claude-sonnet-4-5",
               max_tokens: 6000,
@@ -10565,7 +10559,7 @@ Please respond now.`,
       .map(m => (m.role === "user" ? "User: " : "Sojourn: ") + (m.text || m.content))
       .join("\n");
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("https://sojourn-proxy-production.up.railway.app/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
