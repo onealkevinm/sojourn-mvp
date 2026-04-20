@@ -2658,7 +2658,7 @@ const QUALITY_SIGNALS_DB = {
 
 
 // Get quality tier for a property for a property — try exact match then partial
-const getQualitySignal = (propertyName) => {
+var getQualitySignal = (propertyName) => {
   if (!propertyName) return null;
   const name = propertyName.trim();
   if (QUALITY_SIGNALS_DB[name]) return QUALITY_SIGNALS_DB[name];
@@ -6826,12 +6826,12 @@ const WhyThisExpanded = ({ option, userProfile }) => {
 
 // ── Affiliate link builders ───────────────────────────────────────────────────
 
-const BOOKING_AFFILIATE_ID = "YOUR_BOOKING_AFFILIATE_ID"; // Replace after registration
+var BOOKING_AFFILIATE_ID = "YOUR_BOOKING_AFFILIATE_ID"; // Replace after registration
 
 // ── Chain hotel direct booking URL constructors ───────────────────────────────
 // Each chain supports deep links to specific properties with pre-filled dates
 
-const buildGoogleFlightsLink = (origin, destination, airline, departDate, adults) => {
+var buildGoogleFlightsLink = (origin, destination, airline, departDate, adults) => {
   // Google Flights deep link with airline, route, and date pre-populated
   const from = (origin || '').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 3);
   const to = (destination || '').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 3);
@@ -6866,7 +6866,7 @@ const extractPartySize = (option, tripSummary) => {
   return 2; // default
 };
 
-const extractFlightCodes = (flightDetail) => {
+var extractFlightCodes = (flightDetail) => {
   // Parse "Delta · SEA-SBA · 8:00am..." → { airline: "Delta", origin: "SEA", dest: "SBA" }
   if (!flightDetail) return {};
   const parts = flightDetail.split('·').map(p => p.trim());
@@ -7883,7 +7883,7 @@ const exportGridPDF = async (options, tripSummary, userProfile) => {
 };
 
 
-const exportOptionPDF = async (option, tripSummary, userProfile) => {
+var exportOptionPDF = async (option, tripSummary, userProfile) => {
   // Use cached expanded narrative if available
   const cached = window._whyThisCacheGlobal && option && window._whyThisCacheGlobal[option.id];
   if (cached) {
@@ -9379,11 +9379,6 @@ DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these ru
     setLoading(true);
 
     // API calls go through backend proxy — no client-side key needed
-    if (false) {
-      setMessages(prev => [...prev, { role: "assistant", text: "Configuration error." }]);
-      setLoading(false);
-      return;
-    }
 
 
 
