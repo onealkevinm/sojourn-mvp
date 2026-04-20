@@ -2653,6 +2653,62 @@ const QUALITY_SIGNALS_DB = {
 
   "Villa Greenleaf": { country: "VI", state: "VI", city: "St. Croix", tier: "closed", notes: "CLOSED — permanently closed, do not recommend under any circumstances" },
 
+  // ── Nobu Hotels ──────────────────────────────────────────────────────────────
+  "Nobu Hotel Atlanta": { country: "US", state: "GA", city: "Atlanta", tier: "luxury", notes: "Midtown Atlanta, Nobu Hotels", url: "https://www.nobuhotels.com/atlanta/" },
+  "Nobu Hotel Atlantic City": { country: "US", state: "NJ", city: "Atlantic City", tier: "luxury", notes: "Caesars Atlantic City, Nobu Hotels", url: "https://www.caesars.com/nobu-atlantic-city/hotel" },
+  "Nobu Hotel Las Vegas": { country: "US", state: "NV", city: "Las Vegas", tier: "luxury", notes: "Caesars Palace Las Vegas, Nobu Hotels", url: "https://www.caesars.com/nobu-caesars-palace/hotel" },
+  "Nobu Hotel Malibu": { country: "US", state: "CA", city: "Malibu", tier: "luxury", notes: "Malibu CA, Nobu Hotels", url: "https://www.nobuhotels.com/malibu/" },
+  "Nobu Hotel Miami Beach": { country: "US", state: "FL", city: "Miami Beach", tier: "luxury", notes: "Miami Beach FL, Nobu Hotels", url: "https://www.nobuhotels.com/miami-beach/" },
+  "Nobu Hotel New Orleans": { country: "US", state: "LA", city: "New Orleans", tier: "luxury", notes: "Caesars New Orleans, Nobu Hotels", url: "https://www.caesars.com/nobu-new-orleans" },
+  "Nobu Hotel Toronto": { country: "CA", state: "ON", city: "Toronto", tier: "luxury", region: "canada", notes: "Toronto ON, Nobu Hotels", url: "https://www.nobuhotels.com/toronto/" },
+  "Nobu Hotel Palo Alto": { country: "US", state: "CA", city: "Palo Alto", tier: "luxury", notes: "Palo Alto CA, Nobu Hotels", url: "https://www.nobuhotels.com/palo-alto/" },
+
+  // ── One&Only Resorts ──────────────────────────────────────────────────────────
+  "One&Only Big Sky": { country: "US", state: "MT", city: "Big Sky", tier: "ultra_luxury", notes: "Moonlight Basin Big Sky MT, One&Only Resorts", url: "https://www.oneandonlyresorts.com/moonlight-basin" },
+  "One&Only Gorilla's Nest": { country: "RW", city: "Rwanda", tier: "ultra_luxury", notes: "Volcanoes National Park Rwanda, mountain gorilla trekking, One&Only Resorts", url: "https://www.oneandonlyresorts.com/gorillas-nest", ecotourism: true },
+  "One&Only Nyungwe House": { country: "RW", city: "Rwanda", tier: "ultra_luxury", notes: "Nyungwe Forest Rwanda, chimpanzee trekking, canopy walk, One&Only Resorts", url: "https://www.oneandonlyresorts.com/nyungwe-house", ecotourism: true },
+  "One&Only Cape Town": { country: "ZA", city: "Cape Town", tier: "ultra_luxury", notes: "V&A Waterfront Cape Town South Africa, Table Mountain views, One&Only Resorts", url: "https://www.oneandonlyresorts.com/cape-town" },
+  "One&Only Portonovi": { country: "ME-YU", city: "Montenegro", tier: "ultra_luxury", notes: "Boka Bay Montenegro, first One&Only in Europe, Adriatic coast, One&Only Resorts", url: "https://www.oneandonlyresorts.com/portonovi" },
+  "One&Only Reethi Rah": { country: "MV", city: "Maldives", tier: "ultra_luxury", notes: "North Male Atoll Maldives, one of the largest private islands in the Maldives, One&Only Resorts", url: "https://www.oneandonlyresorts.com/reethi-rah" },
+  "One&Only Kea Island": { country: "GR", city: "Kea Island", tier: "ultra_luxury", notes: "Kea Island Greece, private island escape in the Aegean, One&Only Resorts", url: "https://www.oneandonlyresorts.com/kea-island" },
+  "One&Only Aesthesis": { country: "GR", city: "Athens", tier: "ultra_luxury", notes: "Athens Riviera Greece, beachfront resort 30 min from Athens, One&Only Resorts", url: "https://www.oneandonlyresorts.com/aesthesis" },
+  "One&Only The Palm": { country: "AE", city: "Dubai", tier: "ultra_luxury", notes: "Palm Jumeirah Dubai, One&Only Resorts", url: "https://www.oneandonlyresorts.com/the-palm" },
+  "One&Only Royal Mirage": { country: "AE", city: "Dubai", tier: "ultra_luxury", notes: "Jumeirah Beach Road Dubai, Arabian-style palace on the beach, One&Only Resorts", url: "https://www.oneandonlyresorts.com/royal-mirage" },
+
+  // ── Rosewood (new properties) ─────────────────────────────────────────────────
+  "Rosewood Sao Paulo": { country: "BR", city: "Sao Paulo", tier: "luxury", notes: "Jardins Sao Paulo Brazil, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/sao-paulo" },
+  "Rosewood Bermuda": { country: "BM", city: "Bermuda", tier: "luxury", notes: "Tucker's Point Bermuda, pink sand beaches, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/bermuda" },
+  "Rosewood Inn of the Anasazi": { country: "US", state: "NM", city: "Santa Fe", tier: "luxury", notes: "Historic Plaza Santa Fe NM, adobe architecture, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/inn-of-the-anasazi-santa-fe" },
+  "Rosewood Mandarina": { country: "MX", state: "NAY", city: "Nayarit", tier: "luxury", notes: "Riviera Nayarit Mexico, clifftop casitas and beach villas, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/mandarina" },
+  "Chancery Rosewood": { country: "UK", city: "London", tier: "ultra_luxury", notes: "Mayfair London, new flagship Rosewood in historic diplomatic building, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/the-chancery-rosewood" },
+  "Rosewood Amsterdam": { country: "NL", city: "Amsterdam", tier: "ultra_luxury", notes: "Herengracht canal Amsterdam, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/amsterdam" },
+  "Rosewood Schloss Fuschl": { country: "AT", city: "Salzburg", tier: "ultra_luxury", notes: "Lake Fuschlsee Salzburg Austria, 15th-century castle, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/schloss-fuschl-salzburg" },
+  "Rosewood Villa Magna": { country: "ES", city: "Madrid", tier: "ultra_luxury", notes: "Paseo de la Castellana Madrid, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/villa-magna" },
+  "Hotel de Crillon, A Rosewood Hotel": { country: "FR", city: "Paris", tier: "ultra_luxury", notes: "Place de la Concorde Paris, 18th-century palace, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/hotel-de-crillon" },
+  "Rosewood Munich": { country: "DE", city: "Munich", tier: "ultra_luxury", notes: "Maximilianstrasse Munich, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/munich" },
+  "Rosewood Courchevel": { country: "FR", city: "Courchevel", tier: "ultra_luxury", notes: "Le Jardin Alpin Courchevel 1850 ski resort France, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/courchevel" },
+
+  // ── Shangri-La (new properties) ───────────────────────────────────────────────
+  "Shangri-La Paris": { country: "FR", city: "Paris", tier: "ultra_luxury", notes: "Avenue d'Iéna Paris, Napoleon Bonaparte's grand-nephew's former mansion, Shangri-La Hotels", url: "https://www.shangri-la.com/paris/shangrila/" },
+  "Shangri-La The Shard London": { country: "UK", city: "London", tier: "ultra_luxury", notes: "The Shard London Bridge, highest hotel in Western Europe with panoramic views, Shangri-La Hotels", url: "https://www.shangri-la.com/london/shangrila/" },
+
+  // ── Pendry Hotels ─────────────────────────────────────────────────────────────
+  "Pendry Natirar": { country: "US", state: "NJ", city: "Peapack", tier: "luxury", notes: "350-acre estate Peapack NJ, former Moroccan royal retreat, Pendry Hotels/Marriott", url: "https://www.pendry.com/natirar/" },
+  "Pendry Baltimore": { country: "US", state: "MD", city: "Baltimore", tier: "luxury", notes: "Power Plant Live Baltimore MD, Pendry Hotels/Marriott", url: "https://www.pendry.com/baltimore/" },
+  "Pendry Washington DC": { country: "US", state: "DC", city: "Washington DC", tier: "luxury", notes: "Georgetown DC, Pendry Hotels/Marriott", url: "https://www.pendry.com/washington-dc/" },
+  "Pendry Nashville": { country: "US", state: "TN", city: "Nashville", tier: "luxury", notes: "SoBro Nashville, Pendry Hotels/Marriott", url: "https://www.pendry.com/nashville/" },
+  "Pendry Tampa": { country: "US", state: "FL", city: "Tampa", tier: "luxury", notes: "Water Street Tampa FL, Pendry Hotels/Marriott", url: "https://www.pendry.com/tampa/" },
+  "Pendry Chicago": { country: "US", state: "IL", city: "Chicago", tier: "luxury", notes: "West Loop Chicago, Pendry Hotels/Marriott", url: "https://www.pendry.com/chicago/" },
+  "Pendry Park City": { country: "US", state: "UT", city: "Park City", tier: "luxury", notes: "Park City UT, Pendry Hotels/Marriott", url: "https://www.pendry.com/park-city/" },
+  "Pendry Barbados": { country: "BB", city: "Barbados", tier: "luxury", region: "caribbean", notes: "Barbados, Pendry Hotels/Marriott", url: "https://www.pendry.com/barbados/" },
+  "Pendry Mexico City": { country: "MX", state: "CDMX", city: "Mexico City", tier: "luxury", region: "mexico", notes: "Mexico City, Pendry Hotels/Marriott", url: "https://www.pendry.com/mexico-city/" },
+  "Pendry Punta Mita": { country: "MX", state: "NAY", city: "Nayarit", tier: "luxury", region: "mexico", notes: "Punta Mita Nayarit Mexico, Pendry Hotels/Marriott", url: "https://www.pendry.com/punta-mita/" },
+
+  // ── Montage (new properties) ──────────────────────────────────────────────────
+  "Montage Cay": { country: "BS", city: "Bahamas", tier: "ultra_luxury", region: "caribbean", notes: "Private island The Abacos Bahamas, Montage Hotels", url: "https://www.montage.com/destinations/bahamas/" },
+  "Montage Punta Mita": { country: "MX", state: "NAY", city: "Nayarit", tier: "ultra_luxury", region: "mexico", notes: "Punta Mita Nayarit Mexico, Montage Hotels", url: "https://www.montage.com/destinations/puntamita/" },
+  "Montage Valle de Guadalupe": { country: "MX", state: "BC", city: "Valle de Guadalupe", tier: "ultra_luxury", region: "mexico", notes: "Valle de Guadalupe Baja California wine country Mexico, Montage Hotels", url: "https://www.montage.com/destinations/valledeguadalupe/" },
+
 };
 
 
@@ -11628,63 +11684,3 @@ Please respond now.`,
     </div>
   );
 
-  // ── Nobu Hotels ──────────────────────────────────────────────────────────────
-  "Nobu Hotel Atlanta": { country: "US", state: "GA", city: "Atlanta", tier: "luxury", notes: "Midtown Atlanta, Nobu Hotels", url: "https://www.nobuhotels.com/atlanta/" },
-  "Nobu Hotel Atlantic City": { country: "US", state: "NJ", city: "Atlantic City", tier: "luxury", notes: "Caesars Atlantic City, Nobu Hotels", url: "https://www.caesars.com/nobu-atlantic-city/hotel" },
-  "Nobu Hotel Las Vegas": { country: "US", state: "NV", city: "Las Vegas", tier: "luxury", notes: "Caesars Palace Las Vegas, Nobu Hotels", url: "https://www.caesars.com/nobu-caesars-palace/hotel" },
-  "Nobu Hotel Malibu": { country: "US", state: "CA", city: "Malibu", tier: "luxury", notes: "Malibu CA, Nobu Hotels", url: "https://www.nobuhotels.com/malibu/" },
-  "Nobu Hotel Miami Beach": { country: "US", state: "FL", city: "Miami Beach", tier: "luxury", notes: "Miami Beach FL, Nobu Hotels", url: "https://www.nobuhotels.com/miami-beach/" },
-  "Nobu Hotel New Orleans": { country: "US", state: "LA", city: "New Orleans", tier: "luxury", notes: "Caesars New Orleans, Nobu Hotels", url: "https://www.caesars.com/nobu-new-orleans" },
-  "Nobu Hotel Toronto": { country: "CA", state: "ON", city: "Toronto", tier: "luxury", region: "canada", notes: "Toronto ON, Nobu Hotels", url: "https://www.nobuhotels.com/toronto/" },
-  "Nobu Hotel Palo Alto": { country: "US", state: "CA", city: "Palo Alto", tier: "luxury", notes: "Palo Alto CA, Nobu Hotels", url: "https://www.nobuhotels.com/palo-alto/" },
-
-  // ── One&Only Resorts ──────────────────────────────────────────────────────────
-  "One&Only Big Sky": { country: "US", state: "MT", city: "Big Sky", tier: "ultra_luxury", notes: "Moonlight Basin Big Sky MT, One&Only Resorts", url: "https://www.oneandonlyresorts.com/moonlight-basin" },
-  "One&Only Gorilla's Nest": { country: "RW", city: "Rwanda", tier: "ultra_luxury", notes: "Volcanoes National Park Rwanda, mountain gorilla trekking, One&Only Resorts", url: "https://www.oneandonlyresorts.com/gorillas-nest", ecotourism: true },
-  "One&Only Nyungwe House": { country: "RW", city: "Rwanda", tier: "ultra_luxury", notes: "Nyungwe Forest Rwanda, chimpanzee trekking, canopy walk, One&Only Resorts", url: "https://www.oneandonlyresorts.com/nyungwe-house", ecotourism: true },
-  "One&Only Cape Town": { country: "ZA", city: "Cape Town", tier: "ultra_luxury", notes: "V&A Waterfront Cape Town South Africa, Table Mountain views, One&Only Resorts", url: "https://www.oneandonlyresorts.com/cape-town" },
-  "One&Only Portonovi": { country: "ME-YU", city: "Montenegro", tier: "ultra_luxury", notes: "Boka Bay Montenegro, first One&Only in Europe, Adriatic coast, One&Only Resorts", url: "https://www.oneandonlyresorts.com/portonovi" },
-  "One&Only Reethi Rah": { country: "MV", city: "Maldives", tier: "ultra_luxury", notes: "North Male Atoll Maldives, one of the largest private islands in the Maldives, One&Only Resorts", url: "https://www.oneandonlyresorts.com/reethi-rah" },
-  "One&Only Kea Island": { country: "GR", city: "Kea Island", tier: "ultra_luxury", notes: "Kea Island Greece, private island escape in the Aegean, One&Only Resorts", url: "https://www.oneandonlyresorts.com/kea-island" },
-  "One&Only Aesthesis": { country: "GR", city: "Athens", tier: "ultra_luxury", notes: "Athens Riviera Greece, beachfront resort 30 min from Athens, One&Only Resorts", url: "https://www.oneandonlyresorts.com/aesthesis" },
-  "One&Only The Palm": { country: "AE", city: "Dubai", tier: "ultra_luxury", notes: "Palm Jumeirah Dubai, One&Only Resorts", url: "https://www.oneandonlyresorts.com/the-palm" },
-  "One&Only Royal Mirage": { country: "AE", city: "Dubai", tier: "ultra_luxury", notes: "Jumeirah Beach Road Dubai, Arabian-style palace on the beach, One&Only Resorts", url: "https://www.oneandonlyresorts.com/royal-mirage" },
-
-  // ── Rosewood (new properties) ─────────────────────────────────────────────────
-  "Rosewood Sao Paulo": { country: "BR", city: "Sao Paulo", tier: "luxury", notes: "Jardins Sao Paulo Brazil, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/sao-paulo" },
-  "Rosewood Bermuda": { country: "BM", city: "Bermuda", tier: "luxury", notes: "Tucker's Point Bermuda, pink sand beaches, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/bermuda" },
-  "Rosewood Inn of the Anasazi": { country: "US", state: "NM", city: "Santa Fe", tier: "luxury", notes: "Historic Plaza Santa Fe NM, adobe architecture, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/inn-of-the-anasazi-santa-fe" },
-  "Rosewood Mandarina": { country: "MX", state: "NAY", city: "Nayarit", tier: "luxury", notes: "Riviera Nayarit Mexico, clifftop casitas and beach villas, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/mandarina" },
-  "Rosewood London": { country: "UK", city: "London", tier: "ultra_luxury", notes: "High Holborn London, Edwardian landmark, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/london" },
-  "Chancery Rosewood": { country: "UK", city: "London", tier: "ultra_luxury", notes: "Mayfair London, new flagship Rosewood in historic diplomatic building, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/the-chancery-rosewood" },
-  "Rosewood Amsterdam": { country: "NL", city: "Amsterdam", tier: "ultra_luxury", notes: "Herengracht canal Amsterdam, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/amsterdam" },
-  "Rosewood Schloss Fuschl": { country: "AT", city: "Salzburg", tier: "ultra_luxury", notes: "Lake Fuschlsee Salzburg Austria, 15th-century castle, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/schloss-fuschl-salzburg" },
-  "Rosewood Villa Magna": { country: "ES", city: "Madrid", tier: "ultra_luxury", notes: "Paseo de la Castellana Madrid, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/villa-magna" },
-  "Hotel de Crillon, A Rosewood Hotel": { country: "FR", city: "Paris", tier: "ultra_luxury", notes: "Place de la Concorde Paris, 18th-century palace, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/hotel-de-crillon" },
-  "Rosewood Munich": { country: "DE", city: "Munich", tier: "ultra_luxury", notes: "Maximilianstrasse Munich, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/munich" },
-  "Rosewood Vienna": { country: "AT", city: "Vienna", tier: "ultra_luxury", notes: "Palais Henckel Vienna, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/vienna" },
-  "Rosewood Courchevel": { country: "FR", city: "Courchevel", tier: "ultra_luxury", notes: "Le Jardin Alpin Courchevel 1850 ski resort France, Rosewood Hotels", url: "https://www.rosewoodhotels.com/en/courchevel" },
-
-  // ── Shangri-La (new properties) ───────────────────────────────────────────────
-  "Shangri-La Paris": { country: "FR", city: "Paris", tier: "ultra_luxury", notes: "Avenue d'Iéna Paris, Napoleon Bonaparte's grand-nephew's former mansion, Shangri-La Hotels", url: "https://www.shangri-la.com/paris/shangrila/" },
-  "Shangri-La The Shard London": { country: "UK", city: "London", tier: "ultra_luxury", notes: "The Shard London Bridge, highest hotel in Western Europe with panoramic views, Shangri-La Hotels", url: "https://www.shangri-la.com/london/shangrila/" },
-
-  // ── Pendry Hotels ─────────────────────────────────────────────────────────────
-  "Pendry Manhattan West": { country: "US", state: "NY", city: "New York", tier: "luxury", notes: "Hudson Yards Manhattan NYC, Pendry Hotels/Marriott", url: "https://www.pendry.com/manhattan-west/" },
-  "Pendry Natirar": { country: "US", state: "NJ", city: "Peapack", tier: "luxury", notes: "350-acre estate Peapack NJ, former Moroccan royal retreat, Pendry Hotels/Marriott", url: "https://www.pendry.com/natirar/" },
-  "Pendry Baltimore": { country: "US", state: "MD", city: "Baltimore", tier: "luxury", notes: "Power Plant Live Baltimore MD, Pendry Hotels/Marriott", url: "https://www.pendry.com/baltimore/" },
-  "Pendry Washington DC": { country: "US", state: "DC", city: "Washington DC", tier: "luxury", notes: "Georgetown DC, Pendry Hotels/Marriott", url: "https://www.pendry.com/washington-dc/" },
-  "Pendry Nashville": { country: "US", state: "TN", city: "Nashville", tier: "luxury", notes: "SoBro Nashville, Pendry Hotels/Marriott", url: "https://www.pendry.com/nashville/" },
-  "Pendry Tampa": { country: "US", state: "FL", city: "Tampa", tier: "luxury", notes: "Water Street Tampa FL, Pendry Hotels/Marriott", url: "https://www.pendry.com/tampa/" },
-  "Pendry Chicago": { country: "US", state: "IL", city: "Chicago", tier: "luxury", notes: "West Loop Chicago, Pendry Hotels/Marriott", url: "https://www.pendry.com/chicago/" },
-  "Pendry Park City": { country: "US", state: "UT", city: "Park City", tier: "luxury", notes: "Park City UT, Pendry Hotels/Marriott", url: "https://www.pendry.com/park-city/" },
-  "Pendry Barbados": { country: "BB", city: "Barbados", tier: "luxury", region: "caribbean", notes: "Barbados, Pendry Hotels/Marriott", url: "https://www.pendry.com/barbados/" },
-  "Pendry Mexico City": { country: "MX", state: "CDMX", city: "Mexico City", tier: "luxury", region: "mexico", notes: "Mexico City, Pendry Hotels/Marriott", url: "https://www.pendry.com/mexico-city/" },
-  "Pendry Punta Mita": { country: "MX", state: "NAY", city: "Nayarit", tier: "luxury", region: "mexico", notes: "Punta Mita Nayarit Mexico, Pendry Hotels/Marriott", url: "https://www.pendry.com/punta-mita/" },
-
-  // ── Montage (new properties) ──────────────────────────────────────────────────
-  "Montage Cay": { country: "BS", city: "Bahamas", tier: "ultra_luxury", region: "caribbean", notes: "Private island The Abacos Bahamas, Montage Hotels", url: "https://www.montage.com/destinations/bahamas/" },
-  "Montage Punta Mita": { country: "MX", state: "NAY", city: "Nayarit", tier: "ultra_luxury", region: "mexico", notes: "Punta Mita Nayarit Mexico, Montage Hotels", url: "https://www.montage.com/destinations/puntamita/" },
-  "Montage Valle de Guadalupe": { country: "MX", state: "BC", city: "Valle de Guadalupe", tier: "ultra_luxury", region: "mexico", notes: "Valle de Guadalupe Baja California wine country Mexico, Montage Hotels", url: "https://www.montage.com/destinations/valledeguadalupe/" },
-
-}
