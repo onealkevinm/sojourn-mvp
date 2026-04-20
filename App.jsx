@@ -129,7 +129,8 @@ const mp = {
   }
 };
 
-// API calls proxied through backend — no client-side key needed
+// API key is handled server-side by the Railway proxy — never set this in the browser
+const ANTHROPIC_KEY = ""; // intentionally empty — all calls go through /api/messages proxy
 
 // ─── Simulated user profile (will eventually come from OAuth integrations) ───
 const USER_PROFILE = {
