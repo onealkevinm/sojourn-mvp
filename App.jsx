@@ -2670,35 +2670,34 @@ var getQualitySignal = (propertyName) => {
   return key ? QUALITY_SIGNALS_DB[key] : null;
 };
 
-// Build quality context string for AI prompt injection
 const buildQualityContext = (propertyNames) => {
   if (!propertyNames || !propertyNames.length) return "";
   const signals = propertyNames.map(name => {
-    const q = getQualitySignal(name);
-    if (!q) return null;
+    const qSig = getQualitySignal(name);
+    if (!qSig) return null;
     const markers = [
-      q.michelin_keys ? `${q.michelin_keys} Michelin Key${q.michelin_keys > 1 ? 's' : ''}` : null,
-      q.michelin_stars ? `${q.michelin_stars} Michelin Star${q.michelin_stars > 1 ? 's' : ''} (restaurant)` : null,
-      q.forbes_stars ? `Forbes ${q.forbes_stars}-Star` : null,
-      q.relais_chateaux ? "Relais & Châteaux" : null,
-      q.tl_gold ? "T&L Gold List" : null,
-      q.slh ? "Small Luxury Hotels" : null,
-      q.aman ? "Aman" : null,
-      q.auberge ? "Auberge Collection" : null,
-      q.belmond ? "Belmond" : null,
-      q.cn_gold ? "Condé Nast Gold List" : null,
-      q.cn_hot_list ? "Condé Nast Hot List" : null,
-      q.historic ? "Historic property" : null,
-      q.ecotourism ? "Eco/sustainability focus" : null,
+      qSig.michelin_keys ? `${qSig.michelin_keys} Michelin Key${qSig.michelin_keys > 1 ? 's' : ''}` : null,
+      qSig.michelin_stars ? `${qSig.michelin_stars} Michelin Star${qSig.michelin_stars > 1 ? 's' : ''} (restaurant)` : null,
+      qSig.forbes_stars ? `Forbes ${qSig.forbes_stars}-Star` : null,
+      qSig.relais_chateaux ? "Relais & Châteaux" : null,
+      qSig.tl_gold ? "T&L Gold List" : null,
+      qSig.slh ? "Small Luxury Hotels" : null,
+      qSig.aman ? "Aman" : null,
+      qSig.auberge ? "Auberge Collection" : null,
+      qSig.belmond ? "Belmond" : null,
+      qSig.cn_gold ? "Condé Nast Gold List" : null,
+      qSig.cn_hot_list ? "Condé Nast Hot List" : null,
+      qSig.historic ? "Historic property" : null,
+      qSig.ecotourism ? "Eco/sustainability focus" : null,
     ].filter(Boolean);
-    const tier = q.tier ? q.tier.replace('_', ' ') : '';
-    const notes = q.notes && q.notes.length > 20 ? ` — ${q.notes.slice(0, 120)}` : '';
+    const tier = qSig.tier ? qSig.tier.replace('_', ' ') : '';
+    const notes = qSig.notes && qSig.notes.length > 20 ? ` — ${qSig.notes.slice(0, 120)}` : '';
     const markerStr = markers.length > 0 ? ` [${markers.join(', ')}]` : '';
     // Add geo data if available
     const geo = GEO_ENRICHMENTS[name];
     const geoStr = geo ? ` [${geo.city}${geo.state ? ', ' + geo.state : ''} | ${geo.nearest_airport} +${geo.drive_mins}min drive${geo.activity ? ' | ' + geo.activity.slice(0,4).join('/') : ''}${geo.ski ? ' | ski:' + geo.ski : ''}${geo.beach ? ' | beach:' + geo.beach : ''}]` : '';
     // Closed properties — surface as explicit warning so model sees it
-    if (q.tier === 'closed') return `${name} — CLOSED, do not recommend`;
+    if (qSig.tier === 'closed') return `${name} — CLOSED, do not recommend`;
     return `${name} (${tier}${markerStr})${geoStr}${notes}`;
   }).filter(Boolean);
   return signals.length > 0 ? `QUALITY-VERIFIED PROPERTIES FOR THIS DESTINATION:\n${signals.join('\n')}` : '';
@@ -5053,8 +5052,8 @@ const getRestaurantSignals = (city, axisPreference = null, cuisine = null) => {
 // Build restaurant context string for AI prompt injection on local discovery queries
 const getPropertyStoryNotes = (hotelName) => {
   if (!hotelName) return null;
-  const q = getQualitySignal(hotelName);
-  if (q && q.notes && q.notes.length > 60) return q.notes;
+  const qHotel = getQualitySignal(hotelName);
+  if (qHotel && qHotel.notes && qHotel.notes.length > 60) return qHotel.notes;
   const words = hotelName.toLowerCase().split(' ').slice(0, 3).join(' ');
   const keys = Object.keys(QUALITY_SIGNALS_DB);
   const partial = keys.find(k =>
@@ -5870,8 +5869,8 @@ const buildAirlineLink = (airlineName, origin, dest, date) => {
                           a.includes('british') ? 'British Airways' :
                           a.includes('air canada') ? 'Air Canada' :
                           airlineName;
-    const q = `${airlineFilter} flights from ${o} to ${d}`;
-    return `https://www.google.com/travel/flights?q=${encodeURIComponent(q)}`;
+    const qFlight = `${airlineFilter} flights from ${o} to ${d}`;
+    return `https://www.google.com/travel/flights?q=${encodeURIComponent(qFlight)}`;
   }
 
   // No route info — fall back to airline homepage
@@ -7896,7 +7895,7 @@ var exportOptionPDF = async (option, tripSummary, userProfile) => {
     const brands = (profile.preferredBrands || []).slice(0, 5).join(', ') || 'not set';
     const notes = option && option.headline ? (() => {
       const propName = (option.headline || '').split(' · ').slice(1).join(' ') || option.headline || '';
-      const q = typeof getQualitySignal === 'function' ? getQualitySignal(propName) : null;
+      const qProp = typeof getQualitySignal === 'function' ? getQualitySignal(propName) : null;
       return q && q.notes && q.notes.length > 60 ? q.notes : null;
     })() : null;
     const prompt = [
