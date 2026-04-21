@@ -9412,7 +9412,7 @@ COMPONENT VALUE RULE — CRITICAL:
   - Never mix redemption and earning in the same points field
 - loyaltyHighlight = one short sentence, 150 characters max. The single most relevant status perk for this trip — e.g. "Your Globalist status gets free breakfast and 4pm late checkout here." Do NOT repeat points math.
 - cardStrategy = which card to use for each cash-paid component and why. Format: "Flights: [card] ([Nx] miles) · Hotel: [card] ([Nx] points)". Only include components where cash is paid. Reflect actual cards and multipliers — never invent. Prefer cashback over 1x points cards when no category bonus applies.
-- whyThis = 2-3 sentences only. Be specific to this traveler and destination. Frame cash figures consistently — if flights are $0 out of pocket, say "flights covered by your miles" not "flights cost $X". Do not pad.
+- whyThis = 2-3 sentences, 50-70 words. MUST end with a complete sentence and a period — never mid-sentence. Be specific to this traveler and destination. Do not devote more than one clause to food/dining — whyThis is about the property and trip fit, not the restaurant. Proximity references should be directional and qualitative (e.g. "steps from", "walkable to", "short drive", "adjacent to") — avoid asserting specific times or distances for claims you cannot verify with confidence. Frame cash figures consistently — if flights are $0 out of pocket, say "flights covered by your miles" not "flights cost $X". Do not pad.
 - pointsEarned (top-level) = earning side ONLY — points/miles/cashback this trip generates on cash-paid components. CRITICAL: if a component is covered by a redemption, it earns NO points — do NOT include that program in pointsEarned. Example: if Delta miles cover flights, do NOT include "Delta miles earned" in pointsEarned. Only include programs earned on cash-paid components.
 - CASHBACK vs POINTS FORMATTING: USAA Preferred Cash Rewards earns CASH BACK, not points. Always format as "$X cashback" never as "X points" or "X USAA points". In pointsEarned field: "est. 3,200 Delta miles + $48 cashback" — the cashback is a dollar amount with $ sign, not a point count. In component points field: "est. $18 cashback (1.5%)" — always include % rate and $ sign.
 - SUMMARY CONSISTENCY: the top-level pointsEarned string must exactly match the sum of all component earning fields. If components show "est. 2,670 Delta miles" on flights and "est. $27 cashback" on hotel, pointsEarned must show "est. 2,670 Delta miles + $27 cashback" — not just "via USAA" or a different number. Never attribute flight mile earning to USAA — Delta miles come from the Delta Reserve card, cashback comes from USAA, and these are distinct programs that must be listed separately.
@@ -9930,7 +9930,7 @@ const handleSend = () => {
       // Direct preference changes
       /i\s+(want|prefer|would\s+like|need|am\s+looking\s+for|only\s+want|don.t\s+want)/i,
       // Geographic refinements
-      /stay.*in|options.*in|somewhere.*in|hotels.*in|trips.*to|fly.*to|go.*to/i,
+      /(?:want to |looking to |can we |let.s )stay.*in|options.*in|somewhere.*in|hotels.*in|trips.*to|fly.*to|go.*to/i,
     ];
     // ADDITIVE requests — "any others like X" — should NOT trigger full regen
     // These are keep-and-expand requests, handled by Option B confirmation pattern
@@ -9979,7 +9979,7 @@ const handleSend = () => {
       clearTimeout(refineTimeout);
       setRefineLoading(false);
       setRefineLoadingMessage('');
-      const destMatch = msg.match(/bend|portland|carmel|monterey|ashland|sunriver|sisters|cannon beach|[a-z]+(,?\s+or|,?\s+wa|,?\s+ca)/i);
+      const destMatch = msg.match(/\b(bend|portland|carmel|monterey|ashland|sunriver|sisters|cannon beach|pacific city|seaside|lincoln city|manzanita|astoria|hood river|joseph|enterprise|newport|tillamook|brookings|gold beach|bandon|coos bay)\b/i);
       const destName = destMatch ? destMatch[0].trim() : null;
       const regenSummary = destName
         ? `Narrowing to ${destName.charAt(0).toUpperCase() + destName.slice(1)} — scroll up to see updated options ↑`
@@ -10277,13 +10277,13 @@ SMART OPTION SUPPRESSION — evaluate traveler profile before generating options
 - BEST POINTS EARNED / FUTURE VALUE: only generate if the traveler has at least one loyalty program OR a co-branded travel card. If they have no loyalty programs AND only a cashback card, replace with a second Wild Card or Best Value.
 - Never generate a Redemption Opportunity that requires points the traveler doesn't have.
 
-WORD COUNT DISCIPLINE: whyThis target 40-60 words. tradeoff max 20 words. Chat responses max 150 words.
+WORD COUNT DISCIPLINE: whyThis target 50-70 words, must end with a complete sentence and period. tradeoff max 20 words. Chat responses max 150 words.
 AFFIRMATIVE REASONING RULE: Every whyThis must stand on its own. Make the strongest affirmative case for THIS option for THIS traveler — why it fits their intent, profile, and occasion specifically. NEVER compare to or throw shade on other options in the result set. NEVER say "unlike the Quality Upgrade..." or "while Option 3 is further..." The tradeoff field is for honest constraints about THIS option only (weather, logistics, cost) — not comparisons. The user can compare across the grid. Your job is to make each option's best case independently.
 CARD QUALITY RULES (when generating new cards):
 - NUMBER FORMATTING: all numbers of 1,000 or more must use comma separators in ALL text fields — pointsEarned, whyThis, detail, tradeoff, loyaltyHighlight, cardStrategy. Examples: "3,200 Delta miles" not "3200 Delta miles", "$1,315" not "$1315", "26,000 Hyatt points" not "26000 Hyatt points", "$2,890" not "$2890". This applies to every number in every field without exception.
 - Go deeper, not wider. For any given destination or region, surface the most interesting and fitting properties within that geography before reaching to neighboring regions. A lesser-known gem within the stated area is always preferable to a well-known property just outside it. The Idaho Rocky Mountain Ranch in the Sawtooths is a better Idaho answer than Jackson Hole — even if Jackson Hole is more famous. Depth of knowledge within the query's geography signals intelligence. Breadth across neighboring geographies signals laziness.
 - Each option must be genuinely distinct with a clear optimization angle
-- whyThis: 2-3 sentences, specific to THIS traveler's loyalty status and THIS trip. For earning-intent queries: show points earned per component (e.g. "3x flights via Delta Reserve = 2,670 miles · Bonvoy Silver earns 4,240 points at St. Regis"), then ONE total estimated value line at the end ("Total est. earning: ~10,000 points worth ~$150"). Do NOT show $ value per individual component — only a single total at the end. Keep the closing sentence focused on the qualitative experience/location fit, not more math.
+- whyThis: 2-3 sentences, 50-70 words, MUST end with a complete sentence and a period — never mid-sentence. Do not devote more than one clause to food/dining. Proximity references directional only — no specific times/distances. Specific to THIS traveler's loyalty status and THIS trip. For earning-intent queries: show points earned per component (e.g. "3x flights via Delta Reserve = 2,670 miles · Bonvoy Silver earns 4,240 points at St. Regis"), then ONE total estimated value line at the end ("Total est. earning: ~10,000 points worth ~$150"). Do NOT show $ value per individual component — only a single total at the end. Keep the closing sentence focused on the qualitative experience/location fit, not more math.
 - tradeoff: one crisp specific sentence — never generic
 - Room configs must use fewest rooms for party size (2 travelers = 1 king room, not adjoining rooms)
 - Reference actual card multipliers and loyalty tier benefits
