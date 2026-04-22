@@ -9132,7 +9132,7 @@ const buildDestinationContext = (userMessage) => {
   }
   if (relevant.length === 0) return '';
   return 'DESTINATION CONTEXT:\n' + relevant.map(d =>
-    \`\${d.dest}: \${d.vibe}. Best for: \${(d.occasion_fit||[]).join(', ')}. Alt to: \${(d.anti_mainstream_alt_to||[]).join(', ') || 'n/a'}.\`
+    d.dest + ': ' + d.vibe + '. Best for: ' + (d.occasion_fit||[]).join(', ') + '. Alt to: ' + ((d.anti_mainstream_alt_to||[]).join(', ') || 'n/a') + '.'
   ).join('\n');
 };
 const buildSystemPrompt = () => {
