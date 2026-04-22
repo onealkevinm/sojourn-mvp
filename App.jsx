@@ -9504,6 +9504,12 @@ NEGATION TIERS: Rejecting Vegas/Napa/Maldives = low knowledge signal (anyone kno
 STEP 5 — CONCENTRATION AWARENESS (victims of their own success):
 Napa, Vegas, Cancun, Maldives, Bora Bora, Santorini, Aspen, Vail, Park City, Hawaii (Maui/Waikiki), Tuscany, Nashville, Charleston, Scottsdale — when these are the obvious answer, always include at least one anti_mainstream alternative serving the same intent at equal or higher quality.
 
+CONSTRAINT RELAXATION (for highly-specific queries with 3+ trailing qualifiers):
+1. Find perfect conjunction first → Recommended. Tiered versions → Quality/Value.
+2. If perfect conjunction is sparse: NEVER relax occasion, adults-only, explicit destination, negation filters. Relax vibe/scale/brand FIRST (unless profile signals brand is paramount — then relax activities instead). Relax activity on-property → nearby SECOND.
+3. "One qualifier short" properties → Wild Card: Intent Extension if relaxed a query signal; Wild Card: Profile Extension if relaxed a profile signal. Gap named explicitly in tradeoff field either way.
+4. NEVER silently drop a constraint — always name what was relaxed and frame it as a genuine exchange.
+
 DATE FIELDS — populate checkIn, checkOut, nights in tripSummary using these rules. Today is Monday, March 30, 2026.\n1. SPECIFIC DATES given → use exactly. checkIn and checkOut as YYYY-MM-DD. nights = checkOut minus checkIn in days.\n2. DEPART DAY OF WEEK + nights ("leaving Friday, 5 nights") → checkIn = next occurrence of that weekday from today. checkOut = checkIn + nights.\n3. RETURN DAY OF WEEK + nights ("back Sunday, 5 nights") → checkOut = next that weekday from today. checkIn = checkOut minus nights.\n4. MONTH + nights ("April, 5 nights") → pick a mid-month Tuesday avoiding peak weekends. checkOut = checkIn + nights.\n5. SEASON + duration ("this summer, a week") → pick a representative date. checkOut = checkIn + nights.\n6. No specific time → leave checkIn and checkOut as empty strings, nights as 0.\nNIGHTS vs DAYS: "5 days" = 4 nights. Always use nights for hotel stays.\ndates field = human-readable string like "April 22-27". checkIn/checkOut = ISO YYYY-MM-DD.\n\nREQUIRED JSON SCHEMA:\n{"tripSummary":{"origin":"","destination":"","dates":"","checkIn":"","checkOut":"","nights":0,"preferences":[],"constraints":[]},"options":[{"id":1,"tag":"Recommended","tagColor":"#C9A84C","headline":"","subhead":"","totalCost":0,"pointsEarned":"","pointsValue":0,"netValue":0,"redemption":null,"redemptions":[],"tags":[],"tradeoff":"","loyaltyHighlight":"","cardStrategy":"","whyThis":"","components":[{"label":"Flight","day":1,"value":"","detail":"","points":"","card":""},{"label":"Return Flight","day":5,"value":"","detail":"","points":"","card":""},{"label":"Hotel","day":1,"nights":3,"value":"","detail":"","points":"","card":""},{"label":"Ground","day":1,"value":"","detail":"","points":"","card":""}],"experiences":[]}],"reserve_options":[]}. Set reserve_options to an empty array []. (1) every component MUST include a day integer (1-based). Multi-property stays get separate components each with their own day. Return transport day = total nights + 1. (2) experiences[] must be an EMPTY ARRAY by default. ONLY populate it if the user has explicitly requested specific dining, activities, breweries, distilleries, or excursions in this conversation and asked for them to be included. Never speculatively generate experiences.`;
   };
 
@@ -10636,6 +10642,57 @@ STEP 7 — CONCENTRATION AWARENESS:
 Some destinations are "victims of their own success" — overcrowded, over-indexed, chain-dominated:
 Napa, Vegas, Cancun, Maldives, Bora Bora, Santorini, Aspen, Vail, Park City, Hawaii (Maui/Waikiki), Tuscany, Nashville, Charleston, Scottsdale
 When a query names these OR when the obvious answer is one of these: surface them if explicitly requested BUT always include at least one anti_mainstream alternative that serves the same intent at equal or higher quality.
+
+
+QUERY CONCENTRATION & CONSTRAINT RELAXATION RULES:
+
+QUERY SPECIFICITY SPECTRUM:
+- 1 dimension present → broad; profile does the heavy lifting; concierge clarifies before generating
+- 2 dimensions → structured; generate confidently using conjoint classification
+- 3 dimensions → well-specified; Sojourn's sweet spot; generate with high confidence
+- 3+ trailing qualifiers simultaneously → highly specific; apply constraint relaxation logic below
+
+CONSTRAINT RELAXATION HIERARCHY (for overspecified queries where perfect conjunction is sparse):
+
+STEP 1 — Find the perfect conjunction first:
+All constraints satisfied simultaneously → this is the Recommended option.
+If multiple perfect conjunctions exist → Recommended (best overall fit), Quality Upgrade (higher tier same fit), Best Value (lower tier same fit).
+
+STEP 2 — If perfect conjunction is empty or only 1-2 properties qualify:
+Identify the most optional constraint using this relaxation order:
+
+NEVER RELAX — these are identity constraints; relaxing them changes what trip this fundamentally is:
+- Occasion type (honeymoon, bachelor, anniversary)
+- Adults-only (hard group composition filter)
+- Explicit destination anchor (traveler said "Telluride" — don't move them to Aspen)
+- Negation filters (traveler said "not a chain" — never surface a chain)
+
+RELAX FIRST — vibe and character preferences (softest constraints):
+- Boutique/scale preference (a 60-room property when they said "boutique" — name it honestly)
+- Specific brand flag (relais_chateaux preferred but SLH property is the best fit)
+- Historic/design-forward/vibe character (present if possible, relax if needed)
+EXCEPTION: If the traveler's profile signals that brand or design IS the paramount signal (preferred_brands list is specific and consistent, design_pedigree in travel_types, cultural_explorer archetype) → treat brand/vibe as a near-hard constraint and relax activities instead. Some travelers would rather skimp on an amenity than compromise on the property character — e.g. choosing Four Seasons because it is Four Seasons, not because of a specific amenity.
+
+RELAX SECOND — activity on-property vs. nearby (substitutable with transparency):
+- fly_fishing on-property → "exceptional fly fishing 20 minutes away" acceptable if named honestly
+- ski_in_out → ski shuttle or 5-minute drive acceptable if named as the tradeoff
+- beach_access → "steps from beach" vs beachfront if named
+- golf, spa, vineyard → "property has preferred access at nearby [X]" acceptable
+
+STEP 3 — Surface the "one qualifier short" option as a Wild Card:
+When a property satisfies all hard constraints but misses one soft constraint → surface as Wild Card with the gap named explicitly in the tradeoff field.
+WILD CARD TYPE ASSIGNMENT for constraint-relaxed options:
+- Relaxed a QUERY signal (boutique → 60-room property, vibe preference) → Wild Card: Intent Extension ("here's what the query implies at full fidelity, with one honest tradeoff")
+- Relaxed a PROFILE signal (preferred brand not available, traveler_archetype preference not met) → Wild Card: Profile Extension ("here's the best option for who you are, even if it doesn't match everything you asked for")
+Example: "boutique ski-in/ski-out adults-only Telluride" — if the only ski-in/ski-out property is 80 rooms (not boutique) → Wild Card: Intent Extension, tradeoff: "Larger than boutique at 80 rooms, but the only true ski-in/ski-out adults-preferred property in Telluride — trade the scale for the access."
+Example: Traveler has Four Seasons in preferred_brands but query asks "boutique ski lodge Telluride" and there's no Four Seasons → Wild Card: Profile Extension surfaces the best Four Seasons alternative in region, tradeoff: "Not boutique scale, but matches your Four Seasons preference with the same mountain access."
+
+TRADEOFF FIELD DISCIPLINE for constraint relaxation:
+- Always name the relaxed constraint explicitly: "Not ski-in/ski-out — 5-minute shuttle provided" not "convenient ski access"
+- Never silently drop a constraint — the traveler asked for it; acknowledge you couldn't fully satisfy it
+- Frame the tradeoff as a genuine exchange, not a consolation: "Trade the boutique scale for the only true ski-in/ski-out access in the valley"
+
+
 
 Please respond now.
 
