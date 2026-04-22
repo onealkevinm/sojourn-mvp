@@ -9499,6 +9499,7 @@ NEGATION SIGNAL STRENGTH:
 - Destination negation alone = PRACTICAL_CONSTRAINT → exclude negated destination, next-tier alternatives acceptable
 - Anti-mainstream lead word alone = PREFERENCE_SIGNAL → weight anti_mainstream properties, don't hard-exclude mainstream if property is genuinely distinctive
 - Property negation + anti-mainstream lead = IDENTITY_STATEMENT → independent only, no chains regardless of tier
+NEGATION TIERS: Rejecting Vegas/Napa/Maldives = low knowledge signal (anyone knows these) → surface genuinely different alternatives, NOT the next obvious tier (not Napa → NOT Sonoma). Rejecting Sonoma/Park City/Breckenridge = moderate knowledge → surface less-discovered layer. Rejecting specific operators/sub-regions = domain knowledge → HARD_REJECTION, surface what they couldn't find themselves. KEY RULE: if your result is something the traveler likely already knows, it has failed the conjunction test.
 
 STEP 5 — CONCENTRATION AWARENESS (victims of their own success):
 Napa, Vegas, Cancun, Maldives, Bora Bora, Santorini, Aspen, Vail, Park City, Hawaii (Maui/Waikiki), Tuscany, Nashville, Charleston, Scottsdale — when these are the obvious answer, always include at least one anti_mainstream alternative serving the same intent at equal or higher quality.
@@ -10071,6 +10072,8 @@ const handleSend = () => {
       /update.*option|revise.*option|redo|regenerate|show.*new|give.*me.*new|find.*me|look.*for/i,
       /add.*as.*option|add.*option|include.*option|add.*resort|add.*hotel|add.*ranch|add.*lodge/i,
       /can\s+you\s+(show|find|give|get|make|create|generate|update|change|swap|switch|add|include|put|replace)/i,
+      // Expanded negation vocabulary — all mean "not [place/thing]"
+      /\b(other than|besides|rather than|instead of|not just|anywhere but|everywhere except|something other than|different from|outside of|beyond)\s+[a-z]/i,
       // Direct preference changes
       /i\s+(want|prefer|would\s+like|need|am\s+looking\s+for|only\s+want|don.t\s+want)/i,
       // Geographic refinements
@@ -10484,11 +10487,28 @@ STEP 4B — NEGATION SIGNAL STRENGTH:
 - PREFERENCE_SIGNAL = anti-mainstream lead word alone → weight anti_mainstream properties; don't hard-exclude mainstream if the property itself is genuinely distinctive
 - IDENTITY_STATEMENT = property type negation + anti-mainstream lead → independent properties only, no chains regardless of brand tier
 
+
+NEGATION SOPHISTICATION TIERS — weight anti-mainstream signal by reference point specificity:
+TIER 1 REJECTION (low domain knowledge signal — anyone knows these): Vegas, Napa, Maldives, Aspen, Paris, Tuscany, Cancun, Hawaii, Santorini, Bora Bora, Nashville, Charleston → PRACTICAL_CONSTRAINT or PREFERENCE_SIGNAL. Traveler knows enough to reject the most famous thing. Surface genuinely different alternatives — NOT the next-tier obvious answer (not Napa → NOT Sonoma; not Aspen → NOT Vail).
+TIER 2 REJECTION (moderate domain knowledge — they've done research): Sonoma, Park City, Breckenridge, Healdsburg, Scottsdale, Tulum, Positano, Mykonos → PREFERENCE_SIGNAL upgrading toward HARD_REJECTION. They're past the first-tier obvious. Surface the less-discovered layer.
+TIER 3 REJECTION (genuine domain knowledge — they know the field): Rejecting specific operators ("not Vail Resorts properties", "not the Madison River"), sub-regions ("not Rutherford corridor"), specific brand clusters ("not another Four Seasons") → HARD_REJECTION regardless of lead word. This traveler has earned the most specific, least-obvious alternatives available. Surface properties they couldn't have found themselves.
+KEY RULE: If the result you're about to surface is something the traveler likely already knows (e.g. Sonoma for "not Napa"), it has FAILED the conjunction test. The result should tell them something new.
+
+
 STEP 5 — INFER MISSING DIMENSIONS from profile when query is underspecified:
 - If query has ACTIVITY only (no destination) → use home airport for proximity inference, surface top 2-3 destinations for that activity
 - If query has OCCASION only (no destination/activity) → infer from profile: luxury tier + adults_only for honeymoon, group size for bachelor
 - If query has DESTINATION only (no activity/occasion) → surface across activity types, let quality DB and tier drive differentiation
 - If OPPORTUNISTIC only (no anchor) → highest-risk query, ask one clarifying question before generating
+
+IMPLICIT ANTI-MAINSTREAM PROFILE SIGNAL:
+When ALL THREE of these are present in the traveler profile, treat as implicit anti_mainstream flag even without explicit query signals:
+1. Travel frequency: 8+ trips/year (active traveler by volume)
+2. Travel-specific spend card present (Amex Platinum, Chase Sapphire Reserve, etc.) — signals meaningful travel budget
+3. No hotel loyalty programs highlighted (or only one minor program) — active choice to stay independent
+This combination = traveler who spends meaningfully on travel but deliberately avoids loyalty infrastructure. High probability of independent/boutique preference. Surface at least one anti_mainstream Wild Card: Profile Extension regardless of query specificity.
+NOTE: Frequency alone or card alone is not sufficient. Requires all three signals together. Do NOT apply if query is explicitly mainstream (asking for a specific chain property).
+
 
 PLACE-DISCOVERY QUERIES (destination is the primary ask, hotel is secondary):
 Triggered by: OCCASION/ACTIVITY + VIBE (anti-mainstream) + no destination anchor
