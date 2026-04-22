@@ -10575,6 +10575,43 @@ TAG-LEVEL VIBE ASSIGNMENT:
 - Wild Card: Intent Extension → Layer 3 vibe inference; what the query implies but doesn't state
 - Wild Card: Profile Extension → Layer 4 vibe × profile; what the profile implies independent of query
 
+
+DB FLAG REASONING RULES — how to weight quality and brand signals:
+
+BRAND SIGNAL ARCHITECTURE:
+
+CLUSTER A — QUALITY INDEPENDENT (interchangeable for "genuinely good independent hotel" filtering):
+- relais_chateaux: true → PRIMARY signal: hospitality craft above all else — service, dining, human warmth. R&C membership means the property has been validated on hospitality standards specifically, whether a farmhouse inn or a grand hotel. Weight when: query signals "service", "dining", "hospitality", "cared for", "looked after", or occasion = honeymoon/anniversary where being well looked after matters most.
+- slh: true → The professional independent. Small, boutique, independently owned — but vetted. SLH membership is the signal that separates a genuinely good small hotel from rolling the dice on an unknown B&B or amateur host. Weight when: query signals "boutique", "small", "intimate", "cozy", "independent", "not a chain", or traveler implies they want boutique character without the risk of an unvetted property. Lower character specificity than R&C but a reliable quality floor with the scale and independence attributes intact.
+- auberge: true → American resort luxury with culinary and residential identity. Amenity-rich, California/US-West skewed, tend toward larger scale than R&C. Weight when: US destination, resort amenities matter, culinary identity present, traveler profile suggests American luxury comfort over European intimacy.
+- R&C + SLH + Auberge together → treat as interchangeable cluster for "quality independent" queries. Surface whichever has properties in the target destination. Do NOT force a distinction if the query doesn't warrant one.
+
+CLUSTER B — AMAN (orthogonal — its own category):
+- aman: true with remote/destination property (Amangiri, Amanjiwo, Amanyara, Amangani, wilderness/UNESCO context) → Design integral to landscape; isolation as amenity; property IS the destination; experiential remoteness. Weight when: query signals "remote", "design", "off-the-beaten-path", "nothing else like it", or destination is wilderness/desert/jungle/island.
+- aman: true with urban property (Aman New York, Aman Tokyo, Aman Venice, Aman London) → Showy minimalism — high design, very high service, but with an ostentatious quality that sits just on the right side of gauche. The aesthetic is maximalist restraint — nothing is subtle, but nothing is tacky. Appeals to a specific traveler who wants to be seen in the right place without the brashness of Vegas luxury. Weight when: urban destination, traveler profile shows Aman preference specifically, "statement" or "design" signals present. NOT the choice for travelers who want discretion — Peninsula or Rosewood is more discreet at equivalent quality.
+- RULE: Aman travelers know they want Aman. If preferred_brands includes Aman OR loyaltyAccounts includes Aman → always surface Aman properties in destination if available, as primary Recommended or Quality Upgrade. If no explicit Aman signal → Aman is a Wild Card: Profile Extension for design-forward, anti-mainstream travelers.
+
+CLUSTER C — BELMOND (curated collection of irreducible places):
+- belmond: true → Orient Express legacy; trains, barges, historic properties in iconic locations. Weight when: "iconic", "historic", "once-in-a-lifetime", "classic luxury travel", or destination has a Belmond property that IS the destination (Hotel Cipriani Venice, Cap Juluca Anguilla, Copacabana Palace Rio). Belmond properties are often more famous than their destinations — weight signature_experience field heavily.
+
+CREDENTIAL SIGNALS (quality floors, not character signals):
+- forbes_stars: 5 → Objective quality standard. Weight when traveler profile signals luxury_purist archetype or cards/loyalty suggest ultra_luxury ADR.
+- forbes_stars: 4 → Strong quality floor. Weight for luxury tier when 5-star not available.
+- michelin_keys: 3 → Highest Michelin hotel credential (introduced 2024). Very few properties have this. Weight heavily when present — it is the most rigorous independent quality validation.
+- michelin_keys: 2 → Strong credential. Weight when quality + culinary signals both present.
+- michelin_stars: value → On-property Michelin-starred restaurant. Weight when: query signals "food", "culinary", "dining", traveler_archetype = foodie, or occasion = anniversary/honeymoon where dining is a centerpiece.
+- tl_gold: true → Travel + Leisure Gold List. Editorial quality signal. Meaningful but softer than Forbes/Michelin.
+- cn_hot_list: true → Condé Nast Hot List or Gold List. Editorial signal, trend-aware. Weight when traveler profile suggests style-conscious, trend-forward.
+
+WEIGHTING HIERARCHY by query type:
+- OCCASION queries (honeymoon, anniversary) → R&C first (hospitality signal matches), then Forbes stars, then Belmond if iconic destination
+- ACTIVITY queries (fly fishing, ranch, ski) → activity flags PRIMARY; brand credentials secondary unless property is also R&C/SLH
+- VIBE queries ("boutique", "authentic", "hidden") → R&C + SLH + Auberge cluster equally; anti_mainstream flag; Michelin Keys if present
+- DESTINATION queries (traveler knows where) → surface ALL qualifying brand properties at destination first, then let tier and quality flags differentiate
+- PROFILE-DRIVEN (Aman in preferred_brands) → surface Aman at destination as primary option regardless of query type
+
+MICHELIN KEYS NOTE: Michelin Keys were introduced in 2024 and are the most rigorous independent hotel quality credential currently available. Properties with michelin_keys: 3 are among the best-validated properties in the world. This is a stronger signal than Forbes 5-star for pure quality reasoning.
+
 STEP 7 — CONCENTRATION AWARENESS:
 Some destinations are "victims of their own success" — overcrowded, over-indexed, chain-dominated:
 Napa, Vegas, Cancun, Maldives, Bora Bora, Santorini, Aspen, Vail, Park City, Hawaii (Maui/Waikiki), Tuscany, Nashville, Charleston, Scottsdale
