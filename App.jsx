@@ -6975,10 +6975,10 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
     <div style={{ position: 'fixed', inset: 0, background: '#080706', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
       <div style={{ background: '#0a0908', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '20px', maxWidth: '480px', width: '100%', padding: '40px 36px', textAlign: 'center' }}>
         <div style={{ fontSize: '28px', marginBottom: '16px', color: '#C9A84C' }}>✦</div>
-        <div style={{ fontSize: '22px', fontFamily: "'Playfair Display',Georgia,serif", fontStyle: 'italic', color: '#e8e4dc', marginBottom: '12px' }}>Your trip is confirmed.</div>
+        <div style={{ fontSize: '22px', fontFamily: "'Playfair Display',Georgia,serif", fontStyle: 'italic', color: '#e8e0d0', marginBottom: '12px' }}>Booking coming soon.</div>
         <div style={{ color: '#7a7060', fontSize: '13px', lineHeight: '1.8', marginBottom: '24px' }}>
-          We'll send your full itinerary, travel reminders, and anything worth knowing before you go — including real-time updates if anything changes.
-        </div>
+          Direct booking is on its way. In the meantime, use the property links on your options to book directly — your Sojourn recommendations are waiting for you there.
+        </div></div>
         <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px 18px', marginBottom: '20px', textAlign: 'left' }}>
           <div style={{ color: '#555', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'serif', marginBottom: '6px' }}>Trip Summary</div>
           <div style={{ color: '#b0a898', fontSize: '13px', marginBottom: '3px' }}>{tripSummary?.destination || option.headline?.split(' · ')[0]?.trim()}</div>
@@ -6986,7 +6986,7 @@ const BookingCheckout = ({ option, tripSummary, userProfile, onClose }) => {
           {total > 0 && <div style={{ color: '#C9A84C', fontSize: '13px', marginTop: '6px', fontWeight: '600' }}>${total.toLocaleString()} total</div>}
         </div>
         <div style={{ color: '#3a3530', fontSize: '11px', lineHeight: '1.7', marginBottom: '24px' }}>
-          ✦ &nbsp;Sojourn will monitor for schedule changes, fare drops, and upgrade opportunities
+          ✦ &nbsp;Save this trip for when direct booking launches — or book now through the property links on your options
         </div>
         <button onClick={onClose} style={{ background: '#C9A84C', color: '#0a0908', border: 'none', borderRadius: '12px', padding: '14px 32px', cursor: 'pointer', fontSize: '13px', fontWeight: '700', letterSpacing: '0.08em', fontFamily: "'Playfair Display',Georgia,serif" }}>
           Back to My Trip
