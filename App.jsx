@@ -8991,6 +8991,32 @@ ${(() => {
       .slice(0, 8);
     
     const keysToUse = [...new Set([...relevantKeys, ...globalNotable])];
+
+    // Track conjunction precision at K=28 for efficiency metric
+    // Measures what fraction of injected properties satisfy the query's hard constraints
+    try {
+      const hardConstraints = [];
+      const qLower = (userMessage || '').toLowerCase();
+      if (/ski|slope|powder/.test(qLower)) hardConstraints.push(k => QUALITY_SIGNALS_DB[k]?.ski_in_out);
+      if (/beach|ocean front|oceanfront/.test(qLower)) hardConstraints.push(k => QUALITY_SIGNALS_DB[k]?.beach_access);
+      if (/adults.only|no kids|couples only/.test(qLower)) hardConstraints.push(k => QUALITY_SIGNALS_DB[k]?.adults_only);
+      if (/fly.fish/.test(qLower)) hardConstraints.push(k => QUALITY_SIGNALS_DB[k]?.fly_fishing);
+      if (/ranch/.test(qLower)) hardConstraints.push(k => QUALITY_SIGNALS_DB[k]?.ranch);
+      if (/golf/.test(qLower)) hardConstraints.push(k => QUALITY_SIGNALS_DB[k]?.golf);
+      if (/vineyard|wine country/.test(qLower)) hardConstraints.push(k => QUALITY_SIGNALS_DB[k]?.vineyard_access);
+      if (hardConstraints.length > 0) {
+        const satisfying = keysToUse.filter(k => hardConstraints.every(fn => fn(k))).length;
+        const precision = Math.round((satisfying / Math.max(keysToUse.length, 1)) * 100);
+        if (typeof mp !== 'undefined') mp.track('conjunction_precision', {
+          k: keysToUse.length,
+          hard_constraints: hardConstraints.length,
+          satisfying_k: satisfying,
+          precision_pct: precision,
+          query_text: (userMessage || '').slice(0, 100),
+        });
+      }
+    } catch(e) {}
+
     return keysToUse.length > 0 ? buildQualityContext(keysToUse) : buildQualityContext(Object.keys(QUALITY_SIGNALS_DB).slice(0, 20));
   })()}
 - Geographic reasoning: When recommending properties, use structured geo data where available. For destination queries, prefer properties where nearest_airport matches a direct flight from traveler home airport. For drive-distance queries, use drive_mins from nearest_airport to estimate total travel time. Beach properties: on_beach = steps from water; beach_adjacent = short walk; coastal = scenic but not on beach. Ski properties: ski_in_out = from door to slope; shuttle = 5-15min hotel shuttle; nearby = shuttle/taxi required.
